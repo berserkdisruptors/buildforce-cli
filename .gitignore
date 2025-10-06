@@ -1,0 +1,17 @@
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Project specific
+*.log
+.env
+.env.local
+*.lock
+
+# TypeScript / Node.js
+node_modules/
+dist/
+*.tsbuildinfo
