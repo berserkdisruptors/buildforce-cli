@@ -1,11 +1,10 @@
-import fs from 'fs-extra';
-import path from 'path';
-import unzipper from 'unzipper';
-import chalk from 'chalk';
-import os from 'os';
-import { downloadTemplateFromGithub } from './github.js';
-import { StepTracker } from './step-tracker.js';
-import { ensureExecutableScripts } from './utils.js';
+import fs from "fs-extra";
+import path from "path";
+import unzipper from "unzipper";
+import chalk from "chalk";
+import os from "os";
+import { downloadTemplateFromGithub } from "./github.js";
+import { StepTracker } from "./step-tracker.js";
 
 /**
  * Download and extract template to create a new project
@@ -23,13 +22,19 @@ export async function downloadAndExtractTemplate(
     skipTls?: boolean;
   } = {}
 ): Promise<string> {
-  const { verbose = true, tracker, debug = false, githubToken, skipTls = false } = options;
+  const {
+    verbose = true,
+    tracker,
+    debug = false,
+    githubToken,
+    skipTls = false,
+  } = options;
 
   const currentDir = process.cwd();
 
   // Step: fetch + download combined
   if (tracker) {
-    tracker.start('fetch', 'contacting GitHub API');
+    tracker.start("fetch", "contacting GitHub API");
   }
 
   let zipPath: string;
@@ -49,24 +54,27 @@ export async function downloadAndExtractTemplate(
     meta = result.metadata;
 
     if (tracker) {
-      tracker.complete('fetch', `release ${meta.release} (${meta.size.toLocaleString()} bytes)`);
-      tracker.add('download', 'Download template');
-      tracker.complete('download', meta.filename);
+      tracker.complete(
+        "fetch",
+        `release ${meta.release} (${meta.size.toLocaleString()} bytes)`
+      );
+      tracker.add("download", "Download template");
+      tracker.complete("download", meta.filename);
     }
   } catch (e: any) {
     if (tracker) {
-      tracker.error('fetch', e.message);
+      tracker.error("fetch", e.message);
     } else if (verbose) {
-      console.error(chalk.red('Error downloading template:'), e.message);
+      console.error(chalk.red("Error downloading template:"), e.message);
     }
     throw e;
   }
 
   if (tracker) {
-    tracker.add('extract', 'Extract template');
-    tracker.start('extract');
+    tracker.add("extract", "Extract template");
+    tracker.start("extract");
   } else if (verbose) {
-    console.log('Extracting template...');
+    console.log("Extracting template...");
   }
 
   try {
@@ -76,7 +84,7 @@ export async function downloadAndExtractTemplate(
     }
 
     // Extract to temporary location first
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'specify-'));
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "specify-"));
 
     await fs
       .createReadStream(zipPath)
@@ -86,8 +94,8 @@ export async function downloadAndExtractTemplate(
     const extractedItems = await fs.readdir(tempDir);
 
     if (tracker) {
-      tracker.add('zip-list', 'Archive contents');
-      tracker.complete('zip-list', `${extractedItems.length} entries`);
+      tracker.add("zip-list", "Archive contents");
+      tracker.complete("zip-list", `${extractedItems.length} entries`);
     } else if (verbose) {
       console.log(chalk.cyan(`ZIP contains ${extractedItems.length} items`));
     }
@@ -104,16 +112,16 @@ export async function downloadAndExtractTemplate(
     if (extractedStats.length === 1 && extractedStats[0].isDir) {
       sourceDir = path.join(tempDir, extractedStats[0].name);
       if (tracker) {
-        tracker.add('flatten', 'Flatten nested directory');
-        tracker.complete('flatten');
+        tracker.add("flatten", "Flatten nested directory");
+        tracker.complete("flatten");
       } else if (verbose) {
-        console.log(chalk.cyan('Found nested directory structure'));
+        console.log(chalk.cyan("Found nested directory structure"));
       }
     }
 
     if (tracker) {
-      tracker.add('extracted-summary', 'Extraction summary');
-      tracker.start('extracted-summary');
+      tracker.add("extracted-summary", "Extraction summary");
+      tracker.start("extracted-summary");
     }
 
     // Copy contents to project directory
@@ -143,22 +151,22 @@ export async function downloadAndExtractTemplate(
     }
 
     if (tracker) {
-      tracker.complete('extracted-summary', `${sourceItems.length} items`);
+      tracker.complete("extracted-summary", `${sourceItems.length} items`);
     } else if (verbose) {
-      console.log(chalk.cyan('Template files extracted'));
+      console.log(chalk.cyan("Template files extracted"));
     }
 
     // Clean up temp directory
     await fs.remove(tempDir);
 
     if (tracker) {
-      tracker.complete('extract');
+      tracker.complete("extract");
     }
   } catch (e: any) {
     if (tracker) {
-      tracker.error('extract', e.message);
+      tracker.error("extract", e.message);
     } else if (verbose) {
-      console.error(chalk.red('Error extracting template:'), e.message);
+      console.error(chalk.red("Error extracting template:"), e.message);
       if (debug) {
         console.error(e);
       }
@@ -171,14 +179,14 @@ export async function downloadAndExtractTemplate(
     throw e;
   } finally {
     if (tracker) {
-      tracker.add('cleanup', 'Remove temporary archive');
+      tracker.add("cleanup", "Remove temporary archive");
     }
 
     // Clean up downloaded ZIP file
     if (await fs.pathExists(zipPath)) {
       await fs.unlink(zipPath);
       if (tracker) {
-        tracker.complete('cleanup');
+        tracker.complete("cleanup");
       } else if (verbose) {
         console.log(`Cleaned up: ${path.basename(zipPath)}`);
       }

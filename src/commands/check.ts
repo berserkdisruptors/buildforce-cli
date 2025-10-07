@@ -1,8 +1,8 @@
 import chalk from 'chalk';
-import { showBanner } from '../interactive.js';
+import { showBanner } from '../lib/interactive.js';
 import { BANNER, TAGLINE } from '../constants.js';
-import { checkTool } from '../utils.js';
-import { StepTracker } from '../step-tracker.js';
+import { checkTool } from '../utils/index.js';
+import { StepTracker } from '../lib/step-tracker.js';
 
 /**
  * Check if a tool is installed and update tracker

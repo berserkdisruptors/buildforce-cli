@@ -33,14 +33,14 @@ rm -rf "$GENRELEASES_DIR"/* || true
 rewrite_paths() {
   sed -E \
     -e 's@(/?)memory/@.specify/memory/@g' \
-    -e 's@(/?)scripts/@.specify/scripts/@g' \
-    -e 's@(/?)templates/@.specify/templates/@g'
+    -e 's@(/?)src/scripts/@.specify/scripts/@g' \
+    -e 's@(/?)src/templates/@.specify/templates/@g'
 }
 
 generate_commands() {
   local agent=$1 ext=$2 arg_format=$3 output_dir=$4 script_variant=$5
   mkdir -p "$output_dir"
-  for template in templates/commands/*.md; do
+  for template in src/templates/commands/*.md; do
     [[ -f "$template" ]] || continue
     local name description script_command body
     name=$(basename "$template" .md)
@@ -96,23 +96,23 @@ build_variant() {
   [[ -d memory ]] && { cp -r memory "$SPEC_DIR/"; echo "Copied memory -> .specify"; }
 
   # Only copy the relevant script variant directory
-  if [[ -d scripts ]]; then
+  if [[ -d src/scripts ]]; then
     mkdir -p "$SPEC_DIR/scripts"
     case $script in
       sh)
-        [[ -d scripts/bash ]] && { cp -r scripts/bash "$SPEC_DIR/scripts/"; echo "Copied scripts/bash -> .specify/scripts"; }
+        [[ -d src/scripts/bash ]] && { cp -r src/scripts/bash "$SPEC_DIR/scripts/"; echo "Copied src/scripts/bash -> .specify/scripts"; }
         # Copy any script files that aren't in variant-specific directories
-        find scripts -maxdepth 1 -type f -exec cp {} "$SPEC_DIR/scripts/" \; 2>/dev/null || true
+        find src/scripts -maxdepth 1 -type f -exec cp {} "$SPEC_DIR/scripts/" \; 2>/dev/null || true
         ;;
       ps)
-        [[ -d scripts/powershell ]] && { cp -r scripts/powershell "$SPEC_DIR/scripts/"; echo "Copied scripts/powershell -> .specify/scripts"; }
+        [[ -d src/scripts/powershell ]] && { cp -r src/scripts/powershell "$SPEC_DIR/scripts/"; echo "Copied src/scripts/powershell -> .specify/scripts"; }
         # Copy any script files that aren't in variant-specific directories
-        find scripts -maxdepth 1 -type f -exec cp {} "$SPEC_DIR/scripts/" \; 2>/dev/null || true
+        find src/scripts -maxdepth 1 -type f -exec cp {} "$SPEC_DIR/scripts/" \; 2>/dev/null || true
         ;;
     esac
   fi
 
-  [[ -d templates ]] && { mkdir -p "$SPEC_DIR/templates"; find templates -type f -not -path "templates/commands/*" -exec cp --parents {} "$SPEC_DIR"/ \; ; echo "Copied templates -> .specify/templates"; }
+  [[ -d src/templates ]] && { mkdir -p "$SPEC_DIR/templates"; find src/templates -type f -not -path "src/templates/commands/*" -exec cp --parents {} "$SPEC_DIR"/ \; ; echo "Copied src/templates -> .specify/templates"; }
   # Inject variant into plan-template.md within .specify/templates if present
   local plan_tpl="$base_dir/.specify/templates/plan-template.md"
   if [[ -f "$plan_tpl" ]]; then
