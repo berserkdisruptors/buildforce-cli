@@ -27,7 +27,7 @@ echo "📝 Setting up Claude Code slash commands..."
 mkdir -p .claude/commands
 
 # Copy all commands with buildforce- prefix
-for cmd_file in "$REPO_ROOT/templates/commands"/*.md; do
+for cmd_file in "$REPO_ROOT/src/templates/commands"/*.md; do
   filename=$(basename "$cmd_file")
   cp "$cmd_file" ".claude/commands/buildforce-$filename"
   echo "  ✓ /buildforce-${filename%.md}"
@@ -39,9 +39,9 @@ echo "📚 Setting up templates..."
 mkdir -p templates
 
 # Copy template files
-cp "$REPO_ROOT/templates/spec-template.md" templates/
-cp "$REPO_ROOT/templates/plan-template.md" templates/
-cp "$REPO_ROOT/templates/tasks-template.md" templates/
+cp "$REPO_ROOT/src/templates/spec-template.md" templates/
+cp "$REPO_ROOT/src/templates/plan-template.md" templates/
+cp "$REPO_ROOT/src/templates/tasks-template.md" templates/
 echo "  ✓ spec-template.md"
 echo "  ✓ plan-template.md"
 echo "  ✓ tasks-template.md"

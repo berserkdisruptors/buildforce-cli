@@ -3,9 +3,9 @@ import fs from "fs-extra";
 import path from "path";
 import chalk from "chalk";
 import ora from "ora";
-import { REPO_OWNER, REPO_NAME } from "./constants.js";
-import { ReleaseData, ReleaseMetadata } from "./types.js";
-import { getGithubAuthHeaders } from "./utils.js";
+import { REPO_OWNER, REPO_NAME } from "../constants.js";
+import { ReleaseData, ReleaseMetadata } from "../types.js";
+import { getGithubAuthHeaders } from "../utils/index.js";
 
 /**
  * Download template from GitHub releases

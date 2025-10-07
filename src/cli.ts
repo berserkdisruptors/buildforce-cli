@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
 import { Command } from 'commander';
-import { initCommand } from './commands/init.js';
+import { initCommand } from './commands/init/index.js';
 import { checkCommand } from './commands/check.js';
-import { showBanner } from './interactive.js';
+import { showBanner } from './lib/interactive.js';
 import { BANNER, TAGLINE } from './constants.js';
 
 const program = new Command();
