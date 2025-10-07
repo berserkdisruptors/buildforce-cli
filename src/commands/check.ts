@@ -56,7 +56,7 @@ export function checkCommand(): void {
   console.log(tracker.render());
   console.log();
 
-  console.log(chalk.bold.green('Specify CLI is ready to use!'));
+  console.log(chalk.bold.green('BuildForce CLI is ready to use!'));
   console.log();
 
   if (!gitOk) {

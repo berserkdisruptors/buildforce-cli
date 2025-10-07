@@ -33,7 +33,7 @@ export function ensureExecutableScripts(
     return { updated: 0, failures: [] };
   }
 
-  const scriptsRoot = join(projectPath, ".specify", "scripts");
+  const scriptsRoot = join(projectPath, ".buildforce", "scripts");
 
   if (debug)
     console.log(chalk.dim(`[DEBUG] Looking for scripts in: ${scriptsRoot}`));
