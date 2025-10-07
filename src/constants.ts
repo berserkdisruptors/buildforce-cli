@@ -46,5 +46,5 @@ export const AGENT_FOLDER_MAP: Record<string, string> = {
 
 export const CLAUDE_LOCAL_PATH = `${process.env.HOME}/.claude/local/claude`;
 
-export const REPO_OWNER = "github";
+export const REPO_OWNER = "berserkdisruptors";
 export const REPO_NAME = "buildforce-cli";
