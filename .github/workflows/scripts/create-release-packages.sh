@@ -112,7 +112,19 @@ build_variant() {
     esac
   fi
 
-  [[ -d src/templates ]] && { mkdir -p "$SPEC_DIR/templates"; find src/templates -type f -not -path "src/templates/commands/*" -exec cp --parents {} "$SPEC_DIR"/ \; ; echo "Copied src/templates -> .specify/templates"; }
+  if [[ -d src/templates ]]; then
+    mkdir -p "$SPEC_DIR/templates"
+    # Copy template files, excluding commands subdirectory
+    find src/templates -type f -not -path "src/templates/commands/*" | while read -r file; do
+      # Get the relative path from src/templates
+      rel_path="${file#src/templates/}"
+      dest_file="$SPEC_DIR/templates/$rel_path"
+      # Create parent directories if needed
+      mkdir -p "$(dirname "$dest_file")"
+      cp "$file" "$dest_file"
+    done
+    echo "Copied src/templates -> .specify/templates"
+  fi
   # Inject variant into plan-template.md within .specify/templates if present
   local plan_tpl="$base_dir/.specify/templates/plan-template.md"
   if [[ -f "$plan_tpl" ]]; then
