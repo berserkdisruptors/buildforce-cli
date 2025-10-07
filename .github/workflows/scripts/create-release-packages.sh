@@ -49,8 +49,8 @@ generate_commands() {
     file_content=$(tr -d '\r' < "$template")
     
     # Extract description and script command from YAML frontmatter
-    description=$(printf '%s\n' "$file_content" | awk '/^description:/ {sub(/^description:[[:space:]]*/, ""); print; exit}')
-    script_command=$(printf '%s\n' "$file_content" | awk -v sv="$script_variant" '/^[[:space:]]*'"$script_variant"':[[:space:]]*/ {sub(/^[[:space:]]*'"$script_variant"':[[:space:]]*/, ""); print; exit}')
+    description=$(printf '%s\n' "$file_content" | awk '/^description:/ {sub(/^description:[[:space:]]*/, ""); print; exit}' 2>/dev/null || true)
+    script_command=$(printf '%s\n' "$file_content" | awk -v sv="$script_variant" '/^[[:space:]]*'"$script_variant"':[[:space:]]*/ {sub(/^[[:space:]]*'"$script_variant"':[[:space:]]*/, ""); print; exit}' 2>/dev/null || true)
     
     if [[ -z $script_command ]]; then
       echo "Warning: no script command found for $script_variant in $template" >&2
@@ -130,7 +130,7 @@ build_variant() {
   if [[ -f "$plan_tpl" ]]; then
     plan_norm=$(tr -d '\r' < "$plan_tpl")
     # Extract script command from YAML frontmatter
-    script_command=$(printf '%s\n' "$plan_norm" | awk -v sv="$script" '/^[[:space:]]*'"$script"':[[:space:]]*/ {sub(/^[[:space:]]*'"$script"':[[:space:]]*/, ""); print; exit}')
+    script_command=$(printf '%s\n' "$plan_norm" | awk -v sv="$script" '/^[[:space:]]*'"$script"':[[:space:]]*/ {sub(/^[[:space:]]*'"$script"':[[:space:]]*/, ""); print; exit}' 2>/dev/null || true)
     if [[ -n $script_command ]]; then
       # Always prefix with .buildforce/ for plan usage
       script_command=".buildforce/$script_command"
