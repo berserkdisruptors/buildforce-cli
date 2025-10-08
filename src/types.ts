@@ -48,3 +48,8 @@ export interface InitOptions {
   debug?: boolean;
   githubToken?: string;
 }
+
+export interface BuildforceConfig {
+  specsFolder: string;
+  framework: string;
+}
