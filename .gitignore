@@ -17,3 +17,4 @@ dist/
 *.tsbuildinfo
 
 inspiration/
+.buildforce/scripts
