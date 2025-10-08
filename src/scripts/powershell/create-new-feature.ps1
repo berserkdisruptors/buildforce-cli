@@ -57,7 +57,7 @@ try {
 
 Set-Location $repoRoot
 
-$specsDir = Join-Path $repoRoot 'specs'
+$specsDir = Join-Path $repoRoot '.buildforce/specs'
 New-Item -ItemType Directory -Path $specsDir -Force | Out-Null
 
 $highest = 0
