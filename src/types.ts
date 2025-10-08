@@ -24,13 +24,16 @@ export interface ReleaseMetadata {
 
 export interface ReleaseAsset {
   name: string;
-  browser_download_url: string;
+  url: string; // API URL for downloading (requires auth for private repos)
+  browser_download_url: string; // Browser URL (doesn't work for private repos)
   size: number;
 }
 
 export interface ReleaseData {
   tag_name: string;
   assets: ReleaseAsset[];
+  draft: boolean;
+  prerelease: boolean;
 }
 
 export interface InitOptions {

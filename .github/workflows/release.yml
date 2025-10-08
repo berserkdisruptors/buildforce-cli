@@ -5,8 +5,8 @@ on:
     branches: [ main ]
     paths:
       - 'memory/**'
-      - 'scripts/**'
-      - 'templates/**'
+      - 'src/scripts/**'
+      - 'src/templates/**'
       - 'src/**'
       - 'package.json'
       - 'tsconfig.json'

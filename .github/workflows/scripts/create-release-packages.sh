@@ -32,15 +32,15 @@ rm -rf "$GENRELEASES_DIR"/* || true
 
 rewrite_paths() {
   sed -E \
-    -e 's@(/?)memory/@.specify/memory/@g' \
-    -e 's@(/?)scripts/@.specify/scripts/@g' \
-    -e 's@(/?)templates/@.specify/templates/@g'
+    -e 's@(/?)memory/@.buildforce/memory/@g' \
+    -e 's@(/?)src/scripts/@.buildforce/scripts/@g' \
+    -e 's@(/?)src/templates/@.buildforce/templates/@g'
 }
 
 generate_commands() {
   local agent=$1 ext=$2 arg_format=$3 output_dir=$4 script_variant=$5
   mkdir -p "$output_dir"
-  for template in templates/commands/*.md; do
+  for template in src/templates/commands/*.md; do
     [[ -f "$template" ]] || continue
     local name description script_command body
     name=$(basename "$template" .md)
@@ -49,8 +49,8 @@ generate_commands() {
     file_content=$(tr -d '\r' < "$template")
     
     # Extract description and script command from YAML frontmatter
-    description=$(printf '%s\n' "$file_content" | awk '/^description:/ {sub(/^description:[[:space:]]*/, ""); print; exit}')
-    script_command=$(printf '%s\n' "$file_content" | awk -v sv="$script_variant" '/^[[:space:]]*'"$script_variant"':[[:space:]]*/ {sub(/^[[:space:]]*'"$script_variant"':[[:space:]]*/, ""); print; exit}')
+    description=$(printf '%s\n' "$file_content" | awk '/^description:/ {sub(/^description:[[:space:]]*/, ""); print; exit}' 2>/dev/null || true)
+    script_command=$(printf '%s\n' "$file_content" | awk -v sv="$script_variant" '/^[[:space:]]*'"$script_variant"':[[:space:]]*/ {sub(/^[[:space:]]*'"$script_variant"':[[:space:]]*/, ""); print; exit}' 2>/dev/null || true)
     
     if [[ -z $script_command ]]; then
       echo "Warning: no script command found for $script_variant in $template" >&2
@@ -90,38 +90,50 @@ build_variant() {
   mkdir -p "$base_dir"
 
   # Copy base structure but filter scripts by variant
-  SPEC_DIR="$base_dir/.specify"
+  SPEC_DIR="$base_dir/.buildforce"
   mkdir -p "$SPEC_DIR"
 
-  [[ -d memory ]] && { cp -r memory "$SPEC_DIR/"; echo "Copied memory -> .specify"; }
+  [[ -d memory ]] && { cp -r memory "$SPEC_DIR/"; echo "Copied memory -> .buildforce"; }
 
   # Only copy the relevant script variant directory
-  if [[ -d scripts ]]; then
+  if [[ -d src/scripts ]]; then
     mkdir -p "$SPEC_DIR/scripts"
     case $script in
       sh)
-        [[ -d scripts/bash ]] && { cp -r scripts/bash "$SPEC_DIR/scripts/"; echo "Copied scripts/bash -> .specify/scripts"; }
+        [[ -d src/scripts/bash ]] && { cp -r src/scripts/bash "$SPEC_DIR/scripts/"; echo "Copied src/scripts/bash -> .buildforce/scripts"; }
         # Copy any script files that aren't in variant-specific directories
-        find scripts -maxdepth 1 -type f -exec cp {} "$SPEC_DIR/scripts/" \; 2>/dev/null || true
+        find src/scripts -maxdepth 1 -type f -exec cp {} "$SPEC_DIR/scripts/" \; 2>/dev/null || true
         ;;
       ps)
-        [[ -d scripts/powershell ]] && { cp -r scripts/powershell "$SPEC_DIR/scripts/"; echo "Copied scripts/powershell -> .specify/scripts"; }
+        [[ -d src/scripts/powershell ]] && { cp -r src/scripts/powershell "$SPEC_DIR/scripts/"; echo "Copied src/scripts/powershell -> .buildforce/scripts"; }
         # Copy any script files that aren't in variant-specific directories
-        find scripts -maxdepth 1 -type f -exec cp {} "$SPEC_DIR/scripts/" \; 2>/dev/null || true
+        find src/scripts -maxdepth 1 -type f -exec cp {} "$SPEC_DIR/scripts/" \; 2>/dev/null || true
         ;;
     esac
   fi
 
-  [[ -d templates ]] && { mkdir -p "$SPEC_DIR/templates"; find templates -type f -not -path "templates/commands/*" -exec cp --parents {} "$SPEC_DIR"/ \; ; echo "Copied templates -> .specify/templates"; }
-  # Inject variant into plan-template.md within .specify/templates if present
-  local plan_tpl="$base_dir/.specify/templates/plan-template.md"
+  if [[ -d src/templates ]]; then
+    mkdir -p "$SPEC_DIR/templates"
+    # Copy template files, excluding commands subdirectory
+    find src/templates -type f -not -path "src/templates/commands/*" | while read -r file; do
+      # Get the relative path from src/templates
+      rel_path="${file#src/templates/}"
+      dest_file="$SPEC_DIR/templates/$rel_path"
+      # Create parent directories if needed
+      mkdir -p "$(dirname "$dest_file")"
+      cp "$file" "$dest_file"
+    done
+    echo "Copied src/templates -> .buildforce/templates"
+  fi
+  # Inject variant into plan-template.md within .buildforce/templates if present
+  local plan_tpl="$base_dir/.buildforce/templates/plan-template.md"
   if [[ -f "$plan_tpl" ]]; then
     plan_norm=$(tr -d '\r' < "$plan_tpl")
     # Extract script command from YAML frontmatter
-    script_command=$(printf '%s\n' "$plan_norm" | awk -v sv="$script" '/^[[:space:]]*'"$script"':[[:space:]]*/ {sub(/^[[:space:]]*'"$script"':[[:space:]]*/, ""); print; exit}')
+    script_command=$(printf '%s\n' "$plan_norm" | awk -v sv="$script" '/^[[:space:]]*'"$script"':[[:space:]]*/ {sub(/^[[:space:]]*'"$script"':[[:space:]]*/, ""); print; exit}' 2>/dev/null || true)
     if [[ -n $script_command ]]; then
-      # Always prefix with .specify/ for plan usage
-      script_command=".specify/$script_command"
+      # Always prefix with .buildforce/ for plan usage
+      script_command=".buildforce/$script_command"
       # Replace {SCRIPT} placeholder with the script command and __AGENT__ with agent name
       substituted=$(sed "s|{SCRIPT}|${script_command}|g" "$plan_tpl" | tr -d '\r' | sed "s|__AGENT__|${agent}|g")
       # Strip YAML frontmatter from plan template output (keep body only)

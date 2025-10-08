@@ -3,9 +3,9 @@ import fs from "fs-extra";
 import path from "path";
 import chalk from "chalk";
 import ora from "ora";
-import { REPO_OWNER, REPO_NAME } from "./constants.js";
-import { ReleaseData, ReleaseMetadata } from "./types.js";
-import { getGithubAuthHeaders } from "./utils.js";
+import { REPO_OWNER, REPO_NAME } from "../constants.js";
+import { ReleaseData, ReleaseMetadata } from "../types.js";
+import { getGithubAuthHeaders } from "../utils/index.js";
 
 /**
  * Download template from GitHub releases
@@ -31,9 +31,11 @@ export async function downloadTemplateFromGithub(
     skipTls = false,
   } = options;
 
+  const headers = getGithubAuthHeaders(githubToken);
+
   const client = axios.create({
     timeout: 30000,
-    headers: getGithubAuthHeaders(githubToken),
+    headers,
     httpsAgent: skipTls
       ? new (require("https").Agent)({ rejectUnauthorized: false })
       : undefined,
@@ -43,11 +45,12 @@ export async function downloadTemplateFromGithub(
     console.log(chalk.cyan("Fetching latest release information..."));
   }
 
-  const apiUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/releases/latest`;
-
+  // For private repos, /releases/latest may not work reliably
+  // Instead, fetch all releases and get the first non-draft, non-prerelease one
+  const apiUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/releases`;
   let releaseData: ReleaseData;
   try {
-    const response = await client.get<ReleaseData>(apiUrl);
+    const response = await client.get<ReleaseData[]>(apiUrl);
 
     if (response.status !== 200) {
       let msg = `GitHub API returned ${response.status} for ${apiUrl}`;
@@ -62,7 +65,16 @@ export async function downloadTemplateFromGithub(
       throw new Error(msg);
     }
 
-    releaseData = response.data;
+    // Get the first release that is not a draft or prerelease
+    const latestRelease = response.data.find(
+      (release) => !release.draft && !release.prerelease
+    );
+
+    if (!latestRelease) {
+      throw new Error("No published releases found");
+    }
+
+    releaseData = latestRelease;
   } catch (e: any) {
     console.error(chalk.red("Error fetching release information"));
     console.error(e.message);
@@ -91,7 +103,8 @@ export async function downloadTemplateFromGithub(
     throw new Error("No matching release asset found");
   }
 
-  const downloadUrl = asset.browser_download_url;
+  // For private repos, use the API URL instead of browser_download_url
+  const downloadUrl = asset.url;
   const filename = asset.name;
   const fileSize = asset.size;
 
@@ -110,9 +123,14 @@ export async function downloadTemplateFromGithub(
   const spinner = showProgress ? ora("Downloading...").start() : null;
 
   try {
+    // For downloading release assets from private repos, we need to set Accept header
+    // to application/octet-stream
     const response = await client.get(downloadUrl, {
       responseType: "stream",
-      headers: getGithubAuthHeaders(githubToken),
+      headers: {
+        ...headers,
+        Accept: "application/octet-stream",
+      },
     });
 
     if (response.status !== 200) {

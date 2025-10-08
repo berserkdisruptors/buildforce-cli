@@ -1,5 +1,5 @@
 import chalk from 'chalk';
-import { Step, StepStatus } from './types.js';
+import { Step, StepStatus } from '../types.js';
 
 /**
  * Track and render hierarchical steps without emojis, similar to Claude Code tree output.
