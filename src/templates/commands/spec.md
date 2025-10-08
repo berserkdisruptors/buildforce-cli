@@ -1,5 +1,8 @@
 ---
-description: Materialize user intent into a structured specification document that captures WHAT needs to be changed.
+description: Create or update a structured specification YAML file that captures WHAT needs to be built.
+scripts:
+  sh: src/scripts/bash/create-spec.sh --json "{ARGS}"
+  ps: src/scripts/powershell/create-spec.ps1 -Json "{ARGS}"
 ---
 
 The user input to you can be provided directly by the agent or as a command argument - you **MUST** consider it before proceeding with the prompt (if not empty).
@@ -8,103 +11,44 @@ User input:
 
 $ARGUMENTS
 
-The text the user typed after `/spec` in the triggering message **is** the user's intentthe concrete incremental change they want to implement. Assume you always have it available in this conversation. Do not ask the user to repeat it unless they provided an empty command.
+The text the user typed after `/spec` in the triggering message **is** the feature description. Assume you always have it available in this conversation even if `{ARGS}` appears literally below. Do not ask the user to repeat it unless they provided an empty command.
 
-Goal: Transform the user's intent into a clear, complete, unambiguous specification that captures WHAT needs to be built or changed, avoiding premature decisions about HOW to implement it.
+## Workflow Steps
 
-Execution steps:
+1. **Determine create vs update mode**: Follow the pattern in `src/templates/shared/create-update-pattern.md`
 
-1. **Intent Analysis**: Parse the user's intent ($ARGUMENTS) to understand:
-   - The **core change** being requested (new feature, bug fix, refactor, enhancement)
-   - The **scope** of the change (which parts of the system are affected)
-   - The **user's motivation** or problem being solved
-   - Any **constraints** or **requirements** explicitly mentioned
-   - Any **context** gathered from prior `/research` commands in this conversation
+   - Priority 1: Check conversation history for existing spec
+   - Priority 2: Run `{SCRIPT}` and parse JSON output for FOLDER_NAME, SPEC_FILE, SPEC_DIR, FEATURE_NUM, and IS_UPDATE flag
 
-2. **Validate Prerequisite Context**:
-   - Check if sufficient context exists from previous research or conversation history.
-   - If critical information is missing (e.g., "how does authentication currently work?"), suggest running `/research` first.
-   - If the intent is too vague or ambiguous, ask up to 3 targeted clarifying questions before proceeding.
+2. **For CREATE mode (IS_UPDATE = false)**:
 
-3. **Generate Specification Structure**: Create a specification document with the following sections:
+   - Load `src/templates/spec-template.yaml` to understand structure and fields
+   - Populate all sections based on placeholder text, YAML comments, and field names
+   - For metadata: Use standard conventions (id = "FEATURE_NUM-folder-name", status = "draft", dates = today YYYY-MM-DD)
+   - For content: Derive from feature description and prerequisite context
+   - Ensure requirements use unique IDs (FR1, FR2, ..., NFR1, ..., AC1, ...)
+   - Never leave placeholders like [FEATURE_NUM] - use open_questions for unclear items
 
-   ## Overview
-   - Brief description of the change (1-3 sentences)
-   - Problem statement or motivation
-   - Expected outcome or success criteria
+3. **For UPDATE mode (IS_UPDATE = true)**:
 
-   ## Scope
-   - **In Scope**: What will be changed/added/removed
-   - **Out of Scope**: What will NOT be changed (important for preventing scope creep)
+   - Read existing SPEC_FILE - preserve all existing values
+   - Update `last_updated` to today's date
+   - Intelligently merge new information from $ARGUMENTS (see shared pattern for details)
+   - Report what changed with specific examples
 
-   ## Functional Requirements
-   - Numbered list of WHAT the system must do
-   - Use clear, testable language (avoid vague terms like "robust" or "intuitive")
-   - Each requirement should be independently verifiable
+4. **Validate Prerequisite Context**:
 
-   ## Non-Functional Requirements (if applicable)
-   - Performance expectations
-   - Security considerations
-   - Scalability needs
-   - Compatibility constraints
-   - Accessibility requirements
+   - Check if sufficient context exists from previous `/research` commands in this conversation
+   - If critical information is missing, suggest running `/research` first
+   - If the intent is too vague or ambiguous, ask clarifying questions before proceeding
 
-   ## User Stories / Use Cases (if applicable)
-   - As a [user type], I want to [action], so that [benefit]
-   - Include acceptance criteria for each story
+5. **Behavior rules**:
 
-   ## Data Model Changes (if applicable)
-   - New entities, attributes, or relationships
-   - Changes to existing data structures
-   - Migration considerations
+   - Focus on WHAT, not HOW (avoid implementation details unless they're constraints)
+   - Ensure all requirements are testable and measurable
+   - Keep scope incremental (single, focused change)
+   - Check for contradictions or ambiguities
 
-   ## Edge Cases & Error Handling
-   - Negative scenarios
-   - Boundary conditions
-   - Failure modes and expected behavior
-
-   ## Assumptions & Dependencies
-   - What we assume to be true
-   - External dependencies (libraries, services, APIs)
-   - Prerequisites that must exist
-
-   ## Open Questions (if any)
-   - Items that need clarification or decision
-   - Tradeoffs that need user input
-   - Areas where multiple approaches are possible
-
-4. **Validate Specification Completeness**:
-   - Ensure all sections have meaningful content (no placeholders or TODOs unless flagged as Open Questions).
-   - Check for internal consistency (no contradictions).
-   - Verify all requirements are testable and measurable.
-   - Confirm the spec captures WHAT, not HOW (avoid implementation details like "use library X" unless it's a constraint).
-
-5. **Present Specification to User**:
-   - Display the complete specification document.
-   - Highlight any Open Questions that need user input.
-   - Ask: "Does this specification accurately capture your intent? Are there any gaps, misunderstandings, or areas that need refinement?"
-
-6. **Iterate if Needed**:
-   - If the user requests changes, update the specification accordingly.
-   - Track iterations to ensure convergence (avoid infinite loops).
-   - Once the user confirms the spec is complete, proceed to the next step.
-
-7. **Save Specification** (optional for future persistence):
-   - If the workflow includes saving artifacts, store the spec in a designated location (e.g., `.buildforce/specs/feature-name.md`).
-   - Provide the file path to the user for reference.
-
-8. **Suggest Next Steps**:
-   - If the spec is complete and approved, suggest: "Ready to create a plan? Run `/plan` to design the implementation approach."
-   - If Open Questions remain, suggest resolving them before planning.
-
-Behavior rules:
-- NEVER rush into implementation detailsthis is WHAT, not HOW.
-- NEVER assume requirementsif unclear, ask clarifying questions.
-- NEVER leave placeholders or TODOs in the spec without flagging them as Open Questions.
-- ALWAYS ensure requirements are testable and measurable.
-- ALWAYS check for contradictions or ambiguities before presenting the spec.
-- If the user provides additional context during iteration, integrate it seamlessly into the spec.
-- Keep the spec concise but completeavoid unnecessary verbosity.
-- Focus on **incremental changes**the spec should describe a single, focused change, not a complete system rewrite.
-
-Context: {$ARGUMENTS}
+6. **Report completion**:
+   - If NEW spec: Report folder name, spec file path, and suggest: "Ready to create a plan? Run `/plan` to design the implementation approach."
+   - If UPDATE: Summarize changes made and ask: "Does this capture your updates? Run `/plan` when ready to design the implementation."

@@ -102,7 +102,13 @@ Execution steps:
    - If the user identifies issues:
      * Suggest: "Run `/build [instructions]` to address the issues, then return to `/complete` when ready."
 
-7. **Cleanup Recommendations** (optional):
+7. **Clear Spec Session State** (when user confirms completion):
+   - Delete `.buildforce/.current-spec` file to reset session tracking
+   - This ensures the next `/spec` command starts fresh for a new feature
+   - Command: `rm -f .buildforce/.current-spec` (or PowerShell: `Remove-Item .buildforce/.current-spec -ErrorAction SilentlyContinue`)
+   - Report: "Cleared spec session state for next feature."
+
+8. **Cleanup Recommendations** (optional):
    - Suggest any cleanup actions (e.g., "Consider running tests", "Update documentation", "Create a PR").
    - Provide a summary of artifacts created during the workflow (spec, plan, deviation log).
 
