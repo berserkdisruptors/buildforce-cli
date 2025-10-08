@@ -1,0 +1,11 @@
+version: "1.0"
+contexts:
+  - id: slash-commands
+    file: slash-commands.yml
+    type: module
+    tags: [core, workflow, agents]
+
+  - id: research-slash-command
+    file: research-slash-command.yml
+    type: feature
+    tags: [core, workflow, research, context-gathering]

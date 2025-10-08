@@ -1,0 +1,142 @@
+id: research-slash-command
+name: "RESEARCH Slash Command"
+type: feature
+status: in-development
+created: "2025-01-15"
+last_updated: "2025-01-15"
+
+summary: |
+  First command in the spec-driven development workflow.
+  Gathers context and prepares the context window by searching project knowledge repository,
+  exploring codebase, fetching current web information, or leveraging general knowledge.
+
+responsibilities:
+  - Search .buildforce/context/_index.yml for accumulated project knowledge
+  - Determine appropriate research strategy based on query analysis
+  - Produce structured reports with file paths, diagrams, and data models
+  - Guide users toward next workflow step (/spec)
+
+dependencies:
+  internal:
+    - context-repository: "Primary knowledge source via _index.yml"
+    - slash-commands: "Part of 5-command workflow system"
+  external:
+    - None (instruction template for Claude Code)
+
+files:
+  primary:
+    - src/templates/commands/research.md
+  secondary:
+    - .buildforce/context/_index.yml (searched first)
+
+command_signature:
+  syntax: "/research <query>"
+  arguments:
+    - name: "query"
+      type: "string"
+      required: true
+      description: "Natural language query describing what context is needed"
+  examples:
+    - "/research current best practices for OAuth 2.0 grant flow with Cognito"
+    - "/research how is email sending implemented in this codebase"
+    - "/research what patterns do we use for error handling"
+
+key_guidelines:
+  - name: "Project Context Search"
+    priority: 1
+    description: "ALWAYS start by searching .buildforce/context/_index.yml for relevant accumulated knowledge from past spec-driven sessions"
+
+  - name: "Recency Awareness"
+    priority: 2
+    description: "Detect keywords like 'current', 'latest', 'recent', 'modern', 'best practices', '2024', '2025', 'up-to-date' and use web search for current information"
+
+  - name: "Structured Output"
+    priority: 3
+    description: "Present findings as report with sections: Research Summary, Project Context, Codebase Findings, External Knowledge"
+
+  - name: "Relevant File Paths"
+    priority: 4
+    description: "Provide explicit table/list of all relevant file paths to save manual @ references in follow-up commands"
+
+  - name: "Architecture Visualization"
+    priority: 5
+    description: "Include Mermaid diagrams showing architecture, flow, or relationships for codebase queries"
+
+  - name: "Data Models"
+    priority: 6
+    description: "Document data structures with properties, types, and relationships—not just summaries"
+
+  - name: "Next Steps"
+    priority: 7
+    description: "Suggest next action after research (e.g., 'Ready to define the spec?')"
+
+research_strategies:
+  project_context:
+    trigger: "Always first step"
+    action: "Search _index.yml → Read matching context files"
+    output: "Accumulated project knowledge"
+
+  codebase_exploration:
+    trigger: "Phrases like 'we have', 'our implementation', 'in this project', 'how is X implemented here'"
+    action: "Use Grep, Glob, Read to find implementations and patterns"
+    output: "File paths, code snippets, architecture diagrams"
+
+  web_search:
+    trigger: "Recency indicators detected"
+    action: "Fetch current information from authoritative sources"
+    output: "Links, best practices, recent documentation"
+
+  general_knowledge:
+    trigger: "Conceptual questions without recency/codebase signals"
+    action: "Use training data or supplement with web search if uncertain"
+    output: "Explanations, patterns, theory"
+
+output_structure:
+  sections:
+    - name: "Research Summary"
+      content: "High-level overview of findings"
+
+    - name: "Project Context"
+      content: "Relevant accumulated knowledge from .buildforce/context"
+      conditional: "If context files found"
+
+    - name: "Codebase Findings"
+      content: "File paths (table/list), code patterns, architecture diagram (Mermaid), data models"
+      conditional: "If codebase exploration performed"
+
+    - name: "External Knowledge"
+      content: "Links, best practices, recent information"
+      conditional: "If web search performed"
+
+    - name: "Next Steps"
+      content: "Suggested action (e.g., /spec, further exploration)"
+
+design_decisions:
+  - decision: "Context repository as primary source"
+    rationale: "Leverages accumulated project knowledge to avoid redundant codebase exploration"
+
+  - decision: "Automatic recency detection"
+    rationale: "Prevents hallucination and outdated information for current topics"
+
+  - decision: "Explicit file path lists"
+    rationale: "Saves time—users don't need to manually @ files in subsequent commands"
+
+  - decision: "Mermaid diagrams for architecture"
+    rationale: "Visual representation helps understand complex relationships quickly"
+
+  - decision: "Concrete data model documentation"
+    rationale: "Ensures /spec and /plan have precise type information, not vague summaries"
+
+evolution:
+  - version: "1.0"
+    date: "2025-01-15"
+    changes: "Initial implementation with 7 key guidelines and project context search"
+
+related_specs:
+  - TBD (first research session using this command)
+
+notes: |
+  Most important command in the workflow—sets foundation for /spec, /plan, /build.
+  Compact instruction template (28 lines) that enhances user queries without teaching HOW to research.
+  Build agents already know how to research; this command adds workflow-specific context.
+  Masterpiece feature: .buildforce/context/_index.yml as primary knowledge source.

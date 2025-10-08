@@ -1,0 +1,108 @@
+id: slash-commands
+name: "Slash Commands System"
+type: module
+status: in-development
+created: "2025-01-15"
+last_updated: "2025-01-15"
+
+summary: |
+  Spec-driven development workflow implemented via 5 slash commands.
+  Guides build agents through Research � Spec � Plan � Build � Complete lifecycle.
+  Commands are instruction templates that enhance user queries with workflow-specific context.
+
+responsibilities:
+  - Context gathering and project knowledge retrieval (RESEARCH - see research-slash-command.yml for details)
+  - Intent materialization into specifications (SPEC)
+  - Implementation planning and design decisions (PLAN)
+  - Guided implementation with progress tracking and deviation logging (BUILD)
+  - Final validation and completion confirmation (COMPLETE)
+
+dependencies:
+  internal:
+    - context-repository: "RESEARCH searches .buildforce/context/_index.yml for accumulated knowledge"
+  external:
+    - None (pure instruction templates for Claude Code)
+
+files:
+  primary:
+    - src/templates/commands/research.md
+    - src/templates/commands/spec.md
+    - src/templates/commands/plan.md
+    - src/templates/commands/build.md
+    - src/templates/commands/complete.md
+  secondary:
+    - .buildforce/context/_index.yml (searched by RESEARCH)
+
+workflow:
+  sequence:
+    - command: "/research"
+      purpose: "Gather context for spec-driven development session"
+      input: "User query (what to research)"
+      output: "Structured report with project context, file paths, architecture diagrams, data models"
+      key_features:
+        - "Searches .buildforce/context/_index.yml first (accumulated knowledge)"
+        - "Detects recency indicators � uses web search"
+        - "Produces Mermaid diagrams for codebase queries"
+        - "Explicit file path lists (saves manual @ references)"
+
+    - command: "/spec"
+      purpose: "Materialize user intent into specification (WHAT to build)"
+      input: "User intent (the concrete incremental change)"
+      output: "Specification document with requirements, scope, edge cases, data models"
+      key_features:
+        - "Validates prerequisite context (suggests /research if needed)"
+        - "Asks up to 3 clarifying questions if intent is vague"
+        - "Ensures requirements are testable and measurable"
+        - "Prevents premature HOW decisions"
+
+    - command: "/plan"
+      purpose: "Design implementation approach (HOW to build)"
+      input: "Planning instructions/constraints (optional)"
+      output: "Implementation plan with architecture, design decisions, numbered steps, testing strategy"
+      key_features:
+        - "Requires prior /spec command"
+        - "Justifies all technology/library choices"
+        - "References specific file paths in steps"
+        - "Validates plan aligns with all spec requirements"
+
+    - command: "/build"
+      purpose: "Execute implementation following spec+plan"
+      input: "Iteration-specific instructions (optional)"
+      output: "Implementation + deviation log + confirmation prompt"
+      key_features:
+        - "Requires prior /spec and /plan commands"
+        - "Tracks progress step-by-step with visible checklist"
+        - "Logs deviations from original plan (e.g., library swaps)"
+        - "Supports multiple iterations until user satisfaction"
+        - "Requests explicit confirmation before completion"
+
+    - command: "/complete"
+      purpose: "Finalize feature and validate intent match"
+      input: "None (optional final notes)"
+      output: "Completion report with validation, deviations, files modified"
+      key_features:
+        - "Validates all spec requirements implemented"
+        - "Reviews deviation log across all /build iterations"
+        - "Generates comprehensive completion report"
+        - "Requires explicit user confirmation"
+
+design_principles:
+  - "Compact but powerful: Enhance user queries without teaching build agents HOW to work"
+  - "Context-first: Always search project context repository before other research"
+  - "Incremental: Focus on single, focused changes, not complete rewrites"
+  - "Traceable: Log deviations, track progress, validate against spec"
+  - "Iterative: Support refinement at every stage (spec, plan, build)"
+
+evolution:
+  - version: "1.0"
+    date: "2025-01-15"
+    changes: "Initial implementation of 5-command workflow with project context search"
+
+related_specs:
+  - TBD (first spec-driven session using this system)
+
+notes: |
+  Inspired by @spec-kit workflow but simplified to 5 commands.
+  Key innovation: .buildforce/context repository as primary knowledge source.
+  RESEARCH command is foundationprovides context for all subsequent commands.
+  Each command expects $ARGUMENTS (Claude Code compatible).
