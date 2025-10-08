@@ -1,8 +1,10 @@
 import fs from "fs-extra";
+import path from "path";
 import chalk from "chalk";
 import { StepTracker } from "../../lib/step-tracker.js";
 import { downloadAndExtractTemplate } from "../../lib/extract.js";
 import { ensureExecutableScripts, isGitRepo, initGitRepo } from "../../utils/index.js";
+import { createConfigContent } from "../../utils/config.js";
 
 /**
  * Execute project setup steps with progress tracking
@@ -39,6 +41,7 @@ export async function setupProject(
     ["zip-list", "Archive contents"],
     ["extracted-summary", "Extraction summary"],
     ["chmod", "Ensure scripts executable"],
+    ["config", "Create configuration file"],
     ["cleanup", "Cleanup"],
     ["git", "Initialize git repository"],
     ["final", "Finalize"],
@@ -88,6 +91,17 @@ export async function setupProject(
       tracker.error("chmod", detail);
     } else {
       tracker.complete("chmod", detail);
+    }
+
+    // Create buildforce.json config file
+    tracker.start("config");
+    try {
+      const configPath = path.join(projectPath, ".buildforce", "buildforce.json");
+      const configContent = createConfigContent();
+      await fs.writeFile(configPath, configContent, "utf8");
+      tracker.complete("config", ".buildforce/buildforce.json");
+    } catch (e: any) {
+      tracker.error("config", e.message);
     }
 
     // Git step
