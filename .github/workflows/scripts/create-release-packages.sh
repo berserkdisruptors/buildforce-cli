@@ -125,6 +125,12 @@ build_variant() {
     done
     echo "Copied src/templates -> .buildforce/templates"
   fi
+
+  if [[ -d src/context ]]; then
+    mkdir -p "$SPEC_DIR/context"
+    cp -r src/context/* "$SPEC_DIR/context/"
+    echo "Copied src/context -> .buildforce/context"
+  fi
   # Inject variant into plan-template.md within .buildforce/templates if present
   local plan_tpl="$base_dir/.buildforce/templates/plan-template.md"
   if [[ -f "$plan_tpl" ]]; then

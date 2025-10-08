@@ -1,0 +1,7 @@
+# BuildForce Context Index
+# This file tracks context and memory for your project
+
+version: 1.0
+
+# Context entries
+contexts: []
