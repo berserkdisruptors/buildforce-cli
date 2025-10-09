@@ -1,6 +1,6 @@
 import fs from "fs-extra";
 import path from "path";
-import unzipper from "unzipper";
+import AdmZip from "adm-zip";
 import chalk from "chalk";
 import os from "os";
 import { downloadTemplateFromGithub } from "./github.js";
@@ -86,10 +86,8 @@ export async function downloadAndExtractTemplate(
     // Extract to temporary location first
     const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "specify-"));
 
-    await fs
-      .createReadStream(zipPath)
-      .pipe(unzipper.Extract({ path: tempDir }))
-      .promise();
+    const zip = new AdmZip(zipPath);
+    zip.extractAllTo(tempDir, true);
 
     const extractedItems = await fs.readdir(tempDir);
 
