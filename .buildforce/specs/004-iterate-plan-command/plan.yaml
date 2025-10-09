@@ -1,0 +1,379 @@
+# Plan Template for /build Agent Execution
+# This template is optimized for AI agent consumption during /build commands
+# It provides checkbox-based progress tracking, deviation logging, and spec traceability
+
+id: 004-iterate-plan-command-plan
+name: "Implementation Plan for Iterate and Compress /plan Slash Command"
+spec_id: "004-iterate-plan-command"
+type: implementation-plan
+status: draft
+created: 2025-10-09
+last_updated: 2025-10-09
+
+# ARCHITECTURE OVERVIEW
+# Describe the high-level implementation approach and key technical decisions
+
+approach: |
+  Compress the /plan command template from 157 lines to 40-60 lines by following the proven
+  pattern established by /research (28 lines, 68% reduction) and /build (29 lines, 75% reduction).
+  The approach involves converting verbose execution steps and behavior rules into 7-9 compact
+  numbered guidelines, integrating get-spec-paths.sh for script-based discovery, and defining
+  a fixed output format structure for consistent plan presentation. The command will completely
+  replace plan.yaml on every run (no iteration tracking) and ask users for approval after presenting
+  the plan.
+
+technology_stack:
+  - get-spec-paths.sh: Script-based discovery of SPEC_DIR for loading spec.yaml and plan.yaml
+  - plan-template.yaml v1.0: Enhanced template with checkbox tracking, spec_refs, deviation log structure
+  - Markdown templates: Command template format with YAML frontmatter for script execution
+
+decisions:
+  - decision: "Use 7-9 numbered guidelines instead of verbose execution steps + behavior rules"
+    rationale: "RESEARCH (7 guidelines) and BUILD (7 guidelines) proved this pattern works. Reduces verbosity while maintaining clarity. Inline integration of behavior rules eliminates redundancy."
+
+  - decision: "Execute get-spec-paths.sh --json for SPEC_DIR discovery"
+    rationale: "BUILD command pattern - provides reliable absolute paths. Avoids path resolution issues. Script verifies spec.yaml and plan.yaml exist before proceeding."
+
+  - decision: "Define fixed output format structure in template"
+    rationale: "User specified need for consistent table/list structure that agents can follow reliably. Fixed format ensures predictable, scannable output across all /plan executions."
+
+  - decision: "Completely replace plan.yaml on every /plan run"
+    rationale: "User specified no iteration tracking to avoid polluting plan and confusing /build agent. Fresh replacement keeps plan clean and focused on current intent."
+
+  - decision: "Include all phase tasks in full detail in plan output"
+    rationale: "User specified maximum context needed to prevent agent hallucination during /build. Full task details (checkboxes, spec_refs, files) provide complete picture for informed user decisions."
+
+  - decision: "Ask user for approval/feedback after plan presentation"
+    rationale: "User is ultimate decision maker. Explicit approval step ensures user has opportunity to steer plan via subsequent /plan call before proceeding to /build."
+
+  - decision: "Target 40-60 lines (60-75% reduction)"
+    rationale: "/plan is slightly more complex than /research or /build due to planning content requirements. 40-60 lines balances compactness with necessary detail, matching proven pattern ratio."
+
+# FILE STRUCTURE
+# List all files to be created or modified during implementation
+
+files_to_create: []
+
+files_to_modify:
+  - path: "src/templates/commands/plan.md"
+    change_type: "rewrite"
+    description: "Compress from 157 lines to 40-60 lines using 7-9 numbered guidelines following RESEARCH/BUILD pattern. Add get-spec-paths.sh script execution. Define fixed output format structure. Remove verbose HOW-TO instructions."
+
+# IMPLEMENTATION PHASES
+# Break down the implementation into logical phases with checkbox-based task tracking
+# Use [ ] for pending tasks and [x] for completed tasks
+# Each task should link back to spec requirements via spec_refs
+
+phase_1:
+  name: "Template Header & Script Execution Setup"
+  description: |
+    Set up the YAML frontmatter, user input context, and script execution instructions.
+    This establishes the foundation for spec/plan discovery and context loading.
+
+  tasks:
+    - [ ] Update YAML frontmatter with description and scripts section for get-spec-paths.sh
+      spec_refs: [FR1, AC3]
+      files: [src/templates/commands/plan.md]
+      notes: "Follow build.md pattern - include scripts.sh and scripts.ps for cross-platform support"
+
+    - [ ] Add user input section with $ARGUMENTS context explanation
+      spec_refs: [FR3, AC5]
+      files: [src/templates/commands/plan.md]
+      notes: "Explain that $ARGUMENTS contains optional planning instructions/constraints from user"
+
+    - [ ] Add context explanation stating this is /plan command invocation
+      spec_refs: [FR3]
+      files: [src/templates/commands/plan.md]
+      notes: "Brief 1-2 line context about command purpose and task"
+
+  validation:
+    - [ ] All phase_1 tasks completed
+    - [ ] Header follows build.md and research.md pattern
+    - [ ] Script execution section present with {SCRIPT} placeholder
+    - [ ] Spec requirements covered: [FR1, FR3, AC3, AC5]
+
+phase_2:
+  name: "Define 7-9 Numbered Guidelines"
+  description: |
+    Convert existing verbose execution steps and behavior rules into 7-9 compact numbered
+    guidelines. Integrate behavior rules inline. Use ALWAYS/NEVER bold emphasis for critical
+    instructions. Remove HOW-TO explanations and code examples.
+
+  tasks:
+    - [ ] Guideline 1: Script Execution & Context Loading (execute get-spec-paths.sh, parse SPEC_DIR, load spec.yaml and plan.yaml)
+      spec_refs: [FR1, FR2, AC3, AC4]
+      files: [src/templates/commands/plan.md]
+      notes: "NEVER proceed without spec.yaml loaded. Check if plan.yaml has content beyond template to determine first vs subsequent iteration."
+
+    - [ ] Guideline 2: Parse User Instructions (parse $ARGUMENTS for planning instructions/constraints and incorporate them)
+      spec_refs: [FR3, AC5]
+      files: [src/templates/commands/plan.md]
+      notes: "User instructions take priority - merge with spec requirements when planning"
+
+    - [ ] Guideline 3: Make Design Decisions (architecture approach, technology choices, design patterns, data/state management)
+      spec_refs: [FR5, FR6, AC9]
+      files: [src/templates/commands/plan.md]
+      notes: "Justify all technology/library choices. Consider existing codebase patterns."
+
+    - [ ] Guideline 4: Generate Implementation Plan (populate plan.yaml with phases, tasks with checkboxes/spec_refs/files, validation checklists)
+      spec_refs: [FR4, FR5, FR6, AC9]
+      files: [src/templates/commands/plan.md]
+      notes: "Use plan-template.yaml v1.0 structure. ALWAYS link tasks to spec requirements via spec_refs. Completely replace plan.yaml content."
+
+    - [ ] Guideline 5: Validate Plan Against Spec (ensure every spec requirement addressed, no contradictions, realistic scope)
+      spec_refs: [FR5, FR6, AC9]
+      files: [src/templates/commands/plan.md]
+      notes: "Cross-check all FR*, NFR*, AC* from spec. Verify spec_coverage mapping complete."
+
+    - [ ] Guideline 6: Present Plan to User (use fixed output format structure with all phase tasks in full detail)
+      spec_refs: [FR7, FR10, AC6, AC7, AC11]
+      files: [src/templates/commands/plan.md]
+      notes: "Fixed format: Architecture Overview (paragraph), Design Decisions (list), File Structure (list), Implementation Phases (numbered tasks with checkboxes/spec_refs/files), Testing Strategy (list), Risks (list). Include ALL task details."
+
+    - [ ] Guideline 7: Request User Approval (ask for approval/feedback on design decisions, suggest /build or refinement via /plan)
+      spec_refs: [FR9, AC10]
+      files: [src/templates/commands/plan.md]
+      notes: "User is ultimate decision maker. Wait for approval before suggesting /build. Invite steering via another /plan call if needed."
+
+  validation:
+    - [ ] All phase_2 tasks completed
+    - [ ] Exactly 7 guidelines defined (compact, clear, actionable)
+    - [ ] ALWAYS/NEVER emphasis used for critical instructions
+    - [ ] No verbose HOW-TO explanations or code examples
+    - [ ] Behavior rules integrated inline with guidelines
+    - [ ] Spec requirements covered: [FR1, FR2, FR3, FR4, FR5, FR6, FR7, FR9, FR10, AC3, AC4, AC5, AC6, AC7, AC9, AC10, AC11]
+
+phase_3:
+  name: "Define Fixed Output Format Structure"
+  description: |
+    Specify the exact output format structure that agents must follow when presenting plans
+    to users. This ensures consistency, scannability, and completeness across all /plan executions.
+
+  tasks:
+    - [ ] Define Architecture Overview output format (one concise paragraph describing high-level approach and how pieces fit together)
+      spec_refs: [FR7, AC6]
+      files: [src/templates/commands/plan.md]
+      notes: "Keep simple - one paragraph is enough for users to understand approach"
+
+    - [ ] Define Design Decisions output format (bulleted list with Decision → Rationale structure)
+      spec_refs: [FR7, AC6]
+      files: [src/templates/commands/plan.md]
+      notes: "Each decision should include what was chosen and why (alternatives considered)"
+
+    - [ ] Define File Structure output format (two lists: files to create, files to modify with change descriptions)
+      spec_refs: [FR7, AC6]
+      files: [src/templates/commands/plan.md]
+      notes: "Clear separation between new files and modifications to existing files"
+
+    - [ ] Define Implementation Phases output format (phases with numbered task lists including checkboxes, spec_refs, files for each task)
+      spec_refs: [FR7, FR10, AC6, AC11]
+      files: [src/templates/commands/plan.md]
+      notes: "Show ALL tasks in full detail (not summaries). Include checkboxes, spec_refs array, files array. Critical for preventing hallucination during /build."
+
+    - [ ] Define Testing Strategy output format (two sections: automated tests with file/what/command, manual tests with scenario/steps)
+      spec_refs: [FR7, AC6]
+      files: [src/templates/commands/plan.md]
+      notes: "Based on plan-template.yaml testing section structure"
+
+    - [ ] Define Risks & Considerations output format (list of risks with mitigation strategies)
+      spec_refs: [FR7, AC6]
+      files: [src/templates/commands/plan.md]
+      notes: "Each risk paired with mitigation approach"
+
+  validation:
+    - [ ] All phase_3 tasks completed
+    - [ ] Fixed output format structure defined with specific sections
+    - [ ] Format emphasizes scannability (concise prose, bullets, tables)
+    - [ ] Format maintains completeness (all task details included)
+    - [ ] Format uses consistent table/list structures agents can follow
+    - [ ] Spec requirements covered: [FR7, FR10, AC6, AC7, AC11]
+
+phase_4:
+  name: "Add Iteration Support & Final Polish"
+  description: |
+    Ensure template supports multiple /plan calls with complete plan.yaml replacement.
+    Add final touches like context reference at bottom. Verify line count meets 40-60 target.
+
+  tasks:
+    - [ ] Add instruction to completely replace plan.yaml on every /plan run (no iteration tracking, no diffs)
+      spec_refs: [FR8, AC8]
+      files: [src/templates/commands/plan.md]
+      notes: "Make clear: fresh replacement, not append/merge. Prevents pollution and confusion during /build."
+
+    - [ ] Add context reference at bottom (Context: {$ARGUMENTS})
+      spec_refs: [FR3]
+      files: [src/templates/commands/plan.md]
+      notes: "Follow build.md pattern for consistency"
+
+    - [ ] Remove all verbose execution step explanations and code block examples
+      spec_refs: [NFR2, AC2]
+      files: [src/templates/commands/plan.md]
+      notes: "Trust agents understand planning. Keep only essential workflow guidance."
+
+    - [ ] Verify line count is 40-60 lines (60-75% reduction from 157 lines)
+      spec_refs: [NFR1, AC1]
+      files: [src/templates/commands/plan.md]
+      notes: "Count lines excluding blank lines and comments. Adjust if needed to hit target."
+
+    - [ ] Verify all 10 functional requirements and 11 acceptance criteria covered
+      spec_refs: [FR1, FR2, FR3, FR4, FR5, FR6, FR7, FR8, FR9, FR10, AC1, AC2, AC3, AC4, AC5, AC6, AC7, AC8, AC9, AC10, AC11]
+      files: [src/templates/commands/plan.md]
+      notes: "Cross-check against spec.yaml to ensure nothing missed"
+
+  validation:
+    - [ ] All phase_4 tasks completed
+    - [ ] Template is 40-60 lines (60-75% reduction achieved)
+    - [ ] Iteration support clear (complete replacement, no tracking)
+    - [ ] All verbose content removed
+    - [ ] Template follows RESEARCH/BUILD proven pattern
+    - [ ] Spec requirements covered: [FR3, FR8, NFR1, NFR2, AC1, AC2, AC8]
+
+# DEVIATION LOG
+# The /build agent populates this section when implementation deviates from the original plan
+# Format: phase → task → original plan → actual implementation → reason for deviation
+
+deviations: []
+
+# TESTING GUIDANCE
+# Structured guidance for testing the implementation
+
+testing:
+  automated_tests:
+    - test_file: "Manual verification (no automated tests for markdown templates)"
+      what: "Verify plan.md template structure and content"
+      command: "wc -l src/templates/commands/plan.md && cat src/templates/commands/plan.md"
+
+  manual_tests:
+    - scenario: "Test /plan command with newly compressed template"
+      steps: |
+        1. Create a test spec using /spec command
+        2. Run /plan command (this will use the new compressed template)
+        3. Verify plan output follows fixed format structure:
+           - Architecture Overview (paragraph)
+           - Design Decisions (list)
+           - File Structure (lists)
+           - Implementation Phases (tasks with checkboxes, spec_refs, files)
+           - Testing Strategy (lists)
+           - Risks (list)
+        4. Verify plan.yaml file is created with plan-template.yaml v1.0 structure
+        5. Verify all tasks have spec_refs linking to spec requirements
+        6. Verify agent asks for user approval/feedback after presenting plan
+        7. Run /plan again with instructions to test iteration (should replace plan.yaml)
+        8. Verify plan output is scannable (can review in under 2 minutes)
+        9. Count lines in plan.md (should be 40-60 lines)
+
+    - scenario: "Compare new plan.md with build.md and research.md for consistency"
+      steps: |
+        1. Open src/templates/commands/plan.md
+        2. Open src/templates/commands/build.md
+        3. Open src/templates/commands/research.md
+        4. Verify plan.md follows same pattern:
+           - YAML frontmatter with description and scripts
+           - User input section with $ARGUMENTS
+           - Context explanation
+           - 7-9 numbered guidelines (no separate behavior rules)
+           - ALWAYS/NEVER emphasis for critical instructions
+           - No verbose HOW-TO explanations
+           - Context reference at bottom
+        5. Verify line count similar ratio (research: 28, build: 29, plan: 40-60)
+
+# VALIDATION CRITERIA
+# Define success metrics and track spec requirement coverage
+
+success_metrics:
+  - "Template compressed from 157 lines to 40-60 lines (60-75% reduction)"
+  - "Template uses 7 numbered guidelines (no separate behavior rules section)"
+  - "All 10 functional requirements (FR1-FR10) implemented"
+  - "All 11 acceptance criteria (AC1-AC11) met"
+  - "Fixed output format structure defined and documented"
+  - "Template follows proven RESEARCH/BUILD pattern"
+  - "/plan command successfully generates plans with new template"
+  - "Generated plan.yaml uses plan-template.yaml v1.0 structure"
+  - "Plan output is scannable (reviewable in under 2 minutes)"
+  - "Agent asks for user approval after plan presentation"
+
+spec_coverage:
+  # Functional Requirements
+  - FR1: "⏳ Phase 1: Task 1 (script execution), Phase 2: Task 1 (guideline 1)"
+  - FR2: "⏳ Phase 2: Task 1 (guideline 1 - check plan.yaml content)"
+  - FR3: "⏳ Phase 1: Task 2-3 (user input section), Phase 2: Task 2 (guideline 2), Phase 4: Task 2"
+  - FR4: "⏳ Phase 2: Task 4 (guideline 4 - generate plan)"
+  - FR5: "⏳ Phase 2: Task 3-5 (guidelines 3-5 - design decisions, plan population, validation)"
+  - FR6: "⏳ Phase 2: Task 4-5 (guidelines 4-5 - spec_refs linking, validation)"
+  - FR7: "⏳ Phase 2: Task 6 (guideline 6 - present plan), Phase 3: All tasks (output format)"
+  - FR8: "⏳ Phase 4: Task 1 (complete replacement instruction)"
+  - FR9: "⏳ Phase 2: Task 7 (guideline 7 - request approval)"
+  - FR10: "⏳ Phase 2: Task 6 (guideline 6 - full task details), Phase 3: Task 4 (phases output format)"
+
+  # Non-Functional Requirements
+  - NFR1: "⏳ Phase 4: Task 4 (verify line count 40-60)"
+  - NFR2: "⏳ Phase 2: All tasks (7 numbered guidelines), Phase 4: Task 3 (remove verbose content)"
+  - NFR3: "⏳ Phase 3: All tasks (scannable output format with concise sections)"
+  - NFR4: "⏳ Phase 2: Task 4 (plan-template.yaml v1.0 structure)"
+
+  # Acceptance Criteria
+  - AC1: "⏳ Phase 4: Task 4 (40-60 lines target)"
+  - AC2: "⏳ Phase 2: All tasks (7 guidelines), Phase 4: Task 3"
+  - AC3: "⏳ Phase 1: Task 1 (script execution setup)"
+  - AC4: "⏳ Phase 2: Task 1 (guideline 1 - load spec/plan)"
+  - AC5: "⏳ Phase 1: Task 2 (user input), Phase 2: Task 2 (guideline 2)"
+  - AC6: "⏳ Phase 3: All tasks (fixed output format structure)"
+  - AC7: "⏳ Phase 3: All tasks (scannable with completeness)"
+  - AC8: "⏳ Phase 4: Task 1 (complete replacement)"
+  - AC9: "⏳ Phase 2: Task 4 (plan-template.yaml v1.0)"
+  - AC10: "⏳ Phase 2: Task 7 (guideline 7 - ask approval)"
+  - AC11: "⏳ Phase 2: Task 6, Phase 3: Task 4 (full task details)"
+
+# PROGRESS SUMMARY
+# Track overall progress and identify next steps
+
+overall_progress:
+  phase_1: "0/3 tasks completed"
+  phase_2: "0/7 tasks completed"
+  phase_3: "0/6 tasks completed"
+  phase_4: "0/5 tasks completed"
+
+current_status: |
+  Plan created. Ready for /build implementation.
+  All requirements mapped to implementation tasks.
+  Fixed output format structure defined.
+  Target: 40-60 lines (60-75% reduction from 157 lines).
+
+next_immediate_steps:
+  - "Run /build to implement the compressed plan.md template"
+  - "Follow phase sequence: Header → Guidelines → Output Format → Polish"
+  - "Test with actual /plan execution after implementation"
+
+# RISKS & CONSIDERATIONS
+# Document potential risks and mitigation strategies
+
+risks:
+  - risk: "Line count may exceed 60 lines due to output format structure definition"
+    mitigation: "Prioritize conciseness in guideline wording. Use bullet points for format structure. Remove any redundant explanations. Aim for lower end of 40-60 range."
+
+  - risk: "Fixed output format structure may be too rigid for complex features"
+    mitigation: "Format structure is guidance, not strict template. Agents can adapt within structure (e.g., more phases, more design decisions). Core sections remain consistent."
+
+  - risk: "Full task detail in output may make plan too lengthy for complex features"
+    mitigation: "User specified this is needed to prevent hallucination. Task details are scannable (checkboxes, spec_refs, files in list format). Benefits outweigh verbosity."
+
+  - risk: "Removing iteration tracking may cause confusion about plan changes"
+    mitigation: "User specified this to avoid pollution. Plan is always current/accurate. Users can compare via git diff if needed. Cleaner plan file preferred."
+
+  - risk: "7 guidelines may not cover all planning aspects adequately"
+    mitigation: "RESEARCH and BUILD proved 7 guidelines sufficient. Can expand to 8-9 if needed during implementation. Quality over quantity."
+
+# NOTES
+# Capture lessons learned and future enhancement ideas
+
+lessons_learned:
+  - "Proven pattern from /research and /build iterations provides clear template"
+  - "User clarifications resolved all ambiguities upfront (fixed format, no iteration tracking, full details, user approval)"
+  - "Script-based discovery (get-spec-paths.sh) is reliable pattern to follow"
+  - "Checkbox tracking + spec_refs provide excellent traceability from spec → plan → build"
+
+future_enhancements:
+  - "Could add automatic line count verification in CI/CD to prevent template bloat"
+  - "Could create linter for slash command templates to ensure consistency across all 5 commands"
+  - "Could add template versioning system to track evolution over time"
+  - "Could extract common patterns (script execution, user input, context reference) into reusable template fragments"

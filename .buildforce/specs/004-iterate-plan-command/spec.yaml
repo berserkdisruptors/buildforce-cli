@@ -1,0 +1,169 @@
+id: 004-iterate-plan-command
+name: "Iterate and Compress /plan Slash Command"
+type: feature
+status: draft
+created: 2025-10-09
+last_updated: 2025-10-09
+
+summary: |
+  Compress and refine the /plan slash command from 157 lines to ~40-60 lines (60-75% reduction),
+  following the proven pattern established by /research (68% reduction) and /build (75% reduction).
+  The iteration will leverage get-spec-paths.sh for spec discovery, integrate with the enhanced
+  plan-template.yaml (v1.0), support iterative plan refinement, accept user instructions, and
+  provide compact, scannable plan output for easy user review and steering.
+
+# INTENT / PROBLEM STATEMENT
+
+problem: |
+  The current /plan command template (src/templates/commands/plan.md) is 157 lines long and follows
+  the old verbose pattern with extensive HOW-TO instructions, detailed execution steps, and lengthy
+  explanations. This verbosity:
+
+  1. Increases token consumption unnecessarily
+  2. Contains redundant information that build agents already understand
+  3. Doesn't follow the proven compact pattern established by /research and /build commands
+  4. Lacks script-based discovery (should use get-spec-paths.sh like /build does)
+  5. Doesn't leverage the enhanced plan-template.yaml with checkbox tracking and deviation logging
+  6. Doesn't specify a consistent output format for plan presentation to users
+  7. Doesn't emphasize iterative refinement as a core workflow
+
+motivation: |
+  After successfully compressing /research (87→28 lines, 68%) and /build (116→29 lines, 75%), we've
+  proven that compact instruction templates work better than verbose HOW-TO guides. The /plan command
+  is the last remaining command that needs iteration to match this pattern.
+
+  Compressing /plan will:
+  - Reduce token usage across all planning sessions
+  - Maintain consistency across all 5 slash commands
+  - Trust build agents to execute planning without excessive hand-holding
+  - Leverage existing infrastructure (get-spec-paths.sh, plan-template.yaml v1.0)
+  - Enable iterative plan refinement with user instructions
+  - Provide consistent, scannable output format for user review
+
+# GOALS
+
+primary_goals:
+  - Compress /plan command from 157 lines to ~40-60 lines (target: 60-75% reduction)
+  - Follow the proven RESEARCH and BUILD command pattern (numbered guidelines, compact format)
+  - Integrate get-spec-paths.sh for script-based spec discovery
+  - Leverage enhanced plan-template.yaml (v1.0) with checkbox tracking, spec_refs, deviation log
+  - Support iterative plan refinement (accept user instructions, update existing plan.yaml)
+  - Define consistent, compact output format for plan presentation
+
+secondary_goals:
+  - Remove verbose HOW-TO instructions and code examples
+  - Integrate behavior rules inline with guidelines
+  - Use ALWAYS/NEVER bold emphasis for critical instructions
+  - Ensure plan output is scannable (user can skip through quickly and steer if needed)
+
+# REQUIREMENTS
+
+functional_requirements:
+  - FR1: Execute get-spec-paths.sh --json to discover SPEC_DIR and load spec.yaml into context
+  - FR2: Determine if this is first plan creation or subsequent iteration (check if plan.yaml exists and has content beyond template)
+  - FR3: Parse user instructions from $ARGUMENTS and incorporate them into planning decisions
+  - FR4: Generate or update plan.yaml using enhanced plan-template.yaml structure (phases, tasks with checkboxes, spec_refs, validation checklists)
+  - FR5: Populate all plan sections: architecture overview, technology stack, design decisions, file structure, implementation phases with tasks, testing guidance
+  - FR6: Link tasks to spec requirements via spec_refs array (traceability)
+  - FR7: Present plan to user in consistent, compact, fixed-structure format using table/list structure that agents can follow consistently (sections: Architecture Overview, Design Decisions, File Structure, Implementation Phases with all task details, Testing Strategy, Risks & Considerations)
+  - FR8: Support multiple /plan iterations - completely replace plan.yaml content on every run (no iteration tracking, no diffs, just fresh update based on spec + user instructions)
+  - FR9: After plan presentation, ask user for approval/feedback on design decisions before proceeding (user is ultimate decision maker)
+  - FR10: Include all implementation phase tasks with full detail in plan output (all checkbox tasks, spec_refs, files) to provide maximum context for agents and prevent hallucination during /build
+
+non_functional_requirements:
+  - NFR1: Template length must be 40-60 lines (60-75% reduction from 157 lines)
+  - NFR2: Must follow RESEARCH command structure (numbered guidelines, no verbose explanations)
+  - NFR3: Plan output must be scannable - user should be able to review in under 2 minutes
+  - NFR4: Must integrate seamlessly with /build command expectations (checkbox tasks, spec_refs, deviation log structure)
+
+# SCOPE
+
+in_scope:
+  - Rewrite src/templates/commands/plan.md from 157 lines to ~40-60 lines
+  - Add script execution using get-spec-paths.sh --json
+  - Convert existing workflow steps into 7-9 numbered guidelines
+  - Remove verbose HOW-TO instructions and examples
+  - Define consistent plan output format structure
+  - Add iterative refinement support (detect existing plan, merge instructions)
+  - Integrate behavior rules inline with guidelines
+  - Use ALWAYS/NEVER emphasis for critical instructions
+
+out_of_scope:
+  - Modifying plan-template.yaml structure (already enhanced in 003-plan-template)
+  - Modifying get-spec-paths.sh script (already complete)
+  - Creating new bash scripts (use existing get-spec-paths.sh)
+  - Changing /spec or /build command templates
+  - Adding new fields to plan.yaml beyond what plan-template.yaml v1.0 defines
+
+# DESIGN PRINCIPLES
+
+design_principles:
+  - "Compact but powerful: Trust agents know HOW to plan, guide WHAT workflow"
+  - "Script-based discovery: Use get-spec-paths.sh for reliable spec/plan file paths"
+  - "Iterative by design: Expect multiple /plan calls, completely replace plan.yaml each time"
+  - "Scannable AND complete: User should scan quickly while seeing all task details to make informed decisions"
+  - "Consistency: Follow proven RESEARCH and BUILD command patterns"
+  - "Traceability: Tasks must link to spec requirements via spec_refs"
+  - "User-driven: User is ultimate decision maker, agent asks for approval before /build"
+  - "Prevent hallucination: Include all task details in output so /build agent has full context"
+
+# ACCEPTANCE CRITERIA
+
+acceptance_criteria:
+  - AC1: plan.md template is 40-60 lines (60-75% reduction from 157 lines)
+  - AC2: Template uses 7-9 numbered guidelines (no separate behavior rules section)
+  - AC3: Template executes get-spec-paths.sh --json and parses SPEC_DIR
+  - AC4: Template loads spec.yaml and plan.yaml (if exists) into context before planning
+  - AC5: Template parses $ARGUMENTS for user planning instructions
+  - AC6: Template defines fixed output format structure using consistent table/list formatting (Architecture Overview paragraph, Design Decisions list, File Structure list, Phases with numbered task lists including checkboxes/spec_refs/files, Testing Strategy list, Risks list)
+  - AC7: Output format emphasizes scannability while maintaining completeness (concise prose, bullet points, tables where appropriate, all phase tasks shown in full)
+  - AC8: Template completely replaces plan.yaml on every /plan run (no iteration tracking, no change diffs)
+  - AC9: Generated plan.yaml uses plan-template.yaml v1.0 structure with checkbox tasks, spec_refs, validation checklists, all populated with actual content
+  - AC10: Template instructs agent to ask user for approval/feedback on design decisions after plan presentation
+  - AC11: Plan output includes all implementation phase tasks in full detail (not summaries) to provide complete context for /build agent
+
+# ASSUMPTIONS & DEPENDENCIES
+
+assumptions:
+  - get-spec-paths.sh script works correctly and returns JSON with SPEC_DIR
+  - spec.yaml exists for current spec (created by /spec command)
+  - plan-template.yaml (v1.0) structure is stable and comprehensive
+  - Build agents understand planning concepts (architecture, design decisions, file structure, phases, testing)
+  - Users will provide steering instructions via subsequent /plan calls if needed
+
+dependencies:
+  internal:
+    - get-spec-paths.sh: "Script-based discovery of SPEC_DIR for loading spec.yaml and plan.yaml"
+    - plan-template.yaml: "Enhanced template v1.0 with checkbox tracking, spec_refs, deviation log structure"
+    - spec-template.yaml: "Source of spec requirements (FR*, NFR*, AC*) for traceability via spec_refs"
+    - /spec command: "Must be run before /plan to create spec.yaml"
+    - /build command: "Consumes plan.yaml output from /plan"
+  external: {}
+
+# OPEN QUESTIONS
+
+open_questions: []
+
+# NOTES
+
+notes: |
+  This is the final command iteration to complete the 5-command workflow compression.
+  After this, all slash commands will follow the proven compact pattern.
+
+  Key lessons from /research and /build iterations:
+  - 7-9 numbered guidelines work better than 10+ execution steps + behavior rules
+  - Script-based discovery (get-spec-paths.sh) provides reliable absolute paths
+  - Inline integration of behavior rules reduces redundancy
+  - Bold ALWAYS/NEVER emphasis draws attention to critical instructions
+  - Removing HOW-TO examples reduces verbosity without losing functionality
+  - Agents already understand planning - we just need to guide the workflow
+
+  User clarifications resolved:
+  1. Output format: Fixed structure with consistent table/list formatting for agent consistency
+  2. Architecture Overview: Keep simple (one concise paragraph to start)
+  3. User approval: Yes, explicitly ask user for approval/feedback after plan presentation
+  4. Iteration tracking: No - completely replace plan.yaml on every /plan run (no diffs/change tracking)
+  5. Task detail: Include ALL phase tasks in full detail (checkboxes, spec_refs, files) to prevent hallucination
+
+  The plan output balances scannability with completeness - users can quickly review structure
+  while seeing all task details needed to make informed decisions and provide steering instructions.
