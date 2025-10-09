@@ -1,0 +1,1 @@
+../../src/templates/commands/spec.md
