@@ -96,21 +96,21 @@ export function displayNextSteps(
     stepNum++;
   }
 
-  stepsLines.push(`${stepNum}. Start using slash commands with your AI agent:`);
+  stepsLines.push(`${stepNum}. Start using the spec-driven workflow with your AI agent:`);
   stepsLines.push(
-    "   2.1 " + chalk.cyan("/constitution") + " - Establish project principles"
+    "   " + chalk.cyan("/research") + " - Gather context and prepare for development"
   );
   stepsLines.push(
-    "   2.2 " + chalk.cyan("/specify") + " - Create baseline specification"
+    "   " + chalk.cyan("/spec") + "     - Define what to build (requirements & scope)"
   );
   stepsLines.push(
-    "   2.3 " + chalk.cyan("/plan") + " - Create implementation plan"
+    "   " + chalk.cyan("/plan") + "     - Design how to build (architecture & steps)"
   );
   stepsLines.push(
-    "   2.4 " + chalk.cyan("/tasks") + " - Generate actionable tasks"
+    "   " + chalk.cyan("/build") + "    - Execute implementation with validation"
   );
   stepsLines.push(
-    "   2.5 " + chalk.cyan("/implement") + " - Execute implementation"
+    "   " + chalk.cyan("/complete") + " - Finalize spec and update knowledge base"
   );
 
   console.log();
@@ -122,28 +122,27 @@ export function displayNextSteps(
     })
   );
 
-  // Enhancement commands
-  const enhancementLines = [
-    `Optional commands that you can use for your specs ${chalk.gray(
-      "(improve quality & confidence)"
-    )}`,
+  // Workflow details
+  const workflowLines = [
+    chalk.bold("Understanding the Workflow"),
     "",
-    `○ ${chalk.cyan("/clarify")} ${chalk.gray(
-      "(optional)"
-    )} - Ask structured questions to de-risk ambiguous areas before planning (run before ${chalk.cyan(
-      "/plan"
-    )} if used)`,
-    `○ ${chalk.cyan("/analyze")} ${chalk.gray(
-      "(optional)"
-    )} - Cross-artifact consistency & alignment report (after ${chalk.cyan(
-      "/tasks"
-    )}, before ${chalk.cyan("/implement")})`,
+    `The .buildforce directory stores project knowledge:`,
+    `  ${chalk.cyan(".buildforce/context/")} - Accumulated project context from completed specs`,
+    `  ${chalk.cyan(".buildforce/specs/")}   - Active and historical spec directories`,
+    "",
+    `Each workflow iteration creates a spec folder:`,
+    `  ${chalk.gray("001-feature-name/")}  - First feature`,
+    `  ${chalk.gray("002-another/")}       - Second feature`,
+    `  ${chalk.gray("...")}`,
+    "",
+    `Start your first feature with ${chalk.cyan("/research")} to gather context,`,
+    `then ${chalk.cyan("/spec")} to define what you're building.`,
   ];
 
   console.log();
   console.log(
-    boxen(enhancementLines.join("\n"), {
-      title: "Enhancement Commands",
+    boxen(workflowLines.join("\n"), {
+      title: "Workflow Guide",
       padding: 1,
       borderColor: "cyan",
     })
