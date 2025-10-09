@@ -1,0 +1,147 @@
+id: build-slash-command
+name: "BUILD Slash Command"
+type: feature
+status: completed
+created: "2025-10-08"
+last_updated: "2025-10-08"
+
+summary: |
+  Fourth command in the spec-driven development workflow.
+  Executes implementation following spec and plan, with progress tracking, deviation logging,
+  spec/plan validation, code quality verification, and testing guidance.
+
+responsibilities:
+  - Execute `.buildforce/scripts/bash/get-spec-paths.sh --json` to discover FEATURE_DIR
+  - Load spec.yml and plan.yml into context from FEATURE_DIR
+  - Track implementation progress with visible checklist
+  - Log deviations from original plan across iterations
+  - Validate against both spec requirements AND plan adherence
+  - Verify code quality (compiles, tests pass, no obvious gaps)
+  - Provide testing guidance (what to test, how to test, test results)
+  - Support multiple /build iterations with refinement
+
+dependencies:
+  internal:
+    - slash-commands: "Part of 5-command workflow system"
+    - get-spec-paths.sh: "Script for FEATURE_DIR discovery"
+  external:
+    - None (instruction template for Claude Code)
+
+files:
+  primary:
+    - src/templates/commands/build.md
+  secondary:
+    - .buildforce/scripts/bash/get-spec-paths.sh (executed for FEATURE_DIR)
+    - {FEATURE_DIR}/spec.yml (loaded into context)
+    - {FEATURE_DIR}/plan.yml (loaded into context)
+
+command_signature:
+  syntax: "/build [instructions]"
+  arguments:
+    - name: "instructions"
+      type: "string"
+      required: false
+      description: "Iteration-specific instructions or feedback (e.g., 'change library X to Y', 'fix edge case Z')"
+  examples:
+    - "/build"
+    - "/build change axios to fetch for HTTP requests"
+    - "/build add validation for empty email input"
+
+key_guidelines:
+  - name: "Script Execution & Context Loading"
+    priority: 1
+    description: "Run `.buildforce/scripts/bash/get-spec-paths.sh --json`, parse FEATURE_DIR, load spec.yml and plan.yml. NEVER proceed without both files loaded."
+
+  - name: "Progress Tracking"
+    priority: 2
+    description: "Display visible checklist of plan steps at start. Mark as in-progress/complete. Track iteration number."
+
+  - name: "Follow the Plan"
+    priority: 3
+    description: "Execute steps sequentially. Parse $ARGUMENTS for iteration instructions. Reference file paths. Keep updates concise."
+
+  - name: "Deviation Logging"
+    priority: 4
+    description: "Log Original → Actual → Reason format. Maintain running log across iterations. NEVER hide deviations."
+
+  - name: "Validate Against Spec & Plan"
+    priority: 5
+    description: "Cross-check implementation against BOTH spec requirements AND plan steps. Verify requirements met, edge cases handled, code compiles."
+
+  - name: "Code Quality & Testing Guidance"
+    priority: 6
+    description: "Verify: code compiles, run tests, check for gaps. Provide: what to test, how to test, test results. PR mindset—nothing obviously broken."
+
+  - name: "Iterative Refinement"
+    priority: 7
+    description: "Support multiple /build calls. Track deviations across iterations. Converge toward desired outcome."
+
+iteration_workflow:
+  first_iteration:
+    trigger: "No $ARGUMENTS or initial implementation request"
+    action: "Execute plan from beginning, track progress, log deviations"
+    output: "Implementation + deviation log + testing guidance"
+
+  subsequent_iterations:
+    trigger: "$ARGUMENTS contains refinement instructions"
+    action: "Parse instructions, apply changes, track deviations across all iterations"
+    output: "Updated implementation + cumulative deviation log + testing guidance"
+
+deviation_log_format: |
+  DEVIATION: Step X - [Description]
+  - Original: [What was originally planned]
+  - Actual: [What was actually implemented]
+  - Reason: [Why the deviation occurred]
+
+testing_guidance_format: |
+  **What to Test**:
+  - Feature/scenario 1
+  - Feature/scenario 2
+
+  **How to Test**:
+  1. Step to verify feature 1
+  2. Step to verify feature 2
+
+  **Test Results** (if automated):
+  - Test suite: [pass/fail]
+  - Coverage: [X%]
+
+design_decisions:
+  - decision: "Script-based FEATURE_DIR discovery"
+    rationale: "Eliminates hardcoded paths. Script verifies spec.yml and plan.yml exist before proceeding."
+
+  - decision: "Dual validation (spec + plan)"
+    rationale: "Ensures implementation meets requirements AND follows planned approach (or logs deviations)."
+
+  - decision: "Testing guidance instead of user confirmation"
+    rationale: "Agent verifies code quality like submitting a PR. User tests after agent ensures readiness."
+
+  - decision: "Removed error handling guideline"
+    rationale: "Build agents excel at handling errors in micro-iterations. This is their responsibility."
+
+  - decision: "7 guidelines instead of 8"
+    rationale: "Compact format (29 lines total) following RESEARCH pattern. Removed redundant instructions."
+
+reduction_metrics:
+  original_lines: 116
+  new_lines: 29
+  reduction_percentage: 75
+  target_percentage: 65
+  exceeded_target: true
+
+evolution:
+  - version: "1.0"
+    date: "2025-10-08"
+    changes: "Initial implementation with 7 guidelines, script-based discovery, dual validation, testing guidance"
+
+related_specs:
+  - "002-build-command (spec and plan for this implementation)"
+
+notes: |
+  Compact instruction template (29 lines) that enhances build agent execution without teaching HOW.
+  Key innovations:
+  - Script-based FEATURE_DIR discovery for reliable absolute paths
+  - Dual validation (spec + plan) ensures comprehensive compliance
+  - Testing guidance with PR mindset (code quality verification before user tests)
+  - 75% reduction from original 116 lines while adding features
+  - Removed error handling (agents handle naturally) and confirmation (replaced with testing guidance)

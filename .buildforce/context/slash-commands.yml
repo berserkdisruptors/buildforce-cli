@@ -14,7 +14,7 @@ responsibilities:
   - Context gathering and project knowledge retrieval (RESEARCH - see research-slash-command.yml for details)
   - Intent materialization into specifications (SPEC)
   - Implementation planning and design decisions (PLAN)
-  - Guided implementation with progress tracking and deviation logging (BUILD)
+  - Guided implementation with progress tracking and deviation logging (BUILD - see build-slash-command.yml for details)
   - Final validation and completion confirmation (COMPLETE)
 
 dependencies:
@@ -68,13 +68,16 @@ workflow:
     - command: "/build"
       purpose: "Execute implementation following spec+plan"
       input: "Iteration-specific instructions (optional)"
-      output: "Implementation + deviation log + confirmation prompt"
+      output: "Implementation + deviation log + testing guidance"
       key_features:
-        - "Requires prior /spec and /plan commands"
+        - "Executes `.buildforce/scripts/bash/get-spec-paths.sh --json` for FEATURE_DIR discovery"
+        - "Loads spec.yml and plan.yml from FEATURE_DIR into context"
         - "Tracks progress step-by-step with visible checklist"
         - "Logs deviations from original plan (e.g., library swaps)"
-        - "Supports multiple iterations until user satisfaction"
-        - "Requests explicit confirmation before completion"
+        - "Validates against BOTH spec requirements AND plan adherence"
+        - "Verifies code quality (compiles, tests pass, no obvious gaps)"
+        - "Provides testing guidance (what to test, how to test, test results)"
+        - "Supports multiple iterations with refinement"
 
     - command: "/complete"
       purpose: "Finalize feature and validate intent match"
@@ -98,8 +101,13 @@ evolution:
     date: "2025-01-15"
     changes: "Initial implementation of 5-command workflow with project context search"
 
+  - version: "1.1"
+    date: "2025-10-08"
+    changes: "Completed BUILD command with 7 guidelines, script-based discovery, dual validation, testing guidance (29 lines, 75% reduction)"
+
 related_specs:
-  - TBD (first spec-driven session using this system)
+  - "001-slash-commands (initial system design)"
+  - "002-build-command (BUILD command implementation)"
 
 notes: |
   Inspired by @spec-kit workflow but simplified to 5 commands.

@@ -9,3 +9,8 @@ contexts:
     file: research-slash-command.yml
     type: feature
     tags: [core, workflow, research, context-gathering]
+
+  - id: build-slash-command
+    file: build-slash-command.yml
+    type: feature
+    tags: [core, workflow, build, implementation, validation]
