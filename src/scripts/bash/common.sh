@@ -49,7 +49,12 @@ set_current_spec() {
 
 get_spec_paths() {
     local repo_root=$(get_repo_root)
-    local spec_dir=$(get_current_spec "$repo_root")
+    local spec_folder=$(get_current_spec "$repo_root")
+    local spec_dir=""
+
+    if [ -n "$spec_folder" ]; then
+        spec_dir="$repo_root/.buildforce/specs/$spec_folder"
+    fi
 
     cat <<EOF
 REPO_ROOT='$repo_root'

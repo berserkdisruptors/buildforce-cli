@@ -137,17 +137,33 @@ function Get-FeatureDir {
     Join-Path $RepoRoot ".buildforce/specs/$Branch"
 }
 
+function Get-SpecPaths {
+    $repoRoot = Get-RepoRoot
+    $specFolder = Get-CurrentSpec -RepoRoot $repoRoot
+    $specDir = ""
+
+    if ($specFolder) {
+        $specDir = Join-Path $repoRoot ".buildforce/specs/$specFolder"
+    }
+
+    [PSCustomObject]@{
+        REPO_ROOT = $repoRoot
+        SPEC_DIR  = $specDir
+    }
+}
+
 function Get-FeaturePathsEnv {
     $repoRoot = Get-RepoRoot
     $currentBranch = Get-CurrentBranch
     $hasGit = Test-HasGit
     $featureDir = Get-FeatureDir -RepoRoot $repoRoot -Branch $currentBranch
-    
+
     [PSCustomObject]@{
         REPO_ROOT     = $repoRoot
         CURRENT_BRANCH = $currentBranch
         HAS_GIT       = $hasGit
         FEATURE_DIR   = $featureDir
+        SPEC_DIR      = $featureDir
         FEATURE_SPEC  = Join-Path $featureDir 'spec.md'
         IMPL_PLAN     = Join-Path $featureDir 'plan.md'
         TASKS         = Join-Path $featureDir 'tasks.md'
