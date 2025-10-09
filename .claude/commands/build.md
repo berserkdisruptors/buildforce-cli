@@ -12,7 +12,7 @@ $ARGUMENTS
 
 **Key guidelines**:
 
-1. **Script Execution & Context Loading**: Run `.buildforce/scripts/bash/check-prerequisites.sh --json` from repo root (script verifies files exist and will fail if missing). Parse the JSON response to extract **FEATURE_DIR** (absolute path). Load {FEATURE_DIR}/spec.yml and {FEATURE_DIR}/plan.yml into context. **NEVER proceed** without both files loaded.
+1. **Script Execution & Context Loading**: Run `.buildforce/scripts/bash/get-spec-paths.sh --json` from repo root (script verifies files exist and will fail if missing). Parse the JSON response to extract **FEATURE_DIR** (absolute path). Load {FEATURE_DIR}/spec.yml and {FEATURE_DIR}/plan.yml into context. **NEVER proceed** without both files loaded.
 
 2. **Progress Tracking**: Update the status of each task in the plan as you progress - each task has a checkbox, so make sure to check it on completion.
 

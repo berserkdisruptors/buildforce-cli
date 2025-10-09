@@ -11,7 +11,7 @@ summary: |
   spec/plan validation, code quality verification, and testing guidance.
 
 responsibilities:
-  - Execute `.buildforce/scripts/bash/check-prerequisites.sh --json` to discover FEATURE_DIR
+  - Execute `.buildforce/scripts/bash/get-spec-paths.sh --json` to discover FEATURE_DIR
   - Load spec.yml and plan.yml into context from FEATURE_DIR
   - Track implementation progress with visible checklist
   - Log deviations from original plan across iterations
@@ -23,7 +23,7 @@ responsibilities:
 dependencies:
   internal:
     - slash-commands: "Part of 5-command workflow system"
-    - check-prerequisites.sh: "Script for FEATURE_DIR discovery"
+    - get-spec-paths.sh: "Script for FEATURE_DIR discovery"
   external:
     - None (instruction template for Claude Code)
 
@@ -31,7 +31,7 @@ files:
   primary:
     - src/templates/commands/build.md
   secondary:
-    - .buildforce/scripts/bash/check-prerequisites.sh (executed for FEATURE_DIR)
+    - .buildforce/scripts/bash/get-spec-paths.sh (executed for FEATURE_DIR)
     - {FEATURE_DIR}/spec.yml (loaded into context)
     - {FEATURE_DIR}/plan.yml (loaded into context)
 
@@ -50,7 +50,7 @@ command_signature:
 key_guidelines:
   - name: "Script Execution & Context Loading"
     priority: 1
-    description: "Run `.buildforce/scripts/bash/check-prerequisites.sh --json`, parse FEATURE_DIR, load spec.yml and plan.yml. NEVER proceed without both files loaded."
+    description: "Run `.buildforce/scripts/bash/get-spec-paths.sh --json`, parse FEATURE_DIR, load spec.yml and plan.yml. NEVER proceed without both files loaded."
 
   - name: "Progress Tracking"
     priority: 2

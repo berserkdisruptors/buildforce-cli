@@ -1,6 +1,28 @@
 #!/usr/bin/env pwsh
 # Common PowerShell functions analogous to common.sh
 
+# Find repository root by searching for project markers (.git or .buildforce)
+function Find-RepositoryRoot {
+    param(
+        [string]$StartDir,
+        [string[]]$Markers = @('.git', '.buildforce')
+    )
+    $current = Resolve-Path $StartDir
+    while ($true) {
+        foreach ($marker in $Markers) {
+            if (Test-Path (Join-Path $current $marker)) {
+                return $current
+            }
+        }
+        $parent = Split-Path $current -Parent
+        if ($parent -eq $current) {
+            # Reached filesystem root without finding markers
+            return $null
+        }
+        $current = $parent
+    }
+}
+
 function Get-RepoRoot {
     try {
         $result = git rev-parse --show-toplevel 2>$null
@@ -10,9 +32,32 @@ function Get-RepoRoot {
     } catch {
         # Git command failed
     }
-    
-    # Fall back to script location for non-git repos
-    return (Resolve-Path (Join-Path $PSScriptRoot "../../..")).Path
+
+    # Fall back to searching for project markers
+    $fallbackRoot = Find-RepositoryRoot -StartDir $PSScriptRoot
+    if (-not $fallbackRoot) {
+        Write-Error "Error: Could not determine repository root. Please run this script from within the repository."
+        throw
+    }
+
+    return $fallbackRoot
+}
+
+# Get current spec from state file
+function Get-CurrentSpec {
+    param([string]$RepoRoot)
+    $stateFile = Join-Path $RepoRoot '.buildforce/.current-spec'
+    if (Test-Path $stateFile) {
+        return (Get-Content $stateFile -Raw).Trim()
+    }
+    return $null
+}
+
+# Set current spec in state file
+function Set-CurrentSpec {
+    param([string]$RepoRoot, [string]$SpecFolder)
+    $stateFile = Join-Path $RepoRoot '.buildforce/.current-spec'
+    Set-Content -Path $stateFile -Value $SpecFolder -NoNewline
 }
 
 function Get-CurrentBranch {

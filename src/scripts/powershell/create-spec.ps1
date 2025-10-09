@@ -8,6 +8,9 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 
+# Source common functions
+. "$PSScriptRoot/common.ps1"
+
 if (-not $FeatureDescription -or $FeatureDescription.Count -eq 0) {
     Write-Error "Usage: ./create-spec.ps1 [-Json] <feature description>"
     exit 1
@@ -50,60 +53,12 @@ function Test-FuzzyMatch {
     return ($matches -ge $threshold -and $matches -ge 2)
 }
 
-# Get current spec from state file
-function Get-CurrentSpec {
-    param([string]$RepoRoot)
-    $stateFile = Join-Path $RepoRoot '.buildforce/.current-spec'
-    if (Test-Path $stateFile) {
-        return (Get-Content $stateFile -Raw).Trim()
-    }
-    return $null
-}
-
-# Set current spec in state file
-function Set-CurrentSpec {
-    param([string]$RepoRoot, [string]$SpecFolder)
-    $stateFile = Join-Path $RepoRoot '.buildforce/.current-spec'
-    Set-Content -Path $stateFile -Value $SpecFolder -NoNewline
-}
-
-# Resolve repository root. Prefer git information when available, but fall back
-# to searching for repository markers so the workflow still functions in repositories that
-# were initialised with --no-git.
-function Find-RepositoryRoot {
-    param(
-        [string]$StartDir,
-        [string[]]$Markers = @('.git', '.buildforce')
-    )
-    $current = Resolve-Path $StartDir
-    while ($true) {
-        foreach ($marker in $Markers) {
-            if (Test-Path (Join-Path $current $marker)) {
-                return $current
-            }
-        }
-        $parent = Split-Path $current -Parent
-        if ($parent -eq $current) {
-            # Reached filesystem root without finding markers
-            return $null
-        }
-        $current = $parent
-    }
-}
-
-$fallbackRoot = (Find-RepositoryRoot -StartDir $PSScriptRoot)
-if (-not $fallbackRoot) {
+# Get repository root using common function
+try {
+    $repoRoot = Get-RepoRoot
+} catch {
     Write-Error "Error: Could not determine repository root. Please run this script from within the repository."
     exit 1
-}
-
-try {
-    $repoRoot = git rev-parse --show-toplevel 2>$null
-    if ($LASTEXITCODE -ne 0) {
-        throw "Git not available"
-    }
-} catch {
-    $repoRoot = $fallbackRoot
 }
 
 Set-Location $repoRoot

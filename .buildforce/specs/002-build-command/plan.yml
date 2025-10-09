@@ -10,7 +10,7 @@ last_updated: "2025-10-08"
 
 approach: |
   Apply the proven RESEARCH iteration pattern to BUILD command with script-based discovery:
-  1. Add script execution step (`.buildforce/scripts/bash/check-prerequisites.sh --json`)
+  1. Add script execution step (`.buildforce/scripts/bash/get-spec-paths.sh --json`)
   2. Parse FEATURE_DIR from JSON response
   3. Analyze current 116-line structure
   4. Extract essential workflow enhancements (not HOW-TO instructions)
@@ -39,7 +39,7 @@ decisions:
     rationale: "BUILD is more complex than RESEARCH (script execution, tracking, logging, validation, iteration). Slightly longer is acceptable while maintaining compactness."
 
   - decision: "Script-based FEATURE_DIR discovery"
-    rationale: "Following implement.md pattern: execute `.buildforce/scripts/bash/check-prerequisites.sh --json`, parse FEATURE_DIR, load spec.yml and plan.yml. Provides reliable absolute paths."
+    rationale: "Following implement.md pattern: execute `.buildforce/scripts/bash/get-spec-paths.sh --json`, parse FEATURE_DIR, load spec.yml and plan.yml. Provides reliable absolute paths."
 
   - decision: "Bold emphasis on ALWAYS/NEVER instructions"
     rationale: "Matches RESEARCH pattern. Draws agent attention to non-negotiable requirements (prerequisite checks, stop on errors, never auto-complete)."
@@ -62,7 +62,7 @@ step_1:
 
     Guideline 1: Script Execution & Context Loading
       - From: implement.md pattern + Current "Prerequisites" section + Step 1 + Behavior rule "NEVER proceed without spec/plan"
-      - Content: Execute `.buildforce/scripts/bash/check-prerequisites.sh --json` (script verifies files exist), parse FEATURE_DIR, load {FEATURE_DIR}/spec.yml and {FEATURE_DIR}/plan.yml into context
+      - Content: Execute `.buildforce/scripts/bash/get-spec-paths.sh --json` (script verifies files exist), parse FEATURE_DIR, load {FEATURE_DIR}/spec.yml and {FEATURE_DIR}/plan.yml into context
 
     Guideline 2: Progress Tracking
       - From: Step 3 (Initialize Progress Tracking) + Behavior rule "ALWAYS track progress visibly"
@@ -113,7 +113,7 @@ step_3:
   details: |
     **Key guidelines**:
 
-    1. **Script Execution & Context Loading**: Run `.buildforce/scripts/bash/check-prerequisites.sh --json` from repo root (script verifies files exist and will fail if missing). Parse the JSON response to extract **FEATURE_DIR** (absolute path). Load {FEATURE_DIR}/spec.yml and {FEATURE_DIR}/plan.yml into context. **NEVER proceed** without both files loaded.
+    1. **Script Execution & Context Loading**: Run `.buildforce/scripts/bash/get-spec-paths.sh --json` from repo root (script verifies files exist and will fail if missing). Parse the JSON response to extract **FEATURE_DIR** (absolute path). Load {FEATURE_DIR}/spec.yml and {FEATURE_DIR}/plan.yml into context. **NEVER proceed** without both files loaded.
 
   output: "3-4 lines with script execution, JSON parsing, file loading, and NEVER emphasis"
 
@@ -185,7 +185,7 @@ files_to_modify:
     change_type: "rewrite"
     current_lines: 116
     target_lines: 35-45
-    backup: false  # Git history serves as backup
+    backup: false # Git history serves as backup
 
 # GUIDELINE STRUCTURE SUMMARY
 
@@ -274,15 +274,15 @@ key_insight: |
 # SCRIPT EXECUTION DETAILS
 
 script_info:
-  path: ".buildforce/scripts/bash/check-prerequisites.sh"
+  path: ".buildforce/scripts/bash/get-spec-paths.sh"
   flags: "--json"
   expected_json_output: |
     {
       "FEATURE_DIR": "/absolute/path/to/.buildforce/specs/002-build-command"
     }
-  
+
   usage_in_guideline_1: |
-    1. Execute: `.buildforce/scripts/bash/check-prerequisites.sh --json` from repo root
+    1. Execute: `.buildforce/scripts/bash/get-spec-paths.sh --json` from repo root
     2. Script validates that spec.yml and plan.yml exist (exits with error if not)
     3. Parse JSON response to extract FEATURE_DIR value
     4. Use FEATURE_DIR to construct absolute paths:

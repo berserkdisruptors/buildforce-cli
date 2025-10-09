@@ -2,48 +2,25 @@
 
 set -e
 
+# Source common functions
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/common.sh"
+
 JSON_MODE=false
 ARGS=()
 for arg in "$@"; do
     case "$arg" in
         --json) JSON_MODE=true ;;
-        --help|-h) echo "Usage: $0 [--json] <feature_description>"; exit 0 ;;
+        --help|-h) echo "Usage: $0 [--json] <user_intent>"; exit 0 ;;
         *) ARGS+=("$arg") ;;
     esac
 done
 
-FEATURE_DESCRIPTION="${ARGS[*]}"
-if [ -z "$FEATURE_DESCRIPTION" ]; then
-    echo "Usage: $0 [--json] <feature_description>" >&2
+USER_INTENT="${ARGS[*]}"
+if [ -z "$USER_INTENT" ]; then
+    echo "Usage: $0 [--json] <user_intent>" >&2
     exit 1
 fi
-
-# Function to find the repository root by searching for existing project markers
-find_repo_root() {
-    local dir="$1"
-    while [ "$dir" != "/" ]; do
-        if [ -d "$dir/.git" ] || [ -d "$dir/.buildforce" ]; then
-            echo "$dir"
-            return 0
-        fi
-        dir="$(dirname "$dir")"
-    done
-    return 1
-}
-
-# Get current spec from state file
-get_current_spec() {
-    local state_file="$1/.buildforce/.current-spec"
-    if [[ -f "$state_file" ]]; then
-        cat "$state_file"
-    fi
-}
-
-# Set current spec in state file
-set_current_spec() {
-    local state_file="$1/.buildforce/.current-spec"
-    echo "$2" > "$state_file"
-}
 
 # Normalize text for fuzzy matching (lowercase, alphanumeric only)
 normalize_text() {
@@ -81,20 +58,8 @@ fuzzy_match() {
     return 1  # No match
 }
 
-# Resolve repository root. Prefer git information when available, but fall back
-# to searching for repository markers so the workflow still functions in repositories that
-# were initialised with --no-git.
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-if git rev-parse --show-toplevel >/dev/null 2>&1; then
-    REPO_ROOT=$(git rev-parse --show-toplevel)
-else
-    REPO_ROOT="$(find_repo_root "$SCRIPT_DIR")"
-    if [ -z "$REPO_ROOT" ]; then
-        echo "Error: Could not determine repository root. Please run this script from within the repository." >&2
-        exit 1
-    fi
-fi
+# Get repository root using common function
+REPO_ROOT=$(get_repo_root) || exit 1
 
 cd "$REPO_ROOT"
 
@@ -104,7 +69,7 @@ mkdir -p "$SPECS_DIR"
 # Check for session-tracked current spec from state file (Priority 1)
 CURRENT_SPEC_FROM_FILE=$(get_current_spec "$REPO_ROOT")
 
-# Check for existing spec folders that match the feature description
+# Check for existing spec folders that match the user intent
 EXISTING_FOLDER=""
 HIGHEST=0
 
@@ -125,8 +90,8 @@ elif [ -d "$SPECS_DIR" ]; then
         # Extract feature name from folder (remove number prefix)
         feature_name=$(echo "$dirname" | sed 's/^[0-9]\{3\}-//')
 
-        # Fuzzy match against feature description
-        if fuzzy_match "$feature_name" "$FEATURE_DESCRIPTION"; then
+        # Fuzzy match against user intent
+        if fuzzy_match "$feature_name" "$USER_INTENT"; then
             EXISTING_FOLDER="$dirname"
             break  # Use first match found
         fi
@@ -147,8 +112,8 @@ else
     NEXT=$((HIGHEST + 1))
     FEATURE_NUM=$(printf "%03d" "$NEXT")
 
-    # Normalize description and filter stopwords for better folder naming
-    FOLDER_NAME=$(echo "$FEATURE_DESCRIPTION" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/-\+/-/g' | sed 's/^-//' | sed 's/-$//')
+    # Normalize user intent and filter stopwords for better folder naming
+    FOLDER_NAME=$(echo "$USER_INTENT" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/-\+/-/g' | sed 's/^-//' | sed 's/-$//')
 
     # Stopwords to filter (common filler words that don't add semantic value)
     STOPWORDS="^(a|an|the|i|want|to|build|create|add|implement|make|write|develop|need|should|would|like|and|or|for|with|of|in|on|at|from|by|is|are|be|this|that|it|we|you)$"

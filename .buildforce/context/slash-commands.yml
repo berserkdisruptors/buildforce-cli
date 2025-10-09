@@ -70,7 +70,7 @@ workflow:
       input: "Iteration-specific instructions (optional)"
       output: "Implementation + deviation log + testing guidance"
       key_features:
-        - "Executes `.buildforce/scripts/bash/check-prerequisites.sh --json` for FEATURE_DIR discovery"
+        - "Executes `.buildforce/scripts/bash/get-spec-paths.sh --json` for FEATURE_DIR discovery"
         - "Loads spec.yml and plan.yml from FEATURE_DIR into context"
         - "Tracks progress step-by-step with visible checklist"
         - "Logs deviations from original plan (e.g., library swaps)"

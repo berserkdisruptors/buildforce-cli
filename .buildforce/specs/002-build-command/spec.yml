@@ -42,7 +42,7 @@ secondary_goals:
 # REQUIREMENTS
 
 functional_requirements:
-  - FR1: Command MUST execute `.buildforce/scripts/bash/check-prerequisites.sh --json` to discover FEATURE_DIR (script verifies files exist)
+  - FR1: Command MUST execute `.buildforce/scripts/bash/get-spec-paths.sh --json` to discover FEATURE_DIR (script verifies files exist)
   - FR2: Command MUST parse JSON response to extract FEATURE_DIR (absolute path to current feature directory)
   - FR3: Command MUST explicitly require loading {FEATURE_DIR}/spec.yml and {FEATURE_DIR}/plan.yml into context
   - FR4: Command MUST support progress tracking via visible checklist
@@ -65,7 +65,7 @@ non_functional_requirements:
 
 in_scope:
   - Rewrite src/templates/commands/build.md from 116 to ~40-50 lines
-  - Add script execution step: `.buildforce/scripts/bash/check-prerequisites.sh --json`
+  - Add script execution step: `.buildforce/scripts/bash/get-spec-paths.sh --json`
   - Add FEATURE_DIR parsing and absolute path handling
   - Convert 10 execution steps into ~8 numbered guidelines
   - Integrate 11 behavior rules into guidelines
@@ -82,7 +82,7 @@ out_of_scope:
 # KEY FEATURES TO PRESERVE
 
 critical_features:
-  - Script execution: Run `.buildforce/scripts/bash/check-prerequisites.sh --json` first (script verifies files exist)
+  - Script execution: Run `.buildforce/scripts/bash/get-spec-paths.sh --json` first (script verifies files exist)
   - Feature directory discovery: Parse FEATURE_DIR from JSON response (absolute path)
   - Context loading: Explicitly load {FEATURE_DIR}/spec.yml and {FEATURE_DIR}/plan.yml into context
   - Progress tracking: Visible checklist of plan steps with completion marking
@@ -158,7 +158,7 @@ target_pattern: "~8 numbered guidelines with bold emphasis, no separate behavior
 key_insight: "Agents don't need to be taught HOWthey need workflow context about WHAT"
 
 script_details:
-  script_path: ".buildforce/scripts/bash/check-prerequisites.sh"
+  script_path: ".buildforce/scripts/bash/get-spec-paths.sh"
   flags: "--json"
   json_response: |
     {
