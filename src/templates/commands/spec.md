@@ -15,7 +15,7 @@ The text the user typed after `/spec` in the triggering message **is** the featu
 
 ## Workflow Steps
 
-1. **Determine create vs update mode**: Follow the pattern in `src/templates/shared/create-update-pattern.md`
+1. **Determine create vs update mode**: Follow the pattern in `templates/shared/create-update-pattern.md`
 
    - Priority 1: Check conversation history for existing spec
    - Priority 2: Run `{SCRIPT}` and parse JSON output for FOLDER_NAME, SPEC_FILE, SPEC_DIR, FEATURE_NUM, and IS_UPDATE flag
@@ -47,22 +47,25 @@ The text the user typed after `/spec` in the triggering message **is** the featu
    This is a key quality gate - do NOT skip this step.
 
    **Before writing the spec:**
+
    - Analyze the feature description for vague, ambiguous, or incomplete information
    - Identify assumptions that need validation
    - Note any missing technical details, edge cases, or constraints
    - If the intent is too vague, ask clarifying questions BEFORE creating the spec
 
    **When creating the spec:**
+
    - The template includes an `open_questions` section - use it actively
    - Populate `open_questions` with specific, actionable questions that need answers
    - Do NOT make assumptions to fill gaps - explicitly list unknowns
    - Examples of good open questions:
-     * "Should user sessions persist across browser restarts?"
-     * "What happens to child records when parent is deleted?"
-     * "Which OAuth providers should be supported initially?"
-     * "What is the maximum file size for uploads?"
+     - "Should user sessions persist across browser restarts?"
+     - "What happens to child records when parent is deleted?"
+     - "Which OAuth providers should be supported initially?"
+     - "What is the maximum file size for uploads?"
 
    **After writing the spec:**
+
    - Review the completed spec.yaml file you just created
    - Double-check that all ambiguities are captured in `open_questions`
    - If `open_questions` has items, present them directly to the user NOW
@@ -80,6 +83,7 @@ The text the user typed after `/spec` in the triggering message **is** the featu
 7. **Report completion**:
 
    **If spec has open questions:**
+
    - Report folder name and spec file path
    - Present the open questions list to the user with clear formatting
    - Ask user to provide answers/clarifications
@@ -87,5 +91,6 @@ The text the user typed after `/spec` in the triggering message **is** the featu
    - Do NOT suggest `/plan` yet - questions must be resolved first
 
    **If NO open questions (or after questions are resolved):**
+
    - If NEW spec: Report folder name, spec file path, and suggest: "Ready to create a plan? Run `/plan` to design the implementation approach."
    - If UPDATE: Summarize changes made and ask: "Does this capture your updates? Run `/plan` when ready to design the implementation."
