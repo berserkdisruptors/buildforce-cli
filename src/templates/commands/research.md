@@ -12,7 +12,7 @@ $ARGUMENTS
 
 **Key guidelines**:
 
-1. **Project Context Search**: **ALWAYS start here.** Search `.buildforce/context/_index.yml` for relevant project-specific context before any other research. This index contains references to accumulated knowledge from all completed spec-driven development sessions, organized by modules/components/features. Search the index to find relevant context file paths, then read those specific context files and load them into the context window. This is your primary source of truth about the project's architecture, patterns, and decisions.
+1. **Project Context Search**: **ALWAYS start here.** Read `.buildforce/context/_index.yml` from repo root and search for relevant project-specific context there before any other research. This index contains references to accumulated knowledge from all completed spec-driven development sessions, organized by modules/components/features. Search the index to find relevant context file paths, then read those specific context files and load them into the context window. This is your primary source of truth about the project's architecture, patterns, and decisions.
 
 2. **Recency awareness**: If the query contains words like "current", "latest", "recent", "modern", "best practices", "2024", "2025", or "up-to-date", use web search to fetch current information—do not rely solely on training data.
 

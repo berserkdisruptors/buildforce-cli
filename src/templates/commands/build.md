@@ -1,18 +1,21 @@
 ---
 description: Build the code changes required for the current spec following the plan, with progress tracking, deviation logging, and iterative refinement.
+scripts:
+  sh: src/scripts/bash/get-spec-paths.sh --json "{ARGS}"
+  ps: src/scripts/powershell/get-spec-paths.ps1 -Json "{ARGS}"
 ---
 
 User input:
 
 $ARGUMENTS
 
-**Context**: The user is invoking `/build` to execute implementation. $ARGUMENTS contains iteration-specific instructions or feedback.
+**Context**: The user is invoking `/build` to execute implementation. `{ARGS}` contains iteration-specific instructions or feedback.
 
 **Your task**: Implement the feature by following the spec and plan, tracking progress, logging deviations, validating against requirements, and providing testing guidance.
 
 **Key guidelines**:
 
-1. **Script Execution & Context Loading**: Run `.buildforce/scripts/bash/check-prerequisites.sh --json` from repo root (script verifies files exist and will fail if missing). Parse the JSON response to extract **FEATURE_DIR** (absolute path). Load {FEATURE_DIR}/spec.yml and {FEATURE_DIR}/plan.yml into context. **NEVER proceed** without both files loaded.
+1. **Script Execution & Context Loading**: Run `{SCRIPT}` from repo root (script verifies files exist and will fail if missing). Parse the JSON response to extract **SPEC_DIR** (absolute path). Load {SPEC_DIR}/spec.yml and {SPEC_DIR}/plan.yml into context. **NEVER proceed** without both files loaded.
 
 2. **Progress Tracking**: Update the status of each task in the plan as you progress - each task has a checkbox, so make sure to check it on completion.
 
