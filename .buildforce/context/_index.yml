@@ -10,7 +10,15 @@ contexts:
     type: feature
     tags: [core, workflow, research, context-gathering]
 
-  - id: build-slash-command
-    file: build-slash-command.yml
+  - id: 002-build-command
+    file: 002-build-command.yml
     type: feature
-    tags: [core, workflow, build, implementation, validation]
+    tags:
+      [
+        slash-command,
+        build,
+        command-iteration,
+        compression,
+        workflow-enhancement,
+        script-execution,
+      ]

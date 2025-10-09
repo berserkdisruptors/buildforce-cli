@@ -1,0 +1,170 @@
+id: 002-build-command
+name: "Iterate and Complete /build Slash Command"
+type: feature
+status: completed
+created: 2025-10-08
+last_updated: 2025-10-09
+
+summary: |
+  Compressed and refined the /build slash command from 116 lines to 29 lines (75% reduction),
+  following the proven RESEARCH command pattern. The iteration maintained all critical features
+  (progress tracking, deviation logging, spec/plan validation, code quality verification, testing guidance)
+  while removing verbose HOW-TO instructions and trusting agents to execute effectively.
+
+  Key innovation: Added script-based FEATURE_DIR discovery using get-spec-paths.sh for reliable
+  absolute path handling, dual validation (spec requirements + plan adherence), and testing guidance
+  with a PR-submission mindset.
+
+responsibilities:
+  - Compress /build command template from 116 to ~40-50 lines (achieved 29 lines, 75% reduction)
+  - Add script execution: .buildforce/scripts/bash/get-spec-paths.sh --json for FEATURE_DIR discovery
+  - Convert 10 execution steps + 11 behavior rules into 7 numbered guidelines
+  - Integrate behavior rules inline with guidelines (no separate section)
+  - Maintain progress tracking, deviation logging, spec/plan validation, code quality verification
+  - Use ALWAYS/NEVER bold emphasis for critical instructions
+  - Remove HOW-TO instructions and code examples (trust agent execution knowledge)
+  - Ensure dual validation: spec requirements AND plan adherence
+  - Provide testing guidance instead of user confirmation request
+
+dependencies:
+  internal:
+    - slash-commands: "Part of 5-command spec-driven workflow (SPEC, RESEARCH, PLAN, BUILD, COMPLETE)"
+    - research-slash-command: "Used as structural template for compact guideline format (28 lines)"
+    - get-spec-paths.sh: "Script for reliable FEATURE_DIR discovery and file verification"
+  external:
+    - None (instruction template for Claude Code agents)
+
+files:
+  primary:
+    - src/templates/commands/build.md (rewritten from 116 to 29 lines)
+  secondary:
+    - .buildforce/specs/002-build-command/spec.yml (spec defining requirements)
+    - .buildforce/specs/002-build-command/plan.yml (plan detailing implementation steps)
+    - src/scripts/bash/get-spec-paths.sh (executed for FEATURE_DIR discovery)
+
+command_signature:
+  syntax: "/build [instructions]"
+  arguments:
+    - name: "instructions"
+      type: "string"
+      required: false
+      description: "Iteration-specific instructions or feedback (e.g., 'change library X to Y', 'fix edge case Z')"
+  examples:
+    - "/build"
+    - "/build change axios to fetch for HTTP requests"
+    - "/build add validation for empty email input"
+
+key_guidelines:
+  - name: "Script Execution & Context Loading"
+    priority: 1
+    description: "Run get-spec-paths.sh --json, parse SPEC_DIR, load spec.yml and plan.yml. NEVER proceed without both files loaded."
+
+  - name: "Progress Tracking"
+    priority: 2
+    description: "Update task checkboxes in plan as work progresses. Mark completed on completion."
+
+  - name: "Follow the Plan"
+    priority: 3
+    description: "Execute steps sequentially. Parse $ARGUMENTS for iteration instructions. Reference file paths. Keep updates concise."
+
+  - name: "Deviation Logging"
+    priority: 4
+    description: "Log in plan.yml: Original → Actual → Reason format. Maintain across iterations. NEVER hide deviations."
+
+  - name: "Validate Against Spec & Plan"
+    priority: 5
+    description: "Cross-check against BOTH spec requirements AND plan steps. Verify requirements met, edge cases handled, code compiles."
+
+  - name: "Code Quality & Testing Guidance"
+    priority: 6
+    description: "Verify code compiles, run tests, check for gaps. Provide: what to test, how to test, test results. PR mindset."
+
+  - name: "Iterative Refinement"
+    priority: 7
+    description: "Support multiple /build iterations. Track deviations across all iterations. Converge toward desired outcome."
+
+design_decisions:
+  - decision: "7 numbered guidelines instead of 10 execution steps + 11 behavior rules"
+    rationale: "RESEARCH proved concise guidelines work better than verbose steps. 7 guidelines cover all critical features while staying compact. Removed error handling (agents handle naturally) and changed confirmation to testing guidance."
+
+  - decision: "Script-based FEATURE_DIR discovery using get-spec-paths.sh"
+    rationale: "Following implement.md pattern: execute script, parse JSON, extract SPEC_DIR. Provides reliable absolute paths and verifies files exist before proceeding."
+
+  - decision: "Dual validation (spec + plan)"
+    rationale: "Ensures implementation meets requirements AND follows planned approach (or logs deviations)."
+
+  - decision: "Testing guidance with PR mindset instead of user confirmation"
+    rationale: "Agents should verify code quality like submitting a PR. User tests after agent ensures nothing obviously broken."
+
+  - decision: "Removed error handling guideline"
+    rationale: "Build agents excel at handling errors in micro-iterations. This is their responsibility—no need to explicitly instruct."
+
+  - decision: "Integrate behavior rules inline with guidelines"
+    rationale: "Separate behavior rules section duplicates content. Inline integration reduces redundancy and improves clarity."
+
+  - decision: "Remove code block examples and verbose explanations"
+    rationale: "AI agents understand deviation log format, checklist format, etc. without examples. Examples add verbosity without value."
+
+  - decision: "Target 40-50 lines (achieved 29 lines)"
+    rationale: "BUILD is more complex than RESEARCH (tracking, logging, validation, iteration). Slightly longer acceptable while maintaining compactness. Achieved 75% reduction, exceeding 65% target."
+
+reduction_metrics:
+  original_lines: 116
+  new_lines: 29
+  reduction_percentage: 75
+  target_percentage: 65
+  exceeded_target: true
+  comparison: "RESEARCH: 87→28 (68%), BUILD: 116→29 (75%)"
+
+iteration_workflow:
+  first_iteration:
+    trigger: "No $ARGUMENTS or initial implementation request"
+    action: "Execute plan from beginning, track progress, log deviations"
+    output: "Implementation + deviation log + testing guidance"
+
+  subsequent_iterations:
+    trigger: "$ARGUMENTS contains refinement instructions"
+    action: "Parse instructions, apply changes, track deviations across all iterations"
+    output: "Updated implementation + cumulative deviation log + testing guidance"
+
+script_execution_details:
+  script_path: ".buildforce/scripts/bash/get-spec-paths.sh"
+  flags: "--json"
+  json_response_format: |
+    {
+      "SPEC_DIR": "/absolute/path/to/.buildforce/specs/002-build-command"
+    }
+  usage: "Execute script, parse JSON, extract SPEC_DIR, load spec.yml and plan.yml from SPEC_DIR"
+  verification: "Script verifies spec.yml and plan.yml exist before returning (exits with error if missing)"
+
+evolution:
+  - version: "1.0"
+    date: "2025-10-08"
+    changes: "Initial 116-line verbose BUILD command with 10 execution steps + 11 behavior rules"
+  - version: "2.0"
+    date: "2025-10-09"
+    changes: "Compressed to 29 lines with 7 guidelines, script-based discovery, dual validation, testing guidance. 75% reduction achieved."
+
+related_specs:
+  - "002-build-command"
+  - "001-slash-commands (context for 5-command workflow)"
+
+notes: |
+  Compact instruction template (29 lines) that enhances build agent execution without teaching HOW.
+
+  Key achievements:
+  - 75% reduction from 116 to 29 lines (exceeded 65% target)
+  - All 10 functional requirements preserved
+  - Script-based FEATURE_DIR discovery for reliable absolute paths
+  - Dual validation (spec requirements + plan adherence)
+  - Testing guidance with PR mindset (code quality verification)
+  - Removed error handling guideline (agents handle naturally)
+  - Integrated behavior rules inline with guidelines
+  - Format matches proven RESEARCH command pattern
+
+  Files modified during implementation:
+  - src/templates/commands/build.md (rewritten)
+  - .buildforce/context/build-slash-command.yml (deleted, replaced with 002-build-command.yml)
+  - .buildforce/context/_index.yml (updated entry)
+
+  Design principle: "Trust the agent—they know HOW to implement, guide WHAT workflow"
