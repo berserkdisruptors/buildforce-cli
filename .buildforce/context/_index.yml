@@ -22,3 +22,18 @@ contexts:
         workflow-enhancement,
         script-execution,
       ]
+
+  - id: 003-plan-template
+    file: 003-plan-template.yml
+    type: feature
+    tags:
+      [
+        template,
+        plan-template,
+        build-agent,
+        progress-tracking,
+        checkbox-tracking,
+        deviation-logging,
+        spec-traceability,
+        workflow-enhancement,
+      ]
