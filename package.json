@@ -44,23 +44,23 @@
     "access": "public"
   },
   "dependencies": {
+    "adm-zip": "^0.5.16",
     "axios": "^1.6.7",
+    "boxen": "^7.1.1",
     "chalk": "^5.3.0",
     "cli-table3": "^0.6.3",
-    "boxen": "^7.1.1",
     "commander": "^12.0.0",
     "fs-extra": "^11.2.0",
     "inquirer": "^9.2.15",
     "log-symbols": "^6.0.0",
     "ora": "^8.0.1",
-    "unzipper": "^0.12.1",
     "which": "^4.0.0"
   },
   "devDependencies": {
+    "@types/adm-zip": "^0.5.7",
     "@types/fs-extra": "^11.0.4",
     "@types/inquirer": "^9.0.7",
     "@types/node": "^20.11.19",
-    "@types/unzipper": "^0.10.9",
     "@types/which": "^3.0.3",
     "tsx": "^4.7.1",
     "typescript": "^5.3.3"
