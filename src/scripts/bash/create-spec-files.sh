@@ -67,15 +67,15 @@ SPECS_DIR="$REPO_ROOT/.buildforce/specs"
 mkdir -p "$SPECS_DIR"
 
 # Check for session-tracked current spec from state file (Priority 1)
-CURRENT_SPEC_FROM_FILE=$(get_current_spec "$REPO_ROOT")
+CURRENT_SPEC=$(get_current_spec "$REPO_ROOT")
 
 # Check for existing spec folders that match the user intent
 EXISTING_FOLDER=""
 HIGHEST=0
 
-if [[ -n "$CURRENT_SPEC_FROM_FILE" ]] && [[ -d "$SPECS_DIR/$CURRENT_SPEC_FROM_FILE" ]]; then
+if [[ -n "$CURRENT_SPEC" ]] && [[ -d "$SPECS_DIR/$CURRENT_SPEC" ]]; then
     # Found active spec from state file - use it (highest priority)
-    EXISTING_FOLDER="$CURRENT_SPEC_FROM_FILE"
+    EXISTING_FOLDER="$CURRENT_SPEC"
 elif [ -d "$SPECS_DIR" ]; then
     # No active spec in state file, do fuzzy matching (Priority 2)
     for dir in "$SPECS_DIR"/*; do
@@ -131,9 +131,16 @@ else
     FEATURE_DIR="$SPECS_DIR/$FOLDER_NAME"
     mkdir -p "$FEATURE_DIR"
 
-    TEMPLATE="$REPO_ROOT/src/templates/spec-template.yaml"
+    SPEC_TEMPLATE="$REPO_ROOT/src/templates/spec-template.yaml"
     SPEC_FILE="$FEATURE_DIR/spec.yaml"
-    if [ -f "$TEMPLATE" ]; then cp "$TEMPLATE" "$SPEC_FILE"; else touch "$SPEC_FILE"; fi
+    if [ -f "$SPEC_TEMPLATE" ]; then cp "$SPEC_TEMPLATE" "$SPEC_FILE"; else touch "$SPEC_FILE"; fi
+fi
+
+# Create or locate plan.yaml file
+PLAN_FILE="$FEATURE_DIR/plan.yaml"
+if [ ! -f "$PLAN_FILE" ]; then
+    PLAN_TEMPLATE="$REPO_ROOT/src/templates/plan-template.yaml"
+    if [ -f "$PLAN_TEMPLATE" ]; then cp "$PLAN_TEMPLATE" "$PLAN_FILE"; else touch "$PLAN_FILE"; fi
 fi
 
 # Update state file to track current spec across sessions
@@ -143,11 +150,12 @@ set_current_spec "$REPO_ROOT" "$FOLDER_NAME"
 export CURRENT_SPEC="$FOLDER_NAME"
 
 if $JSON_MODE; then
-    printf '{"FOLDER_NAME":"%s","SPEC_FILE":"%s","SPEC_DIR":"%s","FEATURE_NUM":"%s","IS_UPDATE":%s}\n' \
-        "$FOLDER_NAME" "$SPEC_FILE" "$FEATURE_DIR" "$FEATURE_NUM" "$($IS_UPDATE && echo 'true' || echo 'false')"
+    printf '{"FOLDER_NAME":"%s","SPEC_FILE":"%s","PLAN_FILE":"%s","SPEC_DIR":"%s","FEATURE_NUM":"%s","IS_UPDATE":%s}\n' \
+        "$FOLDER_NAME" "$SPEC_FILE" "$PLAN_FILE" "$FEATURE_DIR" "$FEATURE_NUM" "$($IS_UPDATE && echo 'true' || echo 'false')"
 else
     echo "FOLDER_NAME: $FOLDER_NAME"
     echo "SPEC_FILE: $SPEC_FILE"
+    echo "PLAN_FILE: $PLAN_FILE"
     echo "SPEC_DIR: $FEATURE_DIR"
     echo "FEATURE_NUM: $FEATURE_NUM"
     echo "IS_UPDATE: $($IS_UPDATE && echo 'true' || echo 'false')"

@@ -1,0 +1,117 @@
+id: [FEATURE_NUM]-[feature-name]-plan
+name: "Implementation Plan for [Feature Name]"
+spec_id: "[FEATURE_NUM]-[feature-name]"
+type: implementation-plan
+status: draft
+created: "[YYYY-MM-DD]"
+last_updated: "[YYYY-MM-DD]"
+
+# ARCHITECTURE OVERVIEW
+
+approach: |
+  [Describe the high-level approach to implementing this feature. What is the overall strategy?
+  How will the pieces fit together? What patterns or methodologies will be followed?]
+
+technology_stack:
+  - [Technology/library 1 and its purpose]
+  - [Technology/library 2 and its purpose]
+
+# DESIGN DECISIONS
+
+decisions:
+  - decision: "[Decision statement]"
+    rationale: "[Why this decision was made. What alternatives were considered?]"
+
+  - decision: "[Another decision]"
+    rationale: "[Rationale for this decision]"
+
+# FILE STRUCTURE
+
+files_to_create:
+  - [path/to/new/file.ext]
+  - [path/to/another/file.ext]
+
+files_to_modify:
+  - path: "[path/to/existing/file.ext]"
+    change_type: "[edit|rewrite|refactor]"
+    description: "[What changes will be made]"
+
+# IMPLEMENTATION PLAN
+
+phase_1:
+  name: "[Phase Name]"
+  status: "⏳ pending"
+  description: |
+    [Describe what this phase accomplishes and why it comes first]
+
+  tasks:
+    - task: "[Specific task description]"
+      status: "⏳ pending"
+      notes: "[Optional implementation notes]"
+
+    - task: "[Another task]"
+      status: "⏳ pending"
+
+  estimated_completion: "[Date or time estimate]"
+
+phase_2:
+  name: "[Phase Name]"
+  status: "⏳ pending"
+  description: |
+    [Describe what this phase accomplishes]
+
+  tasks:
+    - task: "[Task description]"
+      status: "⏳ pending"
+
+# IMPLEMENTATION STEPS
+
+step_1:
+  task: "[Step description]"
+  details: |
+    [Detailed implementation instructions for this step]
+  output: "[Expected output or deliverable]"
+
+step_2:
+  task: "[Step description]"
+  details: |
+    [Detailed implementation instructions]
+  output: "[Expected output or deliverable]"
+
+# VALIDATION CRITERIA
+
+success_metrics:
+  - "[Measurable success criterion 1]"
+  - "[Measurable success criterion 2]"
+
+# PROGRESS SUMMARY
+
+overall_progress:
+  phase_1: "⏳ 0% complete"
+  phase_2: "⏳ 0% complete"
+
+current_status: |
+  [Current implementation status and what has been completed so far]
+
+next_immediate_steps:
+  - "[Next action to take]"
+  - "[Another next action]"
+
+# RISKS & CONSIDERATIONS
+
+risks:
+  - risk: "[Potential risk or challenge]"
+    mitigation: "[How this risk will be addressed]"
+
+  - risk: "[Another risk]"
+    mitigation: "[Mitigation strategy]"
+
+# NOTES
+
+lessons_learned:
+  - "[Lesson or insight from planning/implementation]"
+  - "[Another lesson]"
+
+future_enhancements:
+  - "[Potential future improvement]"
+  - "[Another enhancement idea]"

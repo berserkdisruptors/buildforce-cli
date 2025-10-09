@@ -12,7 +12,7 @@ This pattern is used by commands that need to determine whether to create a new 
 - **This ensures that running the command multiple times in the same session always updates the same artifact**
 
 **PRIORITY 2 - Run script (if no conversation history):**
-- Execute the command's script (e.g., `create-spec.sh`, `create-plan.sh`)
+- Execute the command's script (e.g., `create-spec-files.sh`, `create-plan.sh`)
 - Parse JSON output for artifact paths and **IS_UPDATE** flag
 - The script implements its own priority system:
   1. Checks state file (e.g., `.buildforce/.current-spec`) for active artifact
