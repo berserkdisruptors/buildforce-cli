@@ -11,7 +11,7 @@ created: "[YYYY-MM-DD]"
 last_updated: "[YYYY-MM-DD]"
 
 # ARCHITECTURE OVERVIEW
-# Describe the high-level implementation approach and key technical decisions
+# Describe the high-level implementation approach and key technical decisions.
 
 approach: |
   [Describe the high-level approach to implementing this feature. What is the overall strategy?
