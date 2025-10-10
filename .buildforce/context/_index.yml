@@ -52,3 +52,18 @@ contexts:
         fixed-output-format,
         user-approval,
       ]
+
+  - id: 005-new-document-slash
+    file: 005-new-document-slash.yml
+    type: feature
+    tags:
+      [
+        slash-command,
+        document,
+        context-creation,
+        template-only,
+        snake-case-naming,
+        intelligent-merge,
+        auto-detection,
+        workflow-utility,
+      ]

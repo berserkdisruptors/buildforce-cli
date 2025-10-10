@@ -6,8 +6,9 @@ created: "2025-01-15"
 last_updated: "2025-10-10"
 
 summary: |
-  Spec-driven development workflow implemented via 5 slash commands.
-  Guides build agents through Research → Spec → Plan → Build → Complete lifecycle.
+  Spec-driven development workflow implemented via 5 core slash commands plus 1 utility command.
+  Core workflow: Research → Spec → Plan → Build → Complete lifecycle.
+  Utility: Document command for creating context files without specs.
   Commands are instruction templates that enhance user queries with workflow-specific context.
   All commands now follow proven compact pattern with numbered guidelines and script-based discovery.
 
@@ -17,10 +18,11 @@ responsibilities:
   - Implementation planning and design decisions (PLAN - see 004-iterate-plan-command.yml for details, 40 lines)
   - Guided implementation with progress tracking and deviation logging (BUILD - see 002-build-command.yml for details, 32 lines)
   - Final validation and completion confirmation (COMPLETE - 44 lines)
+  - Context file creation for existing functionality without specs (DOCUMENT - see 005-new-document-slash.yml for details, 29 lines)
 
 dependencies:
   internal:
-    - context-repository: "RESEARCH searches .buildforce/context/_index.yml for accumulated knowledge"
+    - context-repository: "RESEARCH searches .buildforce/context/_index.yml for accumulated knowledge; DOCUMENT creates/updates context files; COMPLETE generates context files for completed specs"
   external:
     - None (pure instruction templates for Claude Code)
 
@@ -31,8 +33,9 @@ files:
     - src/templates/commands/plan.md
     - src/templates/commands/build.md
     - src/templates/commands/complete.md
+    - src/templates/commands/document.md
   secondary:
-    - .buildforce/context/_index.yml (searched by RESEARCH)
+    - .buildforce/context/_index.yml (searched by RESEARCH, updated by DOCUMENT and COMPLETE)
 
 workflow:
   sequence:
@@ -95,6 +98,22 @@ workflow:
         - "Generates comprehensive completion report"
         - "Requires explicit user confirmation"
 
+  utility_commands:
+    - command: "/document"
+      purpose: "Create or update context files for existing functionality without specs"
+      input: "Topic or module to document (information assumed in context window)"
+      output: "Context file + _index.yml update + related context updates"
+      key_features:
+        - "Operates independently of spec-driven workflow (no spec/plan/build required)"
+        - "Template-only (no script execution like /research)"
+        - "Auto-detects context type (module/feature/component/pattern)"
+        - "Generates snake-case filenames (2-3 words, NO numeric prefixes)"
+        - "Detects and resolves ID conflicts automatically"
+        - "Supports CREATE mode (new files) and UPDATE mode (intelligent merge)"
+        - "Auto-generates tags for _index.yml from topic analysis"
+        - "Automatically updates related context files with cross-references"
+        - "Uses 7 numbered guidelines with ALWAYS/NEVER emphasis (29 lines)"
+
 design_principles:
   - "Compact but powerful: Enhance user queries without teaching build agents HOW to work"
   - "Context-first: Always search project context repository before other research"
@@ -119,32 +138,44 @@ evolution:
     date: "2025-10-10"
     changes: "Completed PLAN command iteration with 7 guidelines, script-based discovery, fixed output format, complete plan.yaml replacement (40 lines, 74.5% reduction). All 5 commands now follow proven compact pattern."
 
+  - version: "2.1"
+    date: "2025-10-10"
+    changes: "Added /document utility command (29 lines) for creating context files without specs. Enables documenting existing functionality, legacy code, and architectural patterns independently of spec-driven workflow. Template-only with 7 guidelines, snake-case naming, intelligent merge, auto-detection."
+
 related_specs:
   - "001-slash-commands (initial system design)"
   - "002-build-command (BUILD command implementation)"
   - "003-plan-template (enhanced plan template)"
   - "004-iterate-plan-command (PLAN command implementation)"
+  - "005-new-document-slash (DOCUMENT command implementation)"
 
 notes: |
-  Inspired by @spec-kit workflow but simplified to 5 commands.
+  Inspired by @spec-kit workflow but simplified to 5 core commands + 1 utility command.
   Key innovation: .buildforce/context repository as primary knowledge source.
   RESEARCH command is foundationprovides context for all subsequent commands.
   Each command expects $ARGUMENTS (Claude Code compatible).
 
-  Compression achievements (v2.0):
+  Compression achievements (v2.1):
   - /research: 27 lines (68% reduction) - 7 guidelines ✅
   - /spec: 97 lines (iterated with structured workflow) ✅
   - /plan: 40 lines (74.5% reduction) - 7 guidelines ✅
   - /build: 32 lines (75% reduction) - 7 guidelines ✅
   - /complete: 44 lines (iterated with structured workflow) ✅
+  - /document: 29 lines - 7 guidelines ✅ (new utility command)
 
   All commands following proven compact pattern:
   - YAML frontmatter with script execution (where applicable)
   - User input section with $ARGUMENTS
   - Context explanation
-  - Numbered guidelines (RESEARCH/PLAN/BUILD use 7 guidelines)
+  - Numbered guidelines (RESEARCH/PLAN/BUILD/DOCUMENT use 7 guidelines)
   - ALWAYS/NEVER bold emphasis for critical instructions
   - No verbose HOW-TO explanations
   - Context reference at bottom
 
-  System now production-ready with complete 5-command workflow compression.
+  System now production-ready with complete 5-command core workflow + 1 utility command.
+
+  /document vs /complete context creation:
+  - /complete: Creates context files for specs completed through full workflow (research → spec → plan → build → complete)
+  - /document: Creates context files for existing functionality WITHOUT specs (legacy code, discovered patterns, architectural decisions)
+  - Both follow _schema.yml structure, update _index.yml, maintain cross-references
+  - /research reads context, /document writes context (natural complement)

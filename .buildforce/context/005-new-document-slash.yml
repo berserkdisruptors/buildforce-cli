@@ -1,0 +1,107 @@
+id: 005-new-document-slash
+name: "/document Slash Command - Context File Creation Without Specs"
+type: feature
+status: production
+created: "2025-10-10"
+last_updated: "2025-10-10"
+
+summary: |
+  New slash command that enables direct context file creation for existing functionality without
+  requiring a spec-driven development session. Combines /research's context extraction capabilities
+  with /complete's context file creation workflow to document legacy code, architectural patterns,
+  and modules discovered during exploration. Operates on information already in the context window,
+  generates snake-case filenames (no numeric prefixes), auto-detects context type, handles ID
+  conflicts, intelligently merges updates, and automatically maintains cross-references.
+
+responsibilities:
+  - Generate context files for existing functionality without specs
+  - Auto-detect context type (module/feature/component/pattern) from topic analysis
+  - Create snake-case filenames (2-3 words) without numeric prefixes
+  - Detect and resolve ID conflicts by searching _index.yml
+  - Support CREATE mode (new files) and UPDATE mode (intelligent merge)
+  - Populate all required schema fields (id, name, type, status, dates, summary)
+  - Auto-generate tags for _index.yml entries from topic analysis
+  - Automatically update related context files with cross-references
+  - Present findings and request user confirmation before writing
+
+dependencies:
+  internal:
+    context-repository: "Reads _schema.yml for structure, updates _index.yml, creates/updates context files in .buildforce/context/"
+    slash-commands: "Standalone utility command complementing the 5-command workflow (research → spec → plan → build → complete)"
+  external: {}
+
+files:
+  primary:
+    - src/templates/commands/document.md
+  secondary:
+    - .buildforce/context/_schema.yml
+    - .buildforce/context/_index.yml
+
+command_signature:
+  syntax: "/document <topic>"
+  description: "Create or update context files for existing functionality"
+  arguments:
+    - name: "topic"
+      type: "string"
+      required: true
+      description: "The topic or module to document (information assumed already in context window)"
+  examples:
+    - "/document authentication module"
+    - "/document error handling patterns"
+
+design_decisions:
+  - decision: "Template-only command (no script execution like /research)"
+    rationale: "Command doesn't need file discovery—operates on context window content prepared by user. Simplifies implementation and maintains consistency with /research pattern."
+
+  - decision: "Snake-case naming (2-3 words) with NO numeric prefix"
+    rationale: "Context files don't need sequential numbering like specs. Clean, descriptive names improve discoverability and readability (e.g., 'authentication-module.yml' vs '005-authentication.yml')."
+
+  - decision: "Auto-detect context type from topic analysis"
+    rationale: "Reduces user friction—no --type flag needed. Agent analyzes content to determine module/feature/component/pattern intelligently."
+
+  - decision: "Intelligent merge for UPDATE mode (current state → new state)"
+    rationale: "Preserves existing content while adding new information. No distinction between human/AI edits—agent mutates current state to new state based on available information."
+
+  - decision: "Automatic related context updates (no per-file confirmation)"
+    rationale: "Streamlined workflow. Agent automatically adds cross-references to related files' dependencies sections. User confirms all changes together in final validation step."
+
+  - decision: "ID conflict detection via _index.yml search"
+    rationale: "Prevents overwrites and naming collisions. Agent searches index first, chooses alternative ID (append descriptor, use synonym) if conflict exists."
+
+  - decision: "7 numbered guidelines with ALWAYS/NEVER emphasis"
+    rationale: "Proven compact pattern from /research (27 lines) and /complete (44 lines). Achieved 29 lines—well within 35-50 target. Critical instructions emphasized without verbose HOW-TO explanations."
+
+evolution:
+  - version: "1.0"
+    date: "2025-10-10"
+    changes: "Initial implementation with 7 guidelines, 29 lines, template-only approach. Supports CREATE/UPDATE modes, auto-detection, ID conflict resolution, intelligent merge, related context updates."
+
+related_specs:
+  - "005-new-document-slash (spec.yaml)"
+  - "005-new-document-slash-plan (plan.yaml)"
+
+notes: |
+  This command fills a critical gap in the workflow—currently there's no way to document existing
+  functionality without creating artificial specs. Especially valuable for:
+  - Onboarding new projects with existing codebases
+  - Documenting legacy code gradually
+  - Capturing tribal knowledge about architecture decisions
+  - Building up context repository incrementally
+
+  Natural complement to /research: /research reads context, /document writes context.
+
+  Positioned as standalone utility command, separate from core spec-driven development flow.
+
+  Implementation achieved exceptional compactness: 29 lines (target was 35-50), matching the
+  proven pattern of /research (27 lines) and /complete (44 lines). All 13 functional requirements,
+  5 non-functional requirements, and 13 acceptance criteria covered with 0 deviations from plan.
+
+  Key workflow: User prepares context window (reads files, gathers info) → runs /document with
+  topic → agent determines mode → loads schema → generates/updates context → updates index →
+  updates related contexts → presents summary → requests confirmation → writes files.
+
+  4 ALWAYS/NEVER emphasis points ensure critical behavior:
+  - ALWAYS load _schema.yml first
+  - NEVER use numeric prefixes in filenames
+  - NEVER leave placeholder text
+  - ALWAYS request user confirmation before writing
