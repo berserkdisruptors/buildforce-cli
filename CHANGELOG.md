@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Planned
+
 - Enhanced spec templates with more structured requirement types
 - Plan validation with automated completeness checks
 - Testing integration with built-in test file generation
@@ -16,7 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.0.1] - 2025-01-15
 
 ### Added
-- Initial release of BuildForce CLI
+
+- Initial release of Buildforce CLI
 - Core spec-driven development workflow with 5 slash commands:
   - `/research` - Gather context and project knowledge
   - `/spec` - Define requirements and specifications
@@ -54,6 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `--github-token <token>` - GitHub API authentication
 
 ### Documentation
+
 - Comprehensive README with:
   - Spec-Driven Development philosophy
   - Installation instructions for multiple platforms
@@ -68,6 +71,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Code of Conduct (Contributor Covenant v2.1)
 
 ### Technical
+
 - TypeScript implementation with strict mode
 - ESModules (import/export)
 - Node.js >= 18.0.0 requirement
@@ -77,6 +81,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.0.0] - 2025-01-10
 
 ### Added
+
 - Project initialization
 - Basic CLI structure
 - Template system design

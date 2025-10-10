@@ -1,12 +1,12 @@
 id: 006-comprehensive-readme-documentation
-name: "Comprehensive README Documentation for BuildForce CLI"
+name: "Comprehensive README Documentation for Buildforce CLI"
 type: feature
 status: draft
 created: "2025-10-10"
 last_updated: "2025-10-10"
 
 summary: |
-  Update README.md with comprehensive documentation explaining what BuildForce CLI does,
+  Update README.md with comprehensive documentation explaining what Buildforce CLI does,
   how to use it, usage examples for developers, and contribution guidelines. The README
   should serve as the primary entry point for developers discovering the project.
 
@@ -34,7 +34,7 @@ motivation: |
 # GOALS
 
 primary_goals:
-  - Explain what BuildForce CLI is and its core value proposition
+  - Explain what Buildforce CLI is and its core value proposition
   - Document installation instructions for multiple platforms
   - Provide usage examples for all slash commands (/research, /spec, /plan, /build, /complete, /document)
   - Include contribution guidelines to encourage community participation
@@ -117,7 +117,7 @@ design_principles:
 
 acceptance_criteria:
   - AC1: README starts with conceptual definition and philosophy of Spec-Driven Development
-  - AC2: README contains clear explanation of what BuildForce CLI is and why developers should use it
+  - AC2: README contains clear explanation of what Buildforce CLI is and why developers should use it
   - AC3: Badges are present and functional (npm version, downloads, stars, license, build status)
   - AC4: Installation instructions work on macOS, Linux, and Windows
   - AC5: Quick start example can be copy-pasted and successfully executed

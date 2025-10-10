@@ -13,7 +13,7 @@ export function displaySetupInfo(
   const currentDir = process.cwd();
 
   const setupLines = [
-    chalk.cyan("BuildForce Project Setup"),
+    chalk.cyan("Buildforce Project Setup"),
     "",
     `${"Project".padEnd(15)} ${chalk.green(projectName)}`,
     `${"Working Path".padEnd(15)} ${chalk.dim(currentDir)}`,
@@ -96,21 +96,33 @@ export function displayNextSteps(
     stepNum++;
   }
 
-  stepsLines.push(`${stepNum}. Start using the spec-driven workflow with your AI agent:`);
   stepsLines.push(
-    "   " + chalk.cyan("/research") + " - Gather context and prepare for development"
+    `${stepNum}. Start using the spec-driven workflow with your AI agent:`
   );
   stepsLines.push(
-    "   " + chalk.cyan("/spec") + "     - Define what to build (requirements & scope)"
+    "   " +
+      chalk.cyan("/research") +
+      " - Gather context and prepare for development"
   );
   stepsLines.push(
-    "   " + chalk.cyan("/plan") + "     - Design how to build (architecture & steps)"
+    "   " +
+      chalk.cyan("/spec") +
+      "     - Define what to build (requirements & scope)"
   );
   stepsLines.push(
-    "   " + chalk.cyan("/build") + "    - Execute implementation with validation"
+    "   " +
+      chalk.cyan("/plan") +
+      "     - Design how to build (architecture & steps)"
   );
   stepsLines.push(
-    "   " + chalk.cyan("/complete") + " - Finalize spec and update knowledge base"
+    "   " +
+      chalk.cyan("/build") +
+      "    - Execute implementation with validation"
+  );
+  stepsLines.push(
+    "   " +
+      chalk.cyan("/complete") +
+      " - Finalize spec and update knowledge base"
   );
 
   console.log();
@@ -127,15 +139,21 @@ export function displayNextSteps(
     chalk.bold("Understanding the Workflow"),
     "",
     `The .buildforce directory stores project knowledge:`,
-    `  ${chalk.cyan(".buildforce/context/")} - Accumulated project context from completed specs`,
-    `  ${chalk.cyan(".buildforce/specs/")}   - Active and historical spec directories`,
+    `  ${chalk.cyan(
+      ".buildforce/context/"
+    )} - Accumulated project context from completed specs`,
+    `  ${chalk.cyan(
+      ".buildforce/specs/"
+    )}   - Active and historical spec directories`,
     "",
     `Each workflow iteration creates a spec folder:`,
     `  ${chalk.gray("001-feature-name/")}  - First feature`,
     `  ${chalk.gray("002-another/")}       - Second feature`,
     `  ${chalk.gray("...")}`,
     "",
-    `Start your first feature with ${chalk.cyan("/research")} to gather context,`,
+    `Start your first feature with ${chalk.cyan(
+      "/research"
+    )} to gather context,`,
     `then ${chalk.cyan("/spec")} to define what you're building.`,
   ];
 

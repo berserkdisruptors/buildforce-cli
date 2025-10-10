@@ -1,4 +1,4 @@
-# BuildForce CLI
+# Buildforce CLI
 
 **Spec-Driven Development Toolkit for AI-Assisted Software Engineering**
 
@@ -13,8 +13,8 @@
 ## Table of Contents
 
 - [What is Spec-Driven Development?](#what-is-spec-driven-development)
-- [What is BuildForce CLI?](#what-is-buildforce-cli)
-- [Why BuildForce?](#why-buildforce)
+- [What is Buildforce CLI?](#what-is-buildforce-cli)
+- [Why Buildforce?](#why-buildforce)
 - [Installation](#installation)
 - [Quick Start](#quick-start)
 - [CLI Command Reference](#cli-command-reference)
@@ -51,6 +51,7 @@
 ### Why SDD Matters
 
 When working with AI coding assistants, it's tempting to write code immediately. But without clear specifications and plans:
+
 - Requirements get lost or misunderstood
 - Edge cases are overlooked
 - Implementation deviates from intent
@@ -61,9 +62,9 @@ When working with AI coding assistants, it's tempting to write code immediately.
 
 ---
 
-## What is BuildForce CLI?
+## What is Buildforce CLI?
 
-BuildForce CLI is a command-line tool that implements the Spec-Driven Development workflow through **slash commands** for AI coding assistants like Claude Code, GitHub Copilot, Cursor, and more.
+Buildforce CLI is a command-line tool that implements the Spec-Driven Development workflow through **slash commands** for AI coding assistants like Claude Code, GitHub Copilot, Cursor, and more.
 
 Think of it as a **project initialization tool meets workflow orchestrator**. Run one command to set up a new project with:
 
@@ -77,21 +78,24 @@ Think of it as a **project initialization tool meets workflow orchestrator**. Ru
 
 ---
 
-## Why BuildForce?
+## Why Buildforce?
 
 ### For Individual Developers
+
 - **Faster Onboarding**: Jump into new projects with a proven workflow already set up
 - **Better Documentation**: Specs and plans are generated as you work, not after
 - **Clearer Intent**: AI assistants understand exactly what you want to build
 - **Reproducible Builds**: Track every decision from requirements to code
 
 ### For Teams
+
 - **Shared Workflow**: Everyone follows the same process, from junior to senior developers
 - **Better Reviews**: PRs include specs and plans, not just code
 - **Knowledge Transfer**: Context files preserve architectural decisions and patterns
 - **Onboarding Speed**: New team members can read specs to understand features
 
 ### For Open Source Maintainers
+
 - **Transparent Contributions**: Contributors provide specs before code
 - **Consistent Quality**: PRs follow a structured workflow
 - **Faster Reviews**: Reviewers can validate against specs
@@ -108,13 +112,14 @@ npm install -g @buildforce/cli
 ```
 
 Verify installation:
+
 ```bash
 buildforce --version
 ```
 
 ### Option 2: npx (No Installation)
 
-Use BuildForce without installing:
+Use Buildforce without installing:
 
 ```bash
 npx @buildforce/cli [project-name]
@@ -151,10 +156,12 @@ buildforce my-awesome-app
 ```
 
 You'll be prompted to:
+
 - Choose your AI assistant (Claude Code, GitHub Copilot, Cursor, etc.)
 - Choose script type (Shell or PowerShell)
 
 The CLI will:
+
 - ✅ Create project directory
 - ✅ Download latest template
 - ✅ Set up slash commands
@@ -204,21 +211,22 @@ buildforce [project-name] [options]
 ```
 
 **Arguments:**
+
 - `project-name` - Name for your new project directory (optional if using `--here`)
 
 **Options:**
 
-| Option | Description | Example |
-|--------|-------------|---------|
-| `--ai <assistant>` | AI assistant to use | `--ai claude` |
-| `--script <type>` | Script type (`sh` or `ps`) | `--script sh` |
-| `--here` | Initialize in current directory | `--here` |
-| `--force` | Force merge/overwrite (with `--here`) | `--here --force` |
-| `--no-git` | Skip git repository initialization | `--no-git` |
-| `--ignore-agent-tools` | Skip AI agent tool checks | `--ignore-agent-tools` |
-| `--skip-tls` | Skip SSL/TLS verification | `--skip-tls` |
-| `--debug` | Show verbose diagnostic output | `--debug` |
-| `--github-token <token>` | GitHub token for API requests | `--github-token ghp_xxx` |
+| Option                   | Description                           | Example                  |
+| ------------------------ | ------------------------------------- | ------------------------ |
+| `--ai <assistant>`       | AI assistant to use                   | `--ai claude`            |
+| `--script <type>`        | Script type (`sh` or `ps`)            | `--script sh`            |
+| `--here`                 | Initialize in current directory       | `--here`                 |
+| `--force`                | Force merge/overwrite (with `--here`) | `--here --force`         |
+| `--no-git`               | Skip git repository initialization    | `--no-git`               |
+| `--ignore-agent-tools`   | Skip AI agent tool checks             | `--ignore-agent-tools`   |
+| `--skip-tls`             | Skip SSL/TLS verification             | `--skip-tls`             |
+| `--debug`                | Show verbose diagnostic output        | `--debug`                |
+| `--github-token <token>` | GitHub token for API requests         | `--github-token ghp_xxx` |
 
 ### AI Assistants
 
@@ -244,26 +252,31 @@ Choose from 11 supported AI assistants:
 ### Examples
 
 **Basic initialization:**
+
 ```bash
 buildforce my-app
 ```
 
 **Initialize in current directory:**
+
 ```bash
 buildforce --here
 ```
 
 **Specify AI assistant and script type:**
+
 ```bash
 buildforce my-app --ai claude --script sh
 ```
 
 **Initialize without git:**
+
 ```bash
 buildforce my-app --no-git
 ```
 
 **Debug mode for troubleshooting:**
+
 ```bash
 buildforce my-app --debug
 ```
@@ -271,11 +284,13 @@ buildforce my-app --debug
 ### Utility Commands
 
 **Check for required tools:**
+
 ```bash
 buildforce buildforce-check
 ```
 
 This verifies:
+
 - Node.js version (>= 18.0.0)
 - Git availability
 - AI assistant installation (if specified)
@@ -284,7 +299,7 @@ This verifies:
 
 ## Workflow Overview
 
-BuildForce implements a 5-command workflow for systematic software development. Each command guides AI assistants through a specific phase of the development lifecycle.
+Buildforce implements a 5-command workflow for systematic software development. Each command guides AI assistants through a specific phase of the development lifecycle.
 
 ### Core Workflow Diagram
 
@@ -309,6 +324,7 @@ graph LR
 ```
 
 **Legend:**
+
 - **Blue** - Research & Context Gathering
 - **Yellow** - Requirements Definition
 - **Cyan** - Implementation Planning
@@ -329,16 +345,19 @@ Each slash command serves a specific purpose in the development lifecycle. Here'
 **Purpose**: Gather information needed to write a specification.
 
 **When to use**:
+
 - Starting a new feature (gather context about the problem)
 - Understanding existing code (explore codebase patterns)
 - Researching best practices (find current approaches)
 
 **Usage:**
+
 ```
 /research <your-query>
 ```
 
 **Examples:**
+
 ```
 /research authentication patterns in this codebase
 
@@ -348,6 +367,7 @@ Each slash command serves a specific purpose in the development lifecycle. Here'
 ```
 
 **What happens:**
+
 1. Searches `.buildforce/context/_index.yml` for accumulated project knowledge
 2. Explores codebase using grep/glob (if relevant)
 3. Fetches current information via web search (if query contains recency indicators)
@@ -358,6 +378,7 @@ Each slash command serves a specific purpose in the development lifecycle. Here'
    - Recommendations
 
 **Output format:**
+
 - **Research Summary** - High-level findings
 - **Project Context** - Relevant accumulated knowledge
 - **Codebase Findings** - Code patterns and file locations
@@ -365,6 +386,7 @@ Each slash command serves a specific purpose in the development lifecycle. Here'
 - **Next Steps** - Suggested actions
 
 **Pro Tips:**
+
 - Run `/research` BEFORE `/spec` to ensure you have all necessary context
 - Use keywords like "current", "latest", "2024", "2025" to trigger web search
 - Research output becomes part of the spec context window
@@ -376,16 +398,19 @@ Each slash command serves a specific purpose in the development lifecycle. Here'
 **Purpose**: Materialize user intent into a structured specification (WHAT to build).
 
 **When to use**:
+
 - After gathering context with `/research`
 - When starting a new feature or bugfix
 - When you need to clarify requirements
 
 **Usage:**
+
 ```
 /spec <feature-description>
 ```
 
 **Examples:**
+
 ```
 /spec Add JWT-based authentication with email/password login
 
@@ -395,6 +420,7 @@ Each slash command serves a specific purpose in the development lifecycle. Here'
 ```
 
 **What happens:**
+
 1. Creates `.buildforce/specs/NNN-feature-name/` directory
 2. Generates `spec.yaml` file with:
    - Problem statement and motivation
@@ -407,6 +433,7 @@ Each slash command serves a specific purpose in the development lifecycle. Here'
 4. Validates you have sufficient context (suggests `/research` if needed)
 
 **Output format:**
+
 ```yaml
 id: 001-feature-name
 name: "Feature Name"
@@ -432,6 +459,7 @@ open_questions:
 ```
 
 **Pro Tips:**
+
 - Keep specs focused on WHAT, not HOW (save implementation details for `/plan`)
 - Answer all open questions before running `/plan`
 - Requirements should be testable and measurable
@@ -444,15 +472,18 @@ open_questions:
 **Purpose**: Design the implementation approach (HOW to build).
 
 **When to use**:
+
 - After finalizing the spec with `/spec`
 - When you need to refine architecture or design decisions
 
 **Usage:**
+
 ```
 /plan [optional-instructions]
 ```
 
 **Examples:**
+
 ```
 /plan
 
@@ -462,6 +493,7 @@ open_questions:
 ```
 
 **What happens:**
+
 1. Loads `spec.yaml` from current feature directory
 2. Makes design decisions:
    - Architecture approach
@@ -480,6 +512,7 @@ open_questions:
 5. Asks for approval before suggesting `/build`
 
 **Output format:**
+
 ```yaml
 id: 001-feature-name-plan
 spec_id: "001-feature-name"
@@ -501,6 +534,7 @@ phase_1:
 ```
 
 **Pro Tips:**
+
 - Review the plan carefully - this guides implementation
 - Run `/plan` multiple times to refine architecture
 - Each task links to spec requirements via `spec_refs`
@@ -513,15 +547,18 @@ phase_1:
 **Purpose**: Execute the implementation following the spec and plan.
 
 **When to use**:
+
 - After approving the plan from `/plan`
 - For iterative refinement ("change X to Y", "fix edge case Z")
 
 **Usage:**
+
 ```
 /build [optional-iteration-instructions]
 ```
 
 **Examples:**
+
 ```
 /build
 
@@ -531,6 +568,7 @@ phase_1:
 ```
 
 **What happens:**
+
 1. Loads `spec.yaml` and `plan.yaml`
 2. Executes tasks sequentially
 3. Updates checkboxes in `plan.yaml` as tasks complete
@@ -547,6 +585,7 @@ phase_1:
 6. Runs tests and provides testing guidance
 
 **Progress Tracking:**
+
 ```yaml
 phase_1:
   tasks:
@@ -556,6 +595,7 @@ phase_1:
 ```
 
 **Pro Tips:**
+
 - Run `/build` multiple times for iterative refinement
 - Deviations are tracked across all iterations (transparency is key)
 - Testing guidance is provided (what to test, how to test, results)
@@ -568,15 +608,18 @@ phase_1:
 **Purpose**: Finalize the feature and validate it meets the original intent.
 
 **When to use**:
+
 - After implementation is done and tested
 - When ready to generate documentation and context files
 
 **Usage:**
+
 ```
 /complete [optional-final-notes]
 ```
 
 **What happens:**
+
 1. Loads `spec.yaml` and `plan.yaml`
 2. Validates all spec requirements are implemented
 3. Reviews deviation log across all `/build` iterations
@@ -591,11 +634,13 @@ phase_1:
 7. Requires explicit user confirmation before finalizing
 
 **Output:**
+
 - Completion report (validation summary)
 - Context file (e.g., `.buildforce/context/001-feature-name.yml`)
 - Updated index (`.buildforce/context/_index.yml`)
 
 **Pro Tips:**
+
 - Don't rush to `/complete` - validate thoroughly first
 - Review the completion report for any missed requirements
 - Context files preserve knowledge for future `/research` queries
@@ -610,17 +655,20 @@ phase_1:
 **Purpose**: Create context files for existing functionality without going through the full spec-driven workflow.
 
 **When to use**:
+
 - Documenting legacy code
 - Capturing architectural decisions
 - Recording design patterns
 - Building up context repository incrementally
 
 **Usage:**
+
 ```
 /document <topic-or-module>
 ```
 
 **Examples:**
+
 ```
 /document authentication module
 
@@ -630,6 +678,7 @@ phase_1:
 ```
 
 **What happens:**
+
 1. Analyzes information in context window
 2. Auto-detects context type (module/feature/component/pattern)
 3. Generates context file with snake-case filename
@@ -637,10 +686,12 @@ phase_1:
 5. Automatically updates related context files with cross-references
 
 **Output:**
+
 - Context file (e.g., `.buildforce/context/authentication-module.yml`)
 - Updated index with tags for discoverability
 
 **Pro Tips:**
+
 - Prepare context window first (read files, gather info) before running `/document`
 - Use for documenting existing code that doesn't have specs
 - Natural complement to `/research` (research reads context, document writes context)
@@ -650,24 +701,25 @@ phase_1:
 
 ## Supported AI Assistants
 
-BuildForce works with 11 AI coding assistants. Choose your preferred assistant during initialization.
+Buildforce works with 11 AI coding assistants. Choose your preferred assistant during initialization.
 
-| AI Assistant | Configuration Folder | Command Flag |
-|--------------|---------------------|--------------|
-| Claude Code | `.claude/` | `--ai claude` |
-| GitHub Copilot | `.github/` | `--ai copilot` |
-| Cursor | `.cursor/` | `--ai cursor` |
-| Gemini CLI | `.gemini/` | `--ai gemini` |
-| Qwen Code | `.qwen/` | `--ai qwen` |
-| opencode | `.opencode/` | `--ai opencode` |
-| Codex CLI | `.codex/` | `--ai codex` |
-| Windsurf | `.windsurf/` | `--ai windsurf` |
-| Kilo Code | `.kilocode/` | `--ai kilocode` |
-| Auggie CLI | `.augment/` | `--ai auggie` |
-| Roo Code | `.roo/` | `--ai roo` |
+| AI Assistant   | Configuration Folder | Command Flag    |
+| -------------- | -------------------- | --------------- |
+| Claude Code    | `.claude/`           | `--ai claude`   |
+| GitHub Copilot | `.github/`           | `--ai copilot`  |
+| Cursor         | `.cursor/`           | `--ai cursor`   |
+| Gemini CLI     | `.gemini/`           | `--ai gemini`   |
+| Qwen Code      | `.qwen/`             | `--ai qwen`     |
+| opencode       | `.opencode/`         | `--ai opencode` |
+| Codex CLI      | `.codex/`            | `--ai codex`    |
+| Windsurf       | `.windsurf/`         | `--ai windsurf` |
+| Kilo Code      | `.kilocode/`         | `--ai kilocode` |
+| Auggie CLI     | `.augment/`          | `--ai auggie`   |
+| Roo Code       | `.roo/`              | `--ai roo`      |
 
 **How it works:**
-- BuildForce creates slash command files in your chosen assistant's configuration folder
+
+- Buildforce creates slash command files in your chosen assistant's configuration folder
 - Commands are accessible via `/research`, `/spec`, etc. in your AI chat
 - All templates and scripts are copied to your project directory
 - You can switch assistants later by manually copying command files
@@ -680,9 +732,10 @@ BuildForce works with 11 AI coding assistants. Choose your preferred assistant d
 
 #### 1. "Node version mismatch" error
 
-**Problem**: BuildForce requires Node.js >= 18.0.0
+**Problem**: Buildforce requires Node.js >= 18.0.0
 
 **Solution**:
+
 ```bash
 # Check your Node version
 node --version
@@ -699,6 +752,7 @@ nvm use 18
 **Problem**: Shell scripts don't have execute permissions
 
 **Solution**:
+
 ```bash
 # Make scripts executable
 chmod +x .buildforce/scripts/bash/*.sh
@@ -712,6 +766,7 @@ sudo buildforce my-app
 **Problem**: Git is not installed or not in PATH
 
 **Solution**:
+
 ```bash
 # Check if git is installed
 git --version
@@ -734,6 +789,7 @@ buildforce my-app --no-git
 **Problem**: Firewall, proxy, or GitHub rate limiting
 
 **Solution**:
+
 ```bash
 # Use GitHub token to avoid rate limits
 buildforce my-app --github-token ghp_your_token_here
@@ -750,7 +806,9 @@ buildforce my-app --debug
 **Problem**: Commands aren't recognized by your AI assistant
 
 **Solution**:
+
 1. **Verify command files exist**:
+
    ```bash
    # For Claude Code
    ls .claude/commands/
@@ -762,6 +820,7 @@ buildforce my-app --debug
 2. **Restart your AI assistant** - Some assistants need a reload
 
 3. **Check file permissions**:
+
    ```bash
    # Commands should be readable
    chmod 644 .claude/commands/*.md
@@ -784,27 +843,31 @@ buildforce my-app --debug
 
 ## Roadmap
 
-BuildForce is under active development. Here's what's coming next:
+Buildforce is under active development. Here's what's coming next:
 
 ### v0.1.0 (Q1 2025)
+
 - [ ] **Enhanced spec templates** - More structured requirement types
 - [ ] **Plan validation** - Automated checks for plan completeness
 - [ ] **Testing integration** - Built-in test file generation
 - [ ] **Visualization tools** - Generate diagrams from specs/plans
 
 ### v0.2.0 (Q2 2025)
+
 - [ ] **Multi-language support** - Templates in Spanish, French, German
 - [ ] **VS Code extension** - Native integration for VS Code users
 - [ ] **Team collaboration** - Shared context repository across team members
 - [ ] **Spec versioning** - Track spec evolution over time
 
 ### v1.0.0 (Q3 2025)
+
 - [ ] **Web UI** - Browser-based spec/plan editor
 - [ ] **CI/CD integration** - Automated spec validation in pipelines
 - [ ] **Analytics** - Track development velocity and quality metrics
 - [ ] **Enterprise features** - SSO, audit logs, compliance reporting
 
 ### Future Enhancements
+
 - User testimonials and case studies
 - Video tutorials and interactive walkthroughs
 - Automated link checking in CI/CD
@@ -817,20 +880,23 @@ Want to influence the roadmap? [Join the discussion](https://github.com/berserkd
 
 ## Contributing
 
-We welcome contributions from the community! Whether you're fixing bugs, adding features, improving documentation, or sharing feedback, your help makes BuildForce better for everyone.
+We welcome contributions from the community! Whether you're fixing bugs, adding features, improving documentation, or sharing feedback, your help makes Buildforce better for everyone.
 
 ### How to Contribute
 
 1. **Check existing issues** - Someone might already be working on it
+
    - [View open issues](https://github.com/berserkdisruptors/buildforce-cli/issues)
    - [View open pull requests](https://github.com/berserkdisruptors/buildforce-cli/pulls)
 
 2. **Create an issue** (optional but recommended)
+
    - Describe the problem or feature request
    - Wait for feedback before starting work
    - [Create new issue](https://github.com/berserkdisruptors/buildforce-cli/issues/new)
 
 3. **Fork the repository**
+
    ```bash
    # Click "Fork" on GitHub, then clone your fork
    git clone https://github.com/YOUR-USERNAME/buildforce-cli.git
@@ -838,6 +904,7 @@ We welcome contributions from the community! Whether you're fixing bugs, adding 
    ```
 
 4. **Create a branch**
+
    ```bash
    git checkout -b feature/your-feature-name
    # or
@@ -845,12 +912,14 @@ We welcome contributions from the community! Whether you're fixing bugs, adding 
    ```
 
 5. **Make your changes**
+
    - Write clean, well-documented code
    - Follow existing code style
    - Add tests if applicable
    - Update documentation
 
 6. **Test your changes**
+
    ```bash
    # Build the project
    npm run build
@@ -864,6 +933,7 @@ We welcome contributions from the community! Whether you're fixing bugs, adding 
    ```
 
 7. **Commit your changes**
+
    ```bash
    git add .
    git commit -m "feat: Add amazing new feature"
@@ -872,6 +942,7 @@ We welcome contributions from the community! Whether you're fixing bugs, adding 
    ```
 
    **Commit message format**:
+
    - `feat:` - New feature
    - `fix:` - Bug fix
    - `docs:` - Documentation changes
@@ -881,6 +952,7 @@ We welcome contributions from the community! Whether you're fixing bugs, adding 
    - `chore:` - Maintenance tasks
 
 8. **Push to your fork**
+
    ```bash
    git push origin feature/your-feature-name
    ```
@@ -903,7 +975,8 @@ We welcome contributions from the community! Whether you're fixing bugs, adding 
 
 ### Testing
 
-Currently, BuildForce doesn't have automated tests. We welcome contributions to add:
+Currently, Buildforce doesn't have automated tests. We welcome contributions to add:
+
 - Unit tests for utilities
 - Integration tests for CLI commands
 - End-to-end tests for workflows
@@ -911,6 +984,7 @@ Currently, BuildForce doesn't have automated tests. We welcome contributions to 
 ### Documentation
 
 Help improve documentation:
+
 - Fix typos or unclear sections in README
 - Add examples to command documentation
 - Write tutorials or guides for [buildforce.dev](https://buildforce.dev)
@@ -919,6 +993,7 @@ Help improve documentation:
 ### Reporting Bugs
 
 Found a bug? [Create an issue](https://github.com/berserkdisruptors/buildforce-cli/issues/new) with:
+
 - Clear title and description
 - Steps to reproduce
 - Expected vs actual behavior
@@ -928,6 +1003,7 @@ Found a bug? [Create an issue](https://github.com/berserkdisruptors/buildforce-c
 ### Requesting Features
 
 Have an idea? [Create a feature request](https://github.com/berserkdisruptors/buildforce-cli/issues/new) with:
+
 - Use case - Why is this needed?
 - Proposed solution - How should it work?
 - Alternatives considered
@@ -943,7 +1019,7 @@ This project follows the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.
 - **Stuck?** - Comment on the issue or PR
 - **Want to chat?** - [Join our community](https://buildforce.dev/community) (coming soon)
 
-Thank you for contributing to BuildForce! 🚀
+Thank you for contributing to Buildforce! 🚀
 
 ---
 
@@ -957,7 +1033,7 @@ See [CHANGELOG.md](CHANGELOG.md) for a detailed history of changes, new features
 
 ## License
 
-BuildForce CLI is [MIT licensed](LICENSE).
+Buildforce CLI is [MIT licensed](LICENSE).
 
 ```
 MIT License
@@ -1003,7 +1079,7 @@ SOFTWARE.
 
 ### Related Projects
 
-- **Spec-Kit**: Original inspiration for BuildForce ([GitHub](https://github.com/berserkdisruptors/spec-kit))
+- **Spec-Kit**: Original inspiration for Buildforce ([GitHub](https://github.com/berserkdisruptors/spec-kit))
 - **Specify**: Early prototype of spec-driven development ([.specify](./inspiration/.specify/))
 
 ---

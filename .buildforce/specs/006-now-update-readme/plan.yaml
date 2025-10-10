@@ -75,7 +75,7 @@ phase_1:
     - [x] Create hero section with title, tagline, and value proposition
       spec_refs: [FR2, AC2]
       files: [README.md]
-      notes: "Clear, concise explanation of what BuildForce CLI is and why developers should use it"
+      notes: "Clear, concise explanation of what Buildforce CLI is and why developers should use it"
 
     - [x] Add badges (npm version, downloads, stars, license, build status)
       spec_refs: [FR3, AC3]

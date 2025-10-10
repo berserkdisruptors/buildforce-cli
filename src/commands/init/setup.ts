@@ -3,7 +3,11 @@ import path from "path";
 import chalk from "chalk";
 import { StepTracker } from "../../lib/step-tracker.js";
 import { downloadAndExtractTemplate } from "../../lib/extract.js";
-import { ensureExecutableScripts, isGitRepo, initGitRepo } from "../../utils/index.js";
+import {
+  ensureExecutableScripts,
+  isGitRepo,
+  initGitRepo,
+} from "../../utils/index.js";
 import { createConfigContent } from "../../utils/config.js";
 
 /**
@@ -23,7 +27,7 @@ export async function setupProject(
   }
 ): Promise<void> {
   const { debug, githubToken, skipTls, noGit, shouldInitGit } = options;
-  const tracker = new StepTracker("Initialize BuildForce Project");
+  const tracker = new StepTracker("Initialize Buildforce Project");
 
   // Pre-steps recorded as completed before live rendering
   tracker.add("precheck", "Check required tools");
@@ -73,13 +77,19 @@ export async function setupProject(
     // Initial render
     renderTracker();
 
-    await downloadAndExtractTemplate(projectPath, selectedAi, selectedScript, isHere, {
-      verbose: false,
-      tracker,
-      debug,
-      githubToken,
-      skipTls,
-    });
+    await downloadAndExtractTemplate(
+      projectPath,
+      selectedAi,
+      selectedScript,
+      isHere,
+      {
+        verbose: false,
+        tracker,
+        debug,
+        githubToken,
+        skipTls,
+      }
+    );
 
     // Ensure scripts are executable (POSIX)
     const { updated, failures } = ensureExecutableScripts(projectPath, debug);
@@ -96,7 +106,11 @@ export async function setupProject(
     // Create buildforce.json config file
     tracker.start("config");
     try {
-      const configPath = path.join(projectPath, ".buildforce", "buildforce.json");
+      const configPath = path.join(
+        projectPath,
+        ".buildforce",
+        "buildforce.json"
+      );
       const configContent = createConfigContent();
       await fs.writeFile(configPath, configContent, "utf8");
       tracker.complete("config", ".buildforce/buildforce.json");

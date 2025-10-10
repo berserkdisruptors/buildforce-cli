@@ -1,5 +1,5 @@
 id: 006-comprehensive-readme-documentation
-name: "Comprehensive README Documentation for BuildForce CLI"
+name: "Comprehensive README Documentation for Buildforce CLI"
 type: feature
 status: production
 created: 2025-10-10
@@ -7,7 +7,7 @@ last_updated: 2025-10-10
 
 summary: |
   Comprehensive README.md documentation serving as the primary entry point for developers
-  discovering BuildForce CLI. Includes complete explanation of Spec-Driven Development
+  discovering Buildforce CLI. Includes complete explanation of Spec-Driven Development
   philosophy, installation instructions, quick start guide, CLI command reference, detailed
   workflow documentation with visual Mermaid diagram, all 6 slash commands with examples,
   11 supported AI assistants, troubleshooting guide, contribution guidelines, roadmap,
@@ -56,7 +56,7 @@ files:
 
 design_decisions:
   - decision: "Place Spec-Driven Development philosophy at the top before hero section"
-    rationale: "Establishes conceptual foundation first, helping readers understand 'why' before 'what' and 'how'. Differentiates BuildForce from generic CLI tools by leading with methodology."
+    rationale: "Establishes conceptual foundation first, helping readers understand 'why' before 'what' and 'how'. Differentiates Buildforce from generic CLI tools by leading with methodology."
 
   - decision: "Use Mermaid for workflow diagram instead of ASCII art"
     rationale: "Mermaid provides professional-looking diagrams, widely supported on GitHub, renders on npm, and easier to maintain than ASCII art."
@@ -88,7 +88,7 @@ related_specs:
   - "006-now-update-readme (spec.yaml and plan.yaml)"
 
 notes: |
-  This README update is critical for BuildForce CLI adoption and contribution rate.
+  This README update is critical for Buildforce CLI adoption and contribution rate.
 
   Implementation context:
   - README.md was already comprehensively implemented in a previous build iteration (1013 lines)
@@ -103,8 +103,8 @@ notes: |
   1. Badges (npm version, downloads, stars, license, build status)
   2. Table of Contents (18 sections)
   3. What is Spec-Driven Development? (philosophy and value proposition)
-  4. What is BuildForce CLI? (product explanation)
-  5. Why BuildForce? (benefits for individuals, teams, open source)
+  4. What is Buildforce CLI? (product explanation)
+  5. Why Buildforce? (benefits for individuals, teams, open source)
   6. Installation (3 methods: npm, npx, git clone)
   7. Quick Start (60-second workflow example)
   8. CLI Command Reference (all flags documented)
@@ -117,7 +117,7 @@ notes: |
   15. License (MIT with full text)
   16. Links & Resources (official, community, related projects)
 
-  The README successfully demonstrates BuildForce's value proposition through
+  The README successfully demonstrates Buildforce's value proposition through
   structure (following its own SDD methodology) and content (comprehensive
   documentation of the workflow it enables).
 
