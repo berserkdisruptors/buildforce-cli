@@ -1,0 +1,137 @@
+id: 006-comprehensive-readme-documentation
+name: "Comprehensive README Documentation for BuildForce CLI"
+type: feature
+status: production
+created: 2025-10-10
+last_updated: 2025-10-10
+
+summary: |
+  Comprehensive README.md documentation serving as the primary entry point for developers
+  discovering BuildForce CLI. Includes complete explanation of Spec-Driven Development
+  philosophy, installation instructions, quick start guide, CLI command reference, detailed
+  workflow documentation with visual Mermaid diagram, all 6 slash commands with examples,
+  11 supported AI assistants, troubleshooting guide, contribution guidelines, roadmap,
+  and complete project metadata (badges, changelog, license, links).
+
+responsibilities:
+  - Explain Spec-Driven Development (SDD) philosophy and value proposition
+  - Provide installation instructions for npm, npx, and git clone on all platforms
+  - Document quick start workflow from project initialization to first feature completion
+  - Reference all CLI command options and flags (--ai, --script, --here, --force, etc.)
+  - Document all 6 slash commands (/research, /spec, /plan, /build, /complete, /document) with syntax and examples
+  - Visualize workflow with Mermaid diagram showing 5-command core + 1 utility command
+  - List all 11 supported AI assistants with configuration folders
+  - Provide troubleshooting guidance for 5 common setup issues
+  - Define contribution guidelines (issues, PRs, code standards, commit format)
+  - Link to external documentation site (https://buildforce.dev)
+  - Present roadmap with planned features across v0.1.0, v0.2.0, v1.0.0
+  - Reference CHANGELOG.md and CODE_OF_CONDUCT.md
+  - Display project badges (npm version, downloads, stars, license, build status)
+
+dependencies:
+  internal:
+    - package.json: "Source of version, license, repository URL, engine requirements"
+    - src/config/agents.ts: "List of supported AI assistants with folder mappings"
+    - src/cli.ts: "CLI command structure and options"
+    - .buildforce/context/slash-commands.yml: "Slash command workflow documentation"
+    - CHANGELOG.md: "Version history and release notes"
+    - CODE_OF_CONDUCT.md: "Community guidelines (referenced but currently empty)"
+    - LICENSE: "MIT license file"
+  external:
+    - https://buildforce.dev: "External documentation site for detailed guides"
+    - shields.io: "Badge generation for npm, downloads, stars, build status"
+    - Keep a Changelog: "CHANGELOG.md format standard"
+    - Contributor Covenant: "CODE_OF_CONDUCT.md standard (v2.1)"
+
+files:
+  primary:
+    - README.md
+    - CHANGELOG.md
+    - CODE_OF_CONDUCT.md
+  secondary:
+    - package.json
+    - src/config/agents.ts
+    - src/cli.ts
+    - .buildforce/context/slash-commands.yml
+
+design_decisions:
+  - decision: "Place Spec-Driven Development philosophy at the top before hero section"
+    rationale: "Establishes conceptual foundation first, helping readers understand 'why' before 'what' and 'how'. Differentiates BuildForce from generic CLI tools by leading with methodology."
+
+  - decision: "Use Mermaid for workflow diagram instead of ASCII art"
+    rationale: "Mermaid provides professional-looking diagrams, widely supported on GitHub, renders on npm, and easier to maintain than ASCII art."
+
+  - decision: "Single README.md file instead of multiple documentation files"
+    rationale: "Better discoverability (everything in one place), follows GitHub conventions, meets npm package page requirements. Detailed docs live at buildforce.dev."
+
+  - decision: "Progressive disclosure strategy with links to buildforce.dev"
+    rationale: "README focuses on getting started quickly (installation, quick start, examples), while buildforce.dev handles deep dives (API docs, advanced guides, tutorials)."
+
+  - decision: "Create CHANGELOG.md and CODE_OF_CONDUCT.md as separate files rather than inline in README"
+    rationale: "Follows GitHub standard conventions, keeps README focused, allows independent maintenance. CHANGELOG uses Keep a Changelog format, CODE_OF_CONDUCT references Contributor Covenant v2.1."
+
+  - decision: "All examples are copy-pasteable with no placeholders"
+    rationale: "Reduces friction for new users. Examples should work without modification (NFR3 requirement)."
+
+  - decision: "Document all 11 AI assistants in table format with configuration folders"
+    rationale: "Clear mapping from assistant name to folder (.claude/, .github/, etc.) sourced from src/config/agents.ts ensures accuracy."
+
+  - decision: "Include 5 troubleshooting issues instead of minimum 3"
+    rationale: "Covers most common setup problems: Node version, permissions, git installation, network/GitHub rate limits, slash command recognition."
+
+evolution:
+  - version: "1.0"
+    date: "2025-10-10"
+    changes: "Comprehensive README with 1013 lines covering SDD philosophy, installation, quick start, CLI reference, workflow documentation, 6 slash commands, 11 AI assistants, troubleshooting, contribution guidelines, roadmap, changelog, license. Created CHANGELOG.md (Keep a Changelog format) and CODE_OF_CONDUCT.md (empty)."
+
+related_specs:
+  - "006-now-update-readme (spec.yaml and plan.yaml)"
+
+notes: |
+  This README update is critical for BuildForce CLI adoption and contribution rate.
+
+  Implementation context:
+  - README.md was already comprehensively implemented in a previous build iteration (1013 lines)
+  - This /build focused on creating missing CHANGELOG.md and CODE_OF_CONDUCT.md
+  - All 18 functional requirements (FR1-FR18) validated and met
+  - All 6 non-functional requirements (NFR1-NFR6) validated and met
+  - All 18 acceptance criteria (AC1-AC18) validated and met
+  - README length: 1013 lines (within 800-1500 target)
+  - No deviations from plan
+
+  Key sections in README (in order):
+  1. Badges (npm version, downloads, stars, license, build status)
+  2. Table of Contents (18 sections)
+  3. What is Spec-Driven Development? (philosophy and value proposition)
+  4. What is BuildForce CLI? (product explanation)
+  5. Why BuildForce? (benefits for individuals, teams, open source)
+  6. Installation (3 methods: npm, npx, git clone)
+  7. Quick Start (60-second workflow example)
+  8. CLI Command Reference (all flags documented)
+  9. Workflow Overview (Mermaid diagram + 5 core commands + 1 utility)
+  10. Supported AI Assistants (11 assistants in table format)
+  11. Troubleshooting (5 common issues with solutions)
+  12. Roadmap (v0.1.0, v0.2.0, v1.0.0 planned features)
+  13. Contributing (9-step process, commit format, standards)
+  14. Changelog (link to CHANGELOG.md)
+  15. License (MIT with full text)
+  16. Links & Resources (official, community, related projects)
+
+  The README successfully demonstrates BuildForce's value proposition through
+  structure (following its own SDD methodology) and content (comprehensive
+  documentation of the workflow it enables).
+
+  CODE_OF_CONDUCT.md created empty per user request. Can be populated later
+  with Contributor Covenant v2.1 content if needed.
+
+  CHANGELOG.md follows Keep a Changelog format with:
+  - [Unreleased] section for future changes
+  - [0.0.1] documenting initial release features
+  - Version history links to GitHub releases
+
+  Badge URLs use shields.io dynamic badges that auto-update:
+  - npm version: https://img.shields.io/npm/v/@buildforce/cli
+  - npm downloads: https://img.shields.io/npm/dm/@buildforce/cli
+  - GitHub stars: https://img.shields.io/github/stars/berserkdisruptors/buildforce-cli
+  - License: https://img.shields.io/badge/License-MIT-yellow.svg
+  - Build status: https://img.shields.io/github/actions/workflow/status/berserkdisruptors/buildforce-cli/release.yml

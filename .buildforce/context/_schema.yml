@@ -3,23 +3,23 @@
 
 # Required fields for all context files
 required_fields:
-  - id                  # Unique identifier (kebab-case)
-  - name                # Human-readable name
-  - type                # module | feature | component | pattern
-  - status              # in-development | production | deprecated
-  - created             # ISO date (YYYY-MM-DD)
-  - last_updated        # ISO date (YYYY-MM-DD)
-  - summary             # Multi-line description (use | for literal block)
+  - id # Unique identifier (kebab-case)
+  - name # Human-readable name
+  - type # module | feature | component | pattern
+  - status # in-development | production | deprecated
+  - created # ISO date (YYYY-MM-DD)
+  - last_updated # ISO date (YYYY-MM-DD)
+  - summary # Multi-line description (use | for literal block)
 
 # Optional but recommended fields
 optional_fields:
-  - responsibilities    # List of key responsibilities
-  - dependencies        # Internal and external dependencies
-  - files               # Primary and secondary file paths
-  - interfaces          # Exported functions/APIs (if applicable)
-  - evolution           # Version history with dates and changes
-  - related_specs       # Links to spec files
-  - notes               # Additional context or future considerations
+  - responsibilities # List of key responsibilities
+  - dependencies # Internal and external dependencies
+  - files # Primary and secondary file paths
+  - interfaces # Exported functions/APIs (if applicable)
+  - evolution # Version history with dates and changes
+  - related_specs # Links to spec files
+  - notes # Additional context or future considerations
 
 # Field descriptions and examples
 

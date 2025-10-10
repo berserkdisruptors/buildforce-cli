@@ -1,0 +1,163 @@
+# Plan Template for /build Agent Execution
+# This template is optimized for AI agent consumption during /build commands
+# It provides checkbox-based progress tracking, deviation logging, and spec traceability
+
+id: [FEATURE_NUM]-[feature-name]-plan
+name: "Implementation Plan for [Feature Name]"
+spec_id: "[FEATURE_NUM]-[feature-name]"
+type: implementation-plan
+status: draft
+created: "[YYYY-MM-DD]"
+last_updated: "[YYYY-MM-DD]"
+
+# ARCHITECTURE OVERVIEW
+# Describe the high-level implementation approach and key technical decisions.
+
+approach: |
+  [Describe the high-level approach to implementing this feature. What is the overall strategy?
+  How will the pieces fit together? What patterns or methodologies will be followed?]
+
+technology_stack:
+  - [Technology/library 1 and its purpose]
+  - [Technology/library 2 and its purpose]
+
+decisions:
+  - decision: "[Decision statement]"
+    rationale: "[Why this decision was made. What alternatives were considered?]"
+
+  - decision: "[Another decision]"
+    rationale: "[Rationale for this decision]"
+
+# FILE STRUCTURE
+# List all files to be created or modified during implementation
+
+files_to_create:
+  - [path/to/new/file.ext]
+  - [path/to/another/file.ext]
+
+files_to_modify:
+  - path: "[path/to/existing/file.ext]"
+    change_type: "[edit|rewrite|refactor]"
+    description: "[What changes will be made]"
+
+# IMPLEMENTATION PHASES
+# Break down the implementation into logical phases with checkbox-based task tracking
+# Use [ ] for pending tasks and [x] for completed tasks
+# Each task should link back to spec requirements via spec_refs
+
+phase_1:
+  name: "[Phase Name]"
+  description: |
+    [Describe what this phase accomplishes and why it comes first]
+
+  tasks:
+    - [ ] [Specific task description]
+      spec_refs: [FR1, FR2]
+      files: [path/to/file1.ext, path/to/file2.ext]
+      notes: ""
+
+    - [ ] [Another task]
+      spec_refs: [FR3]
+      files: [path/to/file3.ext]
+      notes: ""
+
+  validation:
+    - [ ] All phase_1 tasks completed
+    - [ ] Code compiles without errors
+    - [ ] Relevant tests pass
+    - [ ] Spec requirements covered: [FR1, FR2, FR3]
+
+phase_2:
+  name: "[Phase Name]"
+  description: |
+    [Describe what this phase accomplishes]
+
+  tasks:
+    - [ ] [Task description]
+      spec_refs: [FR4, NFR1]
+      files: [path/to/file4.ext]
+      notes: ""
+
+  validation:
+    - [ ] All phase_2 tasks completed
+    - [ ] Code compiles without errors
+    - [ ] Relevant tests pass
+    - [ ] Spec requirements covered: [FR4, NFR1]
+
+# DEVIATION LOG
+# The /build agent populates this section when implementation deviates from the original plan
+# Format: phase → task → original plan → actual implementation → reason for deviation
+
+deviations:
+  # Example format (remove when using):
+  # - phase: "phase_1"
+  #   task: "Create API endpoint"
+  #   original: "Use Express.js middleware"
+  #   actual: "Used Fastify plugin system"
+  #   reason: "Fastify provides better TypeScript support and performance for this use case"
+
+# TESTING GUIDANCE
+# Structured guidance for testing the implementation
+
+testing:
+  automated_tests:
+    - test_file: "[path/to/test.ts]"
+      what: "[What functionality to test]"
+      command: "[Test command to run]"
+
+  manual_tests:
+    - scenario: "[Test scenario description]"
+      steps: |
+        [Step-by-step instructions for manual testing]
+
+# VALIDATION CRITERIA
+# Define success metrics and track spec requirement coverage
+
+success_metrics:
+  - "[Measurable success criterion 1]"
+  - "[Measurable success criterion 2]"
+
+spec_coverage:
+  # Auto-track which spec requirements are implemented in which tasks
+  # Format: requirement_id: status + location
+  - FR1: "⏳ Phase 1: Task 1"
+  - FR2: "⏳ Phase 1: Task 1"
+  - FR3: "⏳ Phase 1: Task 2"
+  - FR4: "⏳ Phase 2: Task 1"
+  - NFR1: "⏳ Phase 2: Task 1"
+
+# PROGRESS SUMMARY
+# Track overall progress and identify next steps
+
+overall_progress:
+  phase_1: "0/2 tasks completed"
+  phase_2: "0/1 tasks completed"
+
+current_status: |
+  [Current implementation status and what has been completed so far.
+  The /build agent updates this after each task or phase completion.]
+
+next_immediate_steps:
+  - "[Next action to take]"
+  - "[Another next action]"
+
+# RISKS & CONSIDERATIONS
+# Document potential risks and mitigation strategies
+
+risks:
+  - risk: "[Potential risk or challenge]"
+    mitigation: "[How this risk will be addressed]"
+
+  - risk: "[Another risk]"
+    mitigation: "[Mitigation strategy]"
+
+# NOTES
+# Capture lessons learned and future enhancement ideas
+
+lessons_learned:
+  - "[Lesson or insight from planning/implementation]"
+  - "[Another lesson]"
+
+future_enhancements:
+  - "[Potential future improvement]"
+  - "[Another enhancement idea]"

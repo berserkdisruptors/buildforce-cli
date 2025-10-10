@@ -67,3 +67,23 @@ contexts:
         auto-detection,
         workflow-utility,
       ]
+
+  - id: 006-comprehensive-readme-documentation
+    file: 006-comprehensive-readme-documentation.yml
+    type: feature
+    tags:
+      [
+        documentation,
+        readme,
+        onboarding,
+        spec-driven-development,
+        philosophy,
+        installation,
+        quick-start,
+        workflow,
+        slash-commands,
+        troubleshooting,
+        contribution-guidelines,
+        roadmap,
+        changelog,
+      ]

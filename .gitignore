@@ -19,3 +19,4 @@ dist/
 inspiration/
 .buildforce/scripts
 .buildforce/.current-spec
+.claude/**

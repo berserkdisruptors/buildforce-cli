@@ -1,0 +1,206 @@
+id: 006-comprehensive-readme-documentation
+name: "Comprehensive README Documentation for BuildForce CLI"
+type: feature
+status: draft
+created: "2025-10-10"
+last_updated: "2025-10-10"
+
+summary: |
+  Update README.md with comprehensive documentation explaining what BuildForce CLI does,
+  how to use it, usage examples for developers, and contribution guidelines. The README
+  should serve as the primary entry point for developers discovering the project.
+
+# INTENT / PROBLEM STATEMENT
+
+problem: |
+  The current README.md contains only the project title "buildforce-cli" with no
+  explanatory content. This creates several issues:
+  - New developers cannot understand what the project does
+  - No installation or usage instructions are available
+  - No examples demonstrate the spec-driven development workflow
+  - No contribution guidelines exist to encourage community participation
+  - The project appears incomplete or abandoned to external visitors
+
+motivation: |
+  A comprehensive README is critical for:
+  - Onboarding new developers and contributors quickly
+  - Demonstrating the value proposition of spec-driven development
+  - Providing clear installation and usage instructions
+  - Showcasing the 5-command workflow with concrete examples
+  - Building community confidence and encouraging contributions
+  - Improving SEO and discoverability on GitHub and npm
+  - Serving as marketing material for the project
+
+# GOALS
+
+primary_goals:
+  - Explain what BuildForce CLI is and its core value proposition
+  - Document installation instructions for multiple platforms
+  - Provide usage examples for all slash commands (/research, /spec, /plan, /build, /complete, /document)
+  - Include contribution guidelines to encourage community participation
+  - Create a professional, welcoming first impression
+
+secondary_goals:
+  - Add badges for build status, npm version, license, etc.
+  - Include visual diagrams showing the spec-driven development workflow
+  - Link to detailed documentation or wiki if available
+  - Provide troubleshooting section for common issues
+  - Add examples of real-world use cases
+
+# REQUIREMENTS
+
+functional_requirements:
+  - FR1: Include conceptual definition and philosophy of Spec-Driven Development at the top
+  - FR2: Include project title, tagline, and value proposition in hero section
+  - FR3: Add badges for npm version, downloads, GitHub stars, license, and build status
+  - FR4: Document installation instructions (npm global install, npx usage, git clone)
+  - FR5: Provide quick start guide showing basic usage flow
+  - FR6: Document all CLI command options and flags
+  - FR7: Include examples for each of the 6 slash commands with expected outputs
+  - FR8: Document the spec-driven development workflow with visual diagram
+  - FR9: Link to https://buildforce.dev for detailed documentation
+  - FR10: Provide contribution guidelines (how to contribute, code standards, PR process)
+  - FR11: Reference Code of Conduct file (to be created) in contribution section
+  - FR12: Include changelog section or link to CHANGELOG.md
+  - FR13: Include roadmap or future plans section
+  - FR14: Include license information and link to LICENSE file
+  - FR15: Add links to GitHub repository, issues, and discussions
+  - FR16: Document supported AI assistants (Claude, Copilot, Gemini, etc.)
+  - FR17: Include troubleshooting section for common setup issues
+  - FR18: Add table of contents for easy navigation
+
+non_functional_requirements:
+  - NFR1: README must be readable on both GitHub and npm package page
+  - NFR2: Use clear, professional language suitable for technical audience
+  - NFR3: Examples should be copy-pasteable and working
+  - NFR4: Markdown formatting should follow GitHub-flavored markdown standards
+  - NFR5: Content should be maintainable (avoid hardcoded versions where possible)
+  - NFR6: Total length should be comprehensive but not overwhelming (aim for 800-1500 lines)
+
+# SCOPE
+
+in_scope:
+  - Complete rewrite of README.md content
+  - Conceptual definition and philosophy of Spec-Driven Development
+  - Documentation of all 6 slash commands with examples
+  - Installation instructions for multiple platforms
+  - Contribution guidelines section with Code of Conduct reference
+  - Visual workflow diagram (mermaid or ASCII)
+  - Badge additions (npm version, downloads, stars, license, build status)
+  - Changelog section or link to CHANGELOG.md
+  - Roadmap/future plans section
+  - Link to https://buildforce.dev documentation site
+  - Troubleshooting common issues
+  - Links to external resources
+
+out_of_scope:
+  - User testimonials or case studies (not available yet, future enhancement)
+  - Separate "Features" section (features explained through workflow documentation)
+  - Detailed API documentation (link to https://buildforce.dev)
+  - Complete command reference (link to https://buildforce.dev)
+  - Version migration guides (future enhancement)
+  - Video tutorials or screenshots (future enhancement)
+  - Internationalization (English only for now)
+  - Detailed architecture documentation (can reference context files)
+
+# DESIGN PRINCIPLES
+
+design_principles:
+  - "Developer-first: Write for developers who want to understand and use the tool quickly"
+  - "Example-driven: Show, don't just tell - include working examples"
+  - "Progressive disclosure: Start simple, allow deep dives via links"
+  - "Welcoming: Encourage contributions with clear, friendly guidelines"
+  - "Professional: Maintain credibility with well-structured, accurate content"
+  - "Scannable: Use headings, lists, and formatting to enable quick scanning"
+
+# ACCEPTANCE CRITERIA
+
+acceptance_criteria:
+  - AC1: README starts with conceptual definition and philosophy of Spec-Driven Development
+  - AC2: README contains clear explanation of what BuildForce CLI is and why developers should use it
+  - AC3: Badges are present and functional (npm version, downloads, stars, license, build status)
+  - AC4: Installation instructions work on macOS, Linux, and Windows
+  - AC5: Quick start example can be copy-pasted and successfully executed
+  - AC6: All 6 slash commands are documented with syntax and examples
+  - AC7: Workflow diagram accurately represents the research → spec → plan → build → complete → document flow
+  - AC8: Link to https://buildforce.dev is included for detailed documentation
+  - AC9: Contribution guidelines clearly explain how to contribute (issues, PRs, code standards)
+  - AC10: Code of Conduct reference is included in contribution section
+  - AC11: Changelog section or link to CHANGELOG.md is present
+  - AC12: Roadmap/future plans section is included
+  - AC13: README includes working links to repository, issues, license, and package page
+  - AC14: All 11 supported AI assistants are listed with their configuration folder names
+  - AC15: Troubleshooting section addresses at least 3 common setup issues
+  - AC16: README passes markdown linting (if linter is configured)
+  - AC17: Table of contents links correctly navigate to sections
+  - AC18: README length is between 800-1500 lines (comprehensive but not overwhelming)
+
+# ASSUMPTIONS & DEPENDENCIES
+
+assumptions:
+  - README.md is located at repository root
+  - Package is published to npm as @buildforce/cli
+  - GitHub repository is berserkdisruptors/buildforce-cli
+  - Documentation site is available at https://buildforce.dev
+  - License is MIT (as indicated in package.json)
+  - CI/CD pipeline exists for build status badge
+  - Users have Node.js 18+ installed (engine requirement from package.json)
+  - CHANGELOG.md exists or will be created alongside README
+  - CODE_OF_CONDUCT.md will be created (referenced but not implemented in this spec)
+
+dependencies:
+  internal:
+    - package.json: "Source of version, license, repository URL"
+    - src/config/agents.ts: "List of supported AI assistants"
+    - src/cli.ts: "CLI command structure and options"
+    - .buildforce/context/slash-commands.yml: "Documentation of slash command workflow"
+    - CHANGELOG.md: "Changelog content to reference or link"
+    - CODE_OF_CONDUCT.md: "Code of Conduct to reference (to be created separately)"
+  external:
+    - https://buildforce.dev: "Documentation site for detailed guides"
+    - shields.io: "Badge generation for npm, downloads, stars, etc."
+
+# OPEN QUESTIONS
+
+open_questions: []
+
+# NOTES
+
+notes: |
+  This README update is critical for the project's adoption and contribution rate.
+
+  User decisions incorporated:
+  1. ✅ Include badges (npm version, downloads, stars, license, build status)
+  2. ✅ Link to https://buildforce.dev for detailed documentation
+  3. ✅ Include changelog section or link to CHANGELOG.md
+  4. ❌ No user testimonials yet (future enhancement)
+  5. ❌ No separate "Features" section (features explained through workflow)
+  6. ✅ Reference Code of Conduct (to be created separately)
+  7. ✅ Include roadmap/future plans section
+  8. ✅ Add conceptual definition and philosophy at the top
+
+  Key sections to prioritize:
+  1. Conceptual definition and philosophy of Spec-Driven Development
+  2. Hero section with badges and value proposition
+  3. Quick start (minimal steps to first success)
+  4. Workflow explanation with diagram
+  5. Command reference with examples
+  6. Roadmap and future plans
+  7. Contribution guidelines with Code of Conduct reference
+  8. Changelog link
+
+  Recommended README structure:
+  - Above the fold: Philosophy/Concept, What, Why, Badges, Quick Start
+  - Middle section: How (workflow diagram, commands, examples)
+  - Bottom section: Roadmap, Contributing, Changelog, License, Links
+
+  Reference excellent CLI README examples:
+  - https://github.com/vercel/next.js (comprehensive)
+  - https://github.com/npm/cli (detailed commands)
+  - https://github.com/git/git (contribution focus)
+
+  The README should reflect the project's maturity (v0.0.1 but production-ready workflow).
+  Balance between "early stage, needs contributors" and "stable, usable tool".
+
+  Documentation site at https://buildforce.dev exists for detailed guides, so README
+  should focus on getting started quickly and linking out for deep dives.
