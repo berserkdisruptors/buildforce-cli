@@ -1,21 +1,22 @@
 id: slash-commands
 name: "Slash Commands System"
 type: module
-status: in-development
+status: production
 created: "2025-01-15"
-last_updated: "2025-01-15"
+last_updated: "2025-10-10"
 
 summary: |
   Spec-driven development workflow implemented via 5 slash commands.
-  Guides build agents through Research � Spec � Plan � Build � Complete lifecycle.
+  Guides build agents through Research → Spec → Plan → Build → Complete lifecycle.
   Commands are instruction templates that enhance user queries with workflow-specific context.
+  All commands now follow proven compact pattern with numbered guidelines and script-based discovery.
 
 responsibilities:
-  - Context gathering and project knowledge retrieval (RESEARCH - see research-slash-command.yml for details)
-  - Intent materialization into specifications (SPEC)
-  - Implementation planning and design decisions (PLAN)
-  - Guided implementation with progress tracking and deviation logging (BUILD - see build-slash-command.yml for details)
-  - Final validation and completion confirmation (COMPLETE)
+  - Context gathering and project knowledge retrieval (RESEARCH - see research-slash-command.yml for details, 27 lines)
+  - Intent materialization into specifications (SPEC - 97 lines)
+  - Implementation planning and design decisions (PLAN - see 004-iterate-plan-command.yml for details, 40 lines)
+  - Guided implementation with progress tracking and deviation logging (BUILD - see 002-build-command.yml for details, 32 lines)
+  - Final validation and completion confirmation (COMPLETE - 44 lines)
 
 dependencies:
   internal:
@@ -58,12 +59,17 @@ workflow:
     - command: "/plan"
       purpose: "Design implementation approach (HOW to build)"
       input: "Planning instructions/constraints (optional)"
-      output: "Implementation plan with architecture, design decisions, numbered steps, testing strategy"
+      output: "Implementation plan with architecture, design decisions, phases with tasks, testing strategy"
       key_features:
-        - "Requires prior /spec command"
-        - "Justifies all technology/library choices"
-        - "References specific file paths in steps"
-        - "Validates plan aligns with all spec requirements"
+        - "Executes `.buildforce/scripts/bash/get-spec-paths.sh --json` for SPEC_DIR discovery"
+        - "Loads spec.yaml into context (NEVER proceeds without it)"
+        - "Uses 7 numbered guidelines (Script Execution, Parse Instructions, Design Decisions, Generate Plan, Validate, Present, Request Approval)"
+        - "Generates plan.yaml with plan-template.yaml v1.0 structure (phases, tasks with checkboxes/spec_refs/files)"
+        - "Completely replaces plan.yaml on every run (no iteration tracking)"
+        - "Presents plan in fixed format with 6 sections (Architecture, Decisions, Files, Phases, Testing, Risks)"
+        - "Includes ALL task details in output (checkboxes, spec_refs, files) to prevent hallucination"
+        - "Asks user for approval/feedback before suggesting /build"
+        - "Supports iterative refinement via multiple /plan calls"
 
     - command: "/build"
       purpose: "Execute implementation following spec+plan"
@@ -103,14 +109,42 @@ evolution:
 
   - version: "1.1"
     date: "2025-10-08"
-    changes: "Completed BUILD command with 7 guidelines, script-based discovery, dual validation, testing guidance (29 lines, 75% reduction)"
+    changes: "Completed BUILD command with 7 guidelines, script-based discovery, dual validation, testing guidance (32 lines, 75% reduction)"
+
+  - version: "1.2"
+    date: "2025-10-09"
+    changes: "Enhanced PLAN template (plan-template.yaml v1.0) with checkbox tracking, spec_refs, deviation logging, validation checklists"
+
+  - version: "2.0"
+    date: "2025-10-10"
+    changes: "Completed PLAN command iteration with 7 guidelines, script-based discovery, fixed output format, complete plan.yaml replacement (40 lines, 74.5% reduction). All 5 commands now follow proven compact pattern."
 
 related_specs:
   - "001-slash-commands (initial system design)"
   - "002-build-command (BUILD command implementation)"
+  - "003-plan-template (enhanced plan template)"
+  - "004-iterate-plan-command (PLAN command implementation)"
 
 notes: |
   Inspired by @spec-kit workflow but simplified to 5 commands.
   Key innovation: .buildforce/context repository as primary knowledge source.
   RESEARCH command is foundationprovides context for all subsequent commands.
   Each command expects $ARGUMENTS (Claude Code compatible).
+
+  Compression achievements (v2.0):
+  - /research: 27 lines (68% reduction) - 7 guidelines ✅
+  - /spec: 97 lines (iterated with structured workflow) ✅
+  - /plan: 40 lines (74.5% reduction) - 7 guidelines ✅
+  - /build: 32 lines (75% reduction) - 7 guidelines ✅
+  - /complete: 44 lines (iterated with structured workflow) ✅
+
+  All commands following proven compact pattern:
+  - YAML frontmatter with script execution (where applicable)
+  - User input section with $ARGUMENTS
+  - Context explanation
+  - Numbered guidelines (RESEARCH/PLAN/BUILD use 7 guidelines)
+  - ALWAYS/NEVER bold emphasis for critical instructions
+  - No verbose HOW-TO explanations
+  - Context reference at bottom
+
+  System now production-ready with complete 5-command workflow compression.

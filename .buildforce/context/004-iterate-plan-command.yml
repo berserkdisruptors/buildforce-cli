@@ -1,0 +1,177 @@
+id: 004-iterate-plan-command
+name: "Iterate and Compress /plan Slash Command"
+type: feature
+status: completed
+created: 2025-10-10
+last_updated: 2025-10-10
+
+summary: |
+  Compressed and refined the /plan slash command from 157 lines to 40 lines (74.5% reduction),
+  completing the 5-command workflow compression initiative. Following the proven pattern from
+  /research (68% reduction) and /build (75% reduction), the command now uses 7 compact numbered
+  guidelines, integrates get-spec-paths.sh for script-based spec discovery, defines a fixed
+  output format structure for consistent plan presentation, and supports iterative plan refinement
+  with complete plan.yaml replacement on every run.
+
+responsibilities:
+  - Execute get-spec-paths.sh --json to discover SPEC_DIR and load spec.yaml into context
+  - Determine if this is first plan creation or subsequent iteration
+  - Parse user instructions from $ARGUMENTS and incorporate them into planning decisions
+  - Generate or update plan.yaml using enhanced plan-template.yaml v1.0 structure
+  - Populate all plan sections with phases, tasks (checkboxes, spec_refs, files), validation checklists
+  - Link tasks to spec requirements via spec_refs array for traceability
+  - Present plan to user in fixed format with all phase tasks in full detail
+  - Completely replace plan.yaml content on every run (no iteration tracking)
+  - Ask user for approval/feedback on design decisions before proceeding to /build
+
+dependencies:
+  internal:
+    - get-spec-paths.sh: "Script-based discovery of SPEC_DIR for loading spec.yaml and plan.yaml"
+    - plan-template.yaml: "Enhanced template v1.0 with checkbox tracking, spec_refs, deviation log structure"
+    - spec-template.yaml: "Source of spec requirements (FR*, NFR*, AC*) for traceability via spec_refs"
+    - /spec command: "Must be run before /plan to create spec.yaml"
+    - /build command: "Consumes plan.yaml output from /plan"
+  external: {}
+
+files:
+  primary:
+    - src/templates/commands/plan.md
+  secondary:
+    - .buildforce/specs/004-iterate-plan-command/spec.yaml
+    - .buildforce/specs/004-iterate-plan-command/plan.yaml
+
+design_decisions:
+  - decision: "Use 7 numbered guidelines instead of verbose execution steps + behavior rules"
+    rationale: "RESEARCH (7 guidelines) and BUILD (7 guidelines) proved this pattern works. Reduces verbosity while maintaining clarity. Inline integration of behavior rules eliminates redundancy."
+
+  - decision: "Execute get-spec-paths.sh --json for SPEC_DIR discovery"
+    rationale: "BUILD command pattern - provides reliable absolute paths. Avoids path resolution issues. Script verifies spec.yaml and plan.yaml exist before proceeding."
+
+  - decision: "Define fixed output format structure in template"
+    rationale: "User specified need for consistent table/list structure that agents can follow reliably. Fixed format ensures predictable, scannable output across all /plan executions with 6 sections: Architecture Overview, Design Decisions, File Structure, Implementation Phases, Testing Strategy, Risks & Considerations."
+
+  - decision: "Completely replace plan.yaml on every /plan run"
+    rationale: "User specified no iteration tracking to avoid polluting plan and confusing /build agent. Fresh replacement keeps plan clean and focused on current intent."
+
+  - decision: "Include all phase tasks in full detail in plan output"
+    rationale: "User specified maximum context needed to prevent agent hallucination during /build. Full task details (checkboxes, spec_refs, files) provide complete picture for informed user decisions."
+
+  - decision: "Ask user for approval/feedback after plan presentation"
+    rationale: "User is ultimate decision maker. Explicit approval step ensures user has opportunity to steer plan via subsequent /plan call before proceeding to /build."
+
+  - decision: "Target 40-60 lines (60-75% reduction)"
+    rationale: "/plan is slightly more complex than /research or /build due to planning content requirements. 40-60 lines balances compactness with necessary detail, matching proven pattern ratio. Achieved 40 lines (74.5% reduction)."
+
+implementation_highlights:
+  - "Template compressed from 157 to 40 lines (74.5% reduction)"
+  - "7 numbered guidelines following proven RESEARCH/BUILD pattern"
+  - "YAML frontmatter with get-spec-paths.sh script execution (cross-platform: sh and ps)"
+  - "User input section with $ARGUMENTS context explanation"
+  - "ALWAYS/NEVER bold emphasis for critical instructions"
+  - "Fixed output format structure defined with 6 sections"
+  - "Complete plan.yaml replacement on every run (no iteration tracking)"
+  - "All 10 functional requirements (FR1-FR10) implemented"
+  - "All 4 non-functional requirements (NFR1-NFR4) met"
+  - "All 11 acceptance criteria (AC1-AC11) satisfied"
+  - "No deviations from plan during implementation"
+
+key_guidelines:
+  - guideline: "Script Execution & Context Loading"
+    description: "Run get-spec-paths.sh from repo root. Parse JSON response to extract SPEC_DIR. Load spec.yaml into context. NEVER proceed without spec.yaml loaded. Check if plan.yaml exists and has content beyond template."
+
+  - guideline: "Parse User Instructions"
+    description: "Parse $ARGUMENTS for planning instructions or constraints. User instructions take priority—incorporate them when making design decisions and planning implementation."
+
+  - guideline: "Make Design Decisions"
+    description: "Address architecture approach, technology/library choices (justify each), design patterns, data/state management, and file organization. Consider existing codebase patterns and conventions."
+
+  - guideline: "Generate Implementation Plan"
+    description: "Populate plan.yaml using plan-template.yaml structure with phases, tasks (checkboxes, spec_refs, files), validation checklists, testing guidance, and risks. ALWAYS link tasks to spec requirements via spec_refs. Completely replace plan.yaml content on every /plan run."
+
+  - guideline: "Validate Plan Against Spec"
+    description: "Ensure every spec requirement (FR*, NFR*, AC*) is addressed by at least one task. Verify spec_coverage mapping is complete, no contradictions exist, and scope is realistic."
+
+  - guideline: "Present Plan to User"
+    description: "Use fixed output format structure with 6 sections. Include all phase tasks in full detail (checkboxes, spec_refs, files) to provide complete context and prevent hallucination during /build."
+
+  - guideline: "Request User Approval"
+    description: "After presenting plan, ask user for approval or feedback on design decisions. User is ultimate decision maker. Suggest running /build if approved, or refining plan via another /plan call if changes needed."
+
+fixed_output_format:
+  - section: "Architecture Overview"
+    format: "One concise paragraph describing high-level approach and how pieces fit together"
+
+  - section: "Design Decisions"
+    format: "Bulleted list with '**Decision**: X → **Rationale**: Y (alternatives considered)' structure"
+
+  - section: "File Structure"
+    format: "Two lists (files to create, files to modify with change descriptions)"
+
+  - section: "Implementation Phases"
+    format: "Numbered phases with task lists showing [ ] checkboxes, spec_refs arrays, files arrays for each task"
+
+  - section: "Testing Strategy"
+    format: "Automated tests (file, what, command) and manual tests (scenario, steps)"
+
+  - section: "Risks & Considerations"
+    format: "List of risks paired with mitigation strategies"
+
+compression_metrics:
+  original_lines: 157
+  new_lines: 40
+  reduction_lines: 117
+  reduction_percentage: 74.5
+  target_percentage: "60-75"
+  exceeded_target: true
+  comparison: "RESEARCH: 87→27 (68%), BUILD: 116→32 (75%), PLAN: 157→40 (74.5%)"
+
+evolution:
+  - version: "1.0"
+    date: "2025-10-10"
+    changes: |
+      Initial compressed implementation with 7 numbered guidelines, script-based discovery,
+      fixed output format structure, and complete plan.yaml replacement support.
+
+      Compression achievements:
+      - 74.5% reduction from 157 to 40 lines (exceeded 60-75% target)
+      - All 10 functional requirements implemented
+      - All 11 acceptance criteria met
+      - Follows proven RESEARCH/BUILD pattern
+      - No deviations from plan during implementation
+
+      User clarifications incorporated:
+      1. Fixed output format with consistent table/list structure
+      2. Simple Architecture Overview (one concise paragraph)
+      3. User approval required after plan presentation
+      4. No iteration tracking (complete plan.yaml replacement)
+      5. All phase tasks in full detail (prevent hallucination)
+
+related_specs:
+  - "001-slash-commands (initial system design)"
+  - "002-build-command (BUILD command compression pattern)"
+  - "003-plan-template (enhanced plan template used by /plan)"
+
+notes: |
+  This completes the 5-command workflow compression initiative. All slash commands now follow
+  the proven compact pattern:
+
+  - /research: 27 lines (68% reduction) - 7 guidelines ✅
+  - /spec: 97 lines (iterated) - structured workflow ✅
+  - /plan: 40 lines (74.5% reduction) - 7 guidelines ✅
+  - /build: 32 lines (75% reduction) - 7 guidelines ✅
+  - /complete: 44 lines (iterated) - structured workflow ✅
+
+  Key innovation: Fixed output format structure ensures consistent, scannable plan presentation
+  while maintaining completeness. All task details (checkboxes, spec_refs, files) included to
+  provide maximum context for /build agents and prevent hallucination.
+
+  The /plan command now balances three critical requirements:
+  1. Compactness (40 lines, 74.5% reduction)
+  2. Scannability (users can review quickly)
+  3. Completeness (all task details for informed decisions)
+
+  Future enhancements could include:
+  - Automatic line count verification in CI/CD to prevent template bloat
+  - Linter for slash command templates to ensure consistency across all 5 commands
+  - Template versioning system to track evolution over time
+  - Extract common patterns (script execution, user input, context reference) into reusable fragments

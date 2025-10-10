@@ -37,3 +37,18 @@ contexts:
         spec-traceability,
         workflow-enhancement,
       ]
+
+  - id: 004-iterate-plan-command
+    file: 004-iterate-plan-command.yml
+    type: feature
+    tags:
+      [
+        slash-command,
+        plan,
+        command-iteration,
+        compression,
+        workflow-enhancement,
+        script-execution,
+        fixed-output-format,
+        user-approval,
+      ]
