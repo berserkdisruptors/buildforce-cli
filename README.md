@@ -304,23 +304,21 @@ Buildforce implements a 5-command workflow for systematic software development. 
 ### Core Workflow Diagram
 
 ```mermaid
-graph LR
-    A[/research] --> B[/spec]
-    B --> C[/plan]
-    C --> D[/build]
-    D --> E[/complete]
-
-    F[/document] -.-> G[(Context<br/>Repository)]
-    A -.-> G
-    E -.-> G
-
-    style A fill:#e1f5ff
-    style B fill:#fff3cd
-    style C fill:#d1ecf1
-    style D fill:#d4edda
-    style E fill:#f8d7da
-    style F fill:#e2e3e5
-    style G fill:#f5f5f5
+graph LR;
+    A[/research] --> B[/spec];
+    B --> C[/plan];
+    C --> D[/build];
+    D --> E[/complete];
+    F[/document] -.-> G[(Context<br/>Repository)];
+    A -.-> G;
+    E -.-> G;
+    style A fill:#e1f5ff;
+    style B fill:#fff3cd;
+    style C fill:#d1ecf1;
+    style D fill:#d4edda;
+    style E fill:#f8d7da;
+    style F fill:#e2e3e5;
+    style G fill:#f5f5f5;
 ```
 
 **Legend:**
