@@ -1,15 +1,15 @@
 ---
 description: Build the code changes required for the current spec following the plan, with progress tracking, deviation logging, and iterative refinement.
 scripts:
-  sh: src/scripts/bash/get-spec-paths.sh --json "{ARGS}"
-  ps: src/scripts/powershell/get-spec-paths.ps1 -Json "{ARGS}"
+  sh: src/scripts/bash/get-spec-paths.sh --json
+  ps: src/scripts/powershell/get-spec-paths.ps1 -Json
 ---
 
 User input:
 
 $ARGUMENTS
 
-**Context**: The user is invoking `/build` to execute implementation. `{ARGS}` contains iteration-specific instructions or feedback.
+**Context**: The user is invoking `/build` to execute implementation. `($ARGUMENTS)` contains iteration-specific instructions or feedback.
 
 **Your task**: Implement the feature by following the spec and plan, tracking progress, logging deviations, validating against requirements, and providing testing guidance.
 

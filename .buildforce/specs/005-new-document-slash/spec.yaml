@@ -1,0 +1,171 @@
+id: 005-new-document-slash
+name: "/document Slash Command - Context File Creation Without Specs"
+type: feature
+status: draft
+created: "2025-10-10"
+last_updated: "2025-10-10"
+
+summary: |
+  New slash command that combines /research's context extraction capabilities with /complete's
+  context file creation workflow to document existing implemented functionality without requiring
+  a spec-driven development session.
+
+# INTENT / PROBLEM STATEMENT
+
+problem: |
+  Currently, the only way to create context files in .buildforce/context/ is through the
+  /complete command, which requires going through the full spec-driven workflow
+  (/spec → /plan → /build → /complete). This is unnecessarily heavy for documenting
+  functionality that already exists in the codebase but lacks documentation in the context
+  repository.
+
+  There's no direct way to:
+  - Document legacy features that were built before the context system existed
+  - Capture existing architectural patterns and design decisions
+  - Create context files for modules/components discovered during code exploration
+  - Build up the context repository without creating throwaway specs
+
+motivation: |
+  Enable developers to incrementally populate .buildforce/context/ with documentation of
+  existing functionality. This accelerates context repository growth and makes /research
+  more valuable over time by having richer accumulated knowledge to search.
+
+  The command should feel like "reverse engineering documentation" - analyze what exists,
+  understand it deeply (like /research), then formalize it into a context file (like /complete).
+
+# GOALS
+
+primary_goals:
+  - Create a /document command that generates context files for existing functionality
+  - Combine /research's exploration capabilities with /complete's context file creation
+  - Operate independently of the spec-driven workflow (no spec/plan/build required)
+  - Follow context schema structure from .buildforce/context/_schema.yml
+  - Update .buildforce/context/_index.yml automatically
+
+secondary_goals:
+  - Match the compact, guideline-based format of other slash commands
+  - Support iterative refinement (multiple /document calls for same context file)
+  - Identify and update related context files based on discovered dependencies
+  - Provide clear validation and confirmation flow
+
+# REQUIREMENTS
+
+functional_requirements:
+  - FR1: Command MUST assume topic/module information is already in context window (no codebase search required)
+  - FR2: Command MUST load .buildforce/context/_schema.yml to understand required structure
+  - FR3: Command MUST generate context file name as 2-3 word snake-case from topic (e.g., "authentication-module.yml", NO numeric prefix)
+  - FR4: Command MUST search _index.yml for ID conflicts before finalizing context file name; if conflict exists, choose alternative ID
+  - FR5: Command MUST auto-detect context type (module/feature/component/pattern) from topic analysis
+  - FR6: Command MUST generate/update a context YAML file following _schema.yml structure
+  - FR7: Command MUST populate ALL required schema fields (id, name, type, status, created, last_updated, summary)
+  - FR8: Command MUST populate optional fields where information is available from context window (responsibilities, dependencies, files, evolution)
+  - FR9: Command MUST automatically update .buildforce/context/_index.yml with new context entry (auto-generated tags)
+  - FR10: Command MUST detect related context files and automatically update them for cross-references
+  - FR11: Command MUST support both CREATE mode (new context file) and UPDATE mode (existing context file)
+  - FR12: When in UPDATE mode, MUST intelligently merge new information into existing context file (preserving existing content, mutating to new state)
+  - FR13: Command MUST present findings and request user confirmation before writing files
+
+non_functional_requirements:
+  - NFR1: Command template should be ~35-50 lines (matching other slash commands' compact format)
+  - NFR2: Use numbered guidelines (7-8 guidelines following proven pattern)
+  - NFR3: Use ALWAYS/NEVER bold emphasis for critical instructions
+  - NFR4: No verbose HOW-TO instructions (trust agent capabilities)
+  - NFR5: Must prevent placeholder text like "[Agent will populate]" in generated context files
+
+# SCOPE
+
+in_scope:
+  - Create src/templates/commands/document.md command template
+  - Define workflow for context extraction from context window (NOT codebase exploration)
+  - Implement context file name generation (2-3 word snake-case, NO numeric prefix)
+  - Implement ID conflict detection and resolution
+  - Implement auto-detection of context type (module/feature/component/pattern)
+  - Implement context file generation following _schema.yml
+  - Implement intelligent merging for UPDATE mode
+  - Implement _index.yml update logic with auto-generated tags
+  - Implement automatic related context file updates
+  - Support both CREATE and UPDATE modes
+  - Provide validation and user confirmation flow
+
+out_of_scope:
+  - Creating supporting bash/powershell scripts (command is template-only like /research)
+  - Codebase exploration/searching (assumes information already in context window)
+  - Automatic context file generation without user review
+  - Integration with /research command (standalone operation)
+  - User-provided type flags (auto-detect only)
+  - Dry-run mode (user reviews before confirming anyway)
+  - Integration with external documentation sources
+  - Batch processing multiple topics at once
+  - Version control or history tracking beyond the evolution field
+
+# DESIGN PRINCIPLES
+
+design_principles:
+  - "Research-first: Understand deeply before documenting"
+  - "Schema-compliant: All context files must follow _schema.yml structure"
+  - "No placeholders: Every field must have real content or be omitted"
+  - "User-validated: Always confirm before writing context files"
+  - "Incremental: Support iterative refinement of context documentation"
+
+# ACCEPTANCE CRITERIA
+
+acceptance_criteria:
+  - AC1: /document command template exists at src/templates/commands/document.md
+  - AC2: Command template is ≤50 lines with 7-8 numbered guidelines
+  - AC3: Can create new context files with 2-3 word snake-case names (NO numeric prefix)
+  - AC4: Can update existing context files with intelligent merging
+  - AC5: ID conflicts are detected and alternative IDs are chosen automatically
+  - AC6: Context type (module/feature/component/pattern) is auto-detected
+  - AC7: All generated context files follow _schema.yml structure
+  - AC8: Generated files contain no placeholder text like "[Agent will populate]"
+  - AC9: _index.yml is automatically updated with auto-generated tags
+  - AC10: Related context files are automatically updated when dependencies exist
+  - AC11: User confirmation is required before writing any files
+  - AC12: Command follows the compact, guideline-based format of other slash commands
+  - AC13: Command operates on information already in context window (no codebase search)
+
+# ASSUMPTIONS & DEPENDENCIES
+
+assumptions:
+  - Context schema (_schema.yml) exists and is stable
+  - Context index (_index.yml) exists and follows expected structure
+  - Information about topic/module is already loaded in context window
+  - User has prepared context window before running /document (e.g., via file reads, earlier conversation)
+  - Existing context files can be safely updated (no concurrent modifications)
+  - Agent can intelligently merge content regardless of who/what previously edited files
+
+dependencies:
+  internal:
+    - context-repository: "Reads _schema.yml, updates _index.yml, creates/updates context files"
+    - slash-commands: "Part of the 5-command workflow system (new 6th command)"
+  external: {}
+
+# OPEN QUESTIONS
+
+open_questions: []
+
+# NOTES
+
+notes: |
+  This command fills a critical gap in the workflow - currently there's no way to document
+  existing functionality without creating artificial specs. It's especially valuable for:
+  - Onboarding new projects with existing codebases
+  - Documenting legacy code gradually
+  - Capturing tribal knowledge about architecture decisions
+
+  The command should feel like a natural complement to /research: /research reads context,
+  /document writes context.
+
+  Positioned as standalone utility command, separate from core spec-driven development flow
+  (research → spec → plan → build → complete).
+
+  Design decisions clarified:
+  - Command name: /document (simple and clear)
+  - File naming: 2-3 word snake-case (e.g., "authentication-module.yml"), NO numeric prefix
+  - Type detection: Automatic (agent determines module/feature/component/pattern)
+  - Update strategy: Intelligent merge (current state → new state, regardless of previous editor)
+  - Related updates: Automatic (no per-file confirmation)
+  - ID conflicts: Auto-resolve (search _index.yml first, pick alternative if conflict)
+  - Dry-run: Not needed (user confirms before writing anyway)
+  - Tags: Auto-generated by agent
+  - Integration: Standalone (assumes context window is pre-loaded by user)

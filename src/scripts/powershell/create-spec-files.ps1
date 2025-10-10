@@ -1,5 +1,5 @@
 #!/usr/bin/env pwsh
-# Create a new spec folder and file, or return existing spec if matched
+# Create a new spec folder with spec.yaml and plan.yaml files, or return existing spec if matched
 [CmdletBinding()]
 param(
     [switch]$Json,
@@ -12,7 +12,7 @@ $ErrorActionPreference = 'Stop'
 . "$PSScriptRoot/common.ps1"
 
 if (-not $FeatureDescription -or $FeatureDescription.Count -eq 0) {
-    Write-Error "Usage: ./create-spec.ps1 [-Json] <feature description>"
+    Write-Error "Usage: ./create-spec-files.ps1 [-Json] <feature description>"
     exit 1
 }
 $featureDesc = ($FeatureDescription -join ' ').Trim()
@@ -67,15 +67,15 @@ $specsDir = Join-Path $repoRoot '.buildforce/specs'
 New-Item -ItemType Directory -Path $specsDir -Force | Out-Null
 
 # Check for session-tracked current spec from state file (Priority 1)
-$currentSpecFromFile = Get-CurrentSpec $repoRoot
+$currentSpec = Get-CurrentSpec $repoRoot
 
 # Check for existing spec folders that match the feature description
 $existingFolder = $null
 $highest = 0
 
-if ($currentSpecFromFile -and (Test-Path (Join-Path $specsDir $currentSpecFromFile))) {
+if ($currentSpec -and (Test-Path (Join-Path $specsDir $currentSpec))) {
     # Found active spec from state file - use it (highest priority)
-    $existingFolder = $currentSpecFromFile
+    $existingFolder = $currentSpec
 } elseif (Test-Path $specsDir) {
     # No active spec in state file, do fuzzy matching (Priority 2)
     Get-ChildItem -Path $specsDir -Directory | ForEach-Object {
@@ -118,12 +118,23 @@ if ($existingFolder) {
     $featureDir = Join-Path $specsDir $folderName
     New-Item -ItemType Directory -Path $featureDir -Force | Out-Null
 
-    $template = Join-Path $repoRoot 'src/templates/spec-template.yaml'
+    $specTemplate = Join-Path $repoRoot 'src/templates/spec-template.yaml'
     $specFile = Join-Path $featureDir 'spec.yaml'
-    if (Test-Path $template) {
-        Copy-Item $template $specFile
+    if (Test-Path $specTemplate) {
+        Copy-Item $specTemplate $specFile
     } else {
         New-Item -ItemType File -Path $specFile -Force | Out-Null
+    }
+}
+
+# Create or locate plan.yaml file
+$planFile = Join-Path $featureDir 'plan.yaml'
+if (-not (Test-Path $planFile)) {
+    $planTemplate = Join-Path $repoRoot 'src/templates/plan-template.yaml'
+    if (Test-Path $planTemplate) {
+        Copy-Item $planTemplate $planFile
+    } else {
+        New-Item -ItemType File -Path $planFile -Force | Out-Null
     }
 }
 
@@ -137,6 +148,7 @@ if ($Json) {
     @{
         FOLDER_NAME = $folderName
         SPEC_FILE = $specFile
+        PLAN_FILE = $planFile
         SPEC_DIR = $featureDir
         FEATURE_NUM = $featureNum
         IS_UPDATE = $isUpdate
@@ -144,6 +156,7 @@ if ($Json) {
 } else {
     Write-Host "FOLDER_NAME: $folderName"
     Write-Host "SPEC_FILE: $specFile"
+    Write-Host "PLAN_FILE: $planFile"
     Write-Host "SPEC_DIR: $featureDir"
     Write-Host "FEATURE_NUM: $featureNum"
     Write-Host "IS_UPDATE: $isUpdate"

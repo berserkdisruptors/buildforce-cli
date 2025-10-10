@@ -1,8 +1,8 @@
 ---
 description: Create or update a structured specification YAML file that captures WHAT needs to be built.
 scripts:
-  sh: src/scripts/bash/create-spec.sh --json "{ARGS}"
-  ps: src/scripts/powershell/create-spec.ps1 -Json "{ARGS}"
+  sh: src/scripts/bash/create-spec-files.sh --json "{ARGS}"
+  ps: src/scripts/powershell/create-spec-files.ps1 -Json "{ARGS}"
 ---
 
 The user input to you can be provided directly by the agent or as a command argument - you **MUST** consider it before proceeding with the prompt (if not empty).
@@ -15,14 +15,14 @@ The text the user typed after `/spec` in the triggering message **is** the featu
 
 ## Workflow Steps
 
-1. **Determine create vs update mode**: Follow the pattern in `templates/shared/create-update-pattern.md`
+1. **Determine create vs update mode**: Read and follow the pattern described in `templates/shared/create-update-pattern.md` from repo root.
 
    - Priority 1: Check conversation history for existing spec
    - Priority 2: Run `{SCRIPT}` and parse JSON output for FOLDER_NAME, SPEC_FILE, SPEC_DIR, FEATURE_NUM, and IS_UPDATE flag
 
 2. **For CREATE mode (IS_UPDATE = false)**:
 
-   - Load `src/templates/spec-template.yaml` to understand structure and fields
+   - Load `templates/spec-template.yaml` from repo root to understand structure and fields
    - Populate all sections based on placeholder text, YAML comments, and field names
    - For metadata: Use standard conventions (id = "FEATURE_NUM-folder-name", status = "draft", dates = today YYYY-MM-DD)
    - For content: Derive from feature description and prerequisite context

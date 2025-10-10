@@ -22,3 +22,48 @@ contexts:
         workflow-enhancement,
         script-execution,
       ]
+
+  - id: 003-plan-template
+    file: 003-plan-template.yml
+    type: feature
+    tags:
+      [
+        template,
+        plan-template,
+        build-agent,
+        progress-tracking,
+        checkbox-tracking,
+        deviation-logging,
+        spec-traceability,
+        workflow-enhancement,
+      ]
+
+  - id: 004-iterate-plan-command
+    file: 004-iterate-plan-command.yml
+    type: feature
+    tags:
+      [
+        slash-command,
+        plan,
+        command-iteration,
+        compression,
+        workflow-enhancement,
+        script-execution,
+        fixed-output-format,
+        user-approval,
+      ]
+
+  - id: 005-new-document-slash
+    file: 005-new-document-slash.yml
+    type: feature
+    tags:
+      [
+        slash-command,
+        document,
+        context-creation,
+        template-only,
+        snake-case-naming,
+        intelligent-merge,
+        auto-detection,
+        workflow-utility,
+      ]

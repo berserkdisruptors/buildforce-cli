@@ -1,156 +1,40 @@
 ---
 description: Design the implementation approach (HOW) based on the specification, including architecture, patterns, libraries, and step-by-step execution plan.
+scripts:
+  sh: src/scripts/bash/get-spec-paths.sh --json
+  ps: src/scripts/powershell/get-spec-paths.ps1 -Json
 ---
-
-The user input to you can be provided directly by the agent or as a command argument - you **MUST** consider it before proceeding with the prompt (if not empty).
 
 User input:
 
 $ARGUMENTS
 
-The text the user typed after `/plan` in the triggering message **is** planning instructions or constraints they want you to consider. Assume you always have it available in this conversation. If they provided an empty command, proceed with standard planning.
+**Context**: The user is invoking `/plan` to design implementation approach. `($ARGUMENTS)` contains optional planning instructions or constraints.
 
-Goal: Design a comprehensive implementation plan that defines HOW to build what's specified in the spec, including architecture decisions, design patterns, libraries, file structure, and a numbered sequence of implementation steps.
+**Your task**: Create a comprehensive implementation plan that defines HOW to build what's specified in the spec, completely replacing plan.yaml on every run.
 
-Prerequisites:
+**Key guidelines**:
 
-- A specification MUST exist from a prior `/spec` command in this conversation.
-- If no spec exists, instruct the user to run `/spec` first.
+1. **Script Execution & Context Loading**: Run `{SCRIPT}` from repo root. Parse JSON response to extract **SPEC_DIR**. Load {SPEC_DIR}/spec.yaml into context. **NEVER proceed** without spec.yaml loaded. Check if {SPEC_DIR}/plan.yaml exists and has content beyond template to determine if this is first plan or iteration.
 
-Execution steps:
+2. **Parse User Instructions**: Parse $ARGUMENTS for planning instructions or constraints. User instructions take priority—incorporate them when making design decisions and planning implementation.
 
-1. **Load Specification**: Retrieve the specification created in this conversation (from the `/spec` command).
+3. **Make Design Decisions**: Address architecture approach, technology/library choices (justify each), design patterns, data/state management, and file organization. Consider existing codebase patterns and conventions.
 
-   - If no spec is found, STOP and instruct: "No specification found. Please run `/spec` first to define what needs to be built."
-   - Parse the spec to understand requirements, scope, constraints, and dependencies.
+4. **Generate Implementation Plan**: Populate {SPEC_DIR}/plan.yaml using plan-template.yaml structure with phases, tasks (checkboxes, spec_refs, files), validation checklists, testing guidance, and risks. **ALWAYS link tasks to spec requirements via spec_refs**. Completely replace plan.yaml content on every /plan run (no iteration tracking).
 
-2. **Analyze Planning Context**:
+5. **Validate Plan Against Spec**: Ensure every spec requirement (FR*, NFR*, AC*) is addressed by at least one task. Verify spec_coverage mapping is complete, no contradictions exist, and scope is realistic.
 
-   - Consider any planning instructions provided by the user ($ARGUMENTS).
-   - Review any prior `/research` findings in this conversation for technical context.
-   - Identify architectural constraints (existing patterns, tech stack, conventions).
-   - Understand the current codebase structure and where changes will be made.
+6. **Present Plan to User**: Use fixed output format structure below. Include **all phase tasks in full detail** (checkboxes, spec_refs, files) to provide complete context and prevent hallucination during /build.
 
-3. **Make Design Decisions**: Address the following areas systematically:
+   **Format**:
+   - **Architecture Overview**: One concise paragraph describing high-level approach and how pieces fit together
+   - **Design Decisions**: Bulleted list with "**Decision**: X → **Rationale**: Y (alternatives considered)" structure
+   - **File Structure**: Two lists (files to create, files to modify with change descriptions)
+   - **Implementation Phases**: Numbered phases with task lists showing `[ ]` checkboxes, spec_refs arrays, files arrays for each task
+   - **Testing Strategy**: Automated tests (file, what, command) and manual tests (scenario, steps)
+   - **Risks & Considerations**: List of risks paired with mitigation strategies
 
-   **Architecture & Approach**:
-
-   - High-level architectural pattern (e.g., layered, modular, event-driven)
-   - Where this change fits in the existing system
-   - New components or modifications to existing components
-
-   **Technology Choices**:
-
-   - Libraries, frameworks, or tools to use (justify each choice)
-   - APIs or external services to integrate
-   - Design patterns to apply (e.g., Factory, Strategy, Observer)
-
-   **Data & State Management**:
-
-   - How data will be structured and stored
-   - State management approach
-   - Data flow and transformations
-
-   **File & Code Organization**:
-
-   - New files to create (with paths)
-   - Existing files to modify (with paths)
-   - Folder structure changes (if any)
-
-   **Testing Strategy**:
-
-   - What types of tests are needed (unit, integration, e2e)
-   - Key test scenarios based on spec requirements
-   - How to validate edge cases and error handling
-
-4. **Generate Implementation Plan**: Create a numbered, sequential plan with the following structure:
-
-   ## Implementation Plan
-
-   ### Architecture Overview
-
-   - High-level description of the solution approach
-   - Component diagram or textual representation of how pieces fit together
-
-   ### Design Decisions
-
-   - **Library/Tool**: [Name] - [Rationale for choosing it]
-   - **Pattern**: [Pattern Name] - [Why it fits this problem]
-   - **Approach**: [High-level strategy] - [Why this is the best approach]
-
-   ### File Structure
-
-   ```
-   path/to/new/file.ts (new)
-   path/to/existing/file.ts (modify)
-   ```
-
-   ### Implementation Steps
-
-   1. [Setup/preparation step] - [What and why]
-   2. [Foundation/core step] - [What and why]
-   3. [Integration step] - [What and why]
-   4. [Testing step] - [What and why]
-   5. [Polish/validation step] - [What and why]
-
-   Each step should:
-
-   - Be specific and actionable
-   - Reference file paths where work will be done
-   - Explain WHY this step is necessary
-   - Indicate dependencies on previous steps
-   - Be ordered to minimize rework (e.g., models before services, tests before implementation if TDD)
-
-   ### Testing Plan
-
-   - Test files to create or modify
-   - Key test scenarios from the spec
-   - Coverage expectations
-
-   ### Risk & Considerations
-
-   - Potential challenges or unknowns
-   - Tradeoffs made in the design
-   - Areas that may need iteration
-
-5. **Validate Plan Alignment**:
-
-   - Ensure every requirement in the spec is addressed by at least one implementation step.
-   - Check that the plan respects all constraints and dependencies from the spec.
-   - Verify the plan is realistic and doesn't introduce unnecessary complexity.
-   - Confirm the plan follows existing codebase conventions and patterns.
-
-6. **Present Plan to User**:
-
-   - Display the complete implementation plan.
-   - Highlight key design decisions and rationale.
-   - Ask: "Does this plan align with how you would approach the implementation? Are there any changes, alternative approaches, or specific preferences you have?"
-
-7. **Iterate if Needed**:
-
-   - If the user requests changes (e.g., "use library Y instead of X", "split step 3 into smaller steps"), update the plan accordingly.
-   - Track iterations and ensure the plan converges.
-   - If the user suggests a change that affects the spec, flag it and ask if the spec should be updated.
-
-8. **Save Plan** (optional for future persistence):
-
-   - If the workflow includes saving artifacts, store the plan in a designated location (e.g., `.buildforce/plans/feature-name.md`).
-   - Provide the file path to the user for reference.
-
-9. **Suggest Next Steps**:
-   - If the plan is approved, suggest: "Ready to build? Run `/build` to start the implementation."
-   - If there are unresolved questions or decisions, suggest resolving them before building.
-
-Behavior rules:
-
-- NEVER proceed without a specificationalways check for a prior `/spec` command.
-- NEVER make arbitrary design decisionsjustify every choice with reasoning.
-- NEVER create overly complex plansfavor simplicity and incrementality.
-- ALWAYS ensure implementation steps are ordered logically (foundational work first).
-- ALWAYS reference specific file paths in the plan for clarity.
-- If the user's planning instructions ($ARGUMENTS) conflict with the spec, ask for clarification.
-- If multiple approaches are viable, present options and ask the user to choose.
-- Keep the plan actionableavoid vague steps like "implement feature X" (break it down).
-- Respect the **incremental change** philosophythe plan should match the focused scope of the spec.
+7. **Request User Approval**: After presenting plan, ask user for approval or feedback on design decisions. User is ultimate decision maker. Suggest running `/build` if approved, or refining plan via another `/plan` call if changes needed.
 
 Context: {$ARGUMENTS}
