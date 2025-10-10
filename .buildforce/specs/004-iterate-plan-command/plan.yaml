@@ -71,26 +71,26 @@ phase_1:
     This establishes the foundation for spec/plan discovery and context loading.
 
   tasks:
-    - [ ] Update YAML frontmatter with description and scripts section for get-spec-paths.sh
+    - [x] Update YAML frontmatter with description and scripts section for get-spec-paths.sh
       spec_refs: [FR1, AC3]
       files: [src/templates/commands/plan.md]
       notes: "Follow build.md pattern - include scripts.sh and scripts.ps for cross-platform support"
 
-    - [ ] Add user input section with $ARGUMENTS context explanation
+    - [x] Add user input section with $ARGUMENTS context explanation
       spec_refs: [FR3, AC5]
       files: [src/templates/commands/plan.md]
       notes: "Explain that $ARGUMENTS contains optional planning instructions/constraints from user"
 
-    - [ ] Add context explanation stating this is /plan command invocation
+    - [x] Add context explanation stating this is /plan command invocation
       spec_refs: [FR3]
       files: [src/templates/commands/plan.md]
       notes: "Brief 1-2 line context about command purpose and task"
 
   validation:
-    - [ ] All phase_1 tasks completed
-    - [ ] Header follows build.md and research.md pattern
-    - [ ] Script execution section present with {SCRIPT} placeholder
-    - [ ] Spec requirements covered: [FR1, FR3, AC3, AC5]
+    - [x] All phase_1 tasks completed
+    - [x] Header follows build.md and research.md pattern
+    - [x] Script execution section present with {SCRIPT} placeholder
+    - [x] Spec requirements covered: [FR1, FR3, AC3, AC5]
 
 phase_2:
   name: "Define 7-9 Numbered Guidelines"
@@ -100,48 +100,48 @@ phase_2:
     instructions. Remove HOW-TO explanations and code examples.
 
   tasks:
-    - [ ] Guideline 1: Script Execution & Context Loading (execute get-spec-paths.sh, parse SPEC_DIR, load spec.yaml and plan.yaml)
+    - [x] Guideline 1: Script Execution & Context Loading (execute get-spec-paths.sh, parse SPEC_DIR, load spec.yaml and plan.yaml)
       spec_refs: [FR1, FR2, AC3, AC4]
       files: [src/templates/commands/plan.md]
       notes: "NEVER proceed without spec.yaml loaded. Check if plan.yaml has content beyond template to determine first vs subsequent iteration."
 
-    - [ ] Guideline 2: Parse User Instructions (parse $ARGUMENTS for planning instructions/constraints and incorporate them)
+    - [x] Guideline 2: Parse User Instructions (parse $ARGUMENTS for planning instructions/constraints and incorporate them)
       spec_refs: [FR3, AC5]
       files: [src/templates/commands/plan.md]
       notes: "User instructions take priority - merge with spec requirements when planning"
 
-    - [ ] Guideline 3: Make Design Decisions (architecture approach, technology choices, design patterns, data/state management)
+    - [x] Guideline 3: Make Design Decisions (architecture approach, technology choices, design patterns, data/state management)
       spec_refs: [FR5, FR6, AC9]
       files: [src/templates/commands/plan.md]
       notes: "Justify all technology/library choices. Consider existing codebase patterns."
 
-    - [ ] Guideline 4: Generate Implementation Plan (populate plan.yaml with phases, tasks with checkboxes/spec_refs/files, validation checklists)
+    - [x] Guideline 4: Generate Implementation Plan (populate plan.yaml with phases, tasks with checkboxes/spec_refs/files, validation checklists)
       spec_refs: [FR4, FR5, FR6, AC9]
       files: [src/templates/commands/plan.md]
       notes: "Use plan-template.yaml v1.0 structure. ALWAYS link tasks to spec requirements via spec_refs. Completely replace plan.yaml content."
 
-    - [ ] Guideline 5: Validate Plan Against Spec (ensure every spec requirement addressed, no contradictions, realistic scope)
+    - [x] Guideline 5: Validate Plan Against Spec (ensure every spec requirement addressed, no contradictions, realistic scope)
       spec_refs: [FR5, FR6, AC9]
       files: [src/templates/commands/plan.md]
       notes: "Cross-check all FR*, NFR*, AC* from spec. Verify spec_coverage mapping complete."
 
-    - [ ] Guideline 6: Present Plan to User (use fixed output format structure with all phase tasks in full detail)
+    - [x] Guideline 6: Present Plan to User (use fixed output format structure with all phase tasks in full detail)
       spec_refs: [FR7, FR10, AC6, AC7, AC11]
       files: [src/templates/commands/plan.md]
       notes: "Fixed format: Architecture Overview (paragraph), Design Decisions (list), File Structure (list), Implementation Phases (numbered tasks with checkboxes/spec_refs/files), Testing Strategy (list), Risks (list). Include ALL task details."
 
-    - [ ] Guideline 7: Request User Approval (ask for approval/feedback on design decisions, suggest /build or refinement via /plan)
+    - [x] Guideline 7: Request User Approval (ask for approval/feedback on design decisions, suggest /build or refinement via /plan)
       spec_refs: [FR9, AC10]
       files: [src/templates/commands/plan.md]
       notes: "User is ultimate decision maker. Wait for approval before suggesting /build. Invite steering via another /plan call if needed."
 
   validation:
-    - [ ] All phase_2 tasks completed
-    - [ ] Exactly 7 guidelines defined (compact, clear, actionable)
-    - [ ] ALWAYS/NEVER emphasis used for critical instructions
-    - [ ] No verbose HOW-TO explanations or code examples
-    - [ ] Behavior rules integrated inline with guidelines
-    - [ ] Spec requirements covered: [FR1, FR2, FR3, FR4, FR5, FR6, FR7, FR9, FR10, AC3, AC4, AC5, AC6, AC7, AC9, AC10, AC11]
+    - [x] All phase_2 tasks completed
+    - [x] Exactly 7 guidelines defined (compact, clear, actionable)
+    - [x] ALWAYS/NEVER emphasis used for critical instructions
+    - [x] No verbose HOW-TO explanations or code examples
+    - [x] Behavior rules integrated inline with guidelines
+    - [x] Spec requirements covered: [FR1, FR2, FR3, FR4, FR5, FR6, FR7, FR9, FR10, AC3, AC4, AC5, AC6, AC7, AC9, AC10, AC11]
 
 phase_3:
   name: "Define Fixed Output Format Structure"
@@ -150,43 +150,43 @@ phase_3:
     to users. This ensures consistency, scannability, and completeness across all /plan executions.
 
   tasks:
-    - [ ] Define Architecture Overview output format (one concise paragraph describing high-level approach and how pieces fit together)
+    - [x] Define Architecture Overview output format (one concise paragraph describing high-level approach and how pieces fit together)
       spec_refs: [FR7, AC6]
       files: [src/templates/commands/plan.md]
       notes: "Keep simple - one paragraph is enough for users to understand approach"
 
-    - [ ] Define Design Decisions output format (bulleted list with Decision → Rationale structure)
+    - [x] Define Design Decisions output format (bulleted list with Decision → Rationale structure)
       spec_refs: [FR7, AC6]
       files: [src/templates/commands/plan.md]
       notes: "Each decision should include what was chosen and why (alternatives considered)"
 
-    - [ ] Define File Structure output format (two lists: files to create, files to modify with change descriptions)
+    - [x] Define File Structure output format (two lists: files to create, files to modify with change descriptions)
       spec_refs: [FR7, AC6]
       files: [src/templates/commands/plan.md]
       notes: "Clear separation between new files and modifications to existing files"
 
-    - [ ] Define Implementation Phases output format (phases with numbered task lists including checkboxes, spec_refs, files for each task)
+    - [x] Define Implementation Phases output format (phases with numbered task lists including checkboxes, spec_refs, files for each task)
       spec_refs: [FR7, FR10, AC6, AC11]
       files: [src/templates/commands/plan.md]
       notes: "Show ALL tasks in full detail (not summaries). Include checkboxes, spec_refs array, files array. Critical for preventing hallucination during /build."
 
-    - [ ] Define Testing Strategy output format (two sections: automated tests with file/what/command, manual tests with scenario/steps)
+    - [x] Define Testing Strategy output format (two sections: automated tests with file/what/command, manual tests with scenario/steps)
       spec_refs: [FR7, AC6]
       files: [src/templates/commands/plan.md]
       notes: "Based on plan-template.yaml testing section structure"
 
-    - [ ] Define Risks & Considerations output format (list of risks with mitigation strategies)
+    - [x] Define Risks & Considerations output format (list of risks with mitigation strategies)
       spec_refs: [FR7, AC6]
       files: [src/templates/commands/plan.md]
       notes: "Each risk paired with mitigation approach"
 
   validation:
-    - [ ] All phase_3 tasks completed
-    - [ ] Fixed output format structure defined with specific sections
-    - [ ] Format emphasizes scannability (concise prose, bullets, tables)
-    - [ ] Format maintains completeness (all task details included)
-    - [ ] Format uses consistent table/list structures agents can follow
-    - [ ] Spec requirements covered: [FR7, FR10, AC6, AC7, AC11]
+    - [x] All phase_3 tasks completed
+    - [x] Fixed output format structure defined with specific sections
+    - [x] Format emphasizes scannability (concise prose, bullets, tables)
+    - [x] Format maintains completeness (all task details included)
+    - [x] Format uses consistent table/list structures agents can follow
+    - [x] Spec requirements covered: [FR7, FR10, AC6, AC7, AC11]
 
 phase_4:
   name: "Add Iteration Support & Final Polish"
@@ -195,38 +195,38 @@ phase_4:
     Add final touches like context reference at bottom. Verify line count meets 40-60 target.
 
   tasks:
-    - [ ] Add instruction to completely replace plan.yaml on every /plan run (no iteration tracking, no diffs)
+    - [x] Add instruction to completely replace plan.yaml on every /plan run (no iteration tracking, no diffs)
       spec_refs: [FR8, AC8]
       files: [src/templates/commands/plan.md]
       notes: "Make clear: fresh replacement, not append/merge. Prevents pollution and confusion during /build."
 
-    - [ ] Add context reference at bottom (Context: {$ARGUMENTS})
+    - [x] Add context reference at bottom (Context: {$ARGUMENTS})
       spec_refs: [FR3]
       files: [src/templates/commands/plan.md]
       notes: "Follow build.md pattern for consistency"
 
-    - [ ] Remove all verbose execution step explanations and code block examples
+    - [x] Remove all verbose execution step explanations and code block examples
       spec_refs: [NFR2, AC2]
       files: [src/templates/commands/plan.md]
       notes: "Trust agents understand planning. Keep only essential workflow guidance."
 
-    - [ ] Verify line count is 40-60 lines (60-75% reduction from 157 lines)
+    - [x] Verify line count is 40-60 lines (60-75% reduction from 157 lines)
       spec_refs: [NFR1, AC1]
       files: [src/templates/commands/plan.md]
       notes: "Count lines excluding blank lines and comments. Adjust if needed to hit target."
 
-    - [ ] Verify all 10 functional requirements and 11 acceptance criteria covered
+    - [x] Verify all 10 functional requirements and 11 acceptance criteria covered
       spec_refs: [FR1, FR2, FR3, FR4, FR5, FR6, FR7, FR8, FR9, FR10, AC1, AC2, AC3, AC4, AC5, AC6, AC7, AC8, AC9, AC10, AC11]
       files: [src/templates/commands/plan.md]
       notes: "Cross-check against spec.yaml to ensure nothing missed"
 
   validation:
-    - [ ] All phase_4 tasks completed
-    - [ ] Template is 40-60 lines (60-75% reduction achieved)
-    - [ ] Iteration support clear (complete replacement, no tracking)
-    - [ ] All verbose content removed
-    - [ ] Template follows RESEARCH/BUILD proven pattern
-    - [ ] Spec requirements covered: [FR3, FR8, NFR1, NFR2, AC1, AC2, AC8]
+    - [x] All phase_4 tasks completed
+    - [x] Template is 40-60 lines (60-75% reduction achieved)
+    - [x] Iteration support clear (complete replacement, no tracking)
+    - [x] All verbose content removed
+    - [x] Template follows RESEARCH/BUILD proven pattern
+    - [x] Spec requirements covered: [FR3, FR8, NFR1, NFR2, AC1, AC2, AC8]
 
 # DEVIATION LOG
 # The /build agent populates this section when implementation deviates from the original plan
@@ -294,50 +294,50 @@ success_metrics:
 
 spec_coverage:
   # Functional Requirements
-  - FR1: "⏳ Phase 1: Task 1 (script execution), Phase 2: Task 1 (guideline 1)"
-  - FR2: "⏳ Phase 2: Task 1 (guideline 1 - check plan.yaml content)"
-  - FR3: "⏳ Phase 1: Task 2-3 (user input section), Phase 2: Task 2 (guideline 2), Phase 4: Task 2"
-  - FR4: "⏳ Phase 2: Task 4 (guideline 4 - generate plan)"
-  - FR5: "⏳ Phase 2: Task 3-5 (guidelines 3-5 - design decisions, plan population, validation)"
-  - FR6: "⏳ Phase 2: Task 4-5 (guidelines 4-5 - spec_refs linking, validation)"
-  - FR7: "⏳ Phase 2: Task 6 (guideline 6 - present plan), Phase 3: All tasks (output format)"
-  - FR8: "⏳ Phase 4: Task 1 (complete replacement instruction)"
-  - FR9: "⏳ Phase 2: Task 7 (guideline 7 - request approval)"
-  - FR10: "⏳ Phase 2: Task 6 (guideline 6 - full task details), Phase 3: Task 4 (phases output format)"
+  - FR1: "✅ Phase 1: Task 1 (script execution), Phase 2: Task 1 (guideline 1)"
+  - FR2: "✅ Phase 2: Task 1 (guideline 1 - check plan.yaml content)"
+  - FR3: "✅ Phase 1: Task 2-3 (user input section), Phase 2: Task 2 (guideline 2), Phase 4: Task 2"
+  - FR4: "✅ Phase 2: Task 4 (guideline 4 - generate plan)"
+  - FR5: "✅ Phase 2: Task 3-5 (guidelines 3-5 - design decisions, plan population, validation)"
+  - FR6: "✅ Phase 2: Task 4-5 (guidelines 4-5 - spec_refs linking, validation)"
+  - FR7: "✅ Phase 2: Task 6 (guideline 6 - present plan), Phase 3: All tasks (output format)"
+  - FR8: "✅ Phase 4: Task 1 (complete replacement instruction)"
+  - FR9: "✅ Phase 2: Task 7 (guideline 7 - request approval)"
+  - FR10: "✅ Phase 2: Task 6 (guideline 6 - full task details), Phase 3: Task 4 (phases output format)"
 
   # Non-Functional Requirements
-  - NFR1: "⏳ Phase 4: Task 4 (verify line count 40-60)"
-  - NFR2: "⏳ Phase 2: All tasks (7 numbered guidelines), Phase 4: Task 3 (remove verbose content)"
-  - NFR3: "⏳ Phase 3: All tasks (scannable output format with concise sections)"
-  - NFR4: "⏳ Phase 2: Task 4 (plan-template.yaml v1.0 structure)"
+  - NFR1: "✅ Phase 4: Task 4 (verify line count 40-60) - ACHIEVED: 40 lines (74.5% reduction)"
+  - NFR2: "✅ Phase 2: All tasks (7 numbered guidelines), Phase 4: Task 3 (remove verbose content)"
+  - NFR3: "✅ Phase 3: All tasks (scannable output format with concise sections)"
+  - NFR4: "✅ Phase 2: Task 4 (plan-template.yaml v1.0 structure)"
 
   # Acceptance Criteria
-  - AC1: "⏳ Phase 4: Task 4 (40-60 lines target)"
-  - AC2: "⏳ Phase 2: All tasks (7 guidelines), Phase 4: Task 3"
-  - AC3: "⏳ Phase 1: Task 1 (script execution setup)"
-  - AC4: "⏳ Phase 2: Task 1 (guideline 1 - load spec/plan)"
-  - AC5: "⏳ Phase 1: Task 2 (user input), Phase 2: Task 2 (guideline 2)"
-  - AC6: "⏳ Phase 3: All tasks (fixed output format structure)"
-  - AC7: "⏳ Phase 3: All tasks (scannable with completeness)"
-  - AC8: "⏳ Phase 4: Task 1 (complete replacement)"
-  - AC9: "⏳ Phase 2: Task 4 (plan-template.yaml v1.0)"
-  - AC10: "⏳ Phase 2: Task 7 (guideline 7 - ask approval)"
-  - AC11: "⏳ Phase 2: Task 6, Phase 3: Task 4 (full task details)"
+  - AC1: "✅ Phase 4: Task 4 (40-60 lines target) - ACHIEVED: 40 lines"
+  - AC2: "✅ Phase 2: All tasks (7 guidelines), Phase 4: Task 3"
+  - AC3: "✅ Phase 1: Task 1 (script execution setup)"
+  - AC4: "✅ Phase 2: Task 1 (guideline 1 - load spec/plan)"
+  - AC5: "✅ Phase 1: Task 2 (user input), Phase 2: Task 2 (guideline 2)"
+  - AC6: "✅ Phase 3: All tasks (fixed output format structure)"
+  - AC7: "✅ Phase 3: All tasks (scannable with completeness)"
+  - AC8: "✅ Phase 4: Task 1 (complete replacement)"
+  - AC9: "✅ Phase 2: Task 4 (plan-template.yaml v1.0)"
+  - AC10: "✅ Phase 2: Task 7 (guideline 7 - ask approval)"
+  - AC11: "✅ Phase 2: Task 6, Phase 3: Task 4 (full task details)"
 
 # PROGRESS SUMMARY
 # Track overall progress and identify next steps
 
 overall_progress:
-  phase_1: "0/3 tasks completed"
-  phase_2: "0/7 tasks completed"
-  phase_3: "0/6 tasks completed"
-  phase_4: "0/5 tasks completed"
+  phase_1: "3/3 tasks completed"
+  phase_2: "7/7 tasks completed"
+  phase_3: "6/6 tasks completed"
+  phase_4: "5/5 tasks completed"
 
 current_status: |
-  Plan created. Ready for /build implementation.
-  All requirements mapped to implementation tasks.
-  Fixed output format structure defined.
-  Target: 40-60 lines (60-75% reduction from 157 lines).
+  ✅ Implementation complete! Template compressed from 157 to 40 lines (74.5% reduction).
+  All 10 functional requirements implemented.
+  All 11 acceptance criteria met.
+  7 numbered guidelines defined following proven RESEARCH/BUILD pattern.
 
 next_immediate_steps:
   - "Run /build to implement the compressed plan.md template"
