@@ -1,4 +1,4 @@
-id: 005-new-document-slash
+id: document-command
 name: "/document Slash Command - Context File Creation Without Specs"
 type: feature
 status: production
@@ -77,8 +77,8 @@ evolution:
     changes: "Initial implementation with 7 guidelines, 29 lines, template-only approach. Supports CREATE/UPDATE modes, auto-detection, ID conflict resolution, intelligent merge, related context updates."
 
 related_specs:
-  - "005-new-document-slash (spec.yaml)"
-  - "005-new-document-slash-plan (plan.yaml)"
+  - "20250105120000-new-document-slash (spec.yaml)"
+  - "20250105120000-new-document-slash-plan (plan.yaml)"
 
 notes: |
   This command fills a critical gap in the workflow—currently there's no way to document existing
