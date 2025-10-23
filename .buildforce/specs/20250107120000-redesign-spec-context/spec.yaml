@@ -1,0 +1,233 @@
+id: 20250122145030-redesign-naming
+name: "Redesign Spec and Context File Naming with Timestamp-Based Uniqueness"
+type: feature
+status: ready-for-planning
+created: 2025-01-22
+last_updated: 2025-01-22
+
+summary: |
+  Replace sequential numeric prefixes (001-, 002-, etc.) in spec folder names with timestamp-based
+  prefixes for true uniqueness in multi-developer environments. Delegate spec folder naming to the
+  AI agent via new script parameter. Decouple context file naming from spec files entirely, using
+  agent-generated semantic names based on component/feature/module identity rather than spec intent.
+
+# INTENT / PROBLEM STATEMENT
+
+problem: |
+  Current naming system has critical flaws:
+
+  1. **Spec Files - Collision Risk**: Sequential numbering (001-, 002-, 003-) causes conflicts when
+     multiple developers work simultaneously. Developer A creates 003-auth while Developer B creates
+     003-payments, leading to duplicate prefixes and merge conflicts.
+
+  2. **Spec Files - Scale Limitation**: Three-digit format (000-999) caps maximum specs at 1000,
+     insufficient for large/long-lived projects.
+
+  3. **Context Files - Wrong Abstraction**: Context filenames inherit from spec folder names
+     (007-auth-feature.yml), but specs capture *change intent* while contexts document *system
+     components*. One spec may update multiple contexts; one context may be updated by many specs.
+
+  4. **Context Files - Numeric Pollution**: Timestamp/sequential prefixes in context filenames
+     (002-build-command.yml) reduce discoverability, harm IDE autocomplete, and contradict documented
+     design principle requiring snake-case names without prefixes.
+
+motivation: |
+  This redesign enables:
+
+  - **True Uniqueness**: Timestamp prefixes (20250122143052-) are collision-resistant across
+    distributed teams and unlimited in scale
+
+  - **Team Scalability**: Multiple developers can create specs concurrently without coordination
+    or merge conflicts on folder names
+
+  - **Semantic Context**: Context files named by component identity (authentication.yml,
+    build-command.yml) improve searchability and align with living documentation purpose
+
+  - **Agent Intelligence**: AI agents generate meaningful, conflict-free names based on intent
+    analysis rather than mechanical incrementing
+
+  - **Architectural Clarity**: Specs and contexts serve different purposes; their naming should
+    reflect this separation
+
+# GOALS
+
+primary_goals:
+  - Replace sequential spec numbering with timestamp-based prefixes for collision-free uniqueness
+  - Delegate spec folder name generation to AI agent via new script parameter
+  - Decouple context filenames from spec IDs, using agent-generated semantic names
+  - Support unlimited spec creation without numeric ceiling (>999)
+
+secondary_goals:
+  - Break from legacy 00X- naming convention (no backward compatibility needed)
+  - Improve context file discoverability through semantic naming
+  - Document new naming conventions clearly
+
+# REQUIREMENTS
+
+functional_requirements:
+  - FR1: Spec creation scripts (create-spec-files.sh/ps1) accept new optional --folder-name parameter for agent-generated folder names
+  - FR2: Agent-generated folder names ALWAYS include timestamp prefix (YYYYMMDDHHmmss-semantic-slug) for guaranteed uniqueness
+  - FR3: /spec command template instructs agent to generate short semantic slug from intent summary (3-5 words, kebab-case, max 35 chars)
+  - FR4: Agent prepends UTC timestamp to semantic slug before passing to script via --folder-name parameter
+  - FR5: Timestamp generation uses UTC with second-level precision (format: YYYYMMDDHHmmss)
+  - FR6: Script validates folder name format: timestamp matches ^\d{14}-, total length ≤50 chars, valid filesystem characters only
+  - FR7: Complete-spec scripts (complete-spec.sh/ps1) generate context filenames independently from spec IDs (no timestamp prefix)
+  - FR8: /complete command template instructs agent to analyze conversation history, spec.yaml, and plan.yaml to generate semantic context filenames
+  - FR9: /complete agent searches existing context files in .buildforce/context/ and updates existing files rather than creating duplicates
+  - FR10: /complete agent creates new context files only when existing files are too large (>500 lines) and need decomposition
+  - FR11: /complete agent can generate multiple context filenames when spec touches multiple distinct components
+  - FR12: Fuzzy matching removed entirely from create-spec-files scripts (no automatic reuse of existing specs)
+  - FR13: State file (.buildforce/.current-spec) tracks spec folder names with timestamp prefix format
+  - FR14: Spec template's id field populated with full folder name including timestamp prefix
+  - FR15: Context filenames limited to 50 characters, kebab-case, no prefixes, valid filesystem characters only
+
+non_functional_requirements:
+  - NFR1: Timestamp-based folder names remain human-readable for navigation and git history
+  - NFR2: Agent-generated semantic slugs are deterministic within single conversation (same intent → same slug)
+  - NFR3: Script changes maintain cross-platform compatibility (bash and PowerShell)
+  - NFR4: Performance impact negligible (<50ms overhead for name generation and validation)
+  - NFR5: Breaking change acceptable - existing 00X- specs will not be supported going forward
+
+# SCOPE
+
+in_scope:
+  - Modify create-spec-files.sh/ps1 to accept --folder-name parameter with timestamp-slug format
+  - Remove sequential numbering logic and highest-number detection from scripts
+  - Remove fuzzy matching logic from create-spec-files scripts entirely
+  - Update /spec command template to generate semantic slug + prepend timestamp
+  - Update /complete command template to instruct agent to read .buildforce/context/_index.yml and determine context file updates/creation
+  - Update spec-template.yaml placeholder from [FEATURE_NUM]-[feature-name] to [FOLDER_NAME]
+  - Add validation for folder names: timestamp format, length limits, character restrictions
+  - Add validation for context names: length limits (≤50 chars), character restrictions, no prefixes
+  - Rename existing 00X- spec folders to timestamp format maintaining chronological order
+  - Update id fields in renamed spec.yaml files to match new folder names
+  - Update references to old spec IDs in context files' related_specs sections
+  - Update documentation for new naming conventions
+
+out_of_scope:
+  - Migration scripts for external projects using Buildforce CLI
+  - Support for old 00X- naming format in new installations
+  - Changes to plan.yaml naming (stays in spec folder, inherits folder name)
+  - Git history rewriting for old spec folders
+  - Custom timestamp formats or timezone overrides (UTC standard only)
+  - Spec folder name editing after creation (immutable by design)
+  - Automatic context file splitting when >500 lines detected (manual decomposition)
+
+# DESIGN PRINCIPLES
+
+design_principles:
+  - "Uniqueness First: Names must guarantee collision-free creation in distributed teams"
+  - "Agent Autonomy: Delegate naming decisions to AI agents with domain understanding"
+  - "Semantic Over Sequential: Context names reflect component identity, not creation order"
+  - "Human Readable: Technical prefixes (timestamps) remain parsable by developers"
+  - "Clean Break: No backward compatibility - new convention starts fresh"
+  - "Single Responsibility: Specs track changes, contexts document components"
+  - "Update Over Create: Existing context files updated rather than duplicated"
+
+# ACCEPTANCE CRITERIA
+
+acceptance_criteria:
+  - AC1: Two developers creating specs simultaneously generate unique folder names without coordination
+  - AC2: /spec command with "Add authentication" generates semantic slug "add-auth-jwt", prepends timestamp, passes "20250122143052-add-auth-jwt" to script
+  - AC3: create-spec-files.sh --folder-name "20250122143052-add-auth-jwt" creates .buildforce/specs/20250122143052-add-auth-jwt/
+  - AC4: Spec folder names validate format: 14-digit timestamp, hyphen, semantic slug, total ≤50 chars, alphanumeric+hyphens only
+  - AC5: Attempting to create spec without --folder-name parameter results in error (no fallback generation in script)
+  - AC6: /complete for authentication spec analyzes conversation/spec/plan and generates context filename "authentication.yml" (no prefix)
+  - AC7: /complete detecting existing authentication.yml updates that file rather than creating duplicate
+  - AC8: /complete when authentication.yml exceeds 500 lines creates new decomposed files (e.g., "auth-middleware.yml", "auth-config.yml")
+  - AC9: /complete for spec touching multiple components (auth, error-handling, config) updates multiple context files
+  - AC10: Spec created with timestamp prefix has id field set to full folder name (20250122143052-redesign-naming)
+  - AC11: Context filenames validate: ≤50 chars, kebab-case, alphanumeric+hyphens only, no numeric/timestamp prefixes
+  - AC12: Projects can exceed 1000 specs without naming conflicts or numbering ceiling
+  - AC13: Fuzzy matching and sequential numbering completely removed from create-spec-files scripts
+  - AC14: Documentation clearly explains timestamp-slug format for specs and semantic naming for contexts
+
+# ASSUMPTIONS & DEPENDENCIES
+
+assumptions:
+  - AI agents can generate semantically meaningful 3-5 word names from intent summaries
+  - UTC timestamps provide sufficient uniqueness (second-level precision, collision window <1s)
+  - Users understand timestamp prefixes in file browsers (20250122143052- format)
+  - Filesystem supports long folder names (timestamp + slug can exceed 50 characters)
+  - Git handles timestamp-based folder names without performance issues
+
+dependencies:
+  internal:
+    - create-spec-files: "Scripts must parse new --folder-name parameter and validate format"
+    - complete-spec: "Scripts must decouple context naming from spec ID field"
+    - spec-template: "Template id field must accept dynamic values (timestamp or agent name)"
+    - spec.md: "Command template must instruct agent to generate folder names"
+    - complete.md: "Command template must instruct agent to generate context names"
+  external:
+    - bash: "date command for UTC timestamp generation (date -u +%Y%m%d%H%M%S)"
+    - powershell: "Get-Date cmdlet for UTC timestamp ([DateTime]::UtcNow.ToString('yyyyMMddHHmmss'))"
+
+# DESIGN DECISIONS (from open questions)
+
+design_decisions:
+  - decision: "Agent-generated folder names ALWAYS include timestamp prefix"
+    rationale: "Guarantees uniqueness without collision detection logic. Format: YYYYMMDDHHmmss-semantic-slug"
+
+  - decision: "No collision detection needed for spec folder names"
+    rationale: "Timestamp prefix makes collisions mathematically improbable (would require same-second creation)"
+
+  - decision: "/complete generates multiple context filenames when detecting multi-component changes"
+    rationale: "One spec may update multiple contexts. Agent identifies all affected components and updates corresponding files."
+
+  - decision: "Timestamp uses second-level precision (not milliseconds)"
+    rationale: "Spec creation is human-initiated. Same-second collisions unlikely. Keeps format readable."
+
+  - decision: "No migration support for existing 00X- specs"
+    rationale: "Project has no external users yet. Clean break acceptable. Internal specs will be updated manually."
+
+  - decision: "Fuzzy matching removed entirely"
+    rationale: "No use case for automatic spec reuse. Each /spec invocation creates new folder. User can manually check existing specs if needed."
+
+  - decision: "Context naming analyzes conversation, spec.yaml, and plan.yaml"
+    rationale: "Comprehensive analysis ensures context names reflect actual component identity, not just file paths modified."
+
+  - decision: "Maximum folder name length: 50 characters (15 for timestamp, 35 for semantic slug)"
+    rationale: "Prevents filesystem issues in deeply nested paths. Timestamp consumes 15 chars (14 digits + hyphen)."
+
+# NOTES
+
+notes: |
+  BREAKING CHANGE: This is an intentional breaking change. Existing 00X- prefixed specs will not be
+  supported in new system. Internal specs in this repository will be manually updated or removed as
+  part of implementation. External users don't exist yet, so no migration burden.
+
+  Timestamp format: YYYYMMDDHHmmss provides human-readable chronological sorting while maintaining
+  uniqueness. UTC avoids timezone conflicts in distributed teams. Second-level precision sufficient
+  for human-initiated spec creation (same-second collisions require two developers to invoke /spec
+  in identical UTC second - mathematically improbable).
+
+  Agent naming strategy: The /spec command will analyze user intent, extract key concepts, and
+  generate a 3-5 word kebab-case semantic slug (max 35 characters). For example, "Add JWT
+  authentication with refresh tokens" becomes "add-auth-jwt-refresh". Agent prepends current UTC
+  timestamp to create final folder name: "20250122143052-add-auth-jwt-refresh".
+
+  Context file independence: A single spec (e.g., "Refactor authentication module") may update
+  multiple context files (authentication.yml, error-handling.yml, config-management.yml). Conversely,
+  authentication.yml may be updated by many specs over time. This many-to-many relationship requires
+  independent naming decoupled from spec IDs.
+
+  Context file size threshold: When existing context file exceeds 500 lines, /complete agent should
+  suggest decomposition into smaller, focused context files. This is advisory only - agent doesn't
+  automatically split files. User can manually decompose large contexts during /complete confirmation.
+
+  Implementation phases:
+  1. Remove sequential numbering and fuzzy matching from create-spec-files scripts
+  2. Add --folder-name parameter support with validation (timestamp format, length, characters)
+  3. Update /spec template to generate semantic slug, prepend timestamp, pass to script
+  4. Update /complete template to instruct agent to read .buildforce/context/_index.yml, analyze conversation/spec/plan, determine which context files to update/create and if decomposition needed
+  5. Update spec-template.yaml placeholder from [FEATURE_NUM]-[feature-name] to [FOLDER_NAME] for clarity
+  6. Rename existing 00X- spec folders to timestamp format (001→20250101120000-, 002→20250102120000-, etc.) maintaining chronological order
+  7. Update id field in renamed spec.yaml files to match new folder names (001-something → 20250101120000-something)
+  8. Update references to old spec IDs in existing context files' related_specs sections
+  9. Update documentation with examples and rationale
+  10. Test end-to-end workflow with new naming conventions
+  11. Deploy and announce breaking change
+
+  Validation rules:
+  - Spec folder names: Must match ^\d{14}-[a-z0-9-]+$, total length ≤50, semantic slug ≤35 chars
+  - Context filenames: Must match ^[a-z0-9-]+\.yml$, total length ≤50 chars, no numeric prefixes

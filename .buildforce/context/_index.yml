@@ -10,8 +10,8 @@ contexts:
     type: feature
     tags: [core, workflow, research, context-gathering]
 
-  - id: 002-build-command
-    file: 002-build-command.yml
+  - id: build-command
+    file: build-command.yml
     type: feature
     tags:
       [
@@ -23,8 +23,8 @@ contexts:
         script-execution,
       ]
 
-  - id: 003-plan-template
-    file: 003-plan-template.yml
+  - id: plan-template
+    file: plan-template.yml
     type: feature
     tags:
       [
@@ -38,8 +38,8 @@ contexts:
         workflow-enhancement,
       ]
 
-  - id: 004-iterate-plan-command
-    file: 004-iterate-plan-command.yml
+  - id: iterate-plan-command
+    file: iterate-plan-command.yml
     type: feature
     tags:
       [
@@ -53,8 +53,8 @@ contexts:
         user-approval,
       ]
 
-  - id: 005-new-document-slash
-    file: 005-new-document-slash.yml
+  - id: document-command
+    file: document-command.yml
     type: feature
     tags:
       [
@@ -68,8 +68,8 @@ contexts:
         workflow-utility,
       ]
 
-  - id: 006-comprehensive-readme-documentation
-    file: 006-comprehensive-readme-documentation.yml
+  - id: readme-documentation
+    file: readme-documentation.yml
     type: feature
     tags:
       [

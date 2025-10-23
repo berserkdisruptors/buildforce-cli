@@ -1,4 +1,4 @@
-id: 002-build-command
+id: build-command
 name: "Iterate and Complete /build Slash Command"
 type: feature
 status: completed
@@ -146,8 +146,8 @@ evolution:
     changes: "Compressed to 29 lines with 7 guidelines, script-based discovery, dual validation, testing guidance. 75% reduction achieved."
 
 related_specs:
-  - "002-build-command"
-  - "001-slash-commands (context for 5-command workflow)"
+  - "20250102120000-build-command"
+  - "20250101120000-slash-commands (context for 5-command workflow)"
 
 notes: |
   Compact instruction template (29 lines) that enhances build agent execution without teaching HOW.

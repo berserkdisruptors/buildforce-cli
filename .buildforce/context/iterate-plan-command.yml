@@ -1,4 +1,4 @@
-id: 004-iterate-plan-command
+id: iterate-plan-command
 name: "Iterate and Compress /plan Slash Command"
 type: feature
 status: completed
@@ -147,9 +147,9 @@ evolution:
       5. All phase tasks in full detail (prevent hallucination)
 
 related_specs:
-  - "001-slash-commands (initial system design)"
-  - "002-build-command (BUILD command compression pattern)"
-  - "003-plan-template (enhanced plan template used by /plan)"
+  - "20250101120000-slash-commands (initial system design)"
+  - "20250102120000-build-command (BUILD command compression pattern)"
+  - "20250103120000-plan-template (enhanced plan template used by /plan)"
 
 notes: |
   This completes the 5-command workflow compression initiative. All slash commands now follow
