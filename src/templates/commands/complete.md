@@ -1,8 +1,5 @@
 ---
 description: Finalize the current spec by creating context files, updating the context repository, and clearing the spec state.
-scripts:
-  sh: src/scripts/bash/complete-spec.sh --json
-  ps: src/scripts/powershell/complete-spec.ps1 -Json
 ---
 
 User input:
@@ -11,48 +8,169 @@ $ARGUMENTS
 
 **Context**: The user is invoking `/complete` to finalize the current spec. ($ARGUMENTS) contains optional completion notes or confirmations.
 
-**Your task**: Complete the spec by creating comprehensive context files, updating the context repository, and validating that all requirements have been met.
+**Your task**: Complete the spec by creating comprehensive context files, updating the context repository, validating that all requirements have been met, and clearing the spec state.
 
-**Key guidelines**:
+## Workflow Steps
 
-1. **Script Execution & Verification**: Run `{SCRIPT}` from repo root. Parse JSON response to extract SPEC_DIR, SPEC_ID, CONTEXT_FILE, ARTIFACTS, and RELATED_CONTEXTS. **NEVER proceed** if script failsuser must run /spec first.
+1. **Verify Active Spec**:
 
-2. **Artifact Analysis**: Read ALL files listed in ARTIFACTS array from the script output. Do not assume only spec.yml and plan.yml existthe script discovers all files dynamically. Understand what was specified, planned, and implemented.
+   Check if there's an active spec to complete:
 
-3. **Conversation Analysis**: Review the current conversation to extract key design decisions, implementation changes, deviations from the original plan, and any important context not captured in the artifact files.
+   - Read `.buildforce/.current-spec` file from repo root
+   - If file doesn't exist or is empty: **ERROR** - Reply that there is no active spec and user must run `/spec` first
+   - If file has content (folder name): **PROCEED** - Extract folder name and continue
 
-4. **Context File Naming Strategy**: **CRITICAL** - Context files use semantic naming decoupled from spec IDs.
+2. **Load Spec Artifacts**:
 
-   - **Read existing context files**: Load `.buildforce/context/_index.yml` to see all existing context files
-   - **Analyze components touched**: Review conversation history, spec.yaml, and plan.yaml to identify which system components/features/modules were actually modified
-   - **Determine update vs create**:
-     - If an existing context file covers the same component → UPDATE that file (do not create duplicate)
+   Load the spec and plan files from the active spec folder:
+
+   - Construct spec directory path: `.buildforce/specs/{folder-name}/` where folder-name comes from `.current-spec`
+   - Read `spec.yml` from spec directory
+   - Read `plan.yml` from spec directory if it exists
+   - Parse key metadata: spec id, name, requirements, dependencies, files modified
+   - Understand what was specified, planned, and implemented
+
+3. **Analyze Context Requirements**:
+
+   Do a proactive search to determine which context files need updates or creation:
+
+   - **Read `.buildforce/context/_index.yml`** to see all existing context files
+   - **Analyze spec and plan** to identify which system components/features/modules were actually modified
+   - **Review conversation history** to extract key design decisions, implementation changes, and deviations
+   - **Determine update vs create** for each component:
+     - If existing context file covers the same component → **UPDATE** that file (do not create duplicate)
      - If existing file is >500 lines → Consider decomposing into smaller focused files
-     - Only CREATE new file if this represents a new component not yet documented
-   - **Generate semantic filename** (for new files only):
-     - Use component/feature/module identity, NOT spec intent
-     - Format: kebab-case, max 50 characters, no numeric or timestamp prefixes
-     - Examples: `authentication.yml`, `build-command.yml`, `error-handling.yml`
-     - Validate: lowercase alphanumeric and hyphens only
-   - **Multiple components**: One spec may touch multiple contexts → update multiple files
+     - If this represents new component not yet documented → **CREATE** new file
+   - **Multiple components**: One spec may touch multiple contexts → update/create multiple files
 
-5. **Context File Generation**: The script created a template context file at CONTEXT_FILE. Load this file and populate ALL sections based on:
+4. **Generate Context Filenames** (for new files only):
 
-   - Schema structure from `.buildforce/context/_schema.yml` (dynamically loaded by script)
-   - Information from spec artifacts (requirements, dependencies, files modified)
-   - Conversation insights (design decisions, rationale, evolution)
-     **CRITICAL**: Use schema as reference for structure, but populate with actual project information. Do NOT leave placeholder text like "[Agent will populate]"fill in real content.
+   **CRITICAL** - Context files use semantic naming decoupled from spec IDs.
 
-6. **Index Update**: Verify that `.buildforce/context/_index.yml` has been updated with the new context entry. Check that the id, file, type, and tags are correct. Suggest tag improvements if the automatically generated tags are too generic.
+   - Use component/feature/module identity, NOT spec intent
+   - Format: kebab-case, max 50 characters, no numeric or timestamp prefixes
+   - Examples: `authentication.yml`, `build-command.yml`, `error-handling.yml`, `plan-template.yml`
+   - Validate: lowercase alphanumeric and hyphens only
+   - **Check for ID conflicts**: Search `_index.yml` to ensure generated ID doesn't already exist
+   - If conflict exists: Choose alternative ID (append descriptor, use synonym)
 
-7. **Related Context Updates**: If RELATED_CONTEXTS array is not empty, read each related context file and determine if it needs updates based on the current spec's changes. Update files where dependencies or cross-references should be added. Preserve existing content while adding new relationships.
+5. **Create/Update Context Files**:
 
-8. **Validation & Confirmation**: Present a completion report with:
-   - Spec ID and name
-   - Context file created
-   - Summary of what was captured from artifacts and conversation
-   - Related contexts updated (if any)
+   **For NEW context files**:
+
+   - Load `.buildforce/context/_schema.yml` to understand required structure and fields
+   - Create new file at `.buildforce/context/{generated-filename}.yml`
+   - Populate ALL schema sections with actual context from the current spec session
+   - **NEVER leave placeholder text** like "[Agent will populate]" - fill in real content
+
+   **For EXISTING context files**:
+
+   - Read current content from `.buildforce/context/{filename}.yml`
+   - Preserve all existing values (id, created date, version history)
+   - Update `last_updated` to today's date
+   - Intelligently merge new information:
+     - Add new dependencies if discovered
+     - Append to `files` sections if new files were modified
+     - Add new entry to `evolution` section with version bump, date, and changes
+     - Append current spec ID to `related_specs` array
+     - Update `design_decisions` if new decisions were made
+     - Append to `notes` if additional context exists
+   - Do NOT duplicate existing content or contradict existing information
+
+6. **Update Context Index**:
+
+   Update `.buildforce/context/_index.yml` with new entries:
+
+   - For each NEW context file created, add entry:
+     ```yaml
+     - id: {semantic-id}
+       file: {filename}.yml
+       type: {module/feature/component/pattern}
+       tags: [{auto-generated-tags}]
+     ```
+   - Generate tags based on component analysis (e.g., [core, workflow, agents] for slash-commands)
+   - Maintain proper YAML indentation (2 spaces per level)
+   - Preserve existing entries (do not modify or delete)
+   - For EXISTING context files, no index update needed (entry already exists)
+
+7. **Validate Implementation**:
+
+   Confirm that all spec requirements were met:
+
+   - Cross-check implementation against spec's functional requirements (FR1, FR2, ...)
+   - Verify non-functional requirements were addressed (NFR1, NFR2, ...)
+   - Confirm acceptance criteria were satisfied (AC1, AC2, ...)
+   - Check that plan was followed or deviations were logged
+   - If requirements are missing or incomplete: **ALERT USER** before finalizing
+
+8. **Clear Spec State**:
+
+   Mark the spec as complete:
+
+   - Delete `.buildforce/.current-spec` file from repo root
+   - This signals that no active spec is in progress
+
+9. **Present Completion Summary**:
+
+   Provide a concise report to the user:
+
+   - Spec ID and name that was completed
+   - List of context files created (if any) with filenames
+   - List of context files updated (if any) with what was added
    - Confirmation that all spec requirements were implemented
-     **ALWAYS** request user confirmation before finalizing. If user approves, the spec state is already cleared by the script. If issues found, suggest fixes before clearing state.
+   - Brief summary of what was achieved with this spec (1-2 sentences)
+   - **ALWAYS request user confirmation** that the completion is satisfactory
 
-Context: {$ARGUMENTS}
+## Behavior Rules
+
+- Focus on comprehensive documentation - capture all design decisions and rationale
+- Use semantic naming that reflects component identity, not spec intent
+- Update existing context files rather than creating duplicates
+- Validate that all spec requirements are met before finalizing
+- Clear and concise summaries - users should quickly understand what was achieved
+- When in doubt about context file boundaries, prefer smaller focused files over large monoliths
+
+## Example Flow
+
+**CREATE mode** (new component):
+
+```
+1. Read .current-spec → "20250123150000-add-auth"
+2. Load spec.yaml and plan.yaml from .buildforce/specs/20250123150000-add-auth/
+3. Analyze: Introduced new authentication module
+4. Check _index.yml: No existing "authentication" context
+5. Generate filename: "authentication.yml"
+6. Load _schema.yml template
+7. Create .buildforce/context/authentication.yml with full content
+8. Add entry to _index.yml
+9. Delete .current-spec
+10. Report: "Created authentication.yml context file for new auth module"
+```
+
+**UPDATE mode** (existing component):
+
+```
+1. Read .current-spec → "20250123160000-refactor-auth"
+2. Load spec.yaml and plan.yaml
+3. Analyze: Modified existing authentication module
+4. Check _index.yml: Found existing "authentication.yml"
+5. Read existing authentication.yml
+6. Add evolution entry, update files list, append to related_specs
+7. No index update needed (entry exists)
+8. Delete .current-spec
+9. Report: "Updated authentication.yml with refactoring changes"
+```
+
+**MIXED mode** (multiple components):
+
+```
+1. Read .current-spec → "20250123170000-add-feature-x"
+2. Load spec.yaml and plan.yaml
+3. Analyze: Modified auth module, created new config module, touched error handling
+4. Check _index.yml: Found "authentication.yml" and "error-handling.yml", no "config-management.yml"
+5. UPDATE authentication.yml and error-handling.yml
+6. CREATE config-management.yml
+7. Add config-management entry to _index.yml
+8. Delete .current-spec
+9. Report: "Updated 2 context files (authentication, error-handling) and created 1 new file (config-management)"
+```
