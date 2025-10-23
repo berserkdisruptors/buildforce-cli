@@ -1,0 +1,99 @@
+id: spec-command
+name: "Spec Command Template"
+type: feature
+status: production
+created: 2025-01-23
+last_updated: 2025-01-23
+
+summary: |
+  Template-based slash command that guides AI agents through creating or updating structured
+  specification files. Uses .current-spec state tracking to determine CREATE vs UPDATE mode.
+  Delegates timestamp-based folder naming to agents in CREATE flow only.
+
+responsibilities:
+  - Guide agents through spec creation workflow with 7 structured steps
+  - Determine CREATE vs UPDATE mode using .current-spec state file
+  - Instruct agents to generate timestamp-prefixed folder names (CREATE mode only)
+  - Execute create-spec-files script with agent-generated folder name
+  - Capture WHAT needs to be built (not HOW) in spec.yaml files
+  - Identify ambiguities and prompt for clarifying questions
+  - Validate prerequisite context from /research commands
+
+dependencies:
+  internal:
+    - create-spec-files.sh: "Bash script for creating spec folder structure"
+    - create-spec-files.ps1: "PowerShell equivalent for cross-platform support"
+    - spec-template.yaml: "Template structure for new spec files"
+    - .current-spec: "State file tracking active spec folder name"
+  external:
+    - None (template-only command)
+
+files:
+  primary:
+    - src/templates/commands/spec.md
+  secondary:
+    - src/scripts/bash/create-spec-files.sh
+    - src/scripts/powershell/create-spec-files.ps1
+    - src/templates/spec-template.yaml
+
+command_signature:
+  syntax: "/spec [feature-description]"
+  arguments:
+    - name: "feature-description"
+      type: "string"
+      required: false
+      description: "Brief description of the feature to spec (can be provided in follow-up)"
+  examples:
+    - "/spec Add JWT authentication with refresh tokens"
+    - "/spec Refactor error handling middleware"
+
+design_decisions:
+  - decision: "Use .current-spec file for CREATE vs UPDATE determination"
+    rationale: "Simpler and more reliable than external pattern files. Single source of truth for active spec state."
+
+  - decision: "Move folder name generation to CREATE flow only"
+    rationale: "UPDATE mode doesn't need new folder names - it modifies existing spec. Reduces complexity and avoids confusion."
+
+  - decision: "Remove create-update-pattern.md reference"
+    rationale: "Legacy file didn't exist and caused confusion. Direct .current-spec check is self-explanatory."
+
+  - decision: "Timestamp generation in agent, not script"
+    rationale: "Agent needs timestamp to construct full folder name before passing to script. Allows deterministic naming within conversation session."
+
+  - decision: "Remove fuzzy search mentions"
+    rationale: "Fuzzy matching removed from scripts entirely. No longer relevant to command workflow."
+
+evolution:
+  - version: "1.0"
+    date: "2025-01-07"
+    changes: "Initial template with agent-driven folder name generation and script parameter passing"
+
+  - version: "2.0"
+    date: "2025-01-23"
+    changes: "Refactored to use .current-spec for CREATE/UPDATE determination, moved folder generation to CREATE flow only, removed legacy references"
+
+related_specs:
+  - 20250107120000-redesign-spec-context
+
+notes: |
+  The /spec command follows a 7-step workflow:
+  1. Determine CREATE vs UPDATE mode (check .current-spec)
+  2. For CREATE: Generate folder name, run script, populate spec
+  3. For UPDATE: Load existing spec, merge new information
+  4. Validate prerequisite context
+  5. Identify ambiguities and clarifying questions
+  6. Apply behavior rules (focus on WHAT not HOW)
+  7. Report completion
+
+  Folder naming format for CREATE mode:
+  - Timestamp: YYYYMMDDHHmmss (14 digits, UTC)
+  - Semantic slug: kebab-case, 3-5 words, max 35 chars
+  - Combined: {timestamp}-{slug} (max 50 chars total)
+  - Example: 20250123145030-add-auth-jwt
+
+  Key principle: Specs capture WHAT needs to be built, not HOW to build it.
+  Implementation details belong in the plan.yaml, not spec.yaml.
+
+  The command emphasizes active use of open_questions section to capture
+  ambiguities rather than making assumptions. Agents should present open
+  questions to users before proceeding to /plan.

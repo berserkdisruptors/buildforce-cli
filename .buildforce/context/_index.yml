@@ -87,3 +87,33 @@ contexts:
         roadmap,
         changelog,
       ]
+
+  - id: spec-command
+    file: spec-command.yml
+    type: feature
+    description: "Template-based /spec command for creating/updating specifications with state-based CREATE vs UPDATE logic"
+    tags:
+      [
+        slash-command,
+        spec,
+        template-only,
+        state-tracking,
+        timestamp-naming,
+        agent-driven,
+        workflow-core,
+      ]
+
+  - id: complete-command
+    file: complete-command.yml
+    type: feature
+    description: "Template-only /complete command for finalizing specs with agent-driven context file management"
+    tags:
+      [
+        slash-command,
+        complete,
+        template-only,
+        context-management,
+        semantic-naming,
+        intelligent-merge,
+        workflow-core,
+      ]
