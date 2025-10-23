@@ -15,9 +15,17 @@ The text the user typed after `/spec` in the triggering message **is** the featu
 
 ## Workflow Steps
 
-1. **Generate folder name for new specs**:
+1. **Determine CREATE vs UPDATE mode**:
 
-   IMPORTANT: Before running the script, you MUST generate a folder name with timestamp prefix.
+   Check if there's an active spec in the current session:
+
+   - Read `.buildforce/.current-spec` file from repo root
+   - If file exists and has content (non-empty folder name): **UPDATE mode** - Load existing spec from that folder
+   - If file doesn't exist or is empty: **CREATE mode** - Generate new folder name and create new spec
+
+2. **For CREATE mode (new spec)**:
+
+   **Step 2a: Generate folder name**:
 
    - **Extract semantic slug**: Analyze the user's feature description and extract 3-5 key words that capture the intent
    - **Format semantic slug**: Convert to kebab-case, max 35 characters, lowercase alphanumeric and hyphens only
@@ -30,13 +38,11 @@ The text the user typed after `/spec` in the triggering message **is** the featu
    - **Validate**: Ensure total length ≤50 characters
    - **Set {FOLDER_NAME}**: Replace {FOLDER_NAME} in the script command with your generated folder name
 
-2. **Determine create vs update mode**: Read and follow the pattern described in `templates/shared/create-update-pattern.md` from repo root.
+   **Step 2b: Run script and create spec**:
 
-   - Priority 1: Check conversation history for existing spec
-   - Priority 2: Run `{SCRIPT}` with generated FOLDER_NAME and parse JSON output for FOLDER_NAME, SPEC_FILE, SPEC_DIR
-   - NOTE: The script no longer supports fuzzy matching or automatic spec reuse. Each /spec creates a new folder.
+   - Run `{SCRIPT}` with generated FOLDER_NAME and parse JSON output for FOLDER_NAME, SPEC_FILE, SPEC_DIR
 
-3. **For CREATE mode (new spec)**:
+   **Step 2c: Populate spec file**:
 
    - Load `templates/spec-template.yaml` from repo root to understand structure and fields
    - Populate all sections based on placeholder text, YAML comments, and field names
@@ -46,19 +52,25 @@ The text the user typed after `/spec` in the triggering message **is** the featu
    - **CRITICAL**: Never leave placeholders like [FEATURE_NUM] - use `open_questions` section for unclear items
    - **CRITICAL**: Actively populate `open_questions` with any ambiguities, unknowns, or items needing clarification
 
-4. **For UPDATE mode (existing spec in conversation)**:
+3. **For UPDATE mode (existing spec)**:
 
-   - Read existing SPEC_FILE - preserve all existing values
+   - Read folder name from `.buildforce/.current-spec`
+   - Load existing spec.yaml from `.buildforce/specs/{folder-name}/spec.yaml`
+   - Preserve all existing field values (id, created date, etc.)
    - Update `last_updated` to today's date
-   - Intelligently merge new information from $ARGUMENTS (see shared pattern for details)
-   - Report what changed with specific examples
+   - Intelligently merge new information from $ARGUMENTS:
+     - Add new requirements to existing requirement sections (maintain sequential IDs)
+     - Append to `notes` or `open_questions` sections if clarifying existing content
+     - Update specific fields if $ARGUMENTS explicitly requests changes
+     - Do NOT duplicate or contradict existing requirements
+   - Report what changed with specific examples (e.g., "Added FR5-FR7 for error handling", "Updated open_questions with database choice")
 
-5. **Validate Prerequisite Context**:
+4. **Validate Prerequisite Context**:
 
    - Check if sufficient context exists from previous `/research` commands in this conversation
    - If critical information is missing, suggest running `/research` first
 
-6. **Identify Ambiguities & Clarifying Questions** (CRITICAL STEP):
+5. **Identify Ambiguities & Clarifying Questions** (CRITICAL STEP):
 
    This is a key quality gate - do NOT skip this step.
 
@@ -89,14 +101,14 @@ The text the user typed after `/spec` in the triggering message **is** the featu
    - Wait for user responses and update the spec accordingly
    - Only suggest moving to `/plan` after all critical questions are resolved
 
-7. **Behavior rules**:
+6. **Behavior rules**:
 
    - Focus on WHAT, not HOW (avoid implementation details unless they're constraints)
    - Ensure all requirements are testable and measurable
    - Keep scope incremental (single, focused change)
    - Check for contradictions between different requirements
 
-8. **Report completion**:
+7. **Report completion**:
 
    **If spec has open questions:**
 
