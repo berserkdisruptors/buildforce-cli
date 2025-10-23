@@ -86,9 +86,11 @@ $ARGUMENTS
      - id: {semantic-id}
        file: {filename}.yml
        type: {module/feature/component/pattern}
+       description: {short-one-liner-description}
        tags: [{auto-generated-tags}]
      ```
-   - Generate tags based on component analysis (e.g., [core, workflow, agents] for slash-commands)
+   - **Description field**: Provide a short, condensed one-liner (max 100 chars) that summarizes what this context represents - makes search easier without reading the file
+   - **Generate tags** based on component analysis (e.g., [core, workflow, agents] for slash-commands)
    - Maintain proper YAML indentation (2 spaces per level)
    - Preserve existing entries (do not modify or delete)
    - For EXISTING context files, no index update needed (entry already exists)
