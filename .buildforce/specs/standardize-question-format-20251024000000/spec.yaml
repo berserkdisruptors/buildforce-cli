@@ -1,0 +1,141 @@
+id: standardize-question-format-20251024000000
+name: "Standardize Clarifying Question Format"
+type: feature
+status: draft
+created: "2025-10-24"
+last_updated: "2025-10-24"
+
+summary: |
+  Enforce a consistent format for clarifying questions presented to users during the /spec workflow,
+  with numeric questions (1, 2, 3...), alphabetical options (A, B, C...), and a standard "Other" option
+  for free-form responses.
+
+# INTENT / PROBLEM STATEMENT
+
+problem: |
+  Currently, the /spec command displays clarifying questions in inconsistent formats - sometimes with
+  options, sometimes without, with varying numbering schemes, and no clear guidance on how users should
+  respond. This creates user frustration and confusion about the expected answer format.
+
+motivation: |
+  A standardized question format will:
+  - Reduce user cognitive load by providing clear, predictable structure
+  - Enable structured responses (e.g., "1. A; 2. B; 3. Other: custom answer")
+  - Improve UX consistency across all spec creation sessions
+  - Make it easier for users to provide mixed answers (predefined + custom)
+
+# GOALS
+
+primary_goals:
+  - Standardize all clarifying questions to use numeric identifiers (1, 2, 3, ...)
+  - Provide alphabetical options (A, B, C, ...) for each question
+  - Always include a final "X. Other (please specify)" option for free-form input
+
+secondary_goals:
+  - Document the question format guidelines in the spec command template
+  - Ensure consistent formatting is easy for AI agents to follow
+
+# REQUIREMENTS
+
+functional_requirements:
+  - FR1: All clarifying questions must be numbered sequentially (1, 2, 3, 4, ...)
+  - FR2: Each question must provide 2-3 predefined options labeled alphabetically (A, B, C)
+  - FR3: Each question must include a final option "X. Other (please specify)" for free-form responses
+  - FR4: Question format must be documented in the spec command template (src/templates/commands/spec.md)
+  - FR5: Users must be able to respond with simple notation like "1. A; 2. B; 3. X: my custom answer"
+  - FR6: Format should be used when predefined options make sense; plain text questions allowed when options are not applicable
+
+non_functional_requirements:
+  - NFR1: Format must be simple and scannable for quick user comprehension
+  - NFR2: Template guidance must be clear enough for AI agents to consistently apply the format
+  - NFR3: Format should work well in CLI text output (no complex formatting/tables)
+
+# SCOPE
+
+in_scope:
+  - Update spec.md template Step 4 (Identify Ambiguities & Clarifying Questions) with format guidelines
+  - Define the exact format structure and examples for AI agents to follow
+  - Specify how to present questions and how users should respond
+
+out_of_scope:
+  - Automated parsing of user responses (agents handle interpretation)
+  - Validation of user response format
+  - Changes to other slash command templates (/plan, /build, etc.)
+  - Retroactive updates to existing specs
+
+# DESIGN PRINCIPLES
+
+design_principles:
+  - "Consistency over flexibility: Always use the same format, even if it seems verbose"
+  - "User-centric: Make it obvious how to respond"
+  - "Machine-friendly: Format should be easy for AI agents to generate"
+
+# ACCEPTANCE CRITERIA
+
+acceptance_criteria:
+  - AC1: spec.md template includes explicit formatting rules for clarifying questions
+  - AC2: Template provides at least 2 complete examples of properly formatted questions
+  - AC3: Template explains both predefined option responses and "Other" free-form responses
+  - AC4: Format guidelines are placed in Step 4 "After writing the spec and plan" section
+
+# ASSUMPTIONS & DEPENDENCIES
+
+assumptions:
+  - AI agents will follow template instructions consistently
+  - Users prefer structured options over pure free-form questions
+  - CLI text output is sufficient (no need for interactive prompts)
+
+dependencies:
+  internal:
+    - src/templates/commands/spec.md: "Main template file to be updated"
+  external:
+    - None
+
+# OPEN QUESTIONS
+
+open_questions: []
+
+# RESOLVED QUESTIONS
+
+resolved_questions:
+  - question: "Should we limit the maximum number of predefined options per question?"
+    answer: "A. Yes, limit to 3 options (A, B, C) + X for Other"
+    rationale: "Keeps questions concise and scannable. Three options provide enough variety without overwhelming users."
+
+  - question: "What should be the exact wording for the 'Other' option?"
+    answer: "A. X. Other (please specify)"
+    rationale: "Clear, concise, and explicitly prompts for custom input. Consistent wording across all questions."
+
+  - question: "Should we provide explicit guidance on how to format the 'Other' response?"
+    answer: "C. No, users will figure it out from context"
+    rationale: "Users can intuitively understand how to provide custom answers. Over-documentation may clutter the format."
+
+  - question: "Should the format apply to ALL clarifying questions or only when predefined options exist?"
+    answer: "C. Mixed: Use options when possible, plain text questions otherwise"
+    rationale: "Provides flexibility - use structured format when predefined options make sense, fall back to plain questions when they don't. Prevents forcing artificial options."
+
+# NOTES
+
+notes: |
+  This feature aims to improve user experience during the spec clarification phase by reducing
+  ambiguity about how to respond. The format should be simple enough to work in CLI output
+  while providing structure for both users and AI agents.
+
+  Example of ideal formatted questions:
+
+  1. What should be the access token expiration time?
+     A. 15 minutes
+     B. 30 minutes
+     C. 1 hour
+     X. Other (please specify)
+
+  2. Which JWT library should we use?
+     A. jsonwebtoken
+     B. jose
+     C. node-jsonwebtoken
+     X. Other (please specify)
+
+  User response examples:
+  - "1. B; 2. A" (using predefined options)
+  - "1. X: 45 minutes; 2. A" (mixing custom and predefined)
+  - "1. B; 2. X: Let's use passport-jwt instead" (mixing types)

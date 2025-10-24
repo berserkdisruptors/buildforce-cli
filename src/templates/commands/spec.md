@@ -107,8 +107,53 @@ The text the user typed after `/spec` in the triggering message **is** the featu
 
    **After writing the spec and plan:**
 
+   **Question Format Requirements (CRITICAL)**:
+
+   When presenting clarifying questions to users, you MUST follow this standardized format:
+
+   **Format Structure:**
+   - Number questions sequentially: 1, 2, 3, 4, ...
+   - Provide 2-3 predefined options per question, labeled alphabetically: A, B, C
+   - ALWAYS include a final option: "X. Other (please specify)"
+   - Use this format when predefined options make sense; fall back to plain text questions when they don't
+
+   **Format Template:**
+   ```
+   **1. [Question text]?**
+      A. [First option]
+      B. [Second option]
+      C. [Third option] (optional)
+      X. Other (please specify)
+
+   **2. [Question text]?**
+      A. [First option]
+      B. [Second option]
+      X. Other (please specify)
+   ```
+
+   **Example Questions:**
+
+   **1. What should be the JWT token expiration time?**
+      A. 15 minutes
+      B. 30 minutes
+      C. 1 hour
+      X. Other (please specify)
+
+   **2. Which authentication library should we use?**
+      A. passport.js
+      B. jsonwebtoken
+      C. auth0
+      X. Other (please specify)
+
+   **When to Use This Format:**
+   - Use structured format when predefined options provide meaningful choices
+   - Fall back to plain text questions when predefined options would be artificial or limiting
+   - Prioritize user experience - don't force the format if it doesn't fit the question
+
+   **After formatting questions:**
+
    - Review both files for completeness
-   - If `open_questions` has items, present them to the user NOW
+   - If `open_questions` has items, present them to the user NOW using the format above
    - Format: "I've created the spec and plan, but need clarification on these points:"
    - Wait for user responses and update files accordingly
    - **NEVER present plan summary if open questions exist**

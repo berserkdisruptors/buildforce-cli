@@ -16,7 +16,7 @@ responsibilities:
   - Instruct agents to generate semantic-slug-first folder names (CREATE mode only)
   - Execute create-spec-files script with agent-generated folder name
   - Capture WHAT needs to be built (not HOW) in spec.yaml files
-  - Identify ambiguities and prompt for clarifying questions
+  - Identify ambiguities and prompt for clarifying questions using standardized format
   - Validate prerequisite context from /research commands
 
 dependencies:
@@ -66,6 +66,9 @@ design_decisions:
   - decision: "Semantic-first folder naming (slug-timestamp instead of timestamp-slug)"
     rationale: "Improves discoverability, IDE autocomplete, and aligns with context file naming philosophy. Timestamp suffix maintains uniqueness while prioritizing human-readable semantic information."
 
+  - decision: "Standardized clarifying question format (numeric questions + alphabetical options + X for Other)"
+    rationale: "Reduces user cognitive load and confusion by providing consistent, predictable structure for question responses. Format uses 1,2,3 numbering, A,B,C options, and X for free-form answers. Applied when predefined options make sense, with flexibility for plain text questions when appropriate."
+
 evolution:
   - version: "1.0"
     date: "2025-01-07"
@@ -79,9 +82,14 @@ evolution:
     date: "2025-10-24"
     changes: "Reversed naming convention from {timestamp}-{slug} to {slug}-{timestamp} for improved discoverability and IDE autocomplete. Updated validation to enforce semantic slug starting with letter."
 
+  - version: "4.0"
+    date: "2025-10-24"
+    changes: "Added standardized clarifying question format to Step 4 with explicit formatting rules (numeric questions, alphabetical options A/B/C, X for Other), format template, 2 complete examples, and usage guidance. Improves UX consistency and reduces user confusion during spec clarification phase."
+
 related_specs:
   - redesign-spec-context-20250107120000
   - swap-timestamp-slug-order-20251024093000
+  - standardize-question-format-20251024000000
 
 notes: |
   The /spec command follows a 7-step workflow:
@@ -108,3 +116,20 @@ notes: |
   The command emphasizes active use of open_questions section to capture
   ambiguities rather than making assumptions. Agents should present open
   questions to users before proceeding to /plan.
+
+  Clarifying Question Format (v4.0):
+  - Questions numbered sequentially: 1, 2, 3, 4...
+  - Provide 2-3 predefined options per question: A, B, C
+  - Always include final option: X. Other (please specify)
+  - Use structured format when predefined options make sense
+  - Fall back to plain text questions when options would be artificial
+  - Format is documented in spec.md Step 4 (lines 110-159)
+
+  Example question format:
+  **1. What should be the JWT token expiration time?**
+     A. 15 minutes
+     B. 30 minutes
+     C. 1 hour
+     X. Other (please specify)
+
+  Users can respond with: "1. A; 2. B" or "1. X: custom value; 2. C"
