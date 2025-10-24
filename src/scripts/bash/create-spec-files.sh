@@ -61,8 +61,8 @@ BUILDFORCE_ROOT=$(get_buildforce_root) || exit 1
 
 cd "$BUILDFORCE_ROOT"
 
-SPECS_DIR="$REPO_ROOT/.buildforce/specs"
-TEMPLATES_DIR="$REPO_ROOT/.buildforce/templates"
+SPECS_DIR=".buildforce/specs"
+TEMPLATES_DIR=".buildforce/templates"
 mkdir -p "$SPECS_DIR"
 
 # Create new spec folder
