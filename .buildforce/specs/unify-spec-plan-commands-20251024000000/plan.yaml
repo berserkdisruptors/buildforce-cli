@@ -2,9 +2,9 @@
 # This template is optimized for AI agent consumption during /build commands
 # It provides checkbox-based progress tracking, deviation logging, and spec traceability
 
-id: 20251024000000-unify-spec-plan-commands-plan
+id: unify-spec-plan-commands-20251024000000-plan
 name: "Implementation Plan for Unifying /spec and /plan Commands"
-spec_id: "20251024000000-unify-spec-plan-commands"
+spec_id: "unify-spec-plan-commands-20251024000000"
 type: implementation-plan
 status: draft
 created: "2025-10-24"

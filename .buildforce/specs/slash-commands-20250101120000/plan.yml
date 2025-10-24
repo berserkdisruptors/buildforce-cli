@@ -1,6 +1,6 @@
-id: 001-slash-commands-plan
+id: slash-commands-20250101120000-plan
 name: "Implementation Plan for Slash Commands"
-spec_id: "001-slash-commands"
+spec_id: "slash-commands-20250101120000"
 type: implementation-plan
 status: in-progress
 created: "2025-01-15"
@@ -11,7 +11,7 @@ last_updated: "2025-01-15"
 approach: |
   Implement 5 slash commands as markdown instruction templates for Claude Code.
   Each command is a structured prompt that enhances user queries with workflow context.
-  Commands follow the sequence: RESEARCH ’ SPEC ’ PLAN ’ BUILD ’ COMPLETE.
+  Commands follow the sequence: RESEARCH ï¿½ SPEC ï¿½ PLAN ï¿½ BUILD ï¿½ COMPLETE.
 
   The project context repository (.buildforce/context/) serves as the foundation,
   providing accumulated knowledge that RESEARCH leverages as its primary source.
@@ -125,26 +125,26 @@ phase_2:
       completion_date: "2025-01-15"
 
     - task: "Iterate on SPEC command"
-      status: "ó pending"
+      status: "ï¿½ pending"
       notes: "Will iterate after testing RESEARCH"
 
     - task: "Iterate on PLAN command"
-      status: "ó pending"
+      status: "ï¿½ pending"
       notes: "Will iterate after SPEC is complete"
 
     - task: "Iterate on BUILD command"
-      status: "ó pending"
+      status: "ï¿½ pending"
       notes: "Will iterate after PLAN is complete"
 
     - task: "Iterate on COMPLETE command"
-      status: "ó pending"
+      status: "ï¿½ pending"
       notes: "Will iterate after BUILD is complete"
 
   estimated_completion: "TBD (depends on manual testing feedback)"
 
 phase_3:
   name: "Manual Testing via .claude/commands"
-  status: "ó NOT STARTED"
+  status: "ï¿½ NOT STARTED"
   description: |
     Test each command by pasting it into .claude/commands/ and using it in real sessions.
     Validate that commands guide build agents correctly without over-instructing.
@@ -152,7 +152,7 @@ phase_3:
 
   tasks:
     - task: "Test RESEARCH command"
-      status: "ó pending"
+      status: "ï¿½ pending"
       test_scenarios:
         - "Codebase query: 'How is authentication implemented?'"
         - "Recency query: 'Current best practices for OAuth 2.0 with Cognito'"
@@ -165,7 +165,7 @@ phase_3:
         - "Suggests next step (/spec)"
 
     - task: "Test SPEC command"
-      status: "ó pending"
+      status: "ï¿½ pending"
       test_scenarios:
         - "Clear intent: 'Add password reset feature'"
         - "Vague intent: 'Improve authentication'"
@@ -176,7 +176,7 @@ phase_3:
         - "Suggests /plan after approval"
 
     - task: "Test PLAN command"
-      status: "ó pending"
+      status: "ï¿½ pending"
       test_scenarios:
         - "Plan with no constraints"
         - "Plan with specific library preference"
@@ -187,7 +187,7 @@ phase_3:
         - "Validates alignment with spec"
 
     - task: "Test BUILD command"
-      status: "ó pending"
+      status: "ï¿½ pending"
       test_scenarios:
         - "Initial build from approved plan"
         - "Iteration with user feedback (e.g., 'change library X to Y')"
@@ -197,7 +197,7 @@ phase_3:
         - "Requests confirmation (not auto-complete)"
 
     - task: "Test COMPLETE command"
-      status: "ó pending"
+      status: "ï¿½ pending"
       validation:
         - "Validates all spec requirements"
         - "Reviews deviation log"
@@ -244,7 +244,7 @@ context_setup:
 overall_progress:
   phase_1: " 100% complete (5/5 commands created)"
   phase_2: "= 20% complete (1/5 commands iterated: RESEARCH)"
-  phase_3: "ó 0% complete (0/5 commands tested)"
+  phase_3: "ï¿½ 0% complete (0/5 commands tested)"
 
 current_status: |
   Phase 1 is completeall 5 command files exist with initial content.
@@ -282,7 +282,7 @@ success_metrics:
   - "PLAN justifies all design decisions with clear rationale"
   - "BUILD tracks progress visibly and logs all deviations"
   - "COMPLETE validates 100% of spec requirements"
-  - "User can run full workflow (RESEARCH ’ COMPLETE) without confusion"
+  - "User can run full workflow (RESEARCH ï¿½ COMPLETE) without confusion"
 
 # NOTES
 

@@ -143,11 +143,11 @@ evolution:
     changes: "Added /document utility command (29 lines) for creating context files without specs. Enables documenting existing functionality, legacy code, and architectural patterns independently of spec-driven workflow. Template-only with 7 guidelines, snake-case naming, intelligent merge, auto-detection."
 
 related_specs:
-  - "20250101120000-slash-commands (initial system design)"
-  - "20250102120000-build-command (BUILD command implementation)"
-  - "20250103120000-plan-template (enhanced plan template)"
-  - "20250104120000-iterate-plan-command (PLAN command implementation)"
-  - "20250105120000-new-document-slash (DOCUMENT command implementation)"
+  - "slash-commands-20250101120000 (initial system design)"
+  - "build-command-20250102120000 (BUILD command implementation)"
+  - "plan-template-20250103120000 (enhanced plan template)"
+  - "iterate-plan-command-20250104120000 (PLAN command implementation)"
+  - "new-document-slash-20250105120000 (DOCUMENT command implementation)"
 
 notes: |
   Inspired by @spec-kit workflow but simplified to 5 core commands + 1 utility command.

@@ -2,9 +2,9 @@
 # This template is optimized for AI agent consumption during /build commands
 # It provides checkbox-based progress tracking, deviation logging, and spec traceability
 
-id: 004-iterate-plan-command-plan
+id: iterate-plan-command-20250104120000-plan
 name: "Implementation Plan for Iterate and Compress /plan Slash Command"
-spec_id: "004-iterate-plan-command"
+spec_id: "iterate-plan-command-20250104120000"
 type: implementation-plan
 status: draft
 created: 2025-10-09

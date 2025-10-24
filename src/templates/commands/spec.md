@@ -28,14 +28,14 @@ The text the user typed after `/spec` in the triggering message **is** the featu
    **Step 2a: Generate folder name**:
 
    - **Extract semantic slug**: Analyze the user's feature description and extract 3-5 key words that capture the intent
-   - **Format semantic slug**: Convert to kebab-case, max 35 characters, lowercase alphanumeric and hyphens only
+   - **Format semantic slug**: Convert to kebab-case, max 35 characters, lowercase alphanumeric and hyphens only, must start with a letter
      - Examples: "add-auth-jwt", "refactor-error-handling", "implement-caching"
    - **Get UTC timestamp**: Generate current UTC timestamp in format YYYYMMDDHHmmss (14 digits)
      - Use the current conversation timestamp for consistency
-   - **Combine**: Prepend timestamp to slug with hyphen separator
-     - Format: `{timestamp}-{semantic-slug}`
-     - Example: `20250122143052-add-auth-jwt`
-   - **Validate**: Ensure total length ≤50 characters
+   - **Combine**: Append timestamp to slug with hyphen separator
+     - Format: `{semantic-slug}-{timestamp}`
+     - Example: `add-auth-jwt-20250122143052`
+   - **Validate**: Ensure total length ≤50 characters (35 for slug + 1 hyphen + 14 for timestamp)
    - **Set {FOLDER_NAME}**: Replace {FOLDER_NAME} in the script command with your generated folder name
 
    **Step 2b: Run script to create folder and files**:
@@ -49,7 +49,7 @@ The text the user typed after `/spec` in the triggering message **is** the featu
 
    - Load `src/templates/spec-template.yaml` to understand structure
    - Populate with requirements, scope, goals, acceptance criteria (WHAT content)
-   - For metadata: Set id = "{FOLDER_NAME}", status = "draft", dates = today YYYY-MM-DD
+   - For metadata: Set id = "{FOLDER_NAME}" (the full slug-timestamp you generated), status = "draft", dates = today YYYY-MM-DD
    - Ensure requirements use unique IDs (FR1, FR2, ..., NFR1, ..., AC1, ...)
    - **CRITICAL**: Actively populate `open_questions` with any requirement ambiguities or missing details
    - Focus on WHAT needs to be built, not HOW to build it

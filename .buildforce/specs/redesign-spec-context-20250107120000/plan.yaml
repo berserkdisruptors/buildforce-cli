@@ -1,9 +1,9 @@
 # Implementation Plan for Spec and Context File Naming Redesign
 # This plan defines HOW to implement timestamp-based spec naming and semantic context naming
 
-id: 20250122145030-redesign-naming-plan
+id: redesign-spec-context-20250107120000-plan
 name: "Implementation Plan for Spec and Context File Naming Redesign"
-spec_id: "20250122145030-redesign-naming"
+spec_id: "redesign-spec-context-20250107120000"
 type: implementation-plan
 status: draft
 created: 2025-01-22

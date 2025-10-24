@@ -2,9 +2,9 @@
 # This template is optimized for AI agent consumption during /build commands
 # It provides checkbox-based progress tracking, deviation logging, and spec traceability
 
-id: 005-new-document-slash-plan
+id: new-document-slash-20250105120000-plan
 name: "Implementation Plan for /document Slash Command"
-spec_id: "005-new-document-slash"
+spec_id: "new-document-slash-20250105120000"
 type: implementation-plan
 status: draft
 created: "2025-10-10"

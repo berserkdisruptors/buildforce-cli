@@ -79,7 +79,7 @@ evolution:
     changes: "Complete rewrite as template-only command, eliminated script dependency, added 9-step workflow with schema usage and intelligent merging, added description field to index entries"
 
 related_specs:
-  - 20250107120000-redesign-spec-context
+  - redesign-spec-context-20250107120000
 
 notes: |
   The /complete command follows a 9-step workflow:

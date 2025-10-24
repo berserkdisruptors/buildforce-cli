@@ -1,4 +1,4 @@
-id: 20251024000000-unify-spec-plan-commands
+id: unify-spec-plan-commands-20251024000000
 name: "Unify /spec and /plan Commands into Single /spec Command"
 type: feature
 status: draft

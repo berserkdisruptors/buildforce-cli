@@ -3,17 +3,17 @@ name: "Spec Command Template"
 type: feature
 status: production
 created: 2025-01-23
-last_updated: 2025-01-23
+last_updated: 2025-10-24
 
 summary: |
   Template-based slash command that guides AI agents through creating or updating structured
   specification files. Uses .current-spec state tracking to determine CREATE vs UPDATE mode.
-  Delegates timestamp-based folder naming to agents in CREATE flow only.
+  Delegates semantic-slug-first folder naming to agents in CREATE flow only.
 
 responsibilities:
   - Guide agents through spec creation workflow with 7 structured steps
   - Determine CREATE vs UPDATE mode using .current-spec state file
-  - Instruct agents to generate timestamp-prefixed folder names (CREATE mode only)
+  - Instruct agents to generate semantic-slug-first folder names (CREATE mode only)
   - Execute create-spec-files script with agent-generated folder name
   - Capture WHAT needs to be built (not HOW) in spec.yaml files
   - Identify ambiguities and prompt for clarifying questions
@@ -63,6 +63,9 @@ design_decisions:
   - decision: "Remove fuzzy search mentions"
     rationale: "Fuzzy matching removed from scripts entirely. No longer relevant to command workflow."
 
+  - decision: "Semantic-first folder naming (slug-timestamp instead of timestamp-slug)"
+    rationale: "Improves discoverability, IDE autocomplete, and aligns with context file naming philosophy. Timestamp suffix maintains uniqueness while prioritizing human-readable semantic information."
+
 evolution:
   - version: "1.0"
     date: "2025-01-07"
@@ -72,8 +75,13 @@ evolution:
     date: "2025-01-23"
     changes: "Refactored to use .current-spec for CREATE/UPDATE determination, moved folder generation to CREATE flow only, removed legacy references"
 
+  - version: "3.0"
+    date: "2025-10-24"
+    changes: "Reversed naming convention from {timestamp}-{slug} to {slug}-{timestamp} for improved discoverability and IDE autocomplete. Updated validation to enforce semantic slug starting with letter."
+
 related_specs:
-  - 20250107120000-redesign-spec-context
+  - redesign-spec-context-20250107120000
+  - swap-timestamp-slug-order-20251024093000
 
 notes: |
   The /spec command follows a 7-step workflow:
@@ -86,10 +94,13 @@ notes: |
   7. Report completion
 
   Folder naming format for CREATE mode:
+  - Semantic slug: kebab-case, 3-5 words, max 35 chars, must start with letter
   - Timestamp: YYYYMMDDHHmmss (14 digits, UTC)
-  - Semantic slug: kebab-case, 3-5 words, max 35 chars
-  - Combined: {timestamp}-{slug} (max 50 chars total)
-  - Example: 20250123145030-add-auth-jwt
+  - Combined: {slug}-{timestamp} (max 50 chars total)
+  - Example: add-auth-jwt-20250123145030
+
+  Breaking change (v3.0): Format reversed from {timestamp}-{slug} to {slug}-{timestamp}.
+  This prioritizes semantic information for better discoverability and IDE autocomplete support.
 
   Key principle: Specs capture WHAT needs to be built, not HOW to build it.
   Implementation details belong in the plan.yaml, not spec.yaml.
