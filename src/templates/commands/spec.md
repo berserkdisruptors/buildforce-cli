@@ -1,8 +1,8 @@
 ---
 description: Create or update a structured specification YAML file that captures WHAT needs to be built.
 scripts:
-  sh: src/scripts/bash/create-spec-files.sh --json --folder-name "{FOLDER_NAME}"
-  ps: src/scripts/powershell/create-spec-files.ps1 -Json -FolderName "{FOLDER_NAME}"
+  sh: src/scripts/bash/create-spec-files.sh --folder-name "{FOLDER_NAME}" --json
+  ps: src/scripts/powershell/create-spec-files.ps1 -FolderName "{FOLDER_NAME}" -Json
 ---
 
 The user input to you can be provided directly by the agent or as a command argument - you **MUST** consider it before proceeding with the prompt (if not empty).
@@ -20,8 +20,8 @@ The text the user typed after `/spec` in the triggering message **is** the featu
    Check if there's an active spec in the current session:
 
    - Read `.buildforce/.current-spec` file from repo root
-   - If file exists and has content (non-empty folder name): **UPDATE mode** - Load existing spec from that folder
-   - If file doesn't exist or is empty: **CREATE mode** - Generate new folder name and create new spec
+   - If file exists and has content (non-empty folder name): **UPDATE mode** - Load existing spec and plan from that folder
+   - If file doesn't exist or is empty: **CREATE mode** - Generate new folder name and create new spec and plan
 
 2. **For CREATE mode (new spec)**:
 
@@ -38,87 +38,132 @@ The text the user typed after `/spec` in the triggering message **is** the featu
    - **Validate**: Ensure total length ≤50 characters
    - **Set {FOLDER_NAME}**: Replace {FOLDER_NAME} in the script command with your generated folder name
 
-   **Step 2b: Run script and create spec**:
+   **Step 2b: Run script to create folder and files**:
 
-   - Run `{SCRIPT}` with generated FOLDER_NAME and parse JSON output for FOLDER_NAME, SPEC_FILE, SPEC_DIR
+   - Run `{SCRIPT}` with generated FOLDER_NAME and parse JSON output for FOLDER_NAME, SPEC_FILE, PLAN_FILE, SPEC_DIR
+   - The script creates both spec.yaml and plan.yaml files from templates
 
-   **Step 2c: Populate spec file**:
+   **Step 2c: Populate both spec.yaml and plan.yaml**:
 
-   - Load `templates/spec-template.yaml` from repo root to understand structure and fields
-   - Populate all sections based on placeholder text, YAML comments, and field names
-   - For metadata: Set id = "{FOLDER_NAME}" (the full timestamp-slug you generated), status = "draft", dates = today YYYY-MM-DD
-   - For content: Derive from feature description and prerequisite context
+   **For spec.yaml (WHAT to build)**:
+
+   - Load `src/templates/spec-template.yaml` to understand structure
+   - Populate with requirements, scope, goals, acceptance criteria (WHAT content)
+   - For metadata: Set id = "{FOLDER_NAME}", status = "draft", dates = today YYYY-MM-DD
    - Ensure requirements use unique IDs (FR1, FR2, ..., NFR1, ..., AC1, ...)
-   - **CRITICAL**: Never leave placeholders like [FEATURE_NUM] - use `open_questions` section for unclear items
-   - **CRITICAL**: Actively populate `open_questions` with any ambiguities, unknowns, or items needing clarification
+   - **CRITICAL**: Actively populate `open_questions` with any requirement ambiguities or missing details
+   - Focus on WHAT needs to be built, not HOW to build it
+
+   **For plan.yaml (HOW to build)**:
+
+   - Load `src/templates/plan-template.yaml` to understand structure
+   - Populate with architecture, technical decisions, implementation phases, tasks (HOW content)
+   - Set spec_id = "{FOLDER_NAME}", link tasks to spec requirements via spec_refs
+   - Include technology choices, design patterns, file structure, testing strategy
+   - Focus on HOW to implement the requirements from spec.yaml
 
 3. **For UPDATE mode (existing spec)**:
 
+   **Intelligent routing** - Determine which file(s) to update based on user input:
+
    - Read folder name from `.buildforce/.current-spec`
-   - Load existing spec.yaml from `.buildforce/specs/{folder-name}/spec.yaml`
+   - Load both existing spec.yaml and plan.yaml from `.buildforce/specs/{folder-name}/`
+   - Analyze $ARGUMENTS to determine content type:
+     - **Requirements/scope/goals** → Update spec.yaml only
+     - **Architecture/tech decisions/phases** → Update plan.yaml only
+     - **Mixed content** → Update both files appropriately
    - Preserve all existing field values (id, created date, etc.)
-   - Update `last_updated` to today's date
-   - Intelligently merge new information from $ARGUMENTS:
-     - Add new requirements to existing requirement sections (maintain sequential IDs)
-     - Append to `notes` or `open_questions` sections if clarifying existing content
-     - Update specific fields if $ARGUMENTS explicitly requests changes
+   - Update `last_updated` to today's date in modified file(s)
+   - For spec.yaml updates:
+     - Add new requirements with sequential IDs (maintain FR1, FR2, ... sequence)
+     - Update `open_questions` if new ambiguities identified
      - Do NOT duplicate or contradict existing requirements
-   - Report what changed with specific examples (e.g., "Added FR5-FR7 for error handling", "Updated open_questions with database choice")
+   - For plan.yaml updates:
+     - Add/modify technical decisions, phases, or tasks
+     - Update spec_refs to link new tasks to requirements
+     - Do NOT contradict existing architectural decisions without explicit reasoning
+   - Report what changed with specific examples (e.g., "Added FR5-FR7 for error handling to spec.yaml", "Updated plan.yaml Phase 2 with new database migration tasks")
 
-4. **Validate Prerequisite Context**:
-
-   - Check if sufficient context exists from previous `/research` commands in this conversation
-   - If critical information is missing, suggest running `/research` first
-
-5. **Identify Ambiguities & Clarifying Questions** (CRITICAL STEP):
+4. **Identify Ambiguities & Clarifying Questions** (CRITICAL STEP):
 
    This is a key quality gate - do NOT skip this step.
 
-   **Before writing the spec:**
+   **Before writing the spec and plan:**
 
    - Analyze the feature description for vague, ambiguous, or incomplete information
-   - Identify assumptions that need validation
-   - Note any missing technical details, edge cases, or constraints
+   - Identify assumptions that need validation (both requirements AND technical)
+   - Note any missing details, edge cases, or constraints
    - If the intent is too vague, ask clarifying questions BEFORE creating the spec
 
-   **When creating the spec:**
+   **When creating the spec and plan:**
 
-   - The template includes an `open_questions` section - use it actively
-   - Populate `open_questions` with specific, actionable questions that need answers
+   - Use spec.yaml `open_questions` for requirement ambiguities
+   - Questions can cover both WHAT (requirements) and HOW (technical decisions)
    - Do NOT make assumptions to fill gaps - explicitly list unknowns
-   - Examples of good open questions:
-     - "Should user sessions persist across browser restarts?"
-     - "What happens to child records when parent is deleted?"
-     - "Which OAuth providers should be supported initially?"
-     - "What is the maximum file size for uploads?"
+   - Examples:
+     - Requirements: "Should user sessions persist across browser restarts?"
+     - Technical: "Which database migration tool should we use?"
+     - Architecture: "Should we use REST or GraphQL for the API?"
 
-   **After writing the spec:**
+   **After writing the spec and plan:**
 
-   - Review the completed spec.yaml file you just created
-   - Double-check that all ambiguities are captured in `open_questions`
-   - If `open_questions` has items, present them directly to the user NOW
-   - Format: "I've created the spec, but need clarification on these points:"
-   - Wait for user responses and update the spec accordingly
-   - Only suggest moving to `/plan` after all critical questions are resolved
+   - Review both files for completeness
+   - If `open_questions` has items, present them to the user NOW
+   - Format: "I've created the spec and plan, but need clarification on these points:"
+   - Wait for user responses and update files accordingly
+   - **NEVER present plan summary if open questions exist**
 
-6. **Behavior rules**:
+5. **Behavior rules**:
 
-   - Focus on WHAT, not HOW (avoid implementation details unless they're constraints)
+   - spec.yaml focuses on WHAT (requirements, scope, goals, acceptance criteria)
+   - plan.yaml focuses on HOW (architecture, tech stack, implementation approach)
    - Ensure all requirements are testable and measurable
    - Keep scope incremental (single, focused change)
-   - Check for contradictions between different requirements
+   - Check for contradictions between spec requirements and plan implementation
 
-7. **Report completion**:
+6. **Report completion**:
 
    **If spec has open questions:**
 
-   - Report folder name and spec file path
+   - Report folder name, spec file path, and plan file path
    - Present the open questions list to the user with clear formatting
    - Ask user to provide answers/clarifications
-   - Explain: "I'll wait for your input before we proceed to planning."
-   - Do NOT suggest `/plan` yet - questions must be resolved first
+   - Explain: "I'll wait for your input before presenting the implementation plan."
+   - Do NOT present plan summary yet - questions must be resolved first
 
    **If NO open questions (or after questions are resolved):**
 
-   - If NEW spec: Report folder name, spec file path, and suggest: "Ready to create a plan? Run `/plan` to design the implementation approach."
-   - If UPDATE: Summarize changes made and ask: "Does this capture your updates? Run `/plan` when ready to design the implementation."
+   Present a **condensed plan summary** using this format:
+
+   ```
+   ## Implementation Plan Summary
+
+   1. **[Phase 1 Name]**
+      - [Key task 1]
+      - [Key task 2]
+      - [Key task 3]
+
+   2. **[Phase 2 Name]**
+      - [Key task 1]
+      - [Key task 2]
+      - [Key task 3]
+
+   3. **[Phase 3 Name]**
+      - [Key task 1]
+      - [Key task 2]
+      - [Key task 3]
+
+   **Key Architecture Decisions:**
+   - [Decision 1]: [Brief rationale]
+   - [Decision 2]: [Brief rationale]
+
+   **Testing Strategy:** [One sentence summary]
+
+   **Risks:** [One sentence summary of main risks]
+   ```
+
+   Then suggest: **"Ready to code? Run `/build` to start implementation."**
+
+   **For UPDATE mode**: Summarize changes made to spec.yaml and/or plan.yaml, present updated condensed plan summary if plan changed, and suggest: "Ready to code? Run `/build` to start implementation."
+
+   **IMPORTANT**: Every subsequent `/spec` invocation updates BOTH files based on intelligent routing of the user's input content. Raw user input with explicit `/spec` invocation might also intent to update BOTH so decide accordingly.
