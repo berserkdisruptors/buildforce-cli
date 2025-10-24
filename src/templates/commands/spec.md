@@ -28,14 +28,14 @@ The text the user typed after `/spec` in the triggering message **is** the featu
    **Step 2a: Generate folder name**:
 
    - **Extract semantic slug**: Analyze the user's feature description and extract 3-5 key words that capture the intent
-   - **Format semantic slug**: Convert to kebab-case, max 35 characters, lowercase alphanumeric and hyphens only
+   - **Format semantic slug**: Convert to kebab-case, max 35 characters, lowercase alphanumeric and hyphens only, must start with a letter
      - Examples: "add-auth-jwt", "refactor-error-handling", "implement-caching"
    - **Get UTC timestamp**: Generate current UTC timestamp in format YYYYMMDDHHmmss (14 digits)
      - Use the current conversation timestamp for consistency
-   - **Combine**: Prepend timestamp to slug with hyphen separator
-     - Format: `{timestamp}-{semantic-slug}`
-     - Example: `20250122143052-add-auth-jwt`
-   - **Validate**: Ensure total length ≤50 characters
+   - **Combine**: Append timestamp to slug with hyphen separator
+     - Format: `{semantic-slug}-{timestamp}`
+     - Example: `add-auth-jwt-20250122143052`
+   - **Validate**: Ensure total length ≤50 characters (35 for slug + 1 hyphen + 14 for timestamp)
    - **Set {FOLDER_NAME}**: Replace {FOLDER_NAME} in the script command with your generated folder name
 
    **Step 2b: Run script and create spec**:
@@ -46,7 +46,7 @@ The text the user typed after `/spec` in the triggering message **is** the featu
 
    - Load `templates/spec-template.yaml` from repo root to understand structure and fields
    - Populate all sections based on placeholder text, YAML comments, and field names
-   - For metadata: Set id = "{FOLDER_NAME}" (the full timestamp-slug you generated), status = "draft", dates = today YYYY-MM-DD
+   - For metadata: Set id = "{FOLDER_NAME}" (the full slug-timestamp you generated), status = "draft", dates = today YYYY-MM-DD
    - For content: Derive from feature description and prerequisite context
    - Ensure requirements use unique IDs (FR1, FR2, ..., NFR1, ..., AC1, ...)
    - **CRITICAL**: Never leave placeholders like [FEATURE_NUM] - use `open_questions` section for unclear items

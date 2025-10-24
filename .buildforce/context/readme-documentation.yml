@@ -85,7 +85,7 @@ evolution:
     changes: "Comprehensive README with 1013 lines covering SDD philosophy, installation, quick start, CLI reference, workflow documentation, 6 slash commands, 11 AI assistants, troubleshooting, contribution guidelines, roadmap, changelog, license. Created CHANGELOG.md (Keep a Changelog format) and CODE_OF_CONDUCT.md (empty)."
 
 related_specs:
-  - "20250106120000-now-update-readme (spec.yaml and plan.yaml)"
+  - "now-update-readme-20250106120000 (spec.yaml and plan.yaml)"
 
 notes: |
   This README update is critical for Buildforce CLI adoption and contribution rate.
