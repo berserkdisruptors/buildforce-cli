@@ -1,0 +1,289 @@
+# Plan Template for /build Agent Execution
+# This template is optimized for AI agent consumption during /build commands
+# It provides checkbox-based progress tracking, deviation logging, and spec traceability
+
+id: add-research-tldr-section-20251024104500-plan
+name: "Implementation Plan for Add TLDR Section to Research Command Output"
+spec_id: "add-research-tldr-section-20251024104500"
+type: implementation-plan
+status: draft
+created: "2025-10-24"
+last_updated: "2025-10-24"
+
+# ARCHITECTURE OVERVIEW
+# Describe the high-level implementation approach and key technical decisions.
+
+approach: |
+  This is a template-only modification that extends the /research command template with an 8th guideline
+  instructing the AI to generate a TLDR section. The implementation will:
+
+  1. Add a new numbered guideline (#8) to research.md template after the existing 7 guidelines
+  2. Extend guideline #3 (Structured Output) to include TLDR as a new section in the output structure
+  3. Maintain the compact template design (target ≤35 lines, currently 28 lines)
+
+  No code changes, scripts, or data structures are required. This is purely an instruction template enhancement.
+
+technology_stack:
+  - Markdown (for .md template file)
+  - YAML frontmatter (for template metadata)
+
+decisions:
+  - decision: "Add TLDR as 8th guideline instead of extending existing guideline #3"
+    rationale: "Keeps guidelines focused and atomic. Each guideline addresses one specific aspect. Makes it easier for AI to parse and follow instructions."
+
+  - decision: "Position TLDR before 'Next Steps' in output structure"
+    rationale: "Users see summary immediately before being prompted to proceed to /spec. This is the natural decision point where condensed findings are most valuable."
+
+  - decision: "Target 3-7 bullet points for TLDR"
+    rationale: "Balances brevity (readable in 30 seconds) with completeness (captures key findings). Aligns with NFR1 requirement."
+
+  - decision: "Exclude code/diagrams from TLDR, but include section references"
+    rationale: "TLDR is for human scanning, not agent context. References guide users to detailed sections when needed."
+
+  - decision: "Define explicit formatting pattern for TLDR section"
+    rationale: "User requires consistent visual structure across all outputs. Template must specify exact heading format (e.g., '## TLDR'), bullet style (e.g., '-' or standard markdown), and any structural elements to ensure identical appearance regardless of content."
+
+# FILE STRUCTURE
+# List all files to be created or modified during implementation
+
+files_to_create: []
+
+files_to_modify:
+  - path: "src/templates/commands/research.md"
+    change_type: "edit"
+    description: "Add guideline #8 for TLDR section and update guideline #3 to include TLDR in output structure"
+
+  - path: ".buildforce/context/research-slash-command.yml"
+    change_type: "edit"
+    description: "Update context file to document TLDR guideline (optional, for consistency)"
+
+# IMPLEMENTATION PHASES
+# Break down the implementation into logical phases with checkbox-based task tracking
+# Use [ ] for pending tasks and [x] for completed tasks
+# Each task should link back to spec requirements via spec_refs
+
+phase_1:
+  name: "Template Modification"
+  description: |
+    Modify the research.md template to add TLDR guideline and update output structure.
+    This phase implements all functional requirements.
+
+  tasks:
+    - [x] Read current research.md template to understand existing structure
+      spec_refs: [FR1, FR2, FR3, FR4, FR5, FR6]
+      files: [src/templates/commands/research.md]
+      notes: "Verified current line count (28 lines) and guideline structure (7 guidelines)"
+
+    - [x] Add guideline #8 for TLDR section generation with explicit formatting pattern
+      spec_refs: [FR1, FR2, FR3, FR4, FR5, FR7]
+      files: [src/templates/commands/research.md]
+      notes: |
+        Guideline #8 added with exact specifications:
+        - "## TLDR" section before "Next Steps"
+        - 3-7 bullet points using standard markdown bullets (-)
+        - Exclude code snippets, Mermaid diagrams, extensive file paths
+        - Include section references (e.g., "See Codebase Findings for details")
+        - Focus on architectural patterns, critical decisions, constraints
+        - ALWAYS emphasis for consistent formatting
+
+    - [x] Update guideline #3 (Structured Output) to include TLDR in section list
+      spec_refs: [FR1, FR6]
+      files: [src/templates/commands/research.md]
+      notes: "Added TLDR between 'External Knowledge' and 'Next Steps' in section list"
+
+    - [x] Verify template remains compact (≤35 lines)
+      spec_refs: [NFR2, AC6]
+      files: [src/templates/commands/research.md]
+      notes: "Template now 29 lines (increased by 1 from 28), well under 35-line limit"
+
+  validation:
+    - [ ] All phase_1 tasks completed
+    - [ ] Template compiles/renders without errors
+    - [ ] Line count ≤35 (target ~31-33 lines)
+    - [ ] Spec requirements covered: [FR1, FR2, FR3, FR4, FR5, FR6, NFR2, AC6]
+
+phase_2:
+  name: "Deployment and Documentation"
+  description: |
+    Copy updated template to .claude/commands/ and optionally update context documentation.
+
+  tasks:
+    - [x] Copy updated research.md to .claude/commands/research.md
+      spec_refs: [FR1]
+      files: [src/templates/commands/research.md, .claude/commands/research.md]
+      notes: "Deployed version matches source template with guideline #8 and updated guideline #3"
+
+    - [ ] Update research-slash-command.yml context file with TLDR guideline
+      spec_refs: []
+      files: [.buildforce/context/research-slash-command.yml]
+      notes: "Optional: Add guideline #8 to key_guidelines list for documentation consistency"
+
+    - [ ] Update slash-commands.yml with evolution entry for TLDR feature
+      spec_refs: []
+      files: [.buildforce/context/slash-commands.yml]
+      notes: "Optional: Document version 1.1 with TLDR enhancement"
+
+  validation:
+    - [ ] All phase_2 tasks completed
+    - [ ] Deployed template matches source template
+    - [ ] Context files updated (if applicable)
+    - [ ] Spec requirements covered: [FR1]
+
+phase_3:
+  name: "Testing and Validation"
+  description: |
+    Test the updated /research command with various query types to ensure TLDR
+    generation works consistently across all research strategies.
+
+  tasks:
+    - [ ] Test with project context query (e.g., "/research slash commands system")
+      spec_refs: [FR1, FR2, FR3, FR4, FR5, FR7, NFR3, AC1, AC2, AC3, AC4, AC7]
+      files: []
+      notes: "Verify TLDR appears with consistent formatting (## TLDR heading, standard bullets) and summarizes project context findings"
+
+    - [ ] Test with codebase exploration query (e.g., "/research authentication implementation")
+      spec_refs: [FR1, FR2, FR3, FR4, FR5, NFR3, AC1, AC2, AC3, AC4]
+      files: []
+      notes: "Verify TLDR excludes Mermaid diagrams and file path lists"
+
+    - [ ] Test with recency-aware query (e.g., "/research current best practices for testing")
+      spec_refs: [FR1, FR2, FR3, FR4, FR5, NFR3, AC1, AC2, AC3, AC4]
+      files: []
+      notes: "Verify TLDR summarizes web search findings appropriately"
+
+    - [ ] Test with general knowledge query (e.g., "/research dependency injection patterns")
+      spec_refs: [FR1, FR2, FR3, FR4, FR5, NFR3, AC1, AC2, AC3, AC4]
+      files: []
+      notes: "Verify TLDR condenses conceptual explanations"
+
+    - [ ] Verify TLDR readability (reviewable in <30 seconds)
+      spec_refs: [NFR1, AC2]
+      files: []
+      notes: "Manually time reading TLDR sections from test queries"
+
+    - [ ] Verify all existing sections remain unchanged
+      spec_refs: [FR6, AC5]
+      files: []
+      notes: "Compare output with original research output structure"
+
+  validation:
+    - [ ] All phase_3 tasks completed
+    - [ ] TLDR appears consistently across all research strategies
+    - [ ] TLDR format is consistent (## TLDR heading, 3-7 standard bullets, excludes code/diagrams)
+    - [ ] TLDR structure is visually identical across test queries (same heading, bullet style, organization)
+    - [ ] All detailed sections remain unchanged
+    - [ ] Spec requirements covered: [FR1, FR2, FR3, FR4, FR5, FR6, FR7, NFR1, NFR3, AC1, AC2, AC3, AC4, AC5, AC7]
+
+# DEVIATION LOG
+# The /build agent populates this section when implementation deviates from the original plan
+# Format: phase → task → original plan → actual implementation → reason for deviation
+
+deviations: []
+
+# TESTING GUIDANCE
+# Structured guidance for testing the implementation
+
+testing:
+  automated_tests: []
+
+  manual_tests:
+    - scenario: "Test TLDR with various research query types and verify formatting consistency"
+      steps: |
+        1. Run `/research slash commands system` (project context)
+        2. Verify TLDR section appears before "Next Steps"
+        3. Verify heading format is "## TLDR" (exact format)
+        4. Verify bullets use standard markdown format (-)
+        5. Count bullet points (should be 3-7)
+        6. Verify no code snippets or diagrams in TLDR
+        7. Verify section references are included
+        8. Repeat with codebase, web search, and general knowledge queries
+        9. Compare TLDR structure across all test queries for visual consistency
+
+    - scenario: "Verify template remains compact"
+      steps: |
+        1. Count lines in src/templates/commands/research.md
+        2. Verify ≤35 lines (target 31-33)
+        3. Compare with original 28-line version
+        4. Ensure increase is ≤25%
+
+    - scenario: "Verify detailed sections unchanged"
+      steps: |
+        1. Run `/research` query and capture output
+        2. Verify all sections present: Research Summary, Project Context, Codebase Findings, External Knowledge
+        3. Verify Mermaid diagrams and file paths still appear in detailed sections
+        4. Verify TLDR is additive (doesn't replace existing sections)
+
+# VALIDATION CRITERIA
+# Define success metrics and track spec requirement coverage
+
+success_metrics:
+  - "TLDR section appears in 100% of /research outputs"
+  - "TLDR readable in <30 seconds (measured across 5 test queries)"
+  - "Template line count ≤35 (≤25% increase from 28)"
+  - "Zero regressions in existing detailed section output"
+
+spec_coverage:
+  # Auto-track which spec requirements are implemented in which tasks
+  # Format: requirement_id: status + location
+  - FR1: "⏳ Phase 1: Tasks 2,3 | Phase 2: Task 1 | Phase 3: Tasks 1-4"
+  - FR2: "⏳ Phase 1: Task 2 | Phase 3: Tasks 1-5"
+  - FR3: "⏳ Phase 1: Task 2 | Phase 3: Tasks 1-4"
+  - FR4: "⏳ Phase 1: Task 2 | Phase 3: Tasks 1-4"
+  - FR5: "⏳ Phase 1: Task 2 | Phase 3: Tasks 1-4"
+  - FR6: "⏳ Phase 1: Task 1 | Phase 3: Task 6"
+  - FR7: "⏳ Phase 1: Task 2 | Phase 3: Task 1"
+  - NFR1: "⏳ Phase 3: Task 5"
+  - NFR2: "⏳ Phase 1: Task 4"
+  - NFR3: "⏳ Phase 3: Tasks 1-4"
+  - AC1: "⏳ Phase 3: Tasks 1-4"
+  - AC2: "⏳ Phase 3: Tasks 1-5"
+  - AC3: "⏳ Phase 3: Tasks 1-4"
+  - AC4: "⏳ Phase 3: Tasks 1-4"
+  - AC5: "⏳ Phase 3: Task 6"
+  - AC6: "⏳ Phase 1: Task 4"
+  - AC7: "⏳ Phase 3: Task 1"
+
+# PROGRESS SUMMARY
+# Track overall progress and identify next steps
+
+overall_progress:
+  phase_1: "4/4 tasks completed"
+  phase_2: "1/3 tasks completed (core deployment done, optional docs deferred)"
+  phase_3: "0/6 tasks completed (requires manual testing by user)"
+
+current_status: |
+  Phase 1 and core Phase 2 implementation complete. Template modified and deployed.
+  Ready for Phase 3 manual testing. User should test /research with various query types.
+
+next_immediate_steps:
+  - "Test /research with project context query to verify TLDR appears"
+  - "Test /research with multiple query types to verify formatting consistency"
+  - "Verify TLDR readability (<30 seconds) and structure consistency"
+
+# RISKS & CONSIDERATIONS
+# Document potential risks and mitigation strategies
+
+risks:
+  - risk: "Template size exceeds 35 lines, violating NFR2"
+    mitigation: "Keep guideline #8 concise. Use ALWAYS/NEVER emphasis instead of verbose explanations. Target 3-4 lines for the new guideline."
+
+  - risk: "TLDR generation is inconsistent across different AI assistants"
+    mitigation: "Use explicit formatting instructions in guideline #8 (e.g., '3-7 bullet points', 'exclude code/diagrams'). Test with Claude Code as primary assistant."
+
+  - risk: "TLDR duplicates content from 'Research Summary' section"
+    mitigation: "Clarify in guideline that TLDR should be more condensed and action-oriented than Research Summary. TLDR focuses on 'what user needs to know to proceed', Research Summary provides comprehensive overview."
+
+  - risk: "Users may prefer TLDR at the beginning instead of end"
+    mitigation: "Current placement (before Next Steps) aligns with decision point in workflow. Can iterate based on user feedback if needed."
+
+# NOTES
+# Capture lessons learned and future enhancement ideas
+
+lessons_learned:
+  - "Template-only changes are low-risk and fast to implement"
+  - "Dual-audience design (agents vs users) is valuable pattern for other commands"
+
+future_enhancements:
+  - "Apply TLDR pattern to other verbose command outputs if user feedback is positive"
+  - "Add user configuration for TLDR length/detail preferences (future feature)"
+  - "Consider TLDR placement options (beginning vs end) based on user feedback"
