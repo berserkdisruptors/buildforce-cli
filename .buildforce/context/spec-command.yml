@@ -69,6 +69,9 @@ design_decisions:
   - decision: "Standardized clarifying question format (numeric questions + alphabetical options + X for Other)"
     rationale: "Reduces user cognitive load and confusion by providing consistent, predictable structure for question responses. Format uses 1,2,3 numbering, A,B,C options, and X for free-form answers. Applied when predefined options make sense, with flexibility for plain text questions when appropriate."
 
+  - decision: "Add spec summary to final output (before plan summary)"
+    rationale: "Users need a recap of WHAT (spec) before seeing HOW (plan) before running /build. A flowing narrative summary that synthesizes the full spec.yaml context increases user confidence and provides a validation checkpoint. For UPDATE mode, shows only deltas to keep output concise."
+
 evolution:
   - version: "1.0"
     date: "2025-01-07"
@@ -86,10 +89,15 @@ evolution:
     date: "2025-10-24"
     changes: "Added standardized clarifying question format to Step 4 with explicit formatting rules (numeric questions, alphabetical options A/B/C, X for Other), format template, 2 complete examples, and usage guidance. Improves UX consistency and reduces user confusion during spec clarification phase."
 
+  - version: "5.0"
+    date: "2025-10-24"
+    changes: "Added spec summary to final output in Step 6 (Report completion). Spec summary appears before plan summary, synthesizes full spec.yaml context into flowing narrative (not structured sections), adapts to feature complexity (1 sentence for simple, paragraph for complex), and uses delta view for UPDATE mode. Provides users with complete WHAT + HOW context before running /build."
+
 related_specs:
   - redesign-spec-context-20250107120000
   - swap-timestamp-slug-order-20251024093000
   - standardize-question-format-20251024000000
+  - add-spec-summary-output-20251024000000
 
 notes: |
   The /spec command follows a 7-step workflow:
@@ -133,3 +141,13 @@ notes: |
      X. Other (please specify)
 
   Users can respond with: "1. A; 2. B" or "1. X: custom value; 2. C"
+
+  Spec Summary Format (v5.0):
+  - Appears in Step 6 final output, before plan summary
+  - Flowing narrative (not structured sections) that synthesizes full spec.yaml
+  - Combines: problem/motivation, goals, requirements (FR/NFR), scope (in/out), acceptance criteria
+  - Adaptive verbosity: 1 sentence for simple features, 2-3 sentences (paragraph) for complex
+  - CREATE mode: Full spec context summary
+  - UPDATE mode: Delta view only (what changed)
+  - Scannable in 10-15 seconds, fits with plan summary in 40-60 lines total
+  - Provides validation checkpoint before /build execution

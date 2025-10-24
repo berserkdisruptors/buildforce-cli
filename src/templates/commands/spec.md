@@ -178,7 +178,25 @@ The text the user typed after `/spec` in the triggering message **is** the featu
 
    **If NO open questions (or after questions are resolved):**
 
-   Present a **condensed plan summary** using this format:
+   **For CREATE mode**, present a **spec summary** followed by the **condensed plan summary**.
+
+   **For UPDATE mode**, present a **spec summary (changes only)** followed by the **condensed plan summary**.
+
+   **Spec Summary Format:**
+
+   ## Spec Summary
+
+   [Synthesize the full spec.yaml context into a flowing narrative that combines: (1) the problem being solved and why it matters, (2) the primary goals, (3) key functional and non-functional requirements, (4) what's in scope and what's explicitly out of scope, and (5) how success will be measured through acceptance criteria. Adapt verbosity to feature complexity: one sentence for simple features, 2-3 sentences (short paragraph) for complex features. Focus on WHAT is being built, not HOW.]
+
+   **For UPDATE mode only**: Replace the above with a delta view showing only what changed:
+
+   ## Spec Summary
+
+   [Describe only what changed in this update: new requirements added, scope modifications, updated acceptance criteria, or clarified goals. Keep concise and focused on the delta, not the full current state. Example: "Added FR5-FR7 for error handling with retry logic, expanded scope to include logging infrastructure, and updated AC3 to require 99.9% uptime."]
+
+   ---
+
+   Then present a **condensed plan summary** using this format:
 
    ```
    ## Implementation Plan Summary

@@ -1,0 +1,122 @@
+id: add-spec-summary-output-20251024000000
+name: "Add Spec Summary to /spec Command Output"
+type: feature
+status: draft
+created: "2025-10-24"
+last_updated: "2025-10-24"
+
+summary: |
+  Enhance the /spec command's final output to include a brief spec summary before the existing plan summary, providing users with a complete recap of both WHAT will be built and HOW before running /build.
+
+# INTENT / PROBLEM STATEMENT
+
+problem: |
+  Currently, the /spec command produces an excellent plan summary at the end (after clarifying questions), showing the implementation approach. However, users don't see a recap of the spec itself (the WHAT - requirements, scope, goals). This means the last thing users see before running /build is only the HOW (plan), without a quick refresher on the WHAT (spec).
+
+  For complex features, users may have forgotten some of the requirements or scope details discussed earlier in the conversation, leading to reduced confidence before starting implementation.
+
+motivation: |
+  Adding a brief spec summary alongside the existing plan summary will:
+  - Give users a complete "at-a-glance" view of both WHAT and HOW before building
+  - Increase user confidence by providing a final validation checkpoint
+  - Help users catch any misunderstandings or missing requirements before implementation starts
+  - Maintain consistency with the spec-driven development philosophy (spec defines WHAT, plan defines HOW)
+  - Improve user experience by reducing the need to scroll back through the conversation
+
+# GOALS
+
+primary_goals:
+  - Add a concise spec summary section to the /spec command's final output (before the existing plan summary)
+  - Ensure the spec summary is comprehensive enough to capture feature complexity while remaining scannable
+  - Maintain the current plan summary format and quality (no changes to that section)
+
+secondary_goals:
+  - Establish a consistent format for spec summaries that can be reused across the workflow
+  - Ensure the combined output (spec summary + plan summary) doesn't overwhelm users with information
+
+# REQUIREMENTS
+
+functional_requirements:
+  - FR1: The /spec command must output a spec summary section before presenting the plan summary
+  - FR2: The spec summary must appear only when there are NO open questions (or after questions are resolved)
+  - FR3: The spec summary must be a simple, flowing narrative that synthesizes context from the full spec.yaml (not structured sections)
+  - FR4: The spec summary must combine problem/motivation, goals, requirements, scope, and acceptance criteria into a cohesive summary
+  - FR5: The spec summary length should adapt to feature complexity (one sentence for simple features, short paragraph for complex features)
+  - FR6: The spec summary must use a formatted section header "## Spec Summary"
+  - FR7: For UPDATE mode, the spec summary must show only what changed (delta view), not the full current state
+  - FR8: The existing plan summary format and content must remain unchanged
+  - FR9: The output order must be: spec summary first, then plan summary, then "Ready to code? Run /build" suggestion
+
+non_functional_requirements:
+  - NFR1: The spec summary must be concise enough to scan in 10-15 seconds
+  - NFR2: The combined output (spec + plan summaries) must not exceed a reasonable terminal viewport (aim for 40-60 lines total)
+  - NFR3: The spec summary format must be consistent across all /spec command invocations
+
+# SCOPE
+
+in_scope:
+  - Modify the "Report completion" step (Step 6) in src/templates/commands/spec.md
+  - Add spec summary section to the output template before the existing plan summary
+  - Define the spec summary format and content structure
+  - Ensure spec summary appears only when open_questions are empty or resolved
+
+out_of_scope:
+  - Changes to the plan summary format or content (keep exactly as is)
+  - Changes to earlier steps in the /spec workflow (Steps 1-5 remain unchanged)
+  - Changes to spec.yaml or plan.yaml file structures
+  - Changes to other slash commands (/plan, /build, /complete, /document)
+  - Auto-generation of spec summaries in other contexts (this is specific to /spec command output)
+
+# DESIGN PRINCIPLES
+
+design_principles:
+  - "Maintain separation of concerns: spec summary captures WHAT, plan summary captures HOW"
+  - "Optimize for scannability: users should be able to quickly validate the spec without re-reading the full conversation"
+  - "Preserve existing UX: the plan summary remains unchanged, we're only adding context before it"
+  - "Adapt to complexity: summary verbosity should match feature scope (simple feature = brief summary, complex feature = longer but still concise summary)"
+
+# ACCEPTANCE CRITERIA
+
+acceptance_criteria:
+  - AC1: When /spec completes with no open questions, the output includes both a spec summary and a plan summary (in that order)
+  - AC2: The spec summary is a flowing narrative (not structured sections) that synthesizes the full spec.yaml context
+  - AC3: The spec summary can be read and understood in one sentence (for simple features) or a short paragraph (for complex features)
+  - AC4: The spec summary uses "## Spec Summary" as the section header
+  - AC5: For UPDATE mode, the spec summary shows only what changed (delta view)
+  - AC6: The plan summary remains exactly as it currently is (no format or content changes)
+  - AC7: The spec summary does NOT appear if there are unresolved open questions (only the questions are shown)
+  - AC8: The combined output flows logically: spec summary → plan summary → "Ready to code?" call-to-action
+
+# ASSUMPTIONS & DEPENDENCIES
+
+assumptions:
+  - Users value seeing a recap of WHAT before seeing HOW
+  - The current plan summary format is effective and doesn't need changes
+  - A flowing narrative summary (not structured sections) is more scannable and user-friendly
+  - For UPDATE mode, showing only changes is more useful than showing the full current state
+  - Users read the /spec output from top to bottom before running /build
+
+dependencies:
+  internal:
+    - src/templates/commands/spec.md: "Command template that needs modification in Step 6 (Report completion)"
+    - spec.yaml: "Source of truth for WHAT content to summarize"
+    - plan.yaml: "Source of truth for HOW content (already summarized, no changes needed)"
+  external:
+    - None
+
+# OPEN QUESTIONS
+
+open_questions: []
+
+# NOTES
+
+notes: |
+  This enhancement directly addresses user feedback that the plan summary is excellent but doesn't provide context on WHAT is being built.
+
+  The spec summary should be seen as a "validation checkpoint" - users can quickly scan it to confirm their understanding before diving into the implementation plan.
+
+  The spec summary is a flowing narrative (not structured sections) that synthesizes the full spec.yaml context into a cohesive, scannable summary.
+
+  For UPDATE mode, the spec summary shows only what changed (delta view) to keep the output concise and focused on new information.
+
+  Future enhancement: We could potentially add a similar spec summary to the /build command output, but that's out of scope for this change.
