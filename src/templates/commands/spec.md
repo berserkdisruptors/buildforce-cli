@@ -62,6 +62,8 @@ The text the user typed after `/spec` in the triggering message **is** the featu
    - Include technology choices, design patterns, file structure, testing strategy
    - Focus on HOW to implement the requirements from spec.yaml
 
+   **Verify template structure**: After populating both files, confirm they follow template structure—check all top-level sections exist (spec: INTENT, GOALS, REQUIREMENTS, SCOPE, DESIGN PRINCIPLES, ACCEPTANCE CRITERIA, ASSUMPTIONS & DEPENDENCIES, OPEN QUESTIONS, NOTES; plan: ARCHITECTURE OVERVIEW, FILE STRUCTURE, IMPLEMENTATION PHASES, DEVIATION LOG, TESTING GUIDANCE, VALIDATION CRITERIA, PROGRESS SUMMARY, RISKS & CONSIDERATIONS, NOTES), required metadata fields are present (id, name, type, status, created, last_updated), and field types match templates.
+
 3. **For UPDATE mode (existing spec)**:
 
    **Intelligent routing** - Determine which file(s) to update based on user input:

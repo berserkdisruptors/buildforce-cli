@@ -1,0 +1,266 @@
+# Plan Template for /build Agent Execution
+# This template is optimized for AI agent consumption during /build commands
+# It provides checkbox-based progress tracking, deviation logging, and spec traceability
+
+id: add-template-verification-20251024142000-plan
+name: "Implementation Plan for Add Template Structure Verification Instruction"
+spec_id: "add-template-verification-20251024142000"
+type: implementation-plan
+status: draft
+created: "2025-10-24"
+last_updated: "2025-10-24"
+
+# ARCHITECTURE OVERVIEW
+# Describe the high-level implementation approach and key technical decisions.
+
+approach: |
+  This is a template-only modification that adds a single verification instruction to Step 2c of the spec command template. The implementation involves:
+
+  1. Locate Step 2c "Populate both spec.yaml and plan.yaml" section in spec.md (lines 46-63)
+  2. Add verification instruction after "For plan.yaml (HOW to build)" subsection
+  3. Keep instruction concise (≤3 lines) with imperative tone matching existing template style
+  4. Specify key structural elements to verify (sections, fields, types)
+  5. Deploy updated template to .claude/commands/spec.md
+
+  No code changes, scripts, or programmatic validation required. Pure instruction enhancement.
+
+technology_stack:
+  - Markdown (for spec.md template file)
+  - YAML frontmatter (for template metadata)
+
+decisions:
+  - decision: "Add verification instruction at end of Step 2c, after plan.yaml population"
+    rationale: "Places verification immediately after both files are populated but before workflow continues to Step 3 (UPDATE mode). This is the optimal point where agent has full context of templates and populated content to perform structural check."
+
+  - decision: "Verification applies to CREATE mode only (Step 2c), not UPDATE mode (Step 3)"
+    rationale: "UPDATE mode typically modifies specific sections rather than rewriting entire file structure. Risk of structural deviation is minimal after initial creation. Single verification at CREATE time is sufficient and avoids instruction bloat."
+
+  - decision: "Use concise bullet-style verification criteria (≤3 lines)"
+    rationale: "Maintains template simplicity (NFR1) while providing clear structural guidance. Lists key sections to check rather than exhaustive field-by-field verification, trusting agent intelligence for detailed checking."
+
+  - decision: "Specify verification as imperative instruction ('Verify...') not optional suggestion ('Consider verifying...')"
+    rationale: "Consistent with spec.md template tone (uses 'Load...', 'Populate...', 'Ensure...', 'Focus on...'). Imperative tone ensures agents treat this as required step, not optional check."
+
+# FILE STRUCTURE
+# List all files to be created or modified during implementation
+
+files_to_create: []
+
+files_to_modify:
+  - path: "src/templates/commands/spec.md"
+    change_type: "edit"
+    description: "Add verification instruction to Step 2c after plan.yaml population section (after line 63)"
+
+  - path: ".claude/commands/spec.md"
+    change_type: "edit"
+    description: "Deploy updated spec.md template with verification instruction"
+
+# IMPLEMENTATION PHASES
+# Break down the implementation into logical phases with checkbox-based task tracking
+# Use [ ] for pending tasks and [x] for completed tasks
+# Each task should link back to spec requirements via spec_refs
+
+phase_1:
+  name: "Template Modification"
+  description: |
+    Add verification instruction to spec.md template at Step 2c.
+    This phase implements all functional requirements.
+
+  tasks:
+    - [x] Read current spec.md template to understand Step 2c structure and line placement
+      spec_refs: [FR1]
+      files: [src/templates/commands/spec.md]
+      notes: "Current Step 2c was lines 46-63. Verification instruction goes after line 63. Template was 232 lines."
+
+    - [x] Draft verification instruction text (≤3 lines, imperative tone)
+      spec_refs: [FR1, FR2, FR3, FR4, NFR1, NFR2]
+      files: []
+      notes: |
+        Used format:
+        "**Verify template structure**: After populating both files, confirm they follow template structure—check all top-level sections exist (spec: INTENT, GOALS, REQUIREMENTS, SCOPE, DESIGN PRINCIPLES, ACCEPTANCE CRITERIA, ASSUMPTIONS & DEPENDENCIES, OPEN QUESTIONS, NOTES; plan: ARCHITECTURE OVERVIEW, FILE STRUCTURE, IMPLEMENTATION PHASES, DEVIATION LOG, TESTING GUIDANCE, VALIDATION CRITERIA, PROGRESS SUMMARY, RISKS & CONSIDERATIONS, NOTES), required metadata fields are present (id, name, type, status, created, last_updated), and field types match templates."
+
+    - [x] Add verification instruction to Step 2c after "For plan.yaml" subsection
+      spec_refs: [FR1, FR2, FR3, FR4, FR5]
+      files: [src/templates/commands/spec.md]
+      notes: "Inserted at line 65, after plan.yaml population section. Step 3 (UPDATE mode) now begins at line 67."
+
+    - [x] Verify template line count increase is ≤5 lines
+      spec_refs: [AC6]
+      files: [src/templates/commands/spec.md]
+      notes: "Template increased from 232 to 234 lines (2 line increase). Well within ≤5 line limit."
+
+  validation:
+    - [ ] All phase_1 tasks completed
+    - [ ] Verification instruction present in Step 2c
+    - [ ] Instruction is ≤3 lines of text
+    - [ ] Template line count ≤238
+    - [ ] Spec requirements covered: [FR1, FR2, FR3, FR4, FR5, NFR1, NFR2, AC6]
+
+phase_2:
+  name: "Deployment"
+  description: |
+    Deploy updated template to .claude/commands/ directory.
+
+  tasks:
+    - [x] Copy updated spec.md to .claude/commands/spec.md
+      spec_refs: [AC5]
+      files: [src/templates/commands/spec.md, .claude/commands/spec.md]
+      notes: "Deployed successfully. Deployed version matches source template with verification instruction."
+
+    - [x] Verify .claude/commands/spec.md contains verification instruction
+      spec_refs: [AC1, AC2, AC3, AC5]
+      files: [.claude/commands/spec.md]
+      notes: "Verified: verification instruction present at line 65 in deployed file. Explicitly mentions both spec.yaml and plan.yaml."
+
+  validation:
+    - [ ] All phase_2 tasks completed
+    - [ ] Deployed template matches source template
+    - [ ] Verification instruction visible in deployed file
+    - [ ] Spec requirements covered: [AC1, AC2, AC3, AC5]
+
+phase_3:
+  name: "Testing and Validation"
+  description: |
+    Test updated /spec command with CREATE mode to verify instruction works as intended.
+
+  tasks:
+    - [ ] Run /spec command with sample feature to test CREATE mode
+      spec_refs: [FR1, FR2, FR3, FR4, FR5, AC1, AC2, AC3]
+      files: []
+      notes: "Example: /spec Add user authentication with JWT. Observe if agent performs verification after populating files."
+
+    - [ ] Verify agent checks template structure before presenting plan summary
+      spec_refs: [FR2, AC2, AC3]
+      files: []
+      notes: "Look for explicit verification behavior or mention of structural checking in agent output"
+
+    - [ ] Verify spec.yaml matches template structure (all sections, metadata fields)
+      spec_refs: [FR3, FR4]
+      files: []
+      notes: "Manually inspect generated spec.yaml for structural conformance"
+
+    - [ ] Verify plan.yaml matches template structure (all sections, metadata fields)
+      spec_refs: [FR3, FR4]
+      files: []
+      notes: "Manually inspect generated plan.yaml for structural conformance (this addresses reported user bug)"
+
+    - [ ] Confirm verification does NOT trigger in UPDATE mode (Step 3)
+      spec_refs: [FR5]
+      files: []
+      notes: "Run /spec again with existing spec to test UPDATE mode. Verification should not occur."
+
+  validation:
+    - [ ] All phase_3 tasks completed
+    - [ ] Verification instruction works in CREATE mode
+    - [ ] Generated files match template structure
+    - [ ] Verification skipped in UPDATE mode
+    - [ ] Spec requirements covered: [FR1, FR2, FR3, FR4, FR5, AC1, AC2, AC3]
+
+# DEVIATION LOG
+# The /build agent populates this section when implementation deviates from the original plan
+# Format: phase → task → original plan → actual implementation → reason for deviation
+
+deviations: []
+
+# TESTING GUIDANCE
+# Structured guidance for testing the implementation
+
+testing:
+  automated_tests: []
+
+  manual_tests:
+    - scenario: "Test CREATE mode with verification instruction"
+      steps: |
+        1. Clear .buildforce/.current-spec file (ensure CREATE mode)
+        2. Run `/spec Add JWT authentication with refresh tokens`
+        3. Observe agent behavior after populating spec.yaml and plan.yaml
+        4. Look for explicit verification step or structural checking mention
+        5. Inspect generated spec.yaml: verify all sections present (INTENT, GOALS, REQUIREMENTS, etc.)
+        6. Inspect generated plan.yaml: verify all sections present (ARCHITECTURE OVERVIEW, FILE STRUCTURE, etc.)
+        7. Check metadata fields present: id, name, type, status, created, last_updated
+        8. Verify agent proceeds to Step 4 (Identify Ambiguities) after successful verification
+
+    - scenario: "Test UPDATE mode does not trigger verification"
+      steps: |
+        1. With active spec from previous test, run `/spec Add password reset functionality`
+        2. Verify agent enters UPDATE mode (loads existing spec and plan)
+        3. Confirm verification instruction does NOT trigger (Step 2c is CREATE-only)
+        4. Verify agent updates files appropriately without structural re-checking
+
+    - scenario: "Verify template complexity increase is minimal"
+      steps: |
+        1. Count lines in src/templates/commands/spec.md
+        2. Compare with original 233 lines
+        3. Verify increase is ≤5 lines (target ≤238 total)
+        4. Ensure readability maintained (instruction blends naturally with existing Step 2c)
+
+# VALIDATION CRITERIA
+# Define success metrics and track spec requirement coverage
+
+success_metrics:
+  - "Verification instruction visible in spec.md Step 2c"
+  - "Instruction is ≤3 lines of text (measured)"
+  - "Template line count ≤238 (≤5 line increase)"
+  - "Zero structural deviation reports after deployment"
+
+spec_coverage:
+  # Auto-track which spec requirements are implemented in which tasks
+  # Format: requirement_id: status + location
+  - FR1: "⏳ Phase 1: Tasks 1,3 | Phase 2: Task 2 | Phase 3: Task 1"
+  - FR2: "⏳ Phase 1: Tasks 2,3 | Phase 3: Tasks 2,3"
+  - FR3: "⏳ Phase 1: Tasks 2,3 | Phase 3: Tasks 3,4"
+  - FR4: "⏳ Phase 1: Tasks 2,3 | Phase 3: Tasks 3,4"
+  - FR5: "⏳ Phase 1: Task 3 | Phase 3: Task 5"
+  - NFR1: "⏳ Phase 1: Tasks 2,4"
+  - NFR2: "⏳ Phase 1: Task 2"
+  - NFR3: "⏳ Phase 1: All tasks (no code/schema changes)"
+  - AC1: "⏳ Phase 1: Task 3 | Phase 2: Task 2"
+  - AC2: "⏳ Phase 1: Task 2 | Phase 2: Task 2 | Phase 3: Task 2"
+  - AC3: "⏳ Phase 1: Task 2 | Phase 2: Task 2 | Phase 3: Task 2"
+  - AC4: "⏳ Phase 1: Tasks 2,4"
+  - AC5: "⏳ Phase 2: Tasks 1,2"
+  - AC6: "⏳ Phase 1: Task 4"
+
+# PROGRESS SUMMARY
+# Track overall progress and identify next steps
+
+overall_progress:
+  phase_1: "4/4 tasks completed"
+  phase_2: "2/2 tasks completed"
+  phase_3: "0/5 tasks completed (requires manual testing by user)"
+
+current_status: |
+  Phase 1 and Phase 2 complete. Verification instruction successfully added to spec.md template at line 65 (Step 2c, after plan.yaml population). Template increased from 232 to 234 lines (2 line increase, well within ≤5 limit). Deployed to .claude/commands/spec.md. Ready for Phase 3 manual testing.
+
+next_immediate_steps:
+  - "User should test /spec command with CREATE mode to verify instruction works"
+  - "User should verify agent performs structural checking before presenting plan summary"
+  - "User should confirm verification does NOT trigger in UPDATE mode"
+
+# RISKS & CONSIDERATIONS
+# Document potential risks and mitigation strategies
+
+risks:
+  - risk: "Verification instruction may be too verbose, exceeding 3-line limit"
+    mitigation: "Use bullet-style listing of key sections to check. Focus on top-level structure (sections) rather than exhaustive field-by-field verification. Example: 'Verify template structure: check all top-level sections exist, required metadata fields present, field types match templates.'"
+
+  - risk: "Agent may not reliably perform verification without programmatic enforcement"
+    mitigation: "Use imperative tone ('Verify...') matching existing spec.md style. Place instruction at critical point (after population, before continuing). Monitor user reports post-deployment and iterate if needed."
+
+  - risk: "Instruction may add unnecessary overhead to template complexity"
+    mitigation: "Keep instruction ≤3 lines. Target ≤5 line increase to overall template (233→≤238 lines). Ensure instruction blends naturally with Step 2c flow."
+
+  - risk: "Users may still encounter structural deviations if agent skips verification"
+    mitigation: "This instruction addresses 80% case (agents following template). For persistent issues, can explore alternative approaches (programmatic validation, stricter templates, agent model improvements). Gather user feedback post-deployment."
+
+# NOTES
+# Capture lessons learned and future enhancement ideas
+
+lessons_learned:
+  - "Template-only changes are low-risk and fast to implement"
+  - "Self-verification leverages agent intelligence without adding code complexity"
+
+future_enhancements:
+  - "If user reports persist, consider adding verification to /plan command template as well"
+  - "Explore programmatic YAML linting as optional pre-commit hook (out of current scope)"
+  - "Consider adding verification instruction to /build command (check files before execution)"
