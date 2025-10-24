@@ -15,7 +15,7 @@ $ARGUMENTS
 
 **Key guidelines**:
 
-1. **Script Execution & Context Loading**: Run `{SCRIPT}` from repo root. Parse JSON response to extract **SPEC_DIR**. Load {SPEC_DIR}/spec.yaml into context. **NEVER proceed** without spec.yaml loaded. Check if {SPEC_DIR}/plan.yaml exists and has content beyond template to determine if this is first plan or iteration.
+1. **Script Execution & Context Loading**: Run `{SCRIPT}` FROM CURRENT WORKING DIRECTORY AND NEVER FROM SOMEWHERE ELSE! Parse JSON response to extract **SPEC_DIR**. **NEVER proceed** if script fails - display the error message to the user, explain that the `.buildforce` directory was not found, suggest: 1) check if you're in the buildforce root directory (where you ran `buildforce init`), 2) run `buildforce init --here` if needed. Load {SPEC_DIR}/spec.yaml into context. **NEVER proceed** without spec.yaml loaded. Check if {SPEC_DIR}/plan.yaml exists and has content beyond template to determine if this is first plan or iteration.
 
 2. **Parse User Instructions**: Parse $ARGUMENTS for planning instructions or constraints. User instructions take priority—incorporate them when making design decisions and planning implementation.
 

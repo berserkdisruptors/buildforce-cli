@@ -15,7 +15,7 @@ $ARGUMENTS
 
 **Key guidelines**:
 
-1. **Script Execution & Context Loading**: Run `{SCRIPT}` from repo root (script verifies files exist and will fail if missing). Parse the JSON response to extract **SPEC_DIR** (absolute path). Load {SPEC_DIR}/spec.yml and {SPEC_DIR}/plan.yml into context. **NEVER proceed** without both files loaded.
+1. **Script Execution & Context Loading**: Run `{SCRIPT}` FROM CURRENT WORKING DIRECTORY AND NEVER FROM SOMEWHERE ELSE!. **NEVER proceed** if script fails - display the error message to the user, explain that the `.buildforce` directory was not found, suggest: 1) check if you're in the buildforce root directory (where you ran `buildforce init`), 2) run `buildforce init --here` if needed. Parse the JSON response to extract **SPEC_DIR** (absolute path). Load {SPEC_DIR}/spec.yml and {SPEC_DIR}/plan.yml into context. **NEVER proceed** without both files loaded.
 
 2. **Progress Tracking**: Update the status of each task in the plan as you progress - each task has a checkbox, so make sure to check it on completion.
 
