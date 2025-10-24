@@ -33,8 +33,8 @@ files:
   primary:
     - src/templates/plan-template.yaml
   secondary:
-    - .buildforce/specs/20250103120000-plan-template/spec.yml
-    - .buildforce/specs/20250103120000-plan-template/plan.yml
+    - .buildforce/specs/plan-template-20250103120000/spec.yml
+    - .buildforce/specs/plan-template-20250103120000/plan.yml
 
 design_decisions:
   - decision: "Use markdown checkbox syntax [ ] / [x] instead of status fields"
@@ -122,8 +122,8 @@ evolution:
       - Removed estimated_completion fields
 
 related_specs:
-  - .buildforce/specs/20250103120000-plan-template/spec.yml
-  - .buildforce/specs/20250103120000-plan-template/plan.yml
+  - .buildforce/specs/plan-template-20250103120000/spec.yml
+  - .buildforce/specs/plan-template-20250103120000/plan.yml
 
 key_features:
   progress_tracking:

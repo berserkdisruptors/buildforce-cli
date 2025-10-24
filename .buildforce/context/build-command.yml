@@ -146,8 +146,8 @@ evolution:
     changes: "Compressed to 29 lines with 7 guidelines, script-based discovery, dual validation, testing guidance. 75% reduction achieved."
 
 related_specs:
-  - "20250102120000-build-command"
-  - "20250101120000-slash-commands (context for 5-command workflow)"
+  - "build-command-20250102120000"
+  - "slash-commands-20250101120000 (context for 5-command workflow)"
 
 notes: |
   Compact instruction template (29 lines) that enhances build agent execution without teaching HOW.

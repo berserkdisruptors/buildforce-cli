@@ -13,7 +13,7 @@ FOLDER_NAME=""
 for arg in "$@"; do
     case "$arg" in
         --json) JSON_MODE=true ;;
-        --help|-h) echo "Usage: $0 [--json] --folder-name <timestamp-slug>"; exit 0 ;;
+        --help|-h) echo "Usage: $0 [--json] --folder-name <semantic-slug-timestamp>"; exit 0 ;;
         --folder-name)
             shift
             FOLDER_NAME="$1"
@@ -32,21 +32,19 @@ done
 # Validate --folder-name is provided
 if [ -z "$FOLDER_NAME" ]; then
     echo "Error: --folder-name parameter is required" >&2
-    echo "Usage: $0 [--json] --folder-name <timestamp-slug>" >&2
-    echo "Example: $0 --folder-name 20250122143052-add-auth-jwt" >&2
+    echo "Usage: $0 [--json] --folder-name <semantic-slug-timestamp>" >&2
+    echo "Example: $0 --folder-name add-auth-jwt-20250122143052" >&2
     exit 1
 fi
 
-# Validate folder name format: must start with 14-digit timestamp followed by hyphen
-if ! [[ "$FOLDER_NAME" =~ ^[0-9]{14}- ]]; then
-    echo "Error: Folder name must start with 14-digit timestamp followed by hyphen (YYYYMMDDHHmmss-)" >&2
-    echo "Provided: $FOLDER_NAME" >&2
-    exit 1
-fi
-
-# Validate folder name contains only alphanumeric and hyphens
-if ! [[ "$FOLDER_NAME" =~ ^[0-9a-z-]+$ ]]; then
-    echo "Error: Folder name must contain only lowercase alphanumeric characters and hyphens" >&2
+# Validate folder name format: semantic slug (starting with letter) followed by timestamp
+# Pattern: ^[a-z][a-z0-9-]*-[0-9]{14}$
+if ! [[ "$FOLDER_NAME" =~ ^[a-z][a-z0-9-]*-[0-9]{14}$ ]]; then
+    echo "Error: Folder name must follow format: {semantic-slug}-{timestamp}" >&2
+    echo "  - Semantic slug must start with a lowercase letter" >&2
+    echo "  - Slug can contain lowercase letters, numbers, and hyphens" >&2
+    echo "  - Timestamp must be 14 digits (YYYYMMDDHHmmss)" >&2
+    echo "  - Example: add-auth-jwt-20250122143052" >&2
     echo "Provided: $FOLDER_NAME" >&2
     exit 1
 fi

@@ -1,0 +1,185 @@
+id: swap-timestamp-slug-order-20251024093000
+name: "Swap Timestamp and Slug Order in Spec Folder Naming"
+type: feature
+status: draft
+created: 2025-10-24
+last_updated: 2025-10-24
+
+summary: |
+  Reverse the spec folder naming convention from {timestamp}-{semantic-slug} to {semantic-slug}-{timestamp}
+  to improve discoverability, IDE autocomplete, and context referencing (@file-name) by making the semantic
+  portion immediately visible.
+
+# INTENT / PROBLEM STATEMENT
+
+problem: |
+  Current naming convention places 14-digit timestamp first ({timestamp}-{semantic-slug}):
+
+  1. **Poor Discoverability**: When browsing .buildforce/specs/, all folders start with "20251..." making
+     it impossible to quickly identify specs by their purpose without reading the full name.
+
+  2. **Broken IDE Autocomplete**: When using @file-name references, typing meaningful words doesn't match
+     because folders start with numbers. Users must remember/copy timestamps to reference specs.
+
+  3. **Reduced Readability**: In git history, file browsers, and terminal listings, the semantic slug is
+     pushed 15+ characters to the right, reducing scannability.
+
+  4. **Inconsistent with Context Files**: Context files use semantic-first naming (authentication.yml,
+     build-command.yml) while specs use timestamp-first, creating mental model mismatch.
+
+motivation: |
+  Reversing the order ({semantic-slug}-{timestamp}) provides:
+
+  - **Semantic-First Discovery**: Folders immediately identifiable by purpose (swap-timestamp-slug-order-20251024093000)
+  - **Better IDE Support**: Autocomplete works naturally - typing "swap" matches the folder
+  - **Improved Scannability**: Visual scanning prioritizes intent over chronology
+  - **Consistency**: Aligns with context file naming philosophy (semantic identity first)
+  - **Maintained Uniqueness**: Timestamp suffix still guarantees collision-free naming
+
+# GOALS
+
+primary_goals:
+  - Reverse spec folder naming format from {timestamp}-{semantic-slug} to {semantic-slug}-{timestamp}
+  - Maintain timestamp-based uniqueness and collision resistance
+  - Improve discoverability and IDE autocomplete for spec folder references
+  - Align spec folder naming philosophy with context file naming (semantic-first)
+
+secondary_goals:
+  - Migrate existing spec folders to new format maintaining git history
+  - Update validation logic to enforce new format
+
+# REQUIREMENTS
+
+functional_requirements:
+  - FR1: create-spec-files scripts generate folder names in format {semantic-slug}-{timestamp}
+  - FR2: Semantic slug comes first (3-5 words, kebab-case, max 35 chars, lowercase alphanumeric + hyphens)
+  - FR3: Timestamp suffix in format YYYYMMDDHHmmss (14 digits, UTC, second-level precision)
+  - FR4: Total folder name length remains ≤50 characters (35 for slug + 1 hyphen + 14 for timestamp)
+  - FR5: Script validation updated to enforce {semantic-slug}-{timestamp} format
+  - FR6: Agent in /spec command generates semantic slug first, then appends timestamp
+  - FR7: spec.yaml id field populated with full folder name in new format
+  - FR8: .current-spec state file tracks folder names in new format
+  - FR9: Existing spec folders renamed from old format to new format
+  - FR10: All references to old folder names updated (context files' related_specs)
+
+non_functional_requirements:
+  - NFR1: Folder names remain human-readable and git-friendly
+  - NFR2: IDE autocomplete improves for spec folder references (typing semantic words matches)
+  - NFR3: Breaking change acceptable - no backward compatibility with {timestamp}-{slug} format
+  - NFR4: Script validation performance remains <50ms
+  - NFR5: Cross-platform compatibility maintained (bash and PowerShell scripts)
+
+# SCOPE
+
+in_scope:
+  - Modify create-spec-files.sh/ps1 validation regex to require format ^[a-z0-9-]+-\d{14}$
+  - Update /spec command template to instruct agent to append (not prepend) timestamp
+  - Update spec-template.yaml if needed (currently uses [FOLDER_NAME] placeholder - should work as-is)
+  - Rename existing spec folders in .buildforce/specs/ from {timestamp}-{slug} to {slug}-{timestamp}
+  - Update id fields in renamed spec.yaml files to match new folder names
+  - Update related_specs references in context files to use new folder names
+  - Update .current-spec state file if it references old-format folder name
+
+out_of_scope:
+  - Changes to plan.yaml structure (inherits folder name automatically)
+  - Changes to context file naming (already semantic-first)
+  - Migration scripts for external projects (project has no external users yet)
+  - Custom timestamp formats or timezone overrides (UTC-14-digit standard unchanged)
+  - Folder name editing after creation (still immutable by design)
+
+# DESIGN PRINCIPLES
+
+design_principles:
+  - "Semantic First: Human-meaningful information comes before technical metadata"
+  - "Discoverability Over Chronology: Prioritize findability in everyday workflows"
+  - "Consistent Philosophy: Specs and contexts both use semantic-first naming"
+  - "Maintained Uniqueness: Timestamp suffix preserves collision-free guarantee"
+  - "IDE-Friendly: Autocomplete should work naturally with semantic queries"
+
+# ACCEPTANCE CRITERIA
+
+acceptance_criteria:
+  - AC1: /spec command with "Swap timestamp slug order" generates folder "swap-timestamp-slug-order-20251024093000"
+  - AC2: create-spec-files.sh --folder-name "refactor-auth-20251024120000" creates valid folder structure
+  - AC3: Validation rejects "20251024120000-refactor-auth" (old format) with clear error message
+  - AC4: Validation accepts "refactor-auth-20251024120000" (new format)
+  - AC5: Typing "swap-" in IDE file picker shows "swap-timestamp-slug-order-20251024093000" folder
+  - AC6: All existing spec folders renamed (e.g., "20250101120000-slash-commands" → "slash-commands-20250101120000")
+  - AC7: Spec id fields updated to match new folder names
+  - AC8: Context files' related_specs arrays updated with new folder name format
+  - AC9: Total folder name length validation enforced (≤50 chars)
+  - AC10: Semantic slug length validation enforced (≤35 chars before timestamp)
+  - AC11: .current-spec file updated with new format folder name
+
+# ASSUMPTIONS & DEPENDENCIES
+
+assumptions:
+  - Semantic slug remains meaningful and unique enough when combined with timestamp
+  - Users prefer semantic-first naming despite chronological sorting being less natural in file browsers
+  - Git history preservation is possible through folder renames (git mv)
+  - IDE autocomplete performance not significantly impacted by timestamp suffix
+
+dependencies:
+  internal:
+    - create-spec-files: "Scripts must validate new format and reject old format"
+    - spec.md: "Command template must instruct agent to append timestamp, not prepend"
+    - spec-command.yml: "Context documentation must reflect new naming convention"
+    - existing-specs: "All existing spec folders must be renamed to maintain consistency"
+  external:
+    - bash: "date command for UTC timestamp generation (unchanged)"
+    - powershell: "Get-Date cmdlet for UTC timestamp (unchanged)"
+
+# OPEN QUESTIONS
+
+open_questions: []
+
+# RESOLVED QUESTIONS
+
+resolved_questions:
+  - question: "Should chronological sorting be maintained somehow (e.g., spec index file with creation dates)?"
+    resolution: "No - keep it simple. If this becomes a problem, we can iterate later."
+
+  - question: "Should the semantic slug character limit be adjusted (currently 35 chars)?"
+    resolution: "No - 35 chars is sufficient for meaningful names."
+
+  - question: "How should we handle references to renamed spec folders in external documentation or issues?"
+    resolution: "Not applicable - no external users yet. Only migrate specs and references within .buildforce folder of current repo."
+
+  - question: "Should we add a migration check in /spec to detect and warn about old-format folders?"
+    resolution: "No - not needed since we don't have active users yet. Clean migration of internal specs is sufficient."
+
+# NOTES
+
+notes: |
+  BREAKING CHANGE: This intentionally breaks the existing {timestamp}-{semantic-slug} convention.
+  Internal specs will be manually renamed. External users don't exist yet.
+
+  Comparison of formats:
+  - Old: 20251024093000-swap-timestamp-slug-order
+  - New: swap-timestamp-slug-order-20251024093000
+
+  The new format prioritizes human-readable semantic information while preserving technical uniqueness.
+
+  Chronological sorting trade-off: File browsers will no longer sort specs chronologically by default.
+  This is an acceptable trade-off because:
+  1. Specs are rarely browsed chronologically (more often searched by purpose)
+  2. Git history provides chronology when needed
+  3. Context files link to relevant specs regardless of folder names
+  4. A spec index file could provide chronological view if needed later
+
+  Validation regex changes:
+  - Old pattern: ^[0-9]{14}-[a-z0-9-]+$
+  - New pattern: ^[a-z0-9-]+-[0-9]{14}$
+
+  The semantic slug must now be validated to NOT start with digits (avoid ambiguity).
+  Update validation: Semantic slug must match ^[a-z][a-z0-9-]*$ (start with letter).
+
+  Migration steps:
+  1. Update validation regex in create-spec-files scripts
+  2. Update /spec template to append (not prepend) timestamp
+  3. Rename existing spec folders using git mv
+  4. Update spec.yaml id fields in renamed folders
+  5. Search and replace old folder names in context files' related_specs
+  6. Update documentation examples
+  7. Test end-to-end workflow with new format
+  8. Deploy and announce breaking change

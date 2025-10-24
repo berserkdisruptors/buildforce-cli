@@ -14,20 +14,22 @@ $ErrorActionPreference = 'Stop'
 # Validate folder name is provided
 if (-not $FolderName) {
     Write-Error "Error: -FolderName parameter is required"
-    Write-Host "Usage: ./create-spec-files.ps1 [-Json] -FolderName <timestamp-slug>" -ForegroundColor Red
-    Write-Host "Example: ./create-spec-files.ps1 -FolderName 20250122143052-add-auth-jwt" -ForegroundColor Yellow
+    Write-Host "Usage: ./create-spec-files.ps1 [-Json] -FolderName <semantic-slug-timestamp>" -ForegroundColor Red
+    Write-Host "Example: ./create-spec-files.ps1 -FolderName add-auth-jwt-20250122143052" -ForegroundColor Yellow
     exit 1
 }
 
-# Validate folder name format: must start with 14-digit timestamp followed by hyphen
-if ($FolderName -notmatch '^[0-9]{14}-') {
-    Write-Error "Error: Folder name must start with 14-digit timestamp followed by hyphen (YYYYMMDDHHmmss-)`nProvided: $FolderName"
-    exit 1
-}
-
-# Validate folder name contains only alphanumeric and hyphens
-if ($FolderName -notmatch '^[0-9a-z-]+$') {
-    Write-Error "Error: Folder name must contain only lowercase alphanumeric characters and hyphens`nProvided: $FolderName"
+# Validate folder name format: semantic slug (starting with letter) followed by timestamp
+# Pattern: ^[a-z][a-z0-9-]*-[0-9]{14}$
+if ($FolderName -notmatch '^[a-z][a-z0-9-]*-[0-9]{14}$') {
+    Write-Error @"
+Error: Folder name must follow format: {semantic-slug}-{timestamp}
+  - Semantic slug must start with a lowercase letter
+  - Slug can contain lowercase letters, numbers, and hyphens
+  - Timestamp must be 14 digits (YYYYMMDDHHmmss)
+  - Example: add-auth-jwt-20250122143052
+Provided: $FolderName
+"@
     exit 1
 }
 

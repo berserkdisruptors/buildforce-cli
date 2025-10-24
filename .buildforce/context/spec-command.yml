@@ -73,7 +73,7 @@ evolution:
     changes: "Refactored to use .current-spec for CREATE/UPDATE determination, moved folder generation to CREATE flow only, removed legacy references"
 
 related_specs:
-  - 20250107120000-redesign-spec-context
+  - redesign-spec-context-20250107120000
 
 notes: |
   The /spec command follows a 7-step workflow:
@@ -89,7 +89,7 @@ notes: |
   - Timestamp: YYYYMMDDHHmmss (14 digits, UTC)
   - Semantic slug: kebab-case, 3-5 words, max 35 chars
   - Combined: {timestamp}-{slug} (max 50 chars total)
-  - Example: 20250123145030-add-auth-jwt
+  - Example: add-auth-jwt-20250123145030
 
   Key principle: Specs capture WHAT needs to be built, not HOW to build it.
   Implementation details belong in the plan.yaml, not spec.yaml.
