@@ -15,9 +15,10 @@ The text the user typed after `/spec` in the triggering message **is** the featu
 
 ## Workflow Steps
 
-1. **Determine CREATE vs UPDATE mode**:
+1. **Determine create vs update mode**: Read and follow the pattern described in `.buildforce/templates/shared/create-update-pattern.md` from the buildforce root directory.
 
-   Check if there's an active spec in the current session:
+   - Priority 1: Check conversation history for existing spec
+   - Priority 2: Run `{SCRIPT}` FROM CURRENT WORKING DIRECTORY AND NEVER FROM SOMEWHERE ELSE! Parse JSON output for FOLDER_NAME, SPEC_FILE, SPEC_DIR, FEATURE_NUM, and IS_UPDATE flag. **NEVER proceed** if script fails - display the error message to the user, explain that the `.buildforce` directory was not found, suggest: 1) check if you're in the buildforce root directory (where you ran `buildforce init`), 2) run `buildforce init --here` if needed.
 
    - Read `.buildforce/.current-spec` file from repo root
    - If file exists and has content (non-empty folder name): **UPDATE mode** - Load existing spec from that folder
@@ -44,7 +45,7 @@ The text the user typed after `/spec` in the triggering message **is** the featu
 
    **Step 2c: Populate spec file**:
 
-   - Load `templates/spec-template.yaml` from repo root to understand structure and fields
+   - Load `.buildforce/templates/spec-template.yaml` from the current working directory to understand structure and fields
    - Populate all sections based on placeholder text, YAML comments, and field names
    - For metadata: Set id = "{FOLDER_NAME}" (the full slug-timestamp you generated), status = "draft", dates = today YYYY-MM-DD
    - For content: Derive from feature description and prerequisite context
