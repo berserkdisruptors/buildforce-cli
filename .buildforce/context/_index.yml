@@ -178,3 +178,28 @@ contexts:
         intelligent-merge,
         workflow-core,
       ]
+
+  - id: cli-architecture
+    file: cli-architecture.yml
+    type: module
+    description: "Comprehensive CLI architecture with template distribution, context management, and multi-agent support"
+    tags:
+      [
+        core,
+        architecture,
+        cli,
+        commander,
+        github-releases,
+        context-system,
+        agent-support,
+        initialization,
+        workflow-foundation,
+      ]
+    related_context:
+      [
+        slash-commands,
+        document-command,
+        research-slash-command,
+        spec-command,
+        plan-template,
+      ]

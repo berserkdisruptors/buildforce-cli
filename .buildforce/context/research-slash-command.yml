@@ -20,6 +20,7 @@ dependencies:
   internal:
     - context-repository: "Primary knowledge source via _index.yml"
     - slash-commands: "Part of 5-command workflow system"
+    - cli-architecture: "Command template distributed via CLI project initialization"
   external:
     - None (instruction template for Claude Code)
 

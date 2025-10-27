@@ -32,6 +32,7 @@ dependencies:
     complete-command: "v2.0 mirrors /complete steps 3-6 workflow patterns for UX consistency"
     context-repository: "Reads _schema.yml for structure, updates _index.yml, creates/updates context files in .buildforce/context/"
     slash-commands: "Standalone utility command complementing the 5-command workflow (research → spec → plan → build → complete)"
+    cli-architecture: "Command template distributed via CLI project initialization"
   external: {}
 
 files:
