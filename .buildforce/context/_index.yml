@@ -56,16 +56,18 @@ contexts:
   - id: document-command
     file: document-command.yml
     type: feature
+    description: "Enhanced /document command with /complete UX patterns, empty context detection, and completion summaries"
     tags:
       [
         slash-command,
         document,
         context-creation,
         template-only,
-        snake-case-naming,
+        kebab-case-naming,
         intelligent-merge,
         auto-detection,
         workflow-utility,
+        ux-enhancement,
       ]
 
   - id: readme-documentation
