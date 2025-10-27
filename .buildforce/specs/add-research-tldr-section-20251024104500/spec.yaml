@@ -1,0 +1,100 @@
+id: add-research-tldr-section-20251024104500
+name: "Add TLDR Section to Research Command Output"
+type: feature
+status: draft
+created: "2025-10-24"
+last_updated: "2025-10-24"
+
+summary: |
+  Add a concise TLDR (Too Long; Didn't Read) section at the end of /research command output to help users quickly scan the most important findings without scrolling through verbose detailed reports.
+
+# INTENT / PROBLEM STATEMENT
+
+problem: |
+  The /research command output serves two audiences: (1) build agents that need comprehensive context in the context window, and (2) users who need to understand key findings. Currently, the output is very verbose with detailed sections including code snippets, Mermaid diagrams, file paths, and extensive explanations. Users must scroll through large amounts of content and cannot quickly grasp the essential findings in a reasonable amount of time. This creates friction in the workflow as users struggle to identify what matters most before proceeding to /spec.
+
+motivation: |
+  A TLDR section provides a condensed, scannable summary of research findings tailored for human consumption. Users can quickly understand the key points and scroll up for details only when needed. This improves the user experience without compromising the comprehensive context needed by build agents. The dual-purpose design (detailed content for agents, condensed summary for users) optimizes the research workflow for both audiences.
+
+# GOALS
+
+primary_goals:
+  - Provide users with a quick, scannable summary of research findings without requiring them to read the entire verbose report
+  - Maintain comprehensive detailed output for build agents to have sufficient context
+  - Improve user experience and workflow efficiency when using /research command
+
+secondary_goals:
+  - Establish a pattern for dual-audience output (agents vs humans) that could be applied to other commands
+  - Reduce cognitive load for users reviewing research before creating specs
+
+# REQUIREMENTS
+
+functional_requirements:
+  - FR1: Add a "TLDR" section at the end of /research output, positioned before "Next Steps" suggestion
+  - FR2: TLDR section must condense findings into 3-7 bullet points highlighting only the most important discoveries
+  - FR3: TLDR content must exclude code snippets, Mermaid diagrams, and extensive file path lists
+  - FR4: TLDR must include key architectural patterns, critical decisions, or important constraints discovered
+  - FR5: TLDR must preserve references to where detailed information can be found (e.g., "See Codebase Findings for file paths")
+  - FR6: Full detailed sections (Research Summary, Project Context, Codebase Findings, External Knowledge) remain unchanged for build agent consumption
+  - FR7: TLDR output formatting must follow a consistent structural pattern across all research queries regardless of content type or research strategy used
+
+non_functional_requirements:
+  - NFR1: TLDR section should be readable in under 30 seconds
+  - NFR2: Implementation must not increase template complexity significantly (maintain compact 28-line design principle)
+  - NFR3: TLDR generation logic must work consistently across all research strategies (project context, codebase exploration, web search, general knowledge)
+
+# SCOPE
+
+in_scope:
+  - Modify research.md template to include TLDR section generation guideline
+  - Update guideline to instruct AI on what to include/exclude in TLDR
+  - Position TLDR section before "Next Steps" in output structure
+  - Maintain all existing detailed sections for build agent context
+
+out_of_scope:
+  - Modifying other slash command outputs (/spec, /plan, /build, /complete)
+  - Automatic summarization algorithms or NLP-based condensation
+  - User preferences or configuration for TLDR length/detail
+  - Multi-language support for TLDR content
+  - Modifying the research context repository structure
+
+# DESIGN PRINCIPLES
+
+design_principles:
+  - "Human-first summary, agent-first detail: Optimize TLDR for user scanning while preserving comprehensive context for agents"
+  - "Minimal template complexity: Add TLDR guideline without significantly increasing the 28-line template size"
+  - "Consistent structure: TLDR should follow predictable format across all research queries"
+
+# ACCEPTANCE CRITERIA
+
+acceptance_criteria:
+  - AC1: TLDR section appears at the end of every /research output, positioned before "Next Steps"
+  - AC2: TLDR contains 3-7 concise bullet points summarizing the most important findings
+  - AC3: TLDR excludes code snippets, Mermaid diagrams, and lengthy file path lists
+  - AC4: TLDR includes references to sections where users can find detailed information
+  - AC5: All existing detailed sections remain unchanged in the output
+  - AC6: Template remains compact (≤35 lines, within 25% increase from current 28 lines)
+  - AC7: TLDR structure is visually identical across all /research outputs (same heading format, bullet style, and section organization)
+
+# ASSUMPTIONS & DEPENDENCIES
+
+assumptions:
+  - Users are familiar with TLDR convention (common in documentation and online content)
+  - AI assistants can reliably generate appropriate condensed summaries from detailed research findings
+  - TLDR placement at the end (before "Next Steps") is optimal for user workflow
+
+dependencies:
+  internal:
+    - research-command-template: "src/templates/commands/research.md must be modified"
+    - slash-commands-system: "Part of 5-command workflow, must maintain compatibility"
+  external:
+    - None (pure instruction template modification)
+
+# OPEN QUESTIONS
+
+open_questions: []
+
+# NOTES
+
+notes: |
+  This enhancement addresses a common UX pain point without disrupting the core research workflow. The dual-audience design (detailed for agents, condensed for users) could serve as a pattern for future command improvements. Implementation should be a simple template modification adding a new numbered guideline or extending guideline #3 (Structured Output).

@@ -1,0 +1,144 @@
+id: unify-spec-plan-commands-20251024000000
+name: "Unify /spec and /plan Commands into Single /spec Command"
+type: feature
+status: draft
+created: "2025-10-24"
+last_updated: "2025-10-24"
+
+summary: |
+  Merge the /spec and /plan slash commands into a single unified /spec command that handles both
+  specification (WHAT to build) and planning (HOW to build) in one streamlined workflow. This
+  eliminates the unnecessary intermediate step and simplifies the user experience based on real
+  usage patterns.
+
+# INTENT / PROBLEM STATEMENT
+
+problem: |
+  During testing and real-world usage, we discovered that the /plan command is an unnecessary
+  intermediate step. Users already provide comprehensive details during the /spec phase, including
+  clarifying questions and iterative refinement. When it comes to the /plan command, users simply
+  run it to populate plan.yml without providing meaningful additional technical details, as originally
+  anticipated. The current two-step process (spec → plan) adds friction without adding value.
+
+motivation: |
+  By unifying /spec and /plan into a single command, we can:
+  - Streamline the workflow from 5 commands to 4 (research → spec → build → complete)
+  - Eliminate the get-spec-paths.sh script and its PowerShell equivalent
+  - Reduce cognitive overhead for users who currently run /plan just to populate plan.yml
+  - Maintain the same level of planning rigor while removing an unnecessary step
+  - Make the workflow more intuitive: spec.yaml captures WHAT, plan.yaml captures HOW, both in one command
+
+# GOALS
+
+primary_goals:
+  - Merge /spec and /plan commands into a single /spec command that populates both spec.yaml and plan.yaml
+  - Eliminate the need for get-spec-paths.sh and its PowerShell equivalent
+  - Maintain clear separation: spec.yaml = WHAT (requirements, scope), plan.yaml = HOW (technical details, implementation)
+  - Simplify the workflow while preserving all existing functionality
+
+secondary_goals:
+  - Reduce token usage by removing unnecessary validation steps (e.g., "Validate Prerequisite Context")
+  - Present a condensed, high-level plan summary that users can easily scan and approve
+  - Support iterative updates via subsequent /spec command executions
+
+# REQUIREMENTS
+
+functional_requirements:
+  - FR1: Unified /spec command shall determine CREATE vs UPDATE mode by checking .current-spec file
+  - FR2: In CREATE mode, command shall generate folder name, run create-spec-files.sh, and create both spec.yaml and plan.yaml
+  - FR3: Command shall populate spec.yaml with requirements, scope, goals, acceptance criteria, and open questions (WHAT)
+  - FR4: Command shall populate plan.yaml with technical decisions, architecture, implementation phases, tasks, and testing guidance (HOW)
+  - FR5: Command shall intelligently route user input to appropriate file (spec.yaml for requirements, plan.yaml for technical details)
+  - FR6: Command shall identify and present clarifying questions for both specification and technical decisions
+  - FR7: Command shall NOT present plan summary if clarifying questions exist (questions must be answered first)
+  - FR8: After clarifying questions are resolved, command shall present a brief, condensed, high-level plan summary for user approval
+  - FR9: Command shall treat every subsequent user message or /spec execution as an UPDATE to both spec.yaml and plan.yaml
+  - FR10: Command shall eliminate references to /plan command in output and instead suggest /build with "Ready to code? Run /build to start implementation."
+
+non_functional_requirements:
+  - NFR1: Command template shall be concise and token-efficient, removing unnecessary validation steps
+  - NFR2: Plan presentation shall be scannable and easy to skip through (not verbose like current /plan output)
+  - NFR3: Command shall maintain backward compatibility with existing spec.yaml and plan.yaml structures
+  - NFR4: Implementation shall allow removal of get-spec-paths.sh and get-spec-paths.ps1 scripts
+
+# SCOPE
+
+in_scope:
+  - Merging /spec and /plan command templates into a single unified /spec template
+  - Updating command workflow to populate both spec.yaml and plan.yaml in one execution
+  - Removing step 4 (Validate Prerequisite Context) from current /spec workflow
+  - Simplifying and unifying steps 1-3 to handle both spec and plan creation
+  - Redesigning steps 7-8 to present condensed plan summary (only when no open questions exist)
+  - Adding intelligent routing logic to determine which file (spec.yaml vs plan.yaml) to update based on user input
+  - Updating command to support iterative updates to both files
+  - Removing dependency on get-spec-paths.sh and get-spec-paths.ps1 scripts
+
+out_of_scope:
+  - Changes to spec-template.yaml structure
+  - Changes to plan-template.yaml structure
+  - Modifications to /build, /research, /complete, or /document commands
+  - Changes to create-spec-files.sh script (remains as-is for folder creation)
+  - Migration of existing specs/plans created with old workflow
+  - Removal of /plan command files (kept for potential future use or backward compatibility)
+
+# DESIGN PRINCIPLES
+
+design_principles:
+  - "Single responsibility with dual output: One command, two files (spec.yaml + plan.yaml)"
+  - "Intelligent routing: User input automatically goes to the right file based on content type"
+  - "Questions before planning: Never present plan if clarifying questions exist"
+  - "Scannable summaries: Plan presentation should be brief and easy to review"
+  - "Iterative by default: Every subsequent /spec call updates both files"
+
+# ACCEPTANCE CRITERIA
+
+acceptance_criteria:
+  - AC1: Running /spec in CREATE mode shall generate folder, create both spec.yaml and plan.yaml, and populate both files
+  - AC2: spec.yaml shall contain only WHAT content (requirements, scope, goals, acceptance criteria)
+  - AC3: plan.yaml shall contain only HOW content (architecture, tech decisions, phases, tasks, testing)
+  - AC4: Command shall ask clarifying questions for both specification and technical uncertainties
+  - AC5: Plan summary shall NOT be presented if open_questions section has items
+  - AC6: After questions are resolved, command shall present a condensed plan summary (not full /plan format)
+  - AC7: Running /spec in UPDATE mode shall intelligently update spec.yaml or plan.yaml based on user input
+  - AC8: Command template shall not reference /plan command in suggestions or next steps
+  - AC9: get-spec-paths.sh script shall become unused and removable after implementation
+  - AC10: Workflow shall reduce from 5 commands to 4 (research → spec → build → complete)
+
+# ASSUMPTIONS & DEPENDENCIES
+
+assumptions:
+  - Users will provide sufficient detail in initial /spec input to populate both spec and plan
+  - Clarifying questions can cover both specification and technical decision uncertainties
+  - Users are comfortable with a condensed plan summary vs detailed /plan output
+  - Backward compatibility with existing spec/plan files is not strictly required
+
+dependencies:
+  internal:
+    - create-spec-files.sh: "Still needed to create folder structure and empty template files"
+    - spec-template.yaml: "Structure remains unchanged"
+    - plan-template.yaml: "Structure remains unchanged, enhanced with guidelines from /plan command"
+    - /plan command template: "Source of guidelines to merge into unified /spec"
+  external:
+    - None
+
+# OPEN QUESTIONS
+
+open_questions: []
+
+# NOTES
+
+notes: |
+  This refactoring is based on real user testing and usage patterns. The key insight is that users
+  already provide all necessary information during the /spec phase, and the /plan command has become
+  a mechanical step that just populates plan.yml without adding meaningful value.
+
+  The unified /spec command maintains the same rigor and structure, but eliminates the unnecessary
+  intermediate step. The command will need to be smart about routing user input to the appropriate
+  file (spec.yaml for requirements, plan.yaml for technical details).
+
+  Clarifying questions resolved:
+  - /plan command files will remain untouched (this is an experiment)
+  - Condensed plan summary format: numbered list (1./2./3.) for each phase with sub-items (-)
+  - Command will validate that plan.yaml is populated before allowing /build
+  - Intelligent routing always applies (no user prompts for which file to update)
+  - README documentation updates deferred until experiment proves successful

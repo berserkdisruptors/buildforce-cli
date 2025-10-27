@@ -1,6 +1,6 @@
-id: 002-build-command-plan
+id: build-command-20250102120000-plan
 name: "Implementation Plan for /build Command Iteration"
-spec_id: "002-build-command"
+spec_id: "build-command-20250102120000"
 type: implementation-plan
 status: ready
 created: "2025-10-08"

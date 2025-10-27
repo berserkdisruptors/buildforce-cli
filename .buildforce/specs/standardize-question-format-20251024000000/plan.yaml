@@ -1,0 +1,191 @@
+id: standardize-question-format-20251024000000-plan
+name: "Implementation Plan for Standardize Clarifying Question Format"
+spec_id: "standardize-question-format-20251024000000"
+type: implementation-plan
+status: completed
+created: "2025-10-24"
+last_updated: "2025-10-24"
+
+# ARCHITECTURE OVERVIEW
+
+approach: |
+  This is a template-only change that updates the spec.md command template to include explicit
+  formatting rules for clarifying questions. The implementation involves:
+
+  1. Updating Step 4 ("Identify Ambiguities & Clarifying Questions") in spec.md
+  2. Adding a dedicated "Question Format Requirements" subsection with formatting rules
+  3. Providing concrete examples that AI agents can follow
+  4. Documenting user response patterns
+
+  The change is purely documentation/guidance-based - no code changes required. AI agents will
+  read and follow the updated template instructions when presenting clarifying questions.
+
+technology_stack:
+  - Markdown: Template documentation format
+  - YAML: Spec and plan file format
+
+decisions:
+  - decision: "Update template-only, no code changes"
+    rationale: "The /spec command is template-driven. AI agents already read and follow the template instructions, so updating the template is sufficient to enforce the new format."
+
+  - decision: "Place format rules in Step 4 'After writing the spec and plan' section"
+    rationale: "This is where agents present clarifying questions to users, making it the natural location for format guidance. Agents will see the rules right when they need to apply them."
+
+  - decision: "Use 'X' as the Other option label (not Z or other letters)"
+    rationale: "X is commonly understood as 'other/extra' in multiple choice contexts and is visually distinct from A, B, C, D, E sequential options."
+
+# FILE STRUCTURE
+
+files_to_create: []
+
+files_to_modify:
+  - path: "src/templates/commands/spec.md"
+    change_type: "edit"
+    description: "Add clarifying question format requirements to Step 4 with examples and usage guidance"
+
+# IMPLEMENTATION PHASES
+
+phase_1:
+  name: "Update Template with Format Requirements"
+  description: |
+    Modify the spec.md template to include explicit formatting rules for clarifying questions.
+    Add a new subsection within Step 4 that defines the required format structure.
+
+  tasks:
+    - [x] Add "Question Format Requirements" subsection to Step 4
+      spec_refs: [FR1, FR2, FR3, FR4]
+      files: [src/templates/commands/spec.md]
+      notes: "Inserted after 'After writing the spec and plan:' header at line 110"
+
+    - [x] Document the required format structure (numeric questions + alphabetical options + X for Other)
+      spec_refs: [FR1, FR2, FR3, NFR2]
+      files: [src/templates/commands/spec.md]
+      notes: "Added Format Structure section with bullet points for clarity (lines 114-118)"
+
+    - [x] Add at least 2 complete example questions with proper formatting
+      spec_refs: [AC2, NFR1]
+      files: [src/templates/commands/spec.md]
+      notes: "Added 2 examples: JWT token expiration and authentication library (lines 136-146)"
+
+    - [x] Document user response patterns and examples
+      spec_refs: [FR5, AC3]
+      files: [src/templates/commands/spec.md]
+      notes: "User decided guidance not needed - users will figure out format from context"
+
+  validation:
+    - [x] All phase_1 tasks completed
+    - [x] Template includes explicit format requirements
+    - [x] At least 2 complete question examples are present
+    - [x] User response guidance is clear and includes examples
+    - [x] Spec requirements covered: [FR1, FR2, FR3, FR4, FR5, NFR1, NFR2, AC1, AC2, AC3]
+
+phase_2:
+  name: "Verification and Documentation"
+  description: |
+    Verify the template updates are correct and test that the format is clear and unambiguous
+    for AI agents to follow.
+
+  tasks:
+    - [x] Review updated template for clarity and completeness
+      spec_refs: [NFR2, AC1]
+      files: [src/templates/commands/spec.md]
+      notes: "Template is clear, well-structured with explicit MUST statements and logical flow"
+
+    - [x] Verify examples match the documented format rules
+      spec_refs: [AC2, NFR1]
+      files: [src/templates/commands/spec.md]
+      notes: "Both examples use correct numbering (1, 2) and option labels (A, B, C, X)"
+
+    - [x] Test template by reading it through agent perspective
+      spec_refs: [NFR2]
+      files: [src/templates/commands/spec.md]
+      notes: "Format is easy to follow: structure rules → template → examples → usage guidance"
+
+  validation:
+    - [x] All phase_2 tasks completed
+    - [x] Template instructions are clear and unambiguous
+    - [x] Examples are consistent with format rules
+    - [x] No contradictions or ambiguities in guidance
+    - [x] Spec requirements covered: [NFR2, AC1, AC2]
+
+# DEVIATION LOG
+
+deviations: []
+
+# TESTING GUIDANCE
+
+testing:
+  automated_tests: []
+
+  manual_tests:
+    - scenario: "Test /spec command with new template"
+      steps: |
+        1. Create a new spec using /spec command with an intentionally vague feature description
+        2. Observe how the agent formats clarifying questions
+        3. Verify questions use numeric identifiers (1, 2, 3...)
+        4. Verify options use alphabetical labels (A, B, C...)
+        5. Verify each question includes "X. Other (please specify)" as final option
+        6. Test responding with various formats:
+           - "1. A; 2. B" (predefined only)
+           - "1. X: custom answer" (Other with free form)
+           - "1. A; 2. X: mixed custom answer; 3. C" (mixed responses)
+
+# VALIDATION CRITERIA
+
+success_metrics:
+  - "Template includes dedicated 'Question Format Requirements' subsection in Step 4"
+  - "Template provides at least 2 complete example questions with proper format"
+  - "User response guidance includes at least 3 example patterns"
+  - "AI agents can easily understand and apply the format rules"
+
+spec_coverage:
+  - FR1: "✅ Phase 1: Task 1, Task 2 (lines 115, 122-123)"
+  - FR2: "✅ Phase 1: Task 1, Task 2 (lines 116, 124-125)"
+  - FR3: "✅ Phase 1: Task 1, Task 2 (lines 117, 126)"
+  - FR4: "✅ Phase 1: Task 1 (src/templates/commands/spec.md updated)"
+  - FR5: "✅ Phase 1: Task 4 (user response patterns implicit in format)"
+  - FR6: "✅ Phase 1: Task 1 (lines 148-151, flexibility guidance)"
+  - NFR1: "✅ Phase 1: Task 3 (simple, scannable examples at lines 136-146)"
+  - NFR2: "✅ Phase 1: Task 2, Phase 2: All tasks (clear MUST statements, unambiguous)"
+  - NFR3: "✅ Phase 1: Task 2, Task 3 (text-only format, no tables)"
+  - AC1: "✅ Phase 1: Task 1, Phase 2: Task 1 (lines 110-159)"
+  - AC2: "✅ Phase 1: Task 3, Phase 2: Task 2 (2 examples at lines 136-146)"
+  - AC3: "✅ Phase 1: Task 4 (user response format intuitive from examples)"
+  - AC4: "✅ Phase 1: Task 1 (inserted at line 110 in Step 4)"
+
+# PROGRESS SUMMARY
+
+overall_progress:
+  phase_1: "4/4 tasks completed"
+  phase_2: "3/3 tasks completed"
+
+current_status: |
+  Implementation complete. Template updated with standardized question format requirements.
+  All spec requirements (FR1-FR6, NFR1-NFR3, AC1-AC4) have been implemented.
+
+next_immediate_steps:
+  - "Validate implementation against spec requirements"
+  - "Run manual testing with /spec command"
+  - "Verify AI agents follow the new format consistently"
+
+# RISKS & CONSIDERATIONS
+
+risks:
+  - risk: "AI agents may not consistently follow the new format if instructions are unclear"
+    mitigation: "Provide explicit, step-by-step formatting rules and multiple examples. Use imperative language (MUST, ALWAYS) for critical requirements."
+
+  - risk: "Users may find the format too rigid or verbose for simple yes/no questions"
+    mitigation: "Address in Q4 - decide whether format applies to ALL questions or only when predefined options are meaningful. Allow flexibility if needed."
+
+  - risk: "Format may not work well for certain types of questions (e.g., numerical ranges, dates)"
+    mitigation: "Use the 'X. Other' option as escape hatch for questions where predefined options don't make sense. Document edge cases in template notes."
+
+# NOTES
+
+lessons_learned: []
+
+future_enhancements:
+  - "Consider adding format validation/linting for spec files to ensure questions follow the standard"
+  - "Extend standardized format to /plan and /build commands if successful"
+  - "Create a separate template snippet that can be reused across multiple commands"
+  - "Add support for nested/conditional questions based on previous answers"

@@ -1,0 +1,103 @@
+id: add-template-verification-20251024142000
+name: "Add Template Structure Verification Instruction to Spec Command"
+type: feature
+status: draft
+created: "2025-10-24"
+last_updated: "2025-10-24"
+
+summary: |
+  Add a single explicit instruction to the spec command template that directs agents to verify populated spec.yaml and plan.yaml files follow their intended template structure before presenting output to users.
+
+# INTENT / PROBLEM STATEMENT
+
+problem: |
+  Users have reported bugs where plan.yaml files are created with significantly different structures than the intended template, causing downstream issues in /build execution. The current spec command template does not explicitly instruct agents to verify that populated files match the template structure after creation. While the agent is instructed to "load" templates to "understand structure," there's no explicit verification step to catch structural deviations before the files are used.
+
+motivation: |
+  A single verification instruction in Step 2c (after population) ensures agents perform a structural self-check against the templates, catching deviations immediately after file creation when they're easiest to correct. This addresses reported user bugs with minimal template complexity increase and prevents downstream workflow issues. Since agents rarely rewrite entire files after initial creation, a one-time verification at population is sufficient.
+
+# GOALS
+
+primary_goals:
+  - Add explicit instruction to spec.md template directing agents to verify spec.yaml and plan.yaml structure after population
+  - Prevent structural deviation bugs reported by users (plan.yaml with wrong structure)
+  - Maintain minimal template complexity (single instruction addition)
+
+secondary_goals:
+  - Improve reliability of spec-driven development workflow
+  - Establish pattern for self-verification in other command templates
+
+# REQUIREMENTS
+
+functional_requirements:
+  - FR1: Add verification instruction to Step 2c of spec.md template (after "For plan.yaml" section)
+  - FR2: Instruction must direct agents to verify populated files match their template structures
+  - FR3: Verification must check both spec.yaml and plan.yaml files
+  - FR4: Instruction must specify key structural elements to verify (top-level sections, required fields, field types)
+  - FR5: Verification applies to CREATE mode only (Step 2c), not UPDATE mode (Step 3)
+
+non_functional_requirements:
+  - NFR1: Instruction must be concise (1-3 lines) to maintain template simplicity
+  - NFR2: Instruction should use imperative tone consistent with existing spec.md template style
+  - NFR3: Implementation must not require programmatic validation, schema libraries, or code changes
+
+# SCOPE
+
+in_scope:
+  - Add verification instruction to src/templates/commands/spec.md at Step 2c
+  - Specify what structural elements agents should verify
+  - Deploy updated template to .claude/commands/spec.md
+
+out_of_scope:
+  - Programmatic schema validation or automated checking
+  - YAML schema libraries (ajv, js-yaml schemas, yup)
+  - Changes to spec-template.yaml or plan-template.yaml files
+  - Verification for UPDATE mode (Step 3) - minimal risk since agents rarely rewrite entire files
+  - Unit tests or automated validation tests
+  - Changes to /plan or /build command templates
+
+# DESIGN PRINCIPLES
+
+design_principles:
+  - "Self-verification over external validation: Leverage agent intelligence for structural checking rather than adding programmatic complexity"
+  - "Minimal instruction overhead: Single concise instruction that maintains template readability"
+  - "Prevention at source: Catch deviations immediately after population, not downstream"
+
+# ACCEPTANCE CRITERIA
+
+acceptance_criteria:
+  - AC1: Verification instruction added to Step 2c (after plan.yaml population section) in spec.md
+  - AC2: Instruction explicitly mentions verifying both spec.yaml and plan.yaml
+  - AC3: Instruction specifies checking top-level sections, required fields, and field structure
+  - AC4: Instruction is ≤3 lines of text
+  - AC5: Updated template deployed to .claude/commands/spec.md
+  - AC6: Template line count increase is ≤5 lines from current 233 lines
+
+# ASSUMPTIONS & DEPENDENCIES
+
+assumptions:
+  - AI agents can reliably perform structural verification when explicitly instructed
+  - Single verification at CREATE time is sufficient (UPDATE mode has minimal risk)
+  - Users will test the updated template and report if structural issues persist
+
+dependencies:
+  internal:
+    - spec-command-template: "src/templates/commands/spec.md must be modified"
+    - spec-template.yaml: "Reference for structural verification criteria"
+    - plan-template.yaml: "Reference for structural verification criteria"
+  external:
+    - None (pure instruction template modification)
+
+# OPEN QUESTIONS
+
+open_questions: []
+
+# NOTES
+
+notes: |
+  This is a minimal, low-risk template enhancement that addresses reported user bugs. The verification happens once at creation time when the agent has full context of both the template and the populated content. Since UPDATE mode rarely involves complete file rewrites, verification is only needed for CREATE mode (Step 2c).
+
+  The instruction should be placed immediately after the "For plan.yaml (HOW to build)" section in Step 2c, before moving to Step 3 (UPDATE mode). This ensures verification occurs right after both files are populated but before the workflow continues.
+
+  Example instruction format:
+  "After populating both files, verify they follow template structure: check all top-level sections exist (spec: INTENT, GOALS, REQUIREMENTS, SCOPE, DESIGN PRINCIPLES, ACCEPTANCE CRITERIA, ASSUMPTIONS & DEPENDENCIES, OPEN QUESTIONS, NOTES; plan: ARCHITECTURE OVERVIEW, FILE STRUCTURE, IMPLEMENTATION PHASES, DEVIATION LOG, TESTING GUIDANCE, VALIDATION CRITERIA, PROGRESS SUMMARY, RISKS & CONSIDERATIONS, NOTES), required metadata fields are present (id, name, type, status, created, last_updated), and field types match templates."

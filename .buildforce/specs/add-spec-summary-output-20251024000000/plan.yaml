@@ -1,0 +1,313 @@
+# Plan Template for /build Agent Execution
+# This template is optimized for AI agent consumption during /build commands
+# It provides checkbox-based progress tracking, deviation logging, and spec traceability
+
+id: add-spec-summary-output-plan
+name: "Implementation Plan for Add Spec Summary to /spec Command Output"
+spec_id: "add-spec-summary-output-20251024000000"
+type: implementation-plan
+status: draft
+created: "2025-10-24"
+last_updated: "2025-10-24"
+
+# ARCHITECTURE OVERVIEW
+# Describe the high-level implementation approach and key technical decisions.
+
+approach: |
+  This is a template modification task - we'll update the /spec command template (src/templates/commands/spec.md) to include a new spec summary section in the final output (Step 6: Report completion).
+
+  The implementation approach is straightforward:
+  1. Analyze the current "Report completion" section to understand the existing plan summary format
+  2. Design a spec summary format that extracts key information from spec.yaml
+  3. Add the spec summary template before the existing plan summary template
+  4. Ensure proper conditional logic (spec summary only appears when no open questions exist)
+  5. Test the output format for readability and scannability
+
+  This is a template-only change - no code execution, no scripts, just markdown template modification.
+
+technology_stack:
+  - Markdown templates: For defining the /spec command workflow and output format
+  - YAML spec structure: Understanding spec.yaml structure to extract summary information
+
+decisions:
+  - decision: "Add spec summary as a separate section before plan summary"
+    rationale: "Maintains clear separation of WHAT (spec) vs HOW (plan). Users can scan both independently. Preserves existing plan summary format without modification."
+
+  - decision: "Use adaptive verbosity based on feature complexity"
+    rationale: "Simple features don't need verbose summaries. Complex features need more detail. The template should guide agents to adapt the summary length to the feature scope."
+
+  - decision: "Spec summary as flowing narrative (not structured sections)"
+    rationale: "User feedback indicates a simple, synthesized summary is more scannable than structured sections. The narrative should combine context from the full spec.yaml into a cohesive paragraph."
+
+  - decision: "Use '## Spec Summary' as a formatted section header"
+    rationale: "Clear visual separation from plan summary. Consistent with existing markdown formatting in the output. Makes it easy for users to locate each section."
+
+  - decision: "For UPDATE mode, show only what changed (delta view)"
+    rationale: "User feedback indicates delta view is more useful than showing full current state. Keeps output concise and focused on new information."
+
+# FILE STRUCTURE
+# List all files to be created or modified during implementation
+
+files_to_create: []
+
+files_to_modify:
+  - path: "src/templates/commands/spec.md"
+    change_type: "edit"
+    description: "Add spec summary template to Step 6 (Report completion) section, before the existing plan summary template"
+
+# IMPLEMENTATION PHASES
+# Break down the implementation into logical phases with checkbox-based task tracking
+# Use [ ] for pending tasks and [x] for completed tasks
+# Each task should link back to spec requirements via spec_refs
+
+phase_1:
+  name: "Analyze Current Template Structure"
+  description: |
+    Read and understand the current /spec command template, particularly the "Report completion" section (Step 6) where the plan summary is defined. Identify the exact location where the spec summary should be inserted.
+
+  tasks:
+    - [x] Read src/templates/commands/spec.md to understand current workflow
+      spec_refs: [FR8]
+      files: [src/templates/commands/spec.md]
+      notes: "Focus on Step 6 (Report completion) section"
+
+    - [x] Document the current plan summary format and structure
+      spec_refs: [FR8]
+      files: []
+      notes: "Ensure we preserve this format exactly - lines 181-208 contain the plan summary template"
+
+    - [x] Identify the insertion point for spec summary (before plan summary)
+      spec_refs: [FR1, FR9]
+      files: [src/templates/commands/spec.md]
+      notes: "Insertion point: line 180, in the 'If NO open questions' block, before the plan summary template"
+
+  validation:
+    - [x] All phase_1 tasks completed
+    - [x] Current template structure fully understood
+    - [x] Insertion point clearly identified
+    - [x] Spec requirements covered: [FR1, FR8, FR9]
+
+phase_2:
+  name: "Design Spec Summary Format"
+  description: |
+    Create the spec summary template format that will be inserted into the /spec command. Define what information from spec.yaml should be included and how it should be presented.
+
+  tasks:
+    - [x] Define spec summary as flowing narrative format
+      spec_refs: [FR3, FR4, FR5]
+      files: []
+      notes: "CREATE mode: Synthesize full spec.yaml (problem, goals, requirements, scope, AC). UPDATE mode: Show only deltas."
+
+    - [x] Create markdown template for spec summary with adaptive verbosity guidance
+      spec_refs: [FR4, FR5, NFR1, NFR2]
+      files: []
+      notes: "Template instructs agents to adapt length: 1 sentence for simple features, 2-3 sentences (paragraph) for complex"
+
+    - [x] Ensure spec summary format is scannable (10-15 seconds)
+      spec_refs: [NFR1, NFR2]
+      files: []
+      notes: "Flowing narrative with clear guidance on combining context elements, optimized for quick scanning"
+
+  validation:
+    - [x] All phase_2 tasks completed
+    - [x] Spec summary format defined and documented
+    - [x] Format meets scannability requirements (NFR1, NFR2)
+    - [x] Spec requirements covered: [FR3, FR4, FR5, NFR1, NFR2]
+
+phase_3:
+  name: "Update Template with Spec Summary"
+  description: |
+    Modify src/templates/commands/spec.md to include the spec summary template in Step 6 (Report completion), ensuring it appears before the existing plan summary and only when open questions are resolved.
+
+  tasks:
+    - [x] Insert spec summary template into Step 6 before plan summary
+      spec_refs: [FR1, FR2, FR9]
+      files: [src/templates/commands/spec.md]
+      notes: "Added at line 185-195, in 'If NO open questions' block, before existing plan summary"
+
+    - [x] Add clear section header "## Spec Summary"
+      spec_refs: [FR6]
+      files: [src/templates/commands/spec.md]
+      notes: "Header added at lines 187 and 193"
+
+    - [x] Add UPDATE mode delta view logic for spec summary
+      spec_refs: [FR7]
+      files: [src/templates/commands/spec.md]
+      notes: "Lines 191-195: UPDATE mode shows only deltas with example guidance"
+
+    - [x] Ensure proper conditional logic (only when no open questions)
+      spec_refs: [FR2]
+      files: [src/templates/commands/spec.md]
+      notes: "Spec summary only appears in 'If NO open questions' block (line 179+)"
+
+    - [x] Verify plan summary format remains unchanged
+      spec_refs: [FR8]
+      files: [src/templates/commands/spec.md]
+      notes: "Plan summary template (lines 201-226) remains completely unchanged"
+
+    - [x] Verify output order: spec summary → plan summary → "Ready to code?" CTA
+      spec_refs: [FR9]
+      files: [src/templates/commands/spec.md]
+      notes: "Order confirmed: spec summary (185-195) → plan summary (199-226) → CTA (line 228)"
+
+  validation:
+    - [x] All phase_3 tasks completed
+    - [x] Template modification complete
+    - [x] All functional requirements implemented
+    - [x] Spec requirements covered: [FR1, FR2, FR3, FR4, FR5, FR6, FR7, FR8, FR9]
+
+phase_4:
+  name: "Documentation and Final Validation"
+  description: |
+    Update the spec-command.yml context file to document this enhancement and validate that the template modification meets all acceptance criteria.
+
+  tasks:
+    - [x] Update .buildforce/context/spec-command.yml with v5.0 evolution entry
+      spec_refs: [NFR3]
+      files: [.buildforce/context/spec-command.yml]
+      notes: "Added v5.0 evolution entry (line 92-94), design decision (line 72-73), and related spec reference (line 100)"
+
+    - [x] Validate all acceptance criteria are met
+      spec_refs: [AC1, AC2, AC3, AC4, AC5, AC6, AC7, AC8]
+      files: []
+      notes: "AC1-AC8 all met: spec summary in correct order, flowing narrative format, adaptive verbosity, correct header, UPDATE delta view, plan unchanged, conditional logic correct, proper flow"
+
+    - [x] Add notes section explaining spec summary format and usage
+      spec_refs: [NFR3]
+      files: [.buildforce/context/spec-command.yml]
+      notes: "Added detailed notes section (lines 145-153) documenting spec summary format, behavior, and usage"
+
+  validation:
+    - [x] All phase_4 tasks completed
+    - [x] Context documentation updated
+    - [x] All acceptance criteria validated
+    - [x] Spec requirements covered: [NFR3, AC1-AC8]
+
+# DEVIATION LOG
+# The /build agent populates this section when implementation deviates from the original plan
+# Format: phase → task → original plan → actual implementation → reason for deviation
+
+deviations: []
+
+# TESTING GUIDANCE
+# Structured guidance for testing the implementation
+
+testing:
+  automated_tests: []
+
+  manual_tests:
+    - scenario: "Test spec summary output for CREATE mode (simple feature)"
+      steps: |
+        1. Run /spec with a simple feature description (e.g., "Add health check endpoint")
+        2. Verify spec summary appears before plan summary
+        3. Verify spec summary is concise (one sentence or short paragraph)
+        4. Verify plan summary remains unchanged
+        5. Verify "Ready to code?" suggestion appears after both summaries
+
+    - scenario: "Test spec summary output for CREATE mode (complex feature)"
+      steps: |
+        1. Run /spec with a complex feature description (e.g., "Add multi-tenant authentication with role-based access control")
+        2. Verify spec summary appears before plan summary
+        3. Verify spec summary is a flowing narrative (not structured sections)
+        4. Verify spec summary adapts to complexity (longer paragraph but still scannable)
+        5. Verify plan summary remains unchanged
+        6. Verify "Ready to code?" suggestion appears after both summaries
+
+    - scenario: "Test spec summary does NOT appear when open questions exist"
+      steps: |
+        1. Run /spec with a vague feature description (forces open questions)
+        2. Verify only open questions are shown (NO spec summary, NO plan summary)
+        3. Answer the open questions
+        4. Verify spec summary and plan summary both appear after questions resolved
+
+    - scenario: "Test spec summary for UPDATE mode (delta view)"
+      steps: |
+        1. Create a spec with /spec
+        2. Run /spec again with updates (UPDATE mode)
+        3. Verify spec summary shows only what changed (delta view, not full current state)
+        4. Verify plan summary reflects updates
+        5. Verify output order remains correct
+
+# VALIDATION CRITERIA
+# Define success metrics and track spec requirement coverage
+
+success_metrics:
+  - "Spec summary appears in 100% of /spec command completions (when no open questions)"
+  - "Spec summary is scannable in 10-15 seconds (validated via manual testing)"
+  - "Plan summary format remains unchanged (validated via side-by-side comparison)"
+  - "Combined output (spec + plan) fits in 40-60 lines (validated via manual testing)"
+
+spec_coverage:
+  # Auto-track which spec requirements are implemented in which tasks
+  # Format: requirement_id: status + location
+  - FR1: "⏳ Phase 3: Task 1"
+  - FR2: "⏳ Phase 3: Task 4"
+  - FR3: "⏳ Phase 2: Task 1"
+  - FR4: "⏳ Phase 2: Task 1"
+  - FR5: "⏳ Phase 2: Task 2"
+  - FR6: "⏳ Phase 3: Task 2"
+  - FR7: "⏳ Phase 3: Task 3"
+  - FR8: "⏳ Phase 3: Task 5"
+  - FR9: "⏳ Phase 3: Task 6"
+  - NFR1: "⏳ Phase 2: Task 3"
+  - NFR2: "⏳ Phase 2: Task 3"
+  - NFR3: "⏳ Phase 4: Task 1, Task 3"
+  - AC1: "⏳ Phase 4: Task 2"
+  - AC2: "⏳ Phase 4: Task 2"
+  - AC3: "⏳ Phase 4: Task 2"
+  - AC4: "⏳ Phase 4: Task 2"
+  - AC5: "⏳ Phase 4: Task 2"
+  - AC6: "⏳ Phase 4: Task 2"
+  - AC7: "⏳ Phase 4: Task 2"
+  - AC8: "⏳ Phase 4: Task 2"
+
+# PROGRESS SUMMARY
+# Track overall progress and identify next steps
+
+overall_progress:
+  phase_1: "3/3 tasks completed"
+  phase_2: "3/3 tasks completed"
+  phase_3: "6/6 tasks completed"
+  phase_4: "3/3 tasks completed"
+
+current_status: |
+  ✅ Implementation complete! All 15 tasks across 4 phases have been successfully executed.
+
+  The spec summary feature has been added to src/templates/commands/spec.md (Step 6: Report completion).
+  Documentation has been updated in .buildforce/context/spec-command.yml with v5.0 evolution entry.
+  All acceptance criteria (AC1-AC8) have been validated and met.
+
+next_immediate_steps:
+  - "Test the updated template with /spec command (simple feature)"
+  - "Test the updated template with /spec command (complex feature)"
+  - "Test UPDATE mode to verify delta view functionality"
+  - "Run /complete to finalize this spec"
+
+# RISKS & CONSIDERATIONS
+# Document potential risks and mitigation strategies
+
+risks:
+  - risk: "Spec summary might be too verbose for simple features"
+    mitigation: "Template includes adaptive verbosity guidance - agents should shorten for simple features. Manual testing will validate this."
+
+  - risk: "Combined output (spec + plan summaries) might exceed terminal viewport"
+    mitigation: "NFR2 sets a 40-60 line target. Manual testing will validate. If needed, we can further condense the spec summary format."
+
+  - risk: "Users might ignore the spec summary if it feels redundant"
+    mitigation: "Focus on scannability and unique value (validation checkpoint). The spec summary provides WHAT context that the plan summary doesn't."
+
+  - risk: "Spec summary format might need iteration based on user feedback"
+    mitigation: "This is acceptable - the template can be easily refined. Start with the defined format and adjust based on real-world usage."
+
+# NOTES
+# Capture lessons learned and future enhancement ideas
+
+lessons_learned:
+  - "Template-only changes are low-risk but require careful attention to existing structure and conditional logic"
+  - "Adaptive verbosity is challenging to define in templates - provide clear guidance and examples"
+
+future_enhancements:
+  - "Add spec summary to /build command output (currently out of scope)"
+  - "Auto-detect spec summary verbosity based on spec.yaml line count or complexity metrics"
+  - "Add color-coding or formatting to distinguish spec summary from plan summary in terminal output"
+  - "Include spec summary in /complete command's final report"

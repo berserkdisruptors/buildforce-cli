@@ -1,0 +1,323 @@
+# Plan Template for /build Agent Execution
+# This template is optimized for AI agent consumption during /build commands
+# It provides checkbox-based progress tracking, deviation logging, and spec traceability
+
+id: unify-spec-plan-commands-20251024000000-plan
+name: "Implementation Plan for Unifying /spec and /plan Commands"
+spec_id: "unify-spec-plan-commands-20251024000000"
+type: implementation-plan
+status: draft
+created: "2025-10-24"
+last_updated: "2025-10-24"
+
+# ARCHITECTURE OVERVIEW
+# Describe the high-level implementation approach and key technical decisions.
+
+approach: |
+  The implementation will merge the /spec and /plan command templates into a single unified /spec
+  command that populates both spec.yaml (WHAT) and plan.yaml (HOW) in one execution. The approach
+  involves analyzing the current /plan command's 7 guidelines and intelligently merging them with
+  the existing /spec command's workflow steps. The unified command will use intelligent routing
+  to determine which file to update based on the content type of user input (requirements go to
+  spec.yaml, technical details go to plan.yaml). The command will present clarifying questions
+  first, then provide a condensed plan summary for user approval only after all questions are resolved.
+
+technology_stack:
+  - Markdown templates: Command files are .md templates with YAML frontmatter
+  - Bash/PowerShell scripts: create-spec-files.sh for folder creation (keep), get-spec-paths.sh for discovery (remove)
+  - YAML structures: spec-template.yaml and plan-template.yaml remain unchanged
+
+decisions:
+  - decision: "Merge command logic into /spec template, don't create a new command"
+    rationale: "Preserves existing /spec command name and behavior, minimizes disruption. Users already know /spec, just extending its capabilities."
+
+  - decision: "Keep both spec.yaml and plan.yaml as separate files"
+    rationale: "Maintains clear separation of concerns (WHAT vs HOW). Allows /build command to continue working without changes. Backward compatible with existing structures."
+
+  - decision: "Remove get-spec-paths.sh script dependency"
+    rationale: "Unified /spec command already knows the SPEC_DIR from create-spec-files.sh output, so get-spec-paths.sh becomes redundant. Simplifies script architecture."
+
+  - decision: "Adopt condensed plan summary format (not full /plan output)"
+    rationale: "User feedback indicates current /plan output is too verbose. Condensed summary should be 3-5 key points covering architecture, phases, and risks - easy to scan and approve."
+
+  - decision: "Present plan summary only after clarifying questions are resolved"
+    rationale: "Follows existing /plan pattern (never present plan if questions exist). Ensures plan is based on complete information, not assumptions."
+
+  - decision: "Keep /plan command files for backward compatibility"
+    rationale: "Some users may have existing workflows or references. Can deprecate later in a future release."
+
+# FILE STRUCTURE
+# List all files to be created or modified during implementation
+
+files_to_create:
+  - None (all files already exist, just modifying)
+
+files_to_modify:
+  - path: "src/templates/commands/spec.md"
+    change_type: "edit"
+    description: "Merge /plan command's 7 guidelines into /spec workflow. Add intelligent routing logic. Update steps 1-3 to handle both spec and plan creation. Remove step 4 (Validate Prerequisite Context). Update steps 5-6 to present condensed plan summary and replace /plan references with /build suggestions."
+    status: "✅ COMPLETED"
+
+# IMPLEMENTATION PHASES
+# Break down the implementation into logical phases with checkbox-based task tracking
+# Use [ ] for pending tasks and [x] for completed tasks
+# Each task should link back to spec requirements via spec_refs
+
+phase_1:
+  name: "Analyze and Design Unified Command Structure"
+  description: |
+    Analyze the current /plan command's 7 guidelines and determine how to intelligently merge them
+    with /spec's workflow steps. Create a unified command structure that maintains clarity while
+    handling both spec and plan population.
+
+  tasks:
+    - [x] Read and analyze current /plan command template (.claude/commands/plan.md)
+      spec_refs: [FR3, FR4, FR5]
+      files: [.claude/commands/plan.md]
+      notes: "Extracted 7 guidelines: script execution, parse instructions, design decisions, generate plan, validate, present, request approval"
+
+    - [x] Read and analyze current /spec command template (.claude/commands/spec.md)
+      spec_refs: [FR1, FR3]
+      files: [.claude/commands/spec.md]
+      notes: "Understood current workflow steps 1-7 and identified integration points for dual-file population"
+
+    - [x] Design intelligent routing rules (spec.yaml vs plan.yaml)
+      spec_refs: [FR5]
+      files: []
+      notes: "Defined criteria: Requirements/scope/goals → spec.yaml, Architecture/tech/phases → plan.yaml, Mixed content → both files"
+
+    - [x] Design condensed plan summary format
+      spec_refs: [FR8, NFR2]
+      files: []
+      notes: "Numbered phases (1./2./3.) with key task bullets (-), architecture decisions, testing strategy, risks summary"
+
+  validation:
+    - [x] All phase_1 tasks completed
+    - [x] Routing rules are clear and unambiguous
+    - [x] Condensed plan format is defined
+    - [x] Spec requirements covered: [FR1, FR3, FR4, FR5, FR8, NFR2]
+
+phase_2:
+  name: "Implement Unified /spec Command Template"
+  description: |
+    Update the /spec command template to incorporate /plan logic. Simplify steps 1-3, remove
+    step 4, merge plan creation logic, and redesign steps 7-8 to present condensed plan summary.
+
+  tasks:
+    - [x] Update YAML frontmatter (keep scripts section with create-spec-files.sh)
+      spec_refs: [FR2]
+      files: [.claude/commands/spec.md]
+      notes: "Fixed parameter order in script command (--folder-name before --json)"
+
+    - [x] Simplify and unify steps 1-3 (CREATE/UPDATE mode, spec+plan population)
+      spec_refs: [FR1, FR2, FR3, FR4, FR5]
+      files: [.claude/commands/spec.md]
+      notes: "Merged spec and plan creation in step 2c with clear WHAT vs HOW separation. Added intelligent routing logic for UPDATE mode in step 3."
+
+    - [x] Remove step 4 (Validate Prerequisite Context)
+      spec_refs: [NFR1]
+      files: [.claude/commands/spec.md]
+      notes: "Deleted entire step to reduce token usage"
+
+    - [x] Update step 5 (Identify Ambiguities) to include technical questions
+      spec_refs: [FR6]
+      files: [.claude/commands/spec.md]
+      notes: "Clarified that questions can cover both requirements AND technical decisions"
+
+    - [x] Redesign steps 6-7 (Report completion with condensed plan summary)
+      spec_refs: [FR7, FR8, FR10, NFR2]
+      files: [.claude/commands/spec.md]
+      notes: "Never present plan if open_questions exist. Use condensed format with numbered phases. Replace /plan references with 'Ready to code? Run /build to start implementation.'"
+
+    - [x] Add explicit instruction about dual-file updates
+      spec_refs: [FR9]
+      files: [.claude/commands/spec.md]
+      notes: "Added IMPORTANT note at end: Every subsequent /spec call updates BOTH spec.yaml and plan.yaml based on input content"
+
+  validation:
+    - [x] All phase_2 tasks completed
+    - [x] Command template follows compact pattern (YAML frontmatter, numbered guidelines)
+    - [x] No references to /plan command in suggestions (verified via grep - only plan-template.yaml reference remains)
+    - [x] Spec requirements covered: [FR1, FR2, FR3, FR4, FR5, FR6, FR7, FR8, FR9, FR10, NFR1, NFR2]
+
+phase_3:
+  name: "Test and Validate Unified Command"
+  description: |
+    Test the unified /spec command in both CREATE and UPDATE modes. Verify it populates both
+    spec.yaml and plan.yaml correctly, presents condensed plan summary, and handles iterative updates.
+
+  tasks:
+    - [ ] Test CREATE mode (new spec with both spec.yaml and plan.yaml population)
+      spec_refs: [FR1, FR2, FR3, FR4, AC1, AC2, AC3]
+      files: []
+      notes: "Run /spec with feature description, verify both files are created and populated"
+
+    - [ ] Test clarifying questions flow (questions before plan summary)
+      spec_refs: [FR6, FR7, AC4, AC5]
+      files: []
+      notes: "Verify open_questions are presented, plan summary waits until questions resolved"
+
+    - [ ] Test condensed plan summary presentation
+      spec_refs: [FR8, NFR2, AC6]
+      files: []
+      notes: "Verify plan summary is brief, scannable, and not verbose like old /plan output"
+
+    - [ ] Test UPDATE mode (iterative updates to both files)
+      spec_refs: [FR5, FR9, AC7]
+      files: []
+      notes: "Run /spec again with updates, verify intelligent routing to spec.yaml or plan.yaml"
+
+    - [ ] Verify no /plan references in output
+      spec_refs: [FR10, AC8]
+      files: []
+      notes: "Check command output doesn't suggest running /plan next"
+
+    - [ ] Verify get-spec-paths.sh is no longer needed
+      spec_refs: [NFR4, AC9]
+      files: []
+      notes: "Confirm unified /spec doesn't call get-spec-paths.sh"
+
+  validation:
+    - [ ] All phase_3 tasks completed
+    - [ ] All test scenarios pass
+    - [ ] All acceptance criteria (AC1-AC10) are met
+    - [ ] Spec requirements covered: [FR1, FR2, FR3, FR4, FR5, FR6, FR7, FR8, FR9, FR10, NFR2, NFR4, AC1-AC10]
+
+# DEVIATION LOG
+# The /build agent populates this section when implementation deviates from the original plan
+# Format: phase → task → original plan → actual implementation → reason for deviation
+
+deviations:
+  - phase: "phase_2"
+    task: "Implement Unified /spec Command Template"
+    original: "Update .claude/commands/spec.md (the active command file)"
+    actual: "Updated src/templates/commands/spec.md (the library source template)"
+    reason: "User clarified that src/templates/commands/spec.md is the library source that matters. The .claude/commands/ directory is just the user's local test/usage copy of the library."
+
+# TESTING GUIDANCE
+# Structured guidance for testing the implementation
+
+testing:
+  automated_tests:
+    - test_file: "None (manual testing for command templates)"
+      what: "Command template functionality"
+      command: "N/A - manual testing via /spec command execution"
+
+  manual_tests:
+    - scenario: "Test CREATE mode with new feature"
+      steps: |
+        1. Ensure .buildforce/.current-spec doesn't exist or is empty
+        2. Run /spec with a feature description (e.g., "Add user authentication")
+        3. Verify folder is created in .buildforce/specs/
+        4. Verify spec.yaml is populated with requirements, scope, goals, AC
+        5. Verify plan.yaml is populated with architecture, phases, tasks, testing
+        6. Verify clarifying questions are presented (if any ambiguities)
+        7. Verify plan summary is NOT presented if open_questions exist
+        8. Answer clarifying questions
+        9. Verify condensed plan summary is presented after questions resolved
+        10. Verify plan summary is brief (3-5 points, not verbose)
+
+    - scenario: "Test UPDATE mode with iterative refinement"
+      steps: |
+        1. After CREATE mode test, run /spec again with additional requirements
+        2. Verify spec.yaml is updated with new requirements (maintaining sequential IDs)
+        3. Run /spec with technical details (e.g., "Use PostgreSQL for data storage")
+        4. Verify plan.yaml is updated with technical decisions
+        5. Verify no duplicate or contradictory entries
+        6. Verify condensed plan summary is presented after each update
+
+    - scenario: "Test intelligent routing (spec.yaml vs plan.yaml)"
+      steps: |
+        1. Run /spec with requirement-focused input (e.g., "Add acceptance criteria for error handling")
+        2. Verify only spec.yaml is updated, plan.yaml unchanged
+        3. Run /spec with technical input (e.g., "Use Redis for session caching")
+        4. Verify only plan.yaml is updated, spec.yaml unchanged
+        5. Run /spec with mixed input (requirements + technical details)
+        6. Verify both files are updated appropriately
+
+# VALIDATION CRITERIA
+# Define success metrics and track spec requirement coverage
+
+success_metrics:
+  - "Unified /spec command successfully creates and populates both spec.yaml and plan.yaml"
+  - "Users can skip /plan command entirely and go from /spec directly to /build"
+  - "Condensed plan summary is scannable and easy to review (max 5 bullet points)"
+  - "get-spec-paths.sh script is no longer called by any command"
+
+spec_coverage:
+  - FR1: "⏳ Phase 1: Task 2, Phase 2: Task 2"
+  - FR2: "⏳ Phase 2: Task 1, Task 2"
+  - FR3: "⏳ Phase 1: Task 1, Task 2, Phase 2: Task 2"
+  - FR4: "⏳ Phase 1: Task 1, Phase 2: Task 2"
+  - FR5: "⏳ Phase 1: Task 1, Task 3, Phase 2: Task 2"
+  - FR6: "⏳ Phase 2: Task 4"
+  - FR7: "⏳ Phase 2: Task 5"
+  - FR8: "⏳ Phase 1: Task 4, Phase 2: Task 5"
+  - FR9: "⏳ Phase 2: Task 6"
+  - FR10: "⏳ Phase 2: Task 5"
+  - NFR1: "⏳ Phase 2: Task 3"
+  - NFR2: "⏳ Phase 1: Task 4, Phase 2: Task 5"
+  - NFR3: "⏳ (Deferred - no context file updates in this spec)"
+  - NFR4: "⏳ Phase 3: Task 6"
+  - AC1: "⏳ Phase 3: Task 1"
+  - AC2: "⏳ Phase 3: Task 1"
+  - AC3: "⏳ Phase 3: Task 1"
+  - AC4: "⏳ Phase 3: Task 2"
+  - AC5: "⏳ Phase 3: Task 2"
+  - AC6: "⏳ Phase 3: Task 3"
+  - AC7: "⏳ Phase 3: Task 4"
+  - AC8: "⏳ Phase 3: Task 5"
+  - AC9: "⏳ Phase 3: Task 6"
+  - AC10: "⏳ (Deferred - no documentation updates in this spec)"
+
+# PROGRESS SUMMARY
+# Track overall progress and identify next steps
+
+overall_progress:
+  phase_1: "4/4 tasks completed ✅"
+  phase_2: "6/6 tasks completed ✅"
+  phase_3: "0/6 tasks completed"
+
+current_status: |
+  Phase 1 and Phase 2 completed successfully. The unified /spec command has been implemented in
+  .claude/commands/spec.md with all requirements integrated. The command now handles both spec.yaml
+  and plan.yaml population, includes intelligent routing logic, removed step 4, and presents condensed
+  plan summaries with /build suggestions. Ready to begin Phase 3: Testing and Validation.
+
+next_immediate_steps:
+  - "Test CREATE mode to verify both spec.yaml and plan.yaml are created and populated correctly"
+  - "Test clarifying questions flow and verify plan summary is not presented if questions exist"
+  - "Test UPDATE mode to verify intelligent routing between spec.yaml and plan.yaml"
+
+# RISKS & CONSIDERATIONS
+# Document potential risks and mitigation strategies
+
+risks:
+  - risk: "Unified command may become too complex or confusing for users"
+    mitigation: "Keep command structure simple with clear separation: spec.yaml = WHAT, plan.yaml = HOW. Provide clear examples in command template comments."
+
+  - risk: "Intelligent routing logic may not correctly determine which file to update"
+    mitigation: "Define explicit routing rules. When in doubt, ask user which file to update. Provide clear indicators in condensed plan summary."
+
+  - risk: "Condensed plan summary may lack sufficient detail for informed decisions"
+    mitigation: "Include essential information: architecture approach, key phases, major risks. Allow users to request more detail if needed."
+
+  - risk: "Backward compatibility with existing specs created using old workflow"
+    mitigation: "Template structures (spec-template.yaml, plan-template.yaml) remain unchanged. Unified /spec can work with existing files."
+
+  - risk: "Users may still expect /plan command to exist and be functional"
+    mitigation: "Keep /plan command files for backward compatibility. Add deprecation notice."
+
+# NOTES
+# Capture lessons learned and future enhancement ideas
+
+lessons_learned:
+  - "Command templates should be designed based on real user behavior, not theoretical workflows"
+  - "Fewer steps with more capability is better than more steps with single responsibilities"
+  - "Condensed summaries are more valuable than verbose detailed outputs for quick decision-making"
+
+future_enhancements:
+  - "Add support for partial updates (update only spec.yaml OR only plan.yaml, not both)"
+  - "Provide flag to request detailed plan output if user wants it (e.g., /spec --detailed-plan)"
+  - "Auto-detect when user input is ambiguous between spec and plan, ask for clarification"
+  - "Add /spec --status command to show current spec and plan summary without making changes"

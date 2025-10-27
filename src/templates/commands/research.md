@@ -16,7 +16,7 @@ $ARGUMENTS
 
 2. **Recency awareness**: If the query contains words like "current", "latest", "recent", "modern", "best practices", "2024", "2025", or "up-to-date", use web search to fetch current information—do not rely solely on training data.
 
-3. **Structured output**: Present findings as a report with clear sections (e.g., Research Summary, Project Context, Codebase Findings, External Knowledge) that can be easily referenced in subsequent `/spec`, `/plan`, or `/build` steps.
+3. **Structured output**: Present findings as a report with clear sections (e.g., Research Summary, Project Context, Codebase Findings, External Knowledge, TLDR, Next Steps) that can be easily referenced in subsequent `/spec`, `/plan`, or `/build` steps.
 
 4. **Relevant file paths**: For codebase queries, provide an explicit table or list of all relevant file paths discovered. This saves time—users won't need to manually reference each file with @ in follow-up commands.
 
@@ -25,3 +25,5 @@ $ARGUMENTS
 6. **Data models**: When data structures are involved, explicitly document the data models with their properties, types, and relationships—not just summarized sentences.
 
 7. **Next steps**: After presenting findings, suggest the logical next action (e.g., "Ready to define the spec?" or "Would you like to explore anything else?").
+
+8. **TLDR section**: **ALWAYS add a "## TLDR" section before "Next Steps".** Condense findings into 3-7 bullet points (using `-`) highlighting only the most important discoveries. Exclude code snippets, Mermaid diagrams, and extensive file path lists. Include key architectural patterns, critical decisions, or constraints, with references to detailed sections (e.g., "See Codebase Findings for file paths"). Focus on what the user needs to know to proceed.

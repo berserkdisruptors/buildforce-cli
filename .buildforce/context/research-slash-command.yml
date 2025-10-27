@@ -3,7 +3,7 @@ name: "RESEARCH Slash Command"
 type: feature
 status: in-development
 created: "2025-01-15"
-last_updated: "2025-01-15"
+last_updated: "2025-10-24"
 
 summary: |
   First command in the spec-driven development workflow.
@@ -28,6 +28,7 @@ files:
     - src/templates/commands/research.md
   secondary:
     - .buildforce/context/_index.yml (searched first)
+    - .claude/commands/research.md (deployed template)
 
 command_signature:
   syntax: "/research <query>"
@@ -52,7 +53,7 @@ key_guidelines:
 
   - name: "Structured Output"
     priority: 3
-    description: "Present findings as report with sections: Research Summary, Project Context, Codebase Findings, External Knowledge"
+    description: "Present findings as report with sections: Research Summary, Project Context, Codebase Findings, External Knowledge, TLDR, Next Steps"
 
   - name: "Relevant File Paths"
     priority: 4
@@ -69,6 +70,10 @@ key_guidelines:
   - name: "Next Steps"
     priority: 7
     description: "Suggest next action after research (e.g., 'Ready to define the spec?')"
+
+  - name: "TLDR Section"
+    priority: 8
+    description: "ALWAYS add '## TLDR' section before 'Next Steps' with 3-7 bullet points (using '-') highlighting key discoveries. Exclude code/diagrams/file paths. Include section references and focus on what user needs to know to proceed."
 
 research_strategies:
   project_context:
@@ -108,6 +113,10 @@ output_structure:
       content: "Links, best practices, recent information"
       conditional: "If web search performed"
 
+    - name: "TLDR"
+      content: "3-7 concise bullet points summarizing key findings for quick user scanning. Excludes code/diagrams. Includes section references."
+      conditional: "Always present (added in v1.1)"
+
     - name: "Next Steps"
       content: "Suggested action (e.g., /spec, further exploration)"
 
@@ -127,16 +136,26 @@ design_decisions:
   - decision: "Concrete data model documentation"
     rationale: "Ensures /spec and /plan have precise type information, not vague summaries"
 
+  - decision: "TLDR section for dual-audience output"
+    rationale: "Balances comprehensive context for build agents with quick scannable summary for users. Positioned before 'Next Steps' at natural decision point in workflow."
+
 evolution:
   - version: "1.0"
     date: "2025-01-15"
     changes: "Initial implementation with 7 key guidelines and project context search"
 
+  - version: "1.1"
+    date: "2025-10-24"
+    changes: "Added TLDR section (guideline #8) for dual-audience output. Template increased from 28 to 29 lines. TLDR provides 3-7 bullet points with consistent formatting (## TLDR heading, - bullets) for quick user scanning while preserving comprehensive details for build agents."
+
 related_specs:
-  - TBD (first research session using this command)
+  - add-research-tldr-section-20251024104500
 
 notes: |
   Most important command in the workflow—sets foundation for /spec, /plan, /build.
-  Compact instruction template (28 lines) that enhances user queries without teaching HOW to research.
+  Compact instruction template (29 lines as of v1.1) that enhances user queries without teaching HOW to research.
   Build agents already know how to research; this command adds workflow-specific context.
   Masterpiece feature: .buildforce/context/_index.yml as primary knowledge source.
+
+  v1.1 enhancement: TLDR section addresses dual-audience design pattern—comprehensive details for build agents,
+  scannable summary for users. Could be applied to other verbose command outputs.
