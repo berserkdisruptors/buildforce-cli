@@ -23,6 +23,7 @@ responsibilities:
 dependencies:
   internal:
     - context-repository: "RESEARCH searches .buildforce/context/_index.yml for accumulated knowledge; DOCUMENT creates/updates context files; COMPLETE generates context files for completed specs"
+    - cli-architecture: "Slash commands initialized via project templates distributed by the CLI"
   external:
     - None (pure instruction templates for Claude Code)
 

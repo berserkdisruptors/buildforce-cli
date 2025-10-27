@@ -3,31 +3,36 @@ name: "/document Slash Command - Context File Creation Without Specs"
 type: feature
 status: production
 created: "2025-10-10"
-last_updated: "2025-10-10"
+last_updated: "2025-10-27"
 
 summary: |
-  New slash command that enables direct context file creation for existing functionality without
-  requiring a spec-driven development session. Combines /research's context extraction capabilities
-  with /complete's context file creation workflow to document legacy code, architectural patterns,
-  and modules discovered during exploration. Operates on information already in the context window,
-  generates snake-case filenames (no numeric prefixes), auto-detects context type, handles ID
-  conflicts, intelligently merges updates, and automatically maintains cross-references.
+  Slash command that enables direct context file creation for existing functionality without
+  requiring a spec-driven development session. Enhanced in v2.0 to adopt /complete's proven UX
+  patterns including empty context detection with /research suggestions, detailed 6-step workflow
+  mirroring /complete steps 3-6, enhanced filename validation and conflict resolution, conversation
+  history analysis emphasis, description field in index entries, and completion summaries instead
+  of confirmation prompts.
 
 responsibilities:
+  - Detect insufficient context and suggest /research proactively (v2.0)
+  - Analyze conversation history to identify components/modules/patterns to document (v2.0)
   - Generate context files for existing functionality without specs
   - Auto-detect context type (module/feature/component/pattern) from topic analysis
-  - Create snake-case filenames (2-3 words) without numeric prefixes
-  - Detect and resolve ID conflicts by searching _index.yml
-  - Support CREATE mode (new files) and UPDATE mode (intelligent merge)
+  - Create kebab-case filenames (max 50 chars) without numeric/timestamp prefixes (v2.0)
+  - Detect and resolve ID conflicts by searching _index.yml with alternative strategies (v2.0)
+  - Support CREATE mode (new files with _schema.yml) and UPDATE mode (intelligent merge)
   - Populate all required schema fields (id, name, type, status, dates, summary)
+  - Add description field (max 100 chars) to _index.yml entries (v2.0)
   - Auto-generate tags for _index.yml entries from topic analysis
   - Automatically update related context files with cross-references
-  - Present findings and request user confirmation before writing
+  - Present completion summary after writing (no confirmation prompt) (v2.0)
 
 dependencies:
   internal:
+    complete-command: "v2.0 mirrors /complete steps 3-6 workflow patterns for UX consistency"
     context-repository: "Reads _schema.yml for structure, updates _index.yml, creates/updates context files in .buildforce/context/"
     slash-commands: "Standalone utility command complementing the 5-command workflow (research → spec → plan → build → complete)"
+    cli-architecture: "Command template distributed via CLI project initialization"
   external: {}
 
 files:
@@ -50,39 +55,54 @@ command_signature:
     - "/document error handling patterns"
 
 design_decisions:
+  - decision: "v2.0 - Adopt /complete steps 3-6 structure for guidelines 1-6"
+    rationale: "/complete v2.0 has proven UX patterns users appreciate. Mirroring workflow provides consistency, reduces cognitive load when switching commands, brings same robustness (filename validation, conflict resolution, intelligent merge) to /document."
+
+  - decision: "v2.0 - Add empty context detection with /research suggestion"
+    rationale: "Users may run /document expecting agent to figure everything out without loading context. Early detection with /research suggestion prevents wasted effort, guides users toward better workflow practices."
+
+  - decision: "v2.0 - Replace confirmation prompt with completion summary"
+    rationale: "/complete's summary-based approach (execute then report) provides better UX than confirmation-based (ask then execute). Agent has done thorough analysis by step 6, so confirmation redundant. Users prefer seeing 'what was done'."
+
+  - decision: "v2.0 - Grow template from 29 to 82 non-blank lines"
+    rationale: "UX consistency and robustness justify increased length. /complete is 179 lines with full 9-step workflow; /document reusing steps 3-6 is 82 lines. Still maintainable, significantly more detailed guidance."
+
+  - decision: "v2.0 - Add description field to _index.yml entries (matching /complete)"
+    rationale: "Improves searchability without opening files. Short one-liner (max 100 chars) describes context. Brings /document to same standard as /complete v2.0."
+
   - decision: "Template-only command (no script execution like /research)"
     rationale: "Command doesn't need file discovery—operates on context window content prepared by user. Simplifies implementation and maintains consistency with /research pattern."
 
-  - decision: "Snake-case naming (2-3 words) with NO numeric prefix"
-    rationale: "Context files don't need sequential numbering like specs. Clean, descriptive names improve discoverability and readability (e.g., 'authentication-module.yml' vs '005-authentication.yml')."
+  - decision: "Kebab-case naming (max 50 chars) with NO numeric/timestamp prefixes"
+    rationale: "Context files reflect component identity, not spec intent. Clean, semantic names improve discoverability (e.g., 'authentication.yml', 'build-command.yml')."
 
-  - decision: "Auto-detect context type from topic analysis"
+  - decision: "Auto-detect context type from topic/conversation analysis"
     rationale: "Reduces user friction—no --type flag needed. Agent analyzes content to determine module/feature/component/pattern intelligently."
 
-  - decision: "Intelligent merge for UPDATE mode (current state → new state)"
+  - decision: "Intelligent merge for UPDATE mode (preserve + append pattern)"
     rationale: "Preserves existing content while adding new information. No distinction between human/AI edits—agent mutates current state to new state based on available information."
 
   - decision: "Automatic related context updates (no per-file confirmation)"
-    rationale: "Streamlined workflow. Agent automatically adds cross-references to related files' dependencies sections. User confirms all changes together in final validation step."
-
-  - decision: "ID conflict detection via _index.yml search"
-    rationale: "Prevents overwrites and naming collisions. Agent searches index first, chooses alternative ID (append descriptor, use synonym) if conflict exists."
-
-  - decision: "7 numbered guidelines with ALWAYS/NEVER emphasis"
-    rationale: "Proven compact pattern from /research (27 lines) and /complete (44 lines). Achieved 29 lines—well within 35-50 target. Critical instructions emphasized without verbose HOW-TO explanations."
+    rationale: "Unique strength vs /complete. Agent automatically adds cross-references to related files' dependencies sections. User confirms all changes together in completion summary."
 
 evolution:
   - version: "1.0"
     date: "2025-10-10"
     changes: "Initial implementation with 7 guidelines, 29 lines, template-only approach. Supports CREATE/UPDATE modes, auto-detection, ID conflict resolution, intelligent merge, related context updates."
 
+  - version: "2.0"
+    date: "2025-10-27"
+    changes: "Enhanced with /complete UX patterns: empty context detection, 6-step workflow mirroring /complete steps 3-6, detailed filename validation (kebab-case, max 50 chars), conversation history analysis emphasis, description field in index entries, completion summary instead of confirmation prompt. Template: 82 non-blank lines (111 total)."
+
 related_specs:
   - "new-document-slash-20250105120000 (spec.yaml)"
   - "new-document-slash-20250105120000-plan (plan.yaml)"
+  - "enhance-document-command-20251027000000 (spec.yaml)"
+  - "enhance-document-command-20251027000000-plan (plan.yaml)"
 
 notes: |
-  This command fills a critical gap in the workflow—currently there's no way to document existing
-  functionality without creating artificial specs. Especially valuable for:
+  This command fills a critical gap in the workflow—enables documenting existing functionality
+  without creating artificial specs. Especially valuable for:
   - Onboarding new projects with existing codebases
   - Documenting legacy code gradually
   - Capturing tribal knowledge about architecture decisions
@@ -92,16 +112,24 @@ notes: |
 
   Positioned as standalone utility command, separate from core spec-driven development flow.
 
-  Implementation achieved exceptional compactness: 29 lines (target was 35-50), matching the
-  proven pattern of /research (27 lines) and /complete (44 lines). All 13 functional requirements,
-  5 non-functional requirements, and 13 acceptance criteria covered with 0 deviations from plan.
+  **v1.0 (2025-10-10)**: Achieved exceptional compactness: 29 lines (target 35-50), matching
+  proven pattern of /research (27 lines). All 13 FRs, 5 NFRs, 13 ACs covered with 0 deviations.
+  7 guidelines with confirmation-based UX (ask before execute).
 
-  Key workflow: User prepares context window (reads files, gathers info) → runs /document with
-  topic → agent determines mode → loads schema → generates/updates context → updates index →
-  updates related contexts → presents summary → requests confirmation → writes files.
+  **v2.0 (2025-10-27)**: Enhanced for UX consistency with /complete. Template grew to 82 non-blank
+  lines (111 total) with detailed 6-step workflow, empty context detection, enhanced filename
+  validation, conversation analysis emphasis, description field support, and summary-based UX
+  (execute then report). All 12 FRs, 4 NFRs, 14 ACs met with 0 deviations.
 
-  4 ALWAYS/NEVER emphasis points ensure critical behavior:
-  - ALWAYS load _schema.yml first
-  - NEVER use numeric prefixes in filenames
-  - NEVER leave placeholder text
-  - ALWAYS request user confirmation before writing
+  Key v2.0 workflow: Empty context check → Analyze context requirements (emphasize conversation
+  history) → Generate filenames (detailed validation) → Create/update files (intelligent merge) →
+  Update index (with description) → Update related contexts (automatic) → Present completion
+  summary (no confirmation).
+
+  **CRITICAL** behaviors emphasized:
+  - Empty context: Suggest /research if 0-2 file reads AND no substantive discussion
+  - Filename: kebab-case, max 50 chars, NO numeric/timestamp prefixes, component identity
+  - CREATE mode: Load _schema.yml, populate ALL fields, NEVER leave placeholders
+  - UPDATE mode: Preserve existing, append to lists (dependencies, files, evolution)
+  - Index: Include description field (max 100 chars one-liner) for NEW entries
+  - Summary: Execute writes THEN report (not ask permission)

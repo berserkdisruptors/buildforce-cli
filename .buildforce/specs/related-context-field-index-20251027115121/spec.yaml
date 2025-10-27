@@ -1,0 +1,127 @@
+id: related-context-field-index-20251027115121
+name: "Related Context Field in _index.yml for Agent Discovery"
+type: feature
+status: draft
+created: "2025-10-27"
+last_updated: "2025-10-27"
+
+summary: |
+  Introduce a `related_context` field to context index entries that contains an array of related
+  context IDs, enabling agents to discover related contexts through explicit cross-references
+  rather than relying solely on keyword matching or tag comparison.
+
+# INTENT / PROBLEM STATEMENT
+
+problem: |
+  Currently, agents must rely on keyword matching and tag comparison to determine if one context
+  piece is relevant to another. This creates discovery friction—when an agent finds one relevant
+  context entry (e.g., "slash-commands"), they have no explicit guidance about other closely
+  related contexts (e.g., build-command, research-slash-command, complete-command, spec-command,
+  document-command). This leads to incomplete context loading and potential missed relationships.
+
+motivation: |
+  Adding explicit `related_context` cross-references will improve agent context discovery by
+  providing a navigation graph within the context repository. When an agent reads a context file
+  and sees related_context: [build-command, research-slash-command], they can immediately load
+  those related contexts without additional search heuristics. This reduces cognitive load on
+  agents and ensures more comprehensive context gathering.
+
+# GOALS
+
+primary_goals:
+  - Add `related_context` field to _index.yml entries containing arrays of related context IDs
+  - Add comprehensive inline documentation to src/context/_index.yml template explaining all index fields including related_context
+  - Update src/context/_index.yml template to include example entries with related_context populated
+
+secondary_goals:
+  - Update /complete and /document command templates to instruct agents on populating related_context
+  - Remove unused index_structure section from _schema.yml to avoid confusion
+
+# REQUIREMENTS
+
+functional_requirements:
+  - FR1: Add `related_context` field to _index.yml entry structure (optional array of context IDs)
+  - FR2: Add comprehensive inline documentation comment block at the top of src/context/_index.yml explaining all index entry fields (id, file, type, description, tags, related_context) with format, examples, and usage guidelines
+  - FR3: Update src/context/_index.yml template to include at least two example entries with populated related_context field
+  - FR4: Remove unused index_structure section from src/context/_schema.yml (the product template) to reduce confusion
+  - FR5: Update /complete command template to instruct agents to populate related_context when creating/updating index entries
+  - FR6: Update /document command template to instruct agents to populate related_context when creating/updating index entries
+  - FR7: Ensure inline documentation specifies related_context should contain valid context IDs that exist in _index.yml
+
+non_functional_requirements:
+  - NFR1: The related_context field should be optional to avoid breaking existing context files
+  - NFR2: Documentation should be clear enough that agents understand when to add related_context without over-populating
+  - NFR3: The field should maintain YAML formatting consistency with existing _index.yml structure
+
+# SCOPE
+
+in_scope:
+  - Adding comprehensive inline documentation to src/context/_index.yml template explaining all index fields
+  - Adding related_context field to example entries in src/context/_index.yml template
+  - Removing unused index_structure section from src/context/_schema.yml (the product template that users get)
+  - Updating complete.md and document.md command templates with related_context instructions
+  - Documenting when agents should populate related_context (e.g., for closely related modules, features that depend on each other)
+
+out_of_scope:
+  - Retroactively populating related_context for all existing context entries in .buildforce/context/_index.yml (can be done incrementally)
+  - Implementing automated related_context detection (agents will manually determine relationships)
+  - Adding related_context field to context YAML files themselves (only in _index.yml entries)
+  - Creating validation scripts to check related_context ID validity
+
+# DESIGN PRINCIPLES
+
+design_principles:
+  - "Explicit is better than implicit—provide agents with clear relationship signals"
+  - "Keep it optional—don't break existing workflows or require backfilling all entries"
+  - "Guide but don't constrain—give agents discretion on when relationships are significant enough to include"
+
+# ACCEPTANCE CRITERIA
+
+acceptance_criteria:
+  - AC1: src/context/_index.yml template includes comprehensive inline documentation comment block explaining all index entry fields (id, file, type, description, tags, related_context)
+  - AC2: Inline documentation includes format specifications, usage guidelines, and examples for each field
+  - AC3: src/context/_index.yml template includes at least two example entries with related_context populated
+  - AC4: src/context/_schema.yml (template) has index_structure section removed
+  - AC5: complete.md template instructs agents to populate related_context when adding entries to _index.yml
+  - AC6: document.md template instructs agents to populate related_context when adding entries to _index.yml
+  - AC7: Documentation specifies related_context should contain IDs of contexts that are closely related (e.g., dependent modules, sibling features)
+  - AC8: All changes maintain proper YAML formatting and indentation consistency
+
+# ASSUMPTIONS & DEPENDENCIES
+
+assumptions:
+  - Agents will use related_context as a discovery hint when they find a relevant context entry
+  - Context ID uniqueness is maintained (no duplicate IDs across _index.yml)
+  - Agents reading context files will check related_context arrays and load those contexts
+
+dependencies:
+  internal:
+    - _schema.yml: "Will have unused index_structure section removed"
+    - _index.yml: "Index file that will receive inline documentation and related_context field"
+    - complete-command: "Needs to instruct agents on populating related_context"
+    - document-command: "Needs to instruct agents on populating related_context"
+  external: {}
+
+# OPEN QUESTIONS
+
+open_questions: []
+
+# NOTES
+
+notes: |
+  This enhancement builds on the existing context discovery mechanisms (tags, type, description)
+  by adding explicit relationship signals. It's particularly valuable for:
+
+  - Feature families (e.g., all slash commands referencing the core slash-commands context)
+  - Dependent modules (e.g., build-command referencing plan-template)
+  - Sibling features that work together (e.g., research and document commands)
+
+  The field is optional and should be used judiciously—only for relationships that are
+  significant enough to warrant automatic loading by agents. Agents should populate this
+  during /complete and /document operations based on their understanding of component relationships.
+
+  Key change from original plan: Instead of documenting the field in _schema.yml (which has an
+  unused index_structure section), we're adding comprehensive inline documentation directly in
+  src/context/_index.yml template. This is cleaner since agents read _index.yml directly and
+  the documentation will be in context. The _schema.yml remains focused on context YAML file
+  structure only.

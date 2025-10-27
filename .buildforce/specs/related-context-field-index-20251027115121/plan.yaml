@@ -1,0 +1,290 @@
+# Plan Template for /build Agent Execution
+# This template is optimized for AI agent consumption during /build commands
+# It provides checkbox-based progress tracking, deviation logging, and spec traceability
+
+id: related-context-field-index-20251027115121-plan
+name: "Implementation Plan for Related Context Field in _index.yml"
+spec_id: "related-context-field-index-20251027115121"
+type: implementation-plan
+status: draft
+created: "2025-10-27"
+last_updated: "2025-10-27"
+
+# ARCHITECTURE OVERVIEW
+# Describe the high-level implementation approach and key technical decisions.
+
+approach: |
+  This is a documentation-focused enhancement that adds a new optional field to the context
+  index structure. The implementation involves adding inline documentation to the _index.yml
+  template, removing unused schema sections, and updating command instructions. No code changes
+  are required—only YAML and Markdown documentation updates.
+
+  The approach is:
+  1. Add comprehensive inline documentation comment block to src/context/_index.yml explaining all index fields
+  2. Add example entries to src/context/_index.yml template with related_context populated
+  3. Remove unused index_structure section from .buildforce/context/_schema.yml
+  4. Update command templates (/complete and /document) to instruct agents on populating the field
+  5. Ensure consistency in formatting and indentation across all files
+
+technology_stack:
+  - YAML: Structure for context files and index
+  - Markdown: Command template documentation
+
+decisions:
+  - decision: "Make related_context an optional field"
+    rationale: "Avoid breaking existing context files and allow incremental adoption. Not all
+                context entries have significant relationships worth cross-referencing, so
+                mandatory would create noise."
+
+  - decision: "Place related_context in _index.yml entries, not in context YAML files"
+    rationale: "The index is specifically designed for discovery—this is a discovery field.
+                Adding it to individual context files would create duplication and maintenance
+                burden (bidirectional updates)."
+
+  - decision: "Use inline documentation in _index.yml template instead of _schema.yml"
+    rationale: "The _schema.yml currently has an unused index_structure section that's confusing.
+                Since agents read _index.yml directly during context discovery, inline documentation
+                provides immediate context. The _schema.yml should remain focused on context file
+                structure only, not index structure."
+
+  - decision: "No automated validation of related_context IDs"
+    rationale: "Keep implementation simple. Agents are responsible for ensuring IDs are valid.
+                A future enhancement could add validation, but not in scope for this feature."
+
+  - decision: "Provide usage guidelines but allow agent discretion"
+    rationale: "Agents should determine relationship significance based on context. Over-
+                specifying rules would constrain their judgment. Better to guide principles
+                (closely related, dependent modules) than enumerate every case."
+
+# FILE STRUCTURE
+# List all files to be created or modified during implementation
+
+files_to_create: []
+
+files_to_modify:
+  - path: "src/context/_index.yml"
+    change_type: "edit"
+    description: "Add comprehensive inline documentation comment block explaining all index fields, add example entries with populated related_context field"
+
+  - path: "src/context/_schema.yml"
+    change_type: "edit"
+    description: "Remove unused index_structure section to reduce confusion (this is the TEMPLATE, not .buildforce/context/_schema.yml)"
+
+  - path: "src/templates/commands/complete.md"
+    change_type: "edit"
+    description: "Add instruction to populate related_context when creating index entries (step 6)"
+
+  - path: "src/templates/commands/document.md"
+    change_type: "edit"
+    description: "Add instruction to populate related_context when creating index entries (step 4)"
+
+# IMPLEMENTATION PHASES
+# Break down the implementation into logical phases with checkbox-based task tracking
+# Use [ ] for pending tasks and [x] for completed tasks
+# Each task should link back to spec requirements via spec_refs
+
+phase_1:
+  name: "Index Template Documentation and Examples"
+  description: |
+    Add comprehensive inline documentation to src/context/_index.yml explaining all index entry
+    fields, and include example entries with related_context populated. This provides complete
+    guidance directly in the template that agents read during context discovery.
+
+  tasks:
+    - [x] Add inline documentation comment block at top of src/context/_index.yml
+      spec_refs: [FR2, AC1, AC2, AC7]
+      files: [src/context/_index.yml]
+      notes: "Explain all fields: id, file, type, description, tags, related_context with format, examples, usage guidelines"
+
+    - [x] Add at least two example context entries with populated related_context arrays
+      spec_refs: [FR3, AC3]
+      files: [src/context/_index.yml]
+      notes: "Include examples showing slash-commands with related command contexts, and another showing module relationships"
+
+  validation:
+    - [x] All phase_1 tasks completed
+    - [x] Inline documentation is comprehensive and clear
+    - [x] Example entries use valid YAML syntax
+    - [x] related_context arrays contain plausible context IDs
+    - [x] Spec requirements covered: [FR2, FR3, AC1, AC2, AC3, AC7]
+
+phase_2:
+  name: "Schema Template Cleanup"
+  description: |
+    Remove the unused index_structure section from src/context/_schema.yml (the product template)
+    to reduce confusion. The schema should focus only on context YAML file structure, not index
+    structure. Note: We update the TEMPLATE (src/), not the instance (.buildforce/).
+
+  tasks:
+    - [x] Remove index_structure section from src/context/_schema.yml
+      spec_refs: [FR4, AC4]
+      files: [src/context/_schema.yml]
+      notes: "Delete lines 158-165 (index_structure section). This is the TEMPLATE file that users get."
+
+  validation:
+    - [x] All phase_2 tasks completed
+    - [x] src/context/_schema.yml maintains proper YAML formatting after removal
+    - [x] No references to index_structure remain in template
+    - [x] Spec requirements covered: [FR4, AC4]
+
+phase_3:
+  name: "Command Template Instructions"
+  description: |
+    Update /complete and /document command templates to instruct agents to populate
+    related_context when adding entries to _index.yml.
+
+  tasks:
+    - [x] Update complete.md step 6 (Update Context Index) with related_context instruction
+      spec_refs: [FR5, AC5]
+      files: [src/templates/commands/complete.md]
+      notes: "Add bullet point about populating related_context with closely related context IDs"
+
+    - [x] Update document.md step 4 (Update Context Index) with related_context instruction
+      spec_refs: [FR6, AC6]
+      files: [src/templates/commands/document.md]
+      notes: "Add bullet point about populating related_context with closely related context IDs"
+
+  validation:
+    - [x] All phase_3 tasks completed
+    - [x] Instructions are clear about when to populate related_context
+    - [x] Formatting and indentation match existing command template style
+    - [x] Spec requirements covered: [FR5, FR6, AC5, AC6]
+
+phase_4:
+  name: "Final Review"
+  description: |
+    Review all changes for consistency, completeness, and proper formatting.
+
+  tasks:
+    - [x] Verify all modified files maintain YAML/Markdown formatting consistency
+      spec_refs: [NFR3, AC8]
+      files: [src/context/_schema.yml, src/context/_index.yml, src/templates/commands/complete.md, src/templates/commands/document.md]
+      notes: "Check indentation, line breaks, list formatting (all src/ template files)"
+
+    - [x] Confirm related_context is documented as optional in inline documentation
+      spec_refs: [NFR1]
+      files: [src/context/_index.yml]
+      notes: "Ensure 'optional' status is explicit in inline documentation comment block"
+
+    - [x] Verify usage guidelines balance clarity with agent discretion
+      spec_refs: [NFR2]
+      files: [src/context/_index.yml, src/templates/commands/complete.md, src/templates/commands/document.md]
+      notes: "Guidelines should be clear but not overly prescriptive"
+
+  validation:
+    - [x] All phase_4 tasks completed
+    - [x] All files pass formatting checks
+    - [x] Documentation is clear and actionable
+    - [x] Spec requirements covered: [NFR1, NFR2, NFR3, AC8]
+
+# DEVIATION LOG
+# The /build agent populates this section when implementation deviates from the original plan
+# Format: phase → task → original plan → actual implementation → reason for deviation
+
+deviations: []
+
+# TESTING GUIDANCE
+# Structured guidance for testing the implementation
+
+testing:
+  automated_tests: []
+
+  manual_tests:
+    - scenario: "Verify src/context/_index.yml inline documentation and examples"
+      steps: |
+        1. Read src/context/_index.yml
+        2. Verify comprehensive inline documentation comment block exists at top
+        3. Confirm all fields are documented: id, file, type, description, tags, related_context
+        4. Check that documentation includes format, usage guidelines, and examples
+        5. Locate example context entries
+        6. Confirm at least two entries include related_context field
+        7. Verify related_context contains plausible context IDs
+        8. Check YAML formatting is correct
+
+    - scenario: "Verify _schema.yml template cleanup"
+      steps: |
+        1. Read src/context/_schema.yml (TEMPLATE file)
+        2. Confirm index_structure section has been removed
+        3. Verify no references to index structure remain
+        4. Check YAML formatting is still valid
+
+    - scenario: "Verify command template instructions"
+      steps: |
+        1. Read src/templates/commands/complete.md step 6
+        2. Confirm instruction to populate related_context is present
+        3. Read src/templates/commands/document.md step 4
+        4. Confirm instruction to populate related_context is present
+        5. Verify instructions are consistent across both commands
+
+# VALIDATION CRITERIA
+# Define success metrics and track spec requirement coverage
+
+success_metrics:
+  - "All four modified files (all in src/) updated successfully"
+  - "src/context/_index.yml includes comprehensive inline documentation for all fields"
+  - "src/context/_index.yml template has at least two examples with related_context"
+  - "src/context/_schema.yml (template) has index_structure section removed"
+  - "Both command templates instruct agents to populate related_context"
+
+spec_coverage:
+  - FR1: "✓ Phase 1: Task 2 (related_context field added to example entries)"
+  - FR2: "✓ Phase 1: Task 1 (inline documentation explains all fields)"
+  - FR3: "✓ Phase 1: Task 2 (at least two examples with related_context)"
+  - FR4: "✓ Phase 2: Task 1 (index_structure section removed from _schema.yml)"
+  - FR5: "✓ Phase 3: Task 1 (complete.md updated with instruction)"
+  - FR6: "✓ Phase 3: Task 2 (document.md updated with instruction)"
+  - FR7: "✓ Phase 1: Task 1 (inline documentation includes validation guidance)"
+  - NFR1: "✓ Phase 4: Task 2 (optional status documented in inline docs)"
+  - NFR2: "✓ Phase 4: Task 3 (usage guidelines balance clarity with discretion)"
+  - NFR3: "✓ Phase 4: Task 1 (formatting consistency verified)"
+
+# PROGRESS SUMMARY
+# Track overall progress and identify next steps
+
+overall_progress:
+  phase_1: "2/2 tasks completed ✓"
+  phase_2: "1/1 tasks completed ✓"
+  phase_3: "2/2 tasks completed ✓"
+  phase_4: "3/3 tasks completed ✓"
+
+current_status: |
+  All implementation phases completed successfully. All spec requirements met with no deviations.
+
+  Files modified:
+  - src/context/_index.yml: Added comprehensive inline documentation and two example entries with related_context
+  - src/context/_schema.yml: Removed unused index_structure section
+  - src/templates/commands/complete.md: Added related_context instruction to step 6
+  - src/templates/commands/document.md: Added related_context instruction to step 4
+
+next_immediate_steps:
+  - "Manual testing: Verify inline documentation is clear and comprehensive"
+  - "Manual testing: Confirm YAML formatting is valid"
+  - "Manual testing: Test command templates with agents"
+
+# RISKS & CONSIDERATIONS
+# Document potential risks and mitigation strategies
+
+risks:
+  - risk: "Agents may over-populate related_context with too many relationships"
+    mitigation: "Provide clear usage guidelines emphasizing 'closely related' and 'significant relationships'. Give examples of what qualifies."
+
+  - risk: "Inconsistent formatting across documentation files"
+    mitigation: "Include formatting verification as final phase task. Use existing file structure as reference."
+
+  - risk: "Unclear guidance on bidirectional relationships"
+    mitigation: "Document whether both A→B and B→A should be specified. Recommend bidirectional for discoverability."
+
+# NOTES
+# Capture lessons learned and future enhancement ideas
+
+lessons_learned:
+  - "This is primarily a documentation change, making it low-risk and straightforward"
+  - "The optional nature ensures backward compatibility and gradual adoption"
+  - "Inline documentation is preferable to separate schema sections when agents read the file directly"
+  - "Removing unused sections (index_structure) reduces confusion and maintenance burden"
+
+future_enhancements:
+  - "Add automated validation to check related_context IDs exist in _index.yml"
+  - "Create a script to suggest related_context values based on dependency analysis"
+  - "Implement bidirectional relationship checking (warn if A→B exists but B→A missing)"
+  - "Add related_context visualization tool to show context relationship graph"
