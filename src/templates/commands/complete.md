@@ -90,7 +90,7 @@ $ARGUMENTS
        tags: [{auto-generated-tags}]
        related_context: [{related-context-ids}]  # OPTIONAL
      ```
-   - **Description field**: Provide a short, condensed one-liner (max 100 chars) that summarizes what this context represents - makes search easier without reading the file
+   - **Description field**: Provide a generic, stable one-liner (max 100 chars) describing WHAT this component/feature/module IS - focus on its identity and purpose, not implementation details or achievements. Should remain relevant across versions and evolution.
    - **Generate tags** based on component analysis (e.g., [core, workflow, agents] for slash-commands)
    - **Related context field** (OPTIONAL): Add array of closely related context IDs for discovery
      - Include for: feature families, dependent modules, sibling features

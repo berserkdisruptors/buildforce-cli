@@ -32,9 +32,10 @@ version: 1.0
 # OPTIONAL BUT RECOMMENDED FIELDS:
 # ---------------------------------
 # - description (string, max 100 chars):
-#     Short one-liner summary of what this context represents
-#     Improves searchability without opening the file
-#     Example: "JWT-based authentication with OAuth2 social login support"
+#     Generic, stable one-liner describing WHAT this component/feature/module IS
+#     Focus on its identity and purpose, not implementation details or achievements
+#     Should remain relevant across versions and evolution
+#     Example: "User authentication system with JWT tokens and OAuth2 integration"
 #
 # - tags (array of strings):
 #     Searchable keywords for discovery
