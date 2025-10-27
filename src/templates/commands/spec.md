@@ -15,9 +15,10 @@ The text the user typed after `/spec` in the triggering message **is** the featu
 
 ## Workflow Steps
 
-1. **Determine CREATE vs UPDATE mode**:
+1. **Determine create vs update mode**: Read and follow the pattern described in `.buildforce/templates/shared/create-update-pattern.md` from the buildforce root directory.
 
-   Check if there's an active spec in the current session:
+   - Priority 1: Check conversation history for existing spec
+   - Priority 2: Run `{SCRIPT}` FROM CURRENT WORKING DIRECTORY AND NEVER FROM SOMEWHERE ELSE! Parse JSON output for FOLDER_NAME, SPEC_FILE, SPEC_DIR, FEATURE_NUM, and IS_UPDATE flag. **NEVER proceed** if script fails - display the error message to the user, explain that the `.buildforce` directory was not found, suggest: 1) check if you're in the buildforce root directory (where you ran `buildforce init`), 2) run `buildforce init .` if needed.
 
    - Read `.buildforce/.current-spec` file from repo root
    - If file exists and has content (non-empty folder name): **UPDATE mode** - Load existing spec and plan from that folder
@@ -47,7 +48,7 @@ The text the user typed after `/spec` in the triggering message **is** the featu
 
    **For spec.yaml (WHAT to build)**:
 
-   - Load `src/templates/spec-template.yaml` to understand structure
+   - Load `.buildforce/templates/spec-template.yaml` from the current working directory to understand structure and fields
    - Populate with requirements, scope, goals, acceptance criteria (WHAT content)
    - For metadata: Set id = "{FOLDER_NAME}" (the full slug-timestamp you generated), status = "draft", dates = today YYYY-MM-DD
    - Ensure requirements use unique IDs (FR1, FR2, ..., NFR1, ..., AC1, ...)
@@ -114,12 +115,14 @@ The text the user typed after `/spec` in the triggering message **is** the featu
    When presenting clarifying questions to users, you MUST follow this standardized format:
 
    **Format Structure:**
+
    - Number questions sequentially: 1, 2, 3, 4, ...
    - Provide 2-3 predefined options per question, labeled alphabetically: A, B, C
    - ALWAYS include a final option: "X. Other (please specify)"
    - Use this format when predefined options make sense; fall back to plain text questions when they don't
 
    **Format Template:**
+
    ```
    **1. [Question text]?**
       A. [First option]
@@ -136,18 +139,19 @@ The text the user typed after `/spec` in the triggering message **is** the featu
    **Example Questions:**
 
    **1. What should be the JWT token expiration time?**
-      A. 15 minutes
-      B. 30 minutes
-      C. 1 hour
-      X. Other (please specify)
+   A. 15 minutes
+   B. 30 minutes
+   C. 1 hour
+   X. Other (please specify)
 
    **2. Which authentication library should we use?**
-      A. passport.js
-      B. jsonwebtoken
-      C. auth0
-      X. Other (please specify)
+   A. passport.js
+   B. jsonwebtoken
+   C. auth0
+   X. Other (please specify)
 
    **When to Use This Format:**
+
    - Use structured format when predefined options provide meaningful choices
    - Fall back to plain text questions when predefined options would be artificial or limiting
    - Prioritize user experience - don't force the format if it doesn't fit the question
@@ -196,7 +200,7 @@ The text the user typed after `/spec` in the triggering message **is** the featu
 
    [Describe only what changed in this update: new requirements added, scope modifications, updated acceptance criteria, or clarified goals. Keep concise and focused on the delta, not the full current state. Example: "Added FR5-FR7 for error handling with retry logic, expanded scope to include logging infrastructure, and updated AC3 to require 99.9% uptime."]
 
-   ---
+   ***
 
    Then present a **condensed plan summary** using this format:
 

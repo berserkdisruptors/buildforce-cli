@@ -56,13 +56,13 @@ if [ "${#FOLDER_NAME}" -gt 50 ]; then
     exit 1
 fi
 
-# Get repository root using common function
-REPO_ROOT=$(get_repo_root) || exit 1
+# Get buildforce root using common function
+BUILDFORCE_ROOT=$(get_buildforce_root) || exit 1
 
-cd "$REPO_ROOT"
+cd "$BUILDFORCE_ROOT"
 
-SPECS_DIR="$REPO_ROOT/.buildforce/specs"
-TEMPLATES_DIR="$REPO_ROOT/.buildforce/templates"
+SPECS_DIR=".buildforce/specs"
+TEMPLATES_DIR=".buildforce/templates"
 mkdir -p "$SPECS_DIR"
 
 # Create new spec folder
@@ -96,7 +96,7 @@ else
 fi
 
 # Update state file to track current spec across sessions
-set_current_spec "$REPO_ROOT" "$FOLDER_NAME"
+set_current_spec "$BUILDFORCE_ROOT" "$FOLDER_NAME"
 
 # Set CURRENT_SPEC environment variable for session tracking
 export CURRENT_SPEC="$FOLDER_NAME"

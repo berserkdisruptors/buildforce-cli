@@ -67,10 +67,10 @@ eval $(get_spec_paths)
 if $PATHS_ONLY; then
     if $JSON_MODE; then
         # Minimal JSON paths payload (no validation performed)
-        printf '{"REPO_ROOT":"%s","SPEC_DIR":"%s"}\n' \
-            "$REPO_ROOT" "$SPEC_DIR"
+        printf '{"BUILDFORCE_ROOT":"%s","SPEC_DIR":"%s"}\n' \
+            "$BUILDFORCE_ROOT" "$SPEC_DIR"
     else
-        echo "REPO_ROOT: $REPO_ROOT"
+        echo "BUILDFORCE_ROOT: $BUILDFORCE_ROOT"
         echo "SPEC_DIR: $SPEC_DIR"
     fi
     exit 0
@@ -93,10 +93,11 @@ if $JSON_MODE; then
         json_docs=$(printf '"%s",' "${docs[@]}")
         json_docs="[${json_docs%,}]"
     fi
-    
-    printf '{"SPEC_DIR":"%s"}\n' "$SPEC_DIR"
+
+    printf '{"BUILDFORCE_ROOT":"%s","SPEC_DIR":"%s"}\n' "$BUILDFORCE_ROOT" "$SPEC_DIR"
 else
     # Text output
+    echo "BUILDFORCE_ROOT:$BUILDFORCE_ROOT"
     echo "SPEC_DIR:$SPEC_DIR"
-    
+
 fi

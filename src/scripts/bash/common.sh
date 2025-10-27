@@ -1,36 +1,33 @@
 #!/usr/bin/env bash
 # Common functions and variables for all scripts
 
-# Find repository root by searching for project markers (.git or .buildforce)
-find_repo_root() {
-    local dir="$1"
-    while [ "$dir" != "/" ]; do
-        if [ -d "$dir/.git" ] || [ -d "$dir/.buildforce" ]; then
-            echo "$dir"
-            return 0
-        fi
-        dir="$(dirname "$dir")"
-    done
-    return 1
-}
+# Get buildforce root by checking for .buildforce directory in current working directory
+# This enables monorepo support and prevents path confusion
+get_buildforce_root() {
+    local current_dir="$PWD"
 
-# Get repository root, with fallback for non-git repositories
-# Prefers git, then searches for project markers (.git or .buildforce)
-get_repo_root() {
-    if git rev-parse --show-toplevel >/dev/null 2>&1; then
-        git rev-parse --show-toplevel
-    else
-        # Get script directory to start the search
-        local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-        local repo_root="$(find_repo_root "$script_dir")"
-
-        if [ -z "$repo_root" ]; then
-            echo "Error: Could not determine repository root. Please run this script from within the repository." >&2
-            return 1
-        fi
-
-        echo "$repo_root"
+    # Check if .buildforce exists in current working directory
+    if [ -d "$current_dir/.buildforce" ]; then
+        echo "$current_dir"
+        return 0
     fi
+
+    # Not found - provide clear error message
+    cat >&2 << 'EOF'
+ERROR: .buildforce directory not found in current directory.
+
+This command must be run from the directory where you initialized buildforce.
+
+Solutions:
+  1. Change to your buildforce root directory:
+     cd /path/to/your/buildforce/project
+
+  2. Or initialize a new buildforce project here:
+     buildforce init .
+
+Tip: Look for the directory containing .buildforce/ folder.
+EOF
+    return 1
 }
 
 # Get current spec from state file
@@ -48,16 +45,16 @@ set_current_spec() {
 }
 
 get_spec_paths() {
-    local repo_root=$(get_repo_root)
-    local spec_folder=$(get_current_spec "$repo_root")
+    local buildforce_root=$(get_buildforce_root) || return 1
+    local spec_folder=$(get_current_spec "$buildforce_root")
     local spec_dir=""
 
     if [ -n "$spec_folder" ]; then
-        spec_dir="$repo_root/.buildforce/specs/$spec_folder"
+        spec_dir="$buildforce_root/.buildforce/specs/$spec_folder"
     fi
 
     cat <<EOF
-REPO_ROOT='$repo_root'
+BUILDFORCE_ROOT='$buildforce_root'
 SPEC_DIR='$spec_dir'
 EOF
 }
