@@ -18,7 +18,7 @@ The text the user typed after `/spec` in the triggering message **is** the featu
 1. **Determine create vs update mode**: Read and follow the pattern described in `.buildforce/templates/shared/create-update-pattern.md` from the buildforce root directory.
 
    - Priority 1: Check conversation history for existing spec
-   - Priority 2: Run `{SCRIPT}` FROM CURRENT WORKING DIRECTORY AND NEVER FROM SOMEWHERE ELSE! Parse JSON output for FOLDER_NAME, SPEC_FILE, SPEC_DIR, FEATURE_NUM, and IS_UPDATE flag. **NEVER proceed** if script fails - display the error message to the user, explain that the `.buildforce` directory was not found, suggest: 1) check if you're in the buildforce root directory (where you ran `buildforce init`), 2) run `buildforce init --here` if needed.
+   - Priority 2: Run `{SCRIPT}` FROM CURRENT WORKING DIRECTORY AND NEVER FROM SOMEWHERE ELSE! Parse JSON output for FOLDER_NAME, SPEC_FILE, SPEC_DIR, FEATURE_NUM, and IS_UPDATE flag. **NEVER proceed** if script fails - display the error message to the user, explain that the `.buildforce` directory was not found, suggest: 1) check if you're in the buildforce root directory (where you ran `buildforce init`), 2) run `buildforce init .` if needed.
 
    - Read `.buildforce/.current-spec` file from repo root
    - If file exists and has content (non-empty folder name): **UPDATE mode** - Load existing spec from that folder

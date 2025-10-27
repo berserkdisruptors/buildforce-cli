@@ -23,7 +23,7 @@ Solutions:
      cd /path/to/your/buildforce/project
 
   2. Or initialize a new buildforce project here:
-     buildforce init --here
+     buildforce init .
 
 Tip: Look for the directory containing .buildforce/ folder.
 EOF
