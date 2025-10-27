@@ -80,9 +80,15 @@ Before proceeding, verify sufficient context exists:
        type: {module/feature/component/pattern}
        description: {short-one-liner-description}
        tags: [{auto-generated-tags}]
+       related_context: [{related-context-ids}]  # OPTIONAL
      ```
    - **Description field**: Provide a short, condensed one-liner (max 100 chars) that summarizes what this context represents
    - **Generate tags** based on component analysis (e.g., [core, workflow, agents], [auth, security, jwt])
+   - **Related context field** (OPTIONAL): Add array of closely related context IDs for discovery
+     - Include for: feature families, dependent modules, sibling features
+     - Only add significant relationships (avoid over-populating)
+     - IDs must exist in _index.yml
+     - Example: `[slash-commands, plan-template, spec-command]`
    - Maintain proper YAML indentation (2 spaces per level)
    - Preserve existing entries (do not modify or delete)
    - For EXISTING context files, no index update needed (entry already exists)

@@ -1,4 +1,63 @@
 version: "1.0"
+
+# ============================================================================
+# CONTEXT INDEX FIELD DOCUMENTATION
+# ============================================================================
+#
+# Each context entry in the index has the following fields:
+#
+# REQUIRED FIELDS:
+# ----------------
+# - id (string, kebab-case):
+#     Unique identifier matching the context filename (without .yml extension)
+#     Must be unique across all entries in this index
+#     Example: "authentication", "build-command", "error-handling"
+#
+# - file (string):
+#     Context filename (must match id field with .yml extension)
+#     Example: "authentication.yml", "build-command.yml"
+#
+# - type (enum):
+#     Category of the context for organization
+#     Valid values: module | feature | component | pattern
+#       - module: High-level system module (e.g., authentication, payment)
+#       - feature: Specific feature within a module (e.g., OAuth login)
+#       - component: Reusable UI or code component
+#       - pattern: Design pattern or architectural decision
+#     Example: "feature"
+#
+# OPTIONAL BUT RECOMMENDED FIELDS:
+# ---------------------------------
+# - description (string, max 100 chars):
+#     Short one-liner summary of what this context represents
+#     Improves searchability without opening the file
+#     Example: "JWT-based authentication with OAuth2 social login support"
+#
+# - tags (array of strings):
+#     Searchable keywords for discovery
+#     Use relevant terms related to functionality, technology, domain
+#     Example: [auth, security, jwt, oauth2]
+#
+# - related_context (array of context IDs, OPTIONAL):
+#     Array of context IDs that are closely related to this context
+#     Enables agents to discover related contexts through explicit cross-references
+#
+#     **When to populate:**
+#       - Feature families (e.g., all slash commands reference slash-commands)
+#       - Dependent modules (e.g., build-command depends on plan-template)
+#       - Sibling features (e.g., research and document commands work together)
+#
+#     **Usage guidelines:**
+#       - Only include contexts that are closely related or have direct dependencies
+#       - Avoid over-populating—focus on significant relationships
+#       - IDs must exist in this _index.yml file (no validation enforced)
+#       - Bidirectional relationships recommended for discoverability
+#         (if A references B, B should reference A)
+#
+#     Example: [plan-template, iterate-plan-command, spec-command]
+#
+# ============================================================================
+
 contexts:
   - id: slash-commands
     file: slash-commands.yml

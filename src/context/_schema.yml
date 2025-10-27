@@ -154,12 +154,3 @@ design_decisions:
   structure:
     - decision: "What was decided"
       rationale: "Why it was decided"
-
-# Index file structure (_index.yml)
-index_structure:
-  version: "Version number for the index schema"
-  contexts:
-    - id: "Must match context file's id field"
-      file: "Filename (e.g., authentication.yml)"
-      type: "module | feature | component | pattern"
-      tags: "[searchable, tags, for, discovery]"
