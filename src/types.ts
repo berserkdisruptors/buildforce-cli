@@ -47,6 +47,7 @@ export interface InitOptions {
   skipTls?: boolean;
   debug?: boolean;
   githubToken?: string;
+  local?: string | boolean;
 }
 
 export interface BuildforceConfig {
@@ -64,4 +65,5 @@ export interface UpgradeOptions {
   debug?: boolean;
   githubToken?: string;
   skipTls?: boolean;
+  local?: string | boolean;
 }

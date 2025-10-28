@@ -20,3 +20,5 @@ inspiration/
 .buildforce/scripts
 .buildforce/.current-spec
 .claude/**
+
+.genreleases/

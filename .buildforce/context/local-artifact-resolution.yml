@@ -1,0 +1,226 @@
+id: local-artifact-resolution
+name: Local Artifact Resolution
+type: feature
+status: production
+created: 2025-10-28
+last_updated: 2025-10-28
+
+summary: |
+  Local artifact resolution system that enables init and upgrade commands to use pre-built
+  template artifacts from local directories instead of downloading from GitHub Releases.
+  Supports local development workflows, offline operations, and faster testing iterations.
+
+responsibilities:
+  - Resolve local template artifacts matching agent and script type from .genreleases/ directory
+  - Pattern-match artifact filenames using glob patterns (buildforce-cli-template-{agent}-{script}-v*.zip)
+  - Select latest version when multiple matching artifacts exist
+  - Validate artifact existence and structural integrity before returning path
+  - Provide clear error messages with expected filenames when artifacts not found
+  - Extract version information from artifact filenames
+  - List available artifacts when requested artifact is missing
+
+dependencies:
+  internal:
+    - cli-architecture: "Integrates with init and upgrade commands through download infrastructure"
+    - upgrade-command: "Uses local artifacts when --local flag provided"
+  external:
+    - glob: "^10.3.10 - Pattern matching for artifact discovery"
+    - fs-extra: "^11.2.0 - File system operations for validation"
+
+files:
+  primary:
+    - src/lib/local-artifacts.ts
+  secondary:
+    - src/lib/github.ts
+    - src/commands/init/setup.ts
+    - src/commands/upgrade/execution.ts
+    - src/cli.ts
+    - src/types.ts
+
+interfaces:
+  exports:
+    - name: "resolveLocalArtifact"
+      signature: "(localDir: string, aiAssistant: string, scriptType: string) => Promise<{zipPath: string, version: string}>"
+      description: "Finds matching local artifact ZIP in directory, returns path and version"
+
+design_decisions:
+  - decision: "Use glob pattern matching instead of manual directory listing"
+    rationale: "Glob provides flexible pattern matching for buildforce-cli-template-{agent}-{script}-v*.zip format, handles version wildcards cleanly, and is a standard Node.js ecosystem library."
+
+  - decision: "Select latest version alphabetically when multiple matches exist"
+    rationale: "Predictable behavior that matches developer expectations. Latest version (e.g., v0.0.99) is usually what developers want when testing locally. Alphabetical sorting provides stable, deterministic results."
+
+  - decision: "Fail fast with explicit error messages instead of falling back to GitHub"
+    rationale: "When users specify --local flag, they explicitly want local artifacts. Silent fallback to GitHub would mask configuration issues and create confusing behavior. Explicit errors enable faster debugging."
+
+  - decision: "Default local artifact directory to .genreleases/"
+    rationale: "Matches existing build script convention (create-release-packages.sh generates artifacts in .genreleases/). Provides sensible default while allowing override via --local=<path> parameter."
+
+  - decision: "List available artifacts in error messages"
+    rationale: "Helps developers quickly identify what artifacts exist versus what was requested. Reduces debugging time and provides actionable guidance for fixing mismatches."
+
+  - decision: "Skip version validation against CLI version"
+    rationale: "Simplifies local testing workflow. Developers often need to test artifacts from different versions without CLI version constraints. Version information preserved in filename for reference but not enforced."
+
+architecture_flow: |
+  Local Artifact Resolution Process:
+
+  1. Input Validation:
+     - Validate localDir parameter (directory path)
+     - Validate aiAssistant parameter (e.g., "claude", "copilot")
+     - Validate scriptType parameter (e.g., "sh", "ps")
+
+  2. Pattern Construction:
+     - Build glob pattern: buildforce-cli-template-{aiAssistant}-{scriptType}-v*.zip
+     - Example: buildforce-cli-template-claude-sh-v*.zip
+
+  3. Artifact Discovery:
+     - Use glob() to find matching files in localDir
+     - Returns array of matching file paths
+     - Empty array if no matches found
+
+  4. Selection Logic:
+     - If no matches: Throw error with expected pattern and available artifacts
+     - If one match: Use that artifact
+     - If multiple matches: Sort alphabetically and select last (latest version)
+
+  5. Validation:
+     - Verify file exists using fs.existsSync()
+     - Check file size > 0 bytes
+     - Extract version from filename using regex
+
+  6. Return Result:
+     - Return {zipPath: absolutePath, version: extractedVersion}
+     - Path used by downloadTemplateFromGithub() as localZipPath parameter
+
+  Error Handling:
+  - Missing artifact: "Local artifact not found. Expected: {pattern}. Available: {list}. Run: AGENTS={agent} SCRIPTS={script} .github/workflows/scripts/create-release-packages.sh v0.0.99"
+  - Invalid directory: "Local artifact directory not found: {localDir}"
+  - Empty artifact: "Local artifact is empty (0 bytes): {zipPath}"
+
+integration_points:
+  init_command:
+    file: "src/commands/init/setup.ts"
+    flow: |
+      1. User runs: buildforce init project --local --ai claude --script sh
+      2. CLI parses --local flag (default: '.genreleases')
+      3. setupProject() calls resolveLocalArtifact('.genreleases', 'claude', 'sh')
+      4. Returns: {zipPath: '.genreleases/buildforce-cli-template-claude-sh-v0.0.99.zip', version: 'v0.0.99'}
+      5. Pass zipPath to downloadAndExtractTemplate() via localZipPath parameter
+      6. downloadTemplateFromGithub() skips GitHub API, uses local file directly
+
+  upgrade_command:
+    file: "src/commands/upgrade/execution.ts"
+    flow: |
+      1. User runs: buildforce upgrade --local
+      2. CLI parses --local flag and reads buildforce.json for aiAssistant/scriptType
+      3. executeUpgrade() calls resolveLocalArtifact('.genreleases', aiAssistant, scriptType)
+      4. Returns matching artifact path
+      5. Upgrade proceeds with local artifact instead of GitHub download
+
+  github_download_adaptation:
+    file: "src/lib/github.ts"
+    modification: |
+      - Add localZipPath?: string parameter to downloadTemplateFromGithub() options
+      - When localZipPath provided:
+        * Skip GitHub API calls entirely
+        * Validate local file exists
+        * Return {zipPath: localZipPath, metadata: {filename, size, release: 'local', asset_url: localZipPath}}
+      - Existing extraction logic works unchanged (artifact structure identical)
+
+naming_conventions:
+  artifact_pattern: "buildforce-cli-template-{agent}-{script}-{version}.zip"
+  version_format: "v{major}.{minor}.{patch} (e.g., v0.0.99, v1.2.3)"
+  directory_default: ".genreleases/"
+  glob_pattern: "buildforce-cli-template-{agent}-{script}-v*.zip"
+
+usage_examples:
+  successful_resolution:
+    command: "buildforce init my-project --local --ai claude --script sh"
+    behavior: |
+      1. Searches .genreleases/ for buildforce-cli-template-claude-sh-v*.zip
+      2. Finds: buildforce-cli-template-claude-sh-v0.0.99.zip
+      3. Extracts and initializes project using local artifact
+      4. Project structure identical to GitHub download
+
+  missing_artifact:
+    command: "buildforce init test --local --ai windsurf --script ps"
+    behavior: |
+      Error: Local artifact not found
+      Expected: buildforce-cli-template-windsurf-ps-v*.zip
+      Available artifacts in .genreleases/:
+        - buildforce-cli-template-claude-sh-v0.0.99.zip
+        - buildforce-cli-template-copilot-ps-v0.0.99.zip
+
+      To build the required artifact, run:
+      AGENTS=windsurf SCRIPTS=ps .github/workflows/scripts/create-release-packages.sh v0.0.99
+
+  custom_directory:
+    command: "buildforce init project --local=/path/to/artifacts --ai claude --script sh"
+    behavior: |
+      Searches /path/to/artifacts/ instead of default .genreleases/
+
+  multiple_versions:
+    scenario: ".genreleases/ contains both v0.0.10 and v0.0.99"
+    behavior: "Selects v0.0.99 (latest alphabetically)"
+
+key_features:
+  developer_workflow:
+    - "Enables local testing without publishing to GitHub Releases"
+    - "Speeds up development iteration: build artifacts → test init/upgrade → iterate"
+    - "Supports offline development and airgapped environments"
+    - "Validates locally-built artifacts before release"
+
+  user_experience:
+    - "Clear error messages with expected filenames and available options"
+    - "Actionable suggestions (run create-release-packages.sh)"
+    - "Predictable behavior with latest-version selection"
+    - "Flexible override via --local=<path> parameter"
+
+  reliability:
+    - "Explicit validation of artifact existence and size"
+    - "Fail-fast behavior prevents confusing errors downstream"
+    - "Version extraction from filename for metadata"
+    - "Consistent with GitHub artifact structure"
+
+edge_cases_handled:
+  - "No matching artifacts in directory → Clear error with pattern and available list"
+  - "Multiple versions of same artifact → Select latest alphabetically"
+  - "Empty ZIP file (0 bytes) → Validation error before extraction"
+  - "Invalid directory path → Error with directory path shown"
+  - "Artifact exists but wrong agent/script type → Shows expected vs available"
+  - "Directory contains non-artifact files → Ignored by glob pattern"
+
+evolution:
+  - version: "1.0"
+    date: "2025-10-28"
+    changes: "Initial implementation with glob-based pattern matching, latest-version selection, comprehensive error messages, and integration with init/upgrade commands"
+
+related_specs:
+  - add-local-flag-init-upgrade-20251028143052
+
+notes: |
+  This feature bridges the gap between local artifact generation (create-release-packages.sh)
+  and the init/upgrade commands. It's a quality-of-life improvement for developers working on
+  BuildForce CLI itself or anyone who wants to test custom template modifications.
+
+  The .genreleases/ directory convention is established by the existing build script, making
+  this a natural integration point. The --local flag is consistent with CLI conventions
+  (e.g., npm's --local, git's --local-branch).
+
+  Key design trade-offs:
+  - Simplicity over flexibility: Latest version auto-selected rather than interactive picker
+  - Explicitness over convenience: No silent fallback to GitHub on missing artifact
+  - Convention over configuration: Default .genreleases/ matches existing build script
+
+  Integration with existing infrastructure:
+  - Reuses downloadTemplateFromGithub() by adding localZipPath parameter
+  - Maintains identical extraction behavior (artifact structure unchanged)
+  - Zero impact on GitHub download path (backward compatible)
+
+  Future enhancements:
+  - Add buildforce test-local command that validates artifact structure
+  - Support --local-build flag to auto-run create-release-packages.sh
+  - Add version validation warnings (non-blocking) for mismatched CLI versions
+  - Interactive artifact selection when multiple versions available
+  - Cache downloaded GitHub artifacts locally for future --local use

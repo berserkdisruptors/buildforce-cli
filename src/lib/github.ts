@@ -8,7 +8,7 @@ import { ReleaseData, ReleaseMetadata } from "../types.js";
 import { getGithubAuthHeaders } from "../utils/index.js";
 
 /**
- * Download template from GitHub releases
+ * Download template from GitHub releases or use local artifact
  */
 export async function downloadTemplateFromGithub(
   aiAssistant: string,
@@ -20,6 +20,7 @@ export async function downloadTemplateFromGithub(
     debug?: boolean;
     githubToken?: string;
     skipTls?: boolean;
+    localZipPath?: string;
   } = {}
 ): Promise<{ zipPath: string; metadata: ReleaseMetadata }> {
   const {
@@ -29,7 +30,33 @@ export async function downloadTemplateFromGithub(
     debug = false,
     githubToken,
     skipTls = false,
+    localZipPath,
   } = options;
+
+  // If localZipPath is provided, skip GitHub download and use local artifact
+  if (localZipPath) {
+    if (!fs.existsSync(localZipPath)) {
+      throw new Error(`Local artifact not found: ${localZipPath}`);
+    }
+
+    const stats = await fs.stat(localZipPath);
+    const filename = path.basename(localZipPath);
+
+    if (verbose) {
+      console.log(chalk.cyan("Using local artifact:"), filename);
+      console.log(chalk.cyan("Size:"), stats.size.toLocaleString(), "bytes");
+      console.log(chalk.cyan("Source:"), "local");
+    }
+
+    const metadata: ReleaseMetadata = {
+      filename,
+      size: stats.size,
+      release: "local",
+      asset_url: localZipPath,
+    };
+
+    return { zipPath: localZipPath, metadata };
+  }
 
   const headers = getGithubAuthHeaders(githubToken);
 

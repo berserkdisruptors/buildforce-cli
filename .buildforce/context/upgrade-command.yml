@@ -9,12 +9,14 @@ summary: |
   Slash command for upgrading existing BuildForce projects to the latest templates, scripts,
   and slash commands while preserving user-created content (context repository and specs).
   Automatically detects project configuration and supports selective override via flags.
+  Supports local artifact loading via --local flag for offline workflows and testing.
 
 responsibilities:
-  - Upgrade slash commands, templates, and scripts to latest versions from GitHub Releases
+  - Upgrade slash commands, templates, and scripts to latest versions from GitHub Releases or local artifacts
   - Preserve user-created content (.buildforce/context/ and .buildforce/specs/)
   - Auto-detect AI assistant and script type from buildforce.json configuration
   - Support configuration overrides via --ai and --script flags
+  - Support local artifact loading via --local flag for offline/testing workflows
   - Provide dry-run mode to preview changes before applying
   - Display upgrade progress with clear status indicators
   - Update buildforce.json with version metadata after successful upgrade
@@ -25,12 +27,14 @@ dependencies:
   internal:
     - cli-architecture: "Uses template download, extraction, and progress tracking infrastructure"
     - init-command: "Shares template distribution and file copying utilities"
+    - local-artifact-resolution: "Resolves local artifacts when --local flag provided"
   external:
     - commander: "^12.0.0 - CLI argument parsing for upgrade command"
     - fs-extra: "^11.2.0 - File system operations (copy, remove, ensureDir)"
     - ora: "^8.2.0 - Progress spinners for upgrade steps"
     - chalk: "^5.4.1 - Colored terminal output for status messages"
     - inquirer: "^10.2.3 - Interactive prompts for missing configuration"
+    - glob: "^10.3.10 - Pattern matching for local artifact discovery"
 
 files:
   primary:
@@ -59,6 +63,10 @@ command_signature:
       type: "string"
       required: false
       description: "Override script type choice (sh, ps)"
+    - name: "--local"
+      type: "string"
+      required: false
+      description: "Use local artifacts from directory (default: .genreleases)"
     - name: "--dry-run"
       type: "boolean"
       required: false
@@ -79,6 +87,8 @@ command_signature:
     - "buildforce upgrade"
     - "buildforce upgrade --dry-run"
     - "buildforce upgrade --ai claude --script sh"
+    - "buildforce upgrade --local"
+    - "buildforce upgrade --local=/path/to/artifacts"
     - "buildforce upgrade --github-token ghp_xxx"
 
 design_decisions:
@@ -103,6 +113,9 @@ design_decisions:
   - decision: "Prompt for missing configuration in backward compatibility mode"
     rationale: "Projects initialized before this feature lack aiAssistant/scriptType in buildforce.json. Interactive prompts collect missing values and update configuration."
 
+  - decision: "Add --local flag for local artifact support"
+    rationale: "Enables offline workflows, local testing, and faster iteration during development. Reuses local artifact resolution infrastructure for consistency with init command."
+
 architecture_flow: |
   Upgrade Process:
 
@@ -121,8 +134,13 @@ architecture_flow: |
      - Update buildforce.json with selections
 
   3. Template Download (execution.ts):
-     - Reuse downloadTemplateFromGithub() from init
-     - Fetch latest template ZIP from GitHub Releases
+     - If --local flag provided:
+       * Call resolveLocalArtifact() to find matching ZIP in local directory
+       * Pass localZipPath to download function
+       * Skip GitHub API entirely
+     - Otherwise:
+       * Reuse downloadTemplateFromGithub() from init
+       * Fetch latest template ZIP from GitHub Releases
      - Extract to temporary directory
      - Validate template structure
 
@@ -225,8 +243,13 @@ evolution:
     date: "2025-10-28"
     changes: "Initial implementation with auto-detection, dry-run mode, atomic operations, and backward compatibility"
 
+  - version: "1.1"
+    date: "2025-10-28"
+    changes: "Added --local flag for local artifact support, enabling offline workflows and faster local testing iterations"
+
 related_specs:
   - add-upgrade-command-20251027000000
+  - add-local-flag-init-upgrade-20251028143052
 
 notes: |
   The upgrade command is a critical feature for maintaining BuildForce projects over time.

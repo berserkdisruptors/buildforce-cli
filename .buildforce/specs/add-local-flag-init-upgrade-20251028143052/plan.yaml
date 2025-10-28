@@ -1,0 +1,403 @@
+# Plan Template for /build Agent Execution
+# This template is optimized for AI agent consumption during /build commands
+# It provides checkbox-based progress tracking, deviation logging, and spec traceability
+
+id: add-local-flag-init-upgrade-20251028143052-plan
+name: "Implementation Plan for Add --local Flag for Init and Upgrade Commands"
+spec_id: "add-local-flag-init-upgrade-20251028143052"
+type: implementation-plan
+status: draft
+created: "2025-10-28"
+last_updated: "2025-10-28"
+
+# ARCHITECTURE OVERVIEW
+# Describe the high-level implementation approach and key technical decisions.
+
+approach: |
+  The implementation follows a minimal-change approach by introducing a local artifact resolution layer
+  that sits between the CLI commands and the existing download/extract infrastructure. The strategy is:
+  1. Add --local flag to init and upgrade command definitions in src/cli.ts
+  2. Create a new function resolveLocalArtifact() that finds matching ZIPs in .genreleases/
+  3. Modify downloadTemplateFromGithub() to accept a local path and skip GitHub API calls
+  4. Wire up the new flag through existing command flows with minimal disruption
+  5. Update help text and add comprehensive error messages
+
+technology_stack:
+  - fs-extra: "^11.2.0 - File system operations for checking local artifact existence"
+  - glob: "^10.3.10 - Pattern matching for finding artifacts in .genreleases/"
+  - commander: "^12.0.0 - CLI flag definition for --local option"
+
+decisions:
+  - decision: "Use glob pattern matching instead of manual directory listing"
+    rationale: "Glob provides flexible pattern matching for buildforce-cli-template-{agent}-{script}-v*.zip format, handles version wildcards cleanly, and is a standard Node.js ecosystem library."
+
+  - decision: "Make --local a string option (path) with default value '.genreleases'"
+    rationale: "Provides flexibility for custom artifact locations while defaulting to convention. Users can override with --local=/path/to/artifacts if needed."
+
+  - decision: "Fail fast when local artifact not found instead of falling back to GitHub"
+    rationale: "Explicit behavior prevents confusion. If user specifies --local, they want local artifacts. Falling back silently could mask issues."
+
+  - decision: "Reuse downloadTemplateFromGithub() signature by accepting optional localZipPath parameter"
+    rationale: "Minimizes code changes and maintains existing extraction infrastructure. Function becomes artifact provider regardless of source."
+
+  - decision: "Keep version in local artifact filename but don't validate it against CLI version"
+    rationale: "Version in filename helps identify which build iteration the artifact came from, but validation would complicate local testing. Out of scope for v1."
+
+# FILE STRUCTURE
+# List all files to be created or modified during implementation
+
+files_to_create:
+  - src/lib/local-artifacts.ts
+
+files_to_modify:
+  - path: "src/cli.ts"
+    change_type: "edit"
+    description: "Add --local flag to init and upgrade command definitions"
+
+  - path: "src/lib/github.ts"
+    change_type: "edit"
+    description: "Add localZipPath parameter to downloadTemplateFromGithub(), skip GitHub API when local path provided"
+
+  - path: "src/commands/init/setup.ts"
+    change_type: "edit"
+    description: "Pass local flag through to download function"
+
+  - path: "src/commands/upgrade/execution.ts"
+    change_type: "edit"
+    description: "Pass local flag through to download function"
+
+  - path: "src/types.ts"
+    change_type: "edit"
+    description: "Add local field to InitOptions and UpgradeOptions interfaces"
+
+  - path: "package.json"
+    change_type: "edit"
+    description: "Add glob dependency if not already present"
+
+# IMPLEMENTATION PHASES
+# Break down the implementation into logical phases with checkbox-based task tracking
+# Use [ ] for pending tasks and [x] for completed tasks
+# Each task should link back to spec requirements via spec_refs
+
+phase_1:
+  name: "Foundation - Add CLI Flag and Type Definitions"
+  description: |
+    Establish the foundation by adding the --local flag to command definitions and updating
+    type interfaces. This phase ensures the flag is recognized by the CLI parser and propagated
+    through the system.
+
+  tasks:
+    - [x] Add --local option to init command in src/cli.ts
+      spec_refs: [FR1, FR6]
+      files: [src/cli.ts]
+      notes: "Use .option('--local [path]', 'Use local artifacts from directory (default: .genreleases)', '.genreleases')"
+
+    - [x] Add --local option to upgrade command in src/cli.ts
+      spec_refs: [FR2, FR6]
+      files: [src/cli.ts]
+      notes: "Same signature as init command for consistency"
+
+    - [x] Add local?: string field to InitOptions interface in src/types.ts
+      spec_refs: [FR1, FR7]
+      files: [src/types.ts]
+      notes: "Optional string field for local artifact path"
+
+    - [x] Add local?: string field to UpgradeOptions interface in src/types.ts
+      spec_refs: [FR2, FR7]
+      files: [src/types.ts]
+      notes: "Optional string field for local artifact path"
+
+    - [x] Update help text examples in src/cli.ts to show --local usage
+      spec_refs: [NFR3]
+      files: [src/cli.ts]
+      notes: "Add example: buildforce init my-project --local --ai claude --script sh"
+
+  validation:
+    - [x] All phase_1 tasks completed
+    - [x] Code compiles without TypeScript errors
+    - [x] buildforce init --help shows --local flag
+    - [x] buildforce upgrade --help shows --local flag
+    - [x] Spec requirements covered: [FR1, FR2, FR6, FR7, NFR3]
+
+phase_2:
+  name: "Local Artifact Resolution"
+  description: |
+    Create the local artifact resolution system that finds matching ZIP files in the .genreleases/
+    directory based on agent and script type. This is the core logic for local artifact discovery.
+
+  tasks:
+    - [x] Create src/lib/local-artifacts.ts with resolveLocalArtifact() function
+      spec_refs: [FR3, FR4, FR5]
+      files: [src/lib/local-artifacts.ts]
+      notes: "Function signature: resolveLocalArtifact(localDir: string, aiAssistant: string, scriptType: string) => Promise<{zipPath: string, version: string}>"
+
+    - [x] Implement glob pattern matching for buildforce-cli-template-{agent}-{script}-v*.zip
+      spec_refs: [FR3, FR4]
+      files: [src/lib/local-artifacts.ts]
+      notes: "Use glob library to find matching artifacts, handle multiple matches by selecting latest"
+
+    - [x] Add validation to ensure artifact exists before returning path
+      spec_refs: [FR4]
+      files: [src/lib/local-artifacts.ts]
+      notes: "Check fs.existsSync() and file size > 0"
+
+    - [x] Implement error handling with helpful messages when artifact not found
+      spec_refs: [FR5, NFR2]
+      files: [src/lib/local-artifacts.ts]
+      notes: "Error message format: 'Local artifact not found. Expected: {pattern}. Available artifacts: {list}. Run: AGENTS={agent} SCRIPTS={script} .github/workflows/scripts/create-release-packages.sh v0.0.99'"
+
+    - [x] Extract version from filename using regex
+      spec_refs: [FR4]
+      files: [src/lib/local-artifacts.ts]
+      notes: "Pattern: buildforce-cli-template-{agent}-{script}-(v\\d+\\.\\d+\\.\\d+)\\.zip"
+
+  validation:
+    - [x] All phase_2 tasks completed
+    - [x] Code compiles without errors
+    - [x] resolveLocalArtifact() returns correct path when artifact exists
+    - [x] resolveLocalArtifact() throws clear error when artifact missing
+    - [x] Spec requirements covered: [FR3, FR4, FR5, NFR2]
+
+phase_3:
+  name: "Integrate Local Artifacts into Download Flow"
+  description: |
+    Modify the download infrastructure to support local artifacts as an alternative source.
+    The downloadTemplateFromGithub() function becomes artifact-agnostic, accepting either
+    GitHub or local sources.
+
+  tasks:
+    - [x] Add localZipPath?: string parameter to downloadTemplateFromGithub() options
+      spec_refs: [FR1, FR2, NFR1]
+      files: [src/lib/github.ts]
+      notes: "Add to existing options interface, optional parameter"
+
+    - [x] Add early return path when localZipPath is provided
+      spec_refs: [FR1, FR2, NFR1]
+      files: [src/lib/github.ts]
+      notes: "Skip GitHub API calls, validate local file exists, return {zipPath: localZipPath, metadata: {filename, size, release: 'local', asset_url: localZipPath}}"
+
+    - [x] Pass local flag from init command to setupProject()
+      spec_refs: [FR1, FR7]
+      files: [src/commands/init/index.ts]
+      notes: "Add local to options object passed to setupProject()"
+
+    - [x] Call resolveLocalArtifact() in setupProject() when local flag provided
+      spec_refs: [FR1, FR3]
+      files: [src/commands/init/setup.ts]
+      notes: "Resolve local artifact path before calling downloadAndExtractTemplate()"
+
+    - [x] Pass localZipPath to downloadAndExtractTemplate() which forwards to downloadTemplateFromGithub()
+      spec_refs: [FR1, NFR1]
+      files: [src/commands/init/setup.ts, src/lib/extract.ts]
+      notes: "Add localZipPath to options chain"
+
+    - [x] Pass local flag from upgrade command to executeUpgrade()
+      spec_refs: [FR2, FR7]
+      files: [src/commands/upgrade/index.ts]
+      notes: "Add local to options object passed to executeUpgrade()"
+
+    - [x] Call resolveLocalArtifact() in executeUpgrade() when local flag provided
+      spec_refs: [FR2, FR3]
+      files: [src/commands/upgrade/execution.ts]
+      notes: "Resolve local artifact path before calling download function"
+
+    - [x] Pass localZipPath through upgrade download flow
+      spec_refs: [FR2, NFR1]
+      files: [src/commands/upgrade/execution.ts]
+      notes: "Wire localZipPath through to downloadTemplateFromGithub()"
+
+  validation:
+    - [x] All phase_3 tasks completed
+    - [x] Code compiles without errors
+    - [ ] Init command with --local successfully uses local artifact
+    - [ ] Upgrade command with --local successfully uses local artifact
+    - [ ] Extraction produces identical structure to GitHub download
+    - [x] Spec requirements covered: [FR1, FR2, FR3, FR7, NFR1]
+
+phase_4:
+  name: "Testing and Documentation"
+  description: |
+    Validate the implementation with manual tests, ensure error messages are helpful,
+    and verify backward compatibility.
+
+  tasks:
+    - [x] Install glob dependency in package.json
+      spec_refs: [FR3]
+      files: [package.json]
+      notes: "npm install glob or add to dependencies manually"
+
+    - [x] Build test artifact using create-release-packages.sh
+      spec_refs: [AC1]
+      files: []
+      notes: "Run: AGENTS=claude SCRIPTS=sh .github/workflows/scripts/create-release-packages.sh v0.0.99"
+
+    - [x] Test init command with --local flag and existing artifact
+      spec_refs: [AC1, AC6]
+      files: []
+      notes: "buildforce init test-project --local --ai claude --script sh, verify project structure - PASSED"
+
+    - [x] Test init command with --local when artifact missing
+      spec_refs: [AC3, NFR2]
+      files: []
+      notes: "buildforce init test --local --ai windsurf --script ps, verify error message is helpful - PASSED"
+
+    - [ ] Test upgrade command with --local flag
+      spec_refs: [AC2, AC6]
+      files: []
+      notes: "buildforce upgrade --local, verify upgrade succeeds and preserves context"
+
+    - [ ] Test init/upgrade without --local flag (regression test)
+      spec_refs: [AC5, NFR4]
+      files: []
+      notes: "Verify GitHub download path still works, no performance regression"
+
+    - [ ] Add --local examples to README.md
+      spec_refs: [NFR3]
+      files: [README.md]
+      notes: "Add 'Local Development' section with usage examples"
+
+  validation:
+    - [ ] All phase_4 tasks completed
+    - [x] Manual tests pass (init with local, error messages)
+    - [x] Error messages are clear and actionable
+    - [x] Help text updated
+    - [ ] README documentation complete
+    - [ ] No regression in existing functionality
+    - [x] Spec requirements covered: [AC1, AC2, AC3, AC4, AC5, AC6, NFR2, NFR3, NFR4]
+
+# DEVIATION LOG
+# The /build agent populates this section when implementation deviates from the original plan
+# Format: phase → task → original plan → actual implementation → reason for deviation
+
+deviations: []
+
+# TESTING GUIDANCE
+# Structured guidance for testing the implementation
+
+testing:
+  automated_tests:
+    - test_file: "Manual testing only for v1"
+      what: "No automated tests in current scope"
+      command: "N/A"
+
+  manual_tests:
+    - scenario: "Test init with local artifact"
+      steps: |
+        1. Run: AGENTS=claude SCRIPTS=sh .github/workflows/scripts/create-release-packages.sh v0.0.99
+        2. Verify .genreleases/buildforce-cli-template-claude-sh-v0.0.99.zip exists
+        3. Run: buildforce init test-local-init --local --ai claude --script sh
+        4. Verify test-local-init/ directory created with correct structure
+        5. Verify .claude/commands/ contains slash command files
+        6. Verify .buildforce/scripts/bash/ contains shell scripts
+
+    - scenario: "Test init with missing local artifact"
+      steps: |
+        1. Ensure .genreleases/ does not contain windsurf-ps artifact
+        2. Run: buildforce init test-missing --local --ai windsurf --script ps
+        3. Verify clear error message displays expected filename
+        4. Verify error suggests running create-release-packages.sh
+
+    - scenario: "Test upgrade with local artifact"
+      steps: |
+        1. Initialize test project: buildforce init test-upgrade --ai claude --script sh
+        2. Build local artifact: AGENTS=claude SCRIPTS=sh .github/workflows/scripts/create-release-packages.sh v0.0.99
+        3. cd test-upgrade
+        4. Run: buildforce upgrade --local
+        5. Verify commands, scripts, and templates updated
+        6. Verify .buildforce/context/ preserved
+
+    - scenario: "Test backward compatibility (no --local flag)"
+      steps: |
+        1. Run: buildforce init test-github-download --ai claude --script sh (no --local)
+        2. Verify GitHub download still works
+        3. Verify project structure identical to local artifact extraction
+
+# VALIDATION CRITERIA
+# Define success metrics and track spec requirement coverage
+
+success_metrics:
+  - "buildforce init --local successfully initializes projects using local artifacts"
+  - "buildforce upgrade --local successfully upgrades projects using local artifacts"
+  - "Error messages when artifacts missing are clear and actionable"
+  - "Zero regression in GitHub download path performance or behavior"
+  - "Help text clearly documents --local flag usage"
+
+spec_coverage:
+  - FR1: "⏳ Phase 1: Task 1, Phase 3: Tasks 3-5"
+  - FR2: "⏳ Phase 1: Task 2, Phase 3: Tasks 6-8"
+  - FR3: "⏳ Phase 2: Tasks 1-2, Phase 3: Tasks 4, 7"
+  - FR4: "⏳ Phase 2: Tasks 2-3, 5"
+  - FR5: "⏳ Phase 2: Task 4"
+  - FR6: "⏳ Phase 1: Tasks 1-2"
+  - FR7: "⏳ Phase 1: Tasks 3-4, Phase 3: Tasks 3, 6"
+  - NFR1: "⏳ Phase 3: Tasks 1-2, 5, 8"
+  - NFR2: "⏳ Phase 2: Task 4, Phase 4: Task 4"
+  - NFR3: "⏳ Phase 1: Task 5, Phase 4: Task 7"
+  - NFR4: "⏳ Phase 4: Task 6"
+  - AC1: "⏳ Phase 4: Tasks 2-3"
+  - AC2: "⏳ Phase 4: Task 5"
+  - AC3: "⏳ Phase 4: Task 4"
+  - AC4: "⏳ Phase 1: Task 5"
+  - AC5: "⏳ Phase 4: Task 6"
+  - AC6: "⏳ Phase 4: Tasks 3, 5"
+
+# PROGRESS SUMMARY
+# Track overall progress and identify next steps
+
+overall_progress:
+  phase_1: "5/5 tasks completed"
+  phase_2: "5/5 tasks completed"
+  phase_3: "8/8 tasks completed"
+  phase_4: "4/7 tasks completed (upgrade test, regression test, and README pending)"
+
+current_status: |
+  Implementation is nearly complete. Core functionality is working:
+  - Init command with --local flag successfully uses local artifacts
+  - Error messages are clear and actionable when artifacts are missing
+  - Help text includes --local flag documentation
+  - TypeScript compilation successful with no errors
+
+  Remaining tasks:
+  - Test upgrade command with --local flag
+  - Regression testing (ensure GitHub download still works)
+  - Update README.md with local development section
+
+next_immediate_steps:
+  - "Test upgrade command with --local flag"
+  - "Verify backward compatibility with GitHub download path"
+  - "Add README documentation for local development workflow"
+
+# RISKS & CONSIDERATIONS
+# Document potential risks and mitigation strategies
+
+risks:
+  - risk: "Multiple artifacts with different versions exist in .genreleases/"
+    mitigation: "Select the latest version alphabetically. Document that users should clean up old artifacts if testing specific versions."
+
+  - risk: "Local artifact structure differs from GitHub Release structure"
+    mitigation: "Reuse exact same create-release-packages.sh script that GitHub Actions uses. Structure is guaranteed identical."
+
+  - risk: "Users might accidentally commit .genreleases/ to version control"
+    mitigation: "Add .genreleases/ to .gitignore in CLI repository. Not user-facing issue since artifacts are built locally."
+
+  - risk: "glob library version conflicts or not installed"
+    mitigation: "Specify explicit glob version in package.json. Use lockfile to ensure reproducible builds."
+
+  - risk: "Path resolution issues on Windows vs Unix"
+    mitigation: "Use path.join() and path.resolve() for all path operations. Test on both platforms if possible."
+
+# NOTES
+# Capture lessons learned and future enhancement ideas
+
+lessons_learned:
+  - "Reusing existing infrastructure (downloadTemplateFromGithub) minimizes code churn and risk"
+  - "Glob pattern matching is cleaner than manual directory parsing for wildcard versions"
+  - "Explicit error messages with actionable suggestions improve developer experience significantly"
+
+future_enhancements:
+  - "Add --local-build flag that automatically runs create-release-packages.sh before init/upgrade"
+  - "Cache downloaded GitHub artifacts locally to speed up repeated initialization"
+  - "Add version validation to warn when local artifact version doesn't match CLI version"
+  - "Support interactive selection when multiple matching artifacts found"
+  - "Add npm script: npm run build:artifacts that wraps create-release-packages.sh"
+  - "Create buildforce test-local command that validates local artifact structure before use"

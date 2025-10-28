@@ -20,6 +20,7 @@ export async function downloadAndExtractTemplate(
     debug?: boolean;
     githubToken?: string;
     skipTls?: boolean;
+    localZipPath?: string;
   } = {}
 ): Promise<{ projectPath: string; version: string }> {
   const {
@@ -28,6 +29,7 @@ export async function downloadAndExtractTemplate(
     debug = false,
     githubToken,
     skipTls = false,
+    localZipPath,
   } = options;
 
   const currentDir = process.cwd();
@@ -48,6 +50,7 @@ export async function downloadAndExtractTemplate(
       debug,
       githubToken,
       skipTls,
+      localZipPath,
     });
 
     zipPath = result.zipPath;
