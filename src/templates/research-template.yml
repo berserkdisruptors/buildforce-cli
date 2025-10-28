@@ -1,0 +1,166 @@
+# Research Template for Intelligent Materialization
+# This template guides agents in condensing .research-cache.md into structured research.yml
+#
+# IMPORTANT: This structure is FLEXIBLE - not all sections are required.
+# Adapt the structure based on the research content type:
+# - If no diagrams were created, omit mermaid_diagrams section
+# - If no data models documented, omit data_models section
+# - If no code snippets provided, omit code_snippets section
+#
+# PRESERVATION STRATEGY:
+# The goal is INTELLIGENT CONDENSATION - not verbatim copy, not excessive summarization.
+#
+# PRESERVE (Essential for /build context):
+#   - Mermaid diagrams (architecture flows, component relationships) → Copy verbatim
+#   - Data models (properties, types, relationships) → Preserve structure details
+#   - Code snippets (examples, patterns, suggested implementations) → Keep complete code
+#   - File paths discovered during exploration → Keep full paths with context
+#   - Architectural patterns and design decisions → Preserve rationale
+#   - TLDR from research sessions → Merge key points
+#
+# CONDENSE (Remove redundancy, extract essence):
+#   - Research summary prose → Condense to 2-4 sentences
+#   - Project context descriptions → Extract key points only
+#   - External references → Keep URLs/titles, condense explanations
+#   - Codebase findings → Keep discoveries, remove verbose explanations
+#
+# CACHE LOG FORMAT (.research-cache.md):
+# Each research session in the cache should follow this format:
+#
+# ================================================================================
+# Research Session: <timestamp>
+# Type: research_command | freeform_context
+# ================================================================================
+#
+# <Full research output including all sections, diagrams, models, code snippets>
+#
+# ================================================================================
+#
+# Multiple sessions accumulate with clear separators. Preserve ALL content types.
+
+# MATERIALIZED RESEARCH.YML STRUCTURE (Flexible):
+
+id: "<spec-id>-research"  # Must match parent spec ID
+created: "<date>"
+last_updated: "<date>"
+
+# REQUIRED: High-level overview (2-4 sentences)
+summary: |
+  Condensed summary of what was researched across all sessions.
+  Extract the essence - what problem space was explored, what was discovered.
+
+# OPTIONAL: Key discoveries from research
+# Include only if research produced actionable findings
+key_findings:
+  - "Discovery 1 with context"
+  - "Discovery 2 with context"
+  - "Discovery 3 with context"
+
+# OPTIONAL: File paths discovered during codebase exploration
+# Include only if research involved codebase analysis
+file_paths:
+  primary:
+    - path: "src/path/to/file.ts"
+      relevance: "Why this file matters"
+    - path: "src/another/file.ts"
+      relevance: "Why this file matters"
+
+  secondary:
+    - path: "src/related/file.ts"
+      relevance: "Supporting context"
+
+# OPTIONAL: Mermaid diagrams from research
+# PRESERVE VERBATIM - Critical for understanding architecture
+# Include only if diagrams were created during research
+mermaid_diagrams:
+  - title: "Diagram Title"
+    description: "What this diagram shows"
+    diagram: |
+      ```mermaid
+      graph TD
+        A[Component A] --> B[Component B]
+        B --> C[Component C]
+      ```
+
+  - title: "Another Diagram"
+    description: "Flow or relationship visualization"
+    diagram: |
+      ```mermaid
+      sequenceDiagram
+        User->>System: Action
+        System->>Database: Query
+        Database-->>System: Result
+      ```
+
+# OPTIONAL: Data models documented during research
+# PRESERVE STRUCTURE DETAILS - Essential for implementation
+# Include only if data structures were analyzed
+data_models:
+  - name: "ModelName"
+    description: "What this model represents"
+    properties:
+      - name: "propertyName"
+        type: "string | number | boolean | CustomType"
+        required: true
+        description: "What this property stores"
+
+      - name: "anotherProperty"
+        type: "object"
+        required: false
+        description: "Optional property"
+
+    relationships:
+      - "How this model relates to other models"
+
+# OPTIONAL: Code snippets from research
+# PRESERVE COMPLETE CODE - Critical for implementation guidance
+# Include only if code examples were provided
+code_snippets:
+  - title: "Snippet Title"
+    language: "typescript | javascript | python | etc"
+    description: "What this code demonstrates"
+    code: |
+      // Full code snippet preserved
+      function example() {
+        return "Complete implementation";
+      }
+
+# OPTIONAL: Architectural patterns and design decisions from research
+# Include only if architectural analysis was performed
+architectural_decisions:
+  - pattern: "Pattern Name"
+    description: "How and why this pattern is used"
+    rationale: "Benefits and trade-offs"
+
+  - pattern: "Another Pattern"
+    description: "Implementation approach"
+    rationale: "Why this approach was chosen"
+
+# OPTIONAL: External references and resources
+# Keep URLs/titles, condense explanations
+# Include only if external research was conducted
+external_references:
+  - title: "Resource Title"
+    url: "https://example.com/resource"
+    relevance: "Why this resource is valuable (condensed)"
+
+  - title: "Another Resource"
+    url: "https://example.com/another"
+    relevance: "Key takeaway from this resource"
+
+# REQUIRED: Condensed TLDR merging all research sessions
+# Extract and merge TLDR bullets from all sessions in cache
+# 3-7 most critical points
+tldr:
+  - "Critical finding 1"
+  - "Critical finding 2"
+  - "Critical finding 3"
+  - "Critical constraint or decision"
+  - "Key architectural pattern"
+
+# OPTIONAL: Update history for merge scenarios
+# Include only if research.yml is being updated (not created)
+updates:
+  - date: "<date>"
+    summary: "Brief description of what new research added"
+    merged_from_cache: true
