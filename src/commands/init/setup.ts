@@ -9,6 +9,7 @@ import {
   initGitRepo,
 } from "../../utils/index.js";
 import { createConfigContent } from "../../utils/config.js";
+import { resolveLocalArtifact } from "../../lib/local-artifacts.js";
 
 /**
  * Execute project setup steps with progress tracking
@@ -24,9 +25,10 @@ export async function setupProject(
     skipTls: boolean;
     noGit: boolean;
     shouldInitGit: boolean;
+    local?: string | boolean;
   }
 ): Promise<void> {
-  const { debug, githubToken, skipTls, noGit, shouldInitGit } = options;
+  const { debug, githubToken, skipTls, noGit, shouldInitGit, local } = options;
   const tracker = new StepTracker("Initialize Buildforce Project");
 
   // Pre-steps recorded as completed before live rendering
@@ -77,6 +79,23 @@ export async function setupProject(
     // Initial render
     renderTracker();
 
+    // Resolve local artifact if --local flag is provided
+    let localZipPath: string | undefined;
+    if (local) {
+      const localDir = typeof local === "string" ? local : ".genreleases";
+      try {
+        const result = await resolveLocalArtifact(
+          localDir,
+          selectedAi,
+          selectedScript
+        );
+        localZipPath = result.zipPath;
+      } catch (e: any) {
+        tracker.error("fetch", e.message);
+        throw e;
+      }
+    }
+
     const { version } = await downloadAndExtractTemplate(
       projectPath,
       selectedAi,
@@ -88,6 +107,7 @@ export async function setupProject(
         debug,
         githubToken,
         skipTls,
+        localZipPath,
       }
     );
 

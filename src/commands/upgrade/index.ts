@@ -23,6 +23,7 @@ export async function upgradeCommand(options: UpgradeOptions): Promise<void> {
     debug = false,
     githubToken,
     skipTls = false,
+    local,
   } = options;
 
   // Get current working directory (project root)
@@ -135,6 +136,7 @@ export async function upgradeCommand(options: UpgradeOptions): Promise<void> {
       debug,
       githubToken,
       skipTls,
+      local,
     });
 
     console.log();

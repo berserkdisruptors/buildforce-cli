@@ -1,0 +1,145 @@
+id: add-local-flag-init-upgrade-20251028143052
+name: "Add --local Flag for Init and Upgrade Commands"
+type: feature
+status: draft
+created: "2025-10-28"
+last_updated: "2025-10-28"
+
+summary: |
+  Add a --local flag to both init and upgrade commands that enables using pre-built template artifacts
+  from the .genreleases/ directory instead of downloading from GitHub Releases. This supports local
+  development, testing, and offline workflows.
+
+# INTENT / PROBLEM STATEMENT
+
+problem: |
+  Currently, the init and upgrade commands always download template artifacts from GitHub Releases.
+  This creates several pain points:
+  - Developers cannot test locally-built artifacts without publishing to GitHub
+  - Network dependency makes offline development impossible
+  - Each test requires a full GitHub Release cycle (slow iteration)
+  - Local artifact generation script (create-release-packages.sh) exists but has no integration path
+
+motivation: |
+  Enabling local artifact usage will:
+  - Speed up development cycles by eliminating GitHub Release dependency for testing
+  - Enable offline development workflows
+  - Allow developers to test artifact generation locally before publishing
+  - Provide a path for airgapped/restricted network environments
+  - Make the development loop faster: build artifacts locally → test init/upgrade → iterate
+
+# GOALS
+
+primary_goals:
+  - Add --local flag to buildforce init command that uses .genreleases/ artifacts
+  - Add --local flag to buildforce upgrade command that uses .genreleases/ artifacts
+  - Maintain backward compatibility with existing GitHub download workflow
+
+secondary_goals:
+  - Provide clear error messages when local artifacts are missing or invalid
+  - Document local artifact workflow in help text and README
+  - Enable validation of locally-built artifacts before release
+
+# REQUIREMENTS
+
+functional_requirements:
+  - FR1: buildforce init accepts --local flag that uses local artifacts instead of GitHub download
+  - FR2: buildforce upgrade accepts --local flag that uses local artifacts instead of GitHub download
+  - FR3: When --local is provided, CLI searches .genreleases/ for matching artifact (agent + script type)
+  - FR4: CLI validates local artifact exists and matches expected naming pattern before extraction
+  - FR5: If --local flag is provided but artifact not found, display clear error with expected filename
+  - FR6: Local artifact path defaults to .genreleases/ but can be overridden with --local=<path>
+  - FR7: --local flag works seamlessly with other flags (--ai, --script, --debug, --force, etc.)
+
+non_functional_requirements:
+  - NFR1: Local artifact loading must have same extraction behavior as GitHub download
+  - NFR2: Error messages clearly distinguish between GitHub download failures vs local artifact issues
+  - NFR3: Help text for both commands documents --local flag with examples
+  - NFR4: No performance regression when using default GitHub download path
+
+# SCOPE
+
+in_scope:
+  - Add --local flag to init command CLI interface
+  - Add --local flag to upgrade command CLI interface
+  - Implement local artifact resolution logic (find matching ZIP in .genreleases/)
+  - Validate local artifact naming pattern matches expected format
+  - Display helpful error messages for missing/invalid local artifacts
+  - Update CLI help text with --local flag documentation
+  - Reuse existing extraction and setup logic for local artifacts
+
+out_of_scope:
+  - Modifying create-release-packages.sh script (already works)
+  - Auto-building artifacts when --local is used (user must run script manually)
+  - Caching downloaded GitHub artifacts locally for future use
+  - Version validation/mismatch warnings for local artifacts
+  - Interactive selection of available local artifacts (specific artifact must be found)
+  - npm package.json script integration for building artifacts
+
+# DESIGN PRINCIPLES
+
+design_principles:
+  - "Reuse existing download and extraction infrastructure - only change artifact source"
+  - "Fail fast with clear errors - prefer explicit over implicit behavior"
+  - "Maintain consistency - local artifacts must match GitHub artifact structure exactly"
+  - "Developer experience first - make local testing workflow obvious and painless"
+
+# ACCEPTANCE CRITERIA
+
+acceptance_criteria:
+  - AC1: Running buildforce init my-project --local --ai claude --script sh successfully initializes project using .genreleases/buildforce-cli-template-claude-sh-v*.zip
+  - AC2: Running buildforce upgrade --local successfully upgrades project using local artifact matching current configuration
+  - AC3: If local artifact not found, clear error message shows expected filename and suggests running create-release-packages.sh
+  - AC4: --local flag appears in help text for both init and upgrade commands with usage examples
+  - AC5: All existing tests pass with no regression in GitHub download path
+  - AC6: Local artifact extraction produces identical project structure to GitHub download
+
+# ASSUMPTIONS & DEPENDENCIES
+
+assumptions:
+  - User has already run create-release-packages.sh to generate local artifacts in .genreleases/
+  - Local artifacts follow exact naming convention: buildforce-cli-template-{agent}-{script}-{version}.zip
+  - .genreleases/ directory exists in current working directory when --local is used
+  - Local artifacts are structurally identical to GitHub Release artifacts
+
+dependencies:
+  internal:
+    - src/lib/github.ts: "Download and metadata extraction logic to be adapted for local artifacts"
+    - src/lib/extract.ts: "Extraction logic already works, no changes needed"
+    - src/commands/init/setup.ts: "Orchestration logic to support local artifact path"
+    - src/commands/upgrade/execution.ts: "Upgrade flow to support local artifact path"
+  external:
+    - fs-extra: "^11.2.0 - File system operations for local artifact discovery"
+    - glob: "New dependency for pattern matching local artifacts"
+
+# OPEN QUESTIONS
+
+open_questions: []
+
+# RESOLVED QUESTIONS
+
+resolved_questions:
+  - question: "Should --local accept a directory path or specific file path for the artifact?"
+    answer: "Directory path - searches for matching artifact in that directory"
+    rationale: "Simplifies usage. User specifies directory, CLI finds correct artifact based on agent+script."
+
+  - question: "Should we validate the artifact version matches the CLI version when using --local?"
+    answer: "No - skip version validation entirely"
+    rationale: "Makes local testing easier. Users can test any version without CLI version constraints."
+
+  - question: "How should we handle multiple matching artifacts in .genreleases/ (e.g., different versions)?"
+    answer: "Use the latest version alphabetically (v0.0.99 > v0.0.10)"
+    rationale: "Predictable behavior. Latest version is usually what developers want when testing."
+
+# NOTES
+
+notes: |
+  This feature bridges the gap between local artifact generation (create-release-packages.sh)
+  and the init/upgrade commands. It's a quality-of-life improvement for developers working on
+  BuildForce CLI itself or anyone who wants to test custom template modifications.
+
+  The .genreleases/ directory is already created by the build script, so we're establishing
+  a convention that makes sense. Users can override with --local=<path> if needed.
+
+  Future enhancement: Could add --local-build flag that runs create-release-packages.sh
+  automatically before initialization, but that's out of scope for this iteration.

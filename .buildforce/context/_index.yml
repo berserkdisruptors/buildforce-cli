@@ -250,7 +250,14 @@ contexts:
         backward-compatibility,
         workflow-utility,
       ]
-    related_context: [slash-commands, cli-architecture, spec-command, complete-command]
+    related_context:
+      [
+        slash-commands,
+        cli-architecture,
+        spec-command,
+        complete-command,
+        local-artifact-resolution,
+      ]
 
   - id: cli-architecture
     file: cli-architecture.yml
@@ -276,4 +283,20 @@ contexts:
         spec-command,
         plan-template,
         upgrade-command,
+        local-artifact-resolution,
       ]
+
+  - id: local-artifact-resolution
+    file: local-artifact-resolution.yml
+    type: feature
+    description: "Local artifact resolution system for offline workflows and faster testing iterations"
+    tags:
+      [
+        artifact-resolution,
+        offline-support,
+        local-development,
+        testing,
+        glob-pattern,
+        workflow-utility,
+      ]
+    related_context: [cli-architecture, upgrade-command]

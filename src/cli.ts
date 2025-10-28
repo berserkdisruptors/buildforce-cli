@@ -29,6 +29,10 @@ program
   .option("--debug", "Show verbose diagnostic output")
   .option("--github-token <token>", "GitHub token for API requests")
   .option("--skip-tls", "Skip SSL/TLS verification (not recommended)")
+  .option(
+    "--local [path]",
+    "Use local artifacts from directory instead of GitHub (default: .genreleases)"
+  )
   .action(async (options) => {
     await upgradeCommand({
       ai: options.ai,
@@ -37,6 +41,7 @@ program
       debug: options.debug,
       githubToken: options.githubToken,
       skipTls: options.skipTls,
+      local: options.local,
     });
   });
 
@@ -85,6 +90,11 @@ program
     "--github-token <token>",
     "GitHub token to use for API requests (or set GH_TOKEN or GITHUB_TOKEN environment variable)"
   )
+  .option(
+    "--local [path]",
+    "Use local artifacts from directory instead of GitHub (default: .genreleases)\n" +
+    "Example: buildforce init my-project --local --ai claude --script sh"
+  )
   .action(async (projectName, options) => {
     // If no project name and no flags, show help
     if (!projectName && !options.here && Object.keys(options).length === 0) {
@@ -104,6 +114,7 @@ program
       skipTls: options.skipTls,
       debug: options.debug,
       githubToken: options.githubToken,
+      local: options.local,
     });
   });
 

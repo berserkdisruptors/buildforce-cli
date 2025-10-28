@@ -7,6 +7,7 @@ import { StepTracker } from "../../lib/step-tracker.js";
 import { downloadTemplateFromGithub } from "../../lib/github.js";
 import { saveBuildforceConfig } from "../../utils/config.js";
 import { AGENT_FOLDER_MAP } from "../../constants.js";
+import { resolveLocalArtifact } from "../../lib/local-artifacts.js";
 
 /**
  * Execute the upgrade process
@@ -22,9 +23,10 @@ export async function executeUpgrade(
     debug: boolean;
     githubToken?: string;
     skipTls: boolean;
+    local?: string | boolean;
   }
 ): Promise<void> {
-  const { dryRun, debug, githubToken, skipTls } = options;
+  const { dryRun, debug, githubToken, skipTls, local } = options;
 
   if (debug) {
     console.log(chalk.gray("\n[DEBUG] Upgrade execution options:"));
@@ -82,8 +84,27 @@ export async function executeUpgrade(
   try {
     renderTracker();
 
-    // Step 1: Download template
-    tracker.start("fetch");
+    // Step 1: Resolve local artifact if --local flag is provided
+    let localZipPath: string | undefined;
+    if (local) {
+      const localDir = typeof local === "string" ? local : ".genreleases";
+      try {
+        tracker.start("fetch");
+        const result = await resolveLocalArtifact(
+          localDir,
+          selectedAi,
+          selectedScript
+        );
+        localZipPath = result.zipPath;
+      } catch (e: any) {
+        tracker.error("fetch", e.message);
+        throw e;
+      }
+    } else {
+      tracker.start("fetch");
+    }
+
+    // Step 2: Download or use local template
     const currentDir = process.cwd();
 
     const result = await downloadTemplateFromGithub(selectedAi, currentDir, {
@@ -93,6 +114,7 @@ export async function executeUpgrade(
       debug,
       githubToken,
       skipTls,
+      localZipPath,
     });
 
     zipPath = result.zipPath;
