@@ -3,7 +3,7 @@ name: BuildForce CLI Architecture
 type: module
 status: production
 created: 2025-10-27
-last_updated: 2025-10-27
+last_updated: 2025-10-28
 
 summary: |
   Comprehensive architecture of the BuildForce CLI tool - a Node.js-based command-line
@@ -18,6 +18,8 @@ responsibilities:
   - AI assistant detection and configuration
   - Git repository initialization and management
   - Script permission setup for POSIX systems
+  - Project configuration persistence and management via buildforce.json
+  - Project upgrade capabilities with preservation of user content
 
 dependencies:
   internal:
@@ -26,6 +28,7 @@ dependencies:
     - research-slash-command: "Context discovery and research capabilities"
     - spec-command: "Specification template system"
     - plan-template: "Implementation planning structure"
+    - upgrade-command: "Project upgrade system for keeping templates current"
   external:
     - commander: "^12.0.0 - CLI framework for argument parsing"
     - chalk: "^5.4.1 - Terminal color output"
@@ -43,6 +46,9 @@ files:
     - src/cli.ts
     - src/commands/init/index.ts
     - src/commands/init/setup.ts
+    - src/commands/upgrade/index.ts
+    - src/commands/upgrade/validation.ts
+    - src/commands/upgrade/execution.ts
     - src/lib/github.ts
     - src/lib/extract.ts
     - src/lib/step-tracker.ts
@@ -66,6 +72,10 @@ interfaces:
     - name: "buildforce [project-name]"
       signature: "CLI command with options: --ai, --script, --here, --force, --no-git, --skip-tls, --debug, --github-token"
       description: "Initializes a new BuildForce project with specified AI assistant and script type"
+
+    - name: "buildforce upgrade"
+      signature: "CLI command with options: --ai, --script, --dry-run, --debug, --github-token, --skip-tls"
+      description: "Upgrades project templates to latest version while preserving context and specs"
 
     - name: "buildforce-check"
       signature: "CLI diagnostic command"
@@ -92,6 +102,12 @@ design_decisions:
 
   - decision: "YAML for specifications and plans"
     rationale: "More readable than JSON for humans and AI agents. Better suited for multi-line content and hierarchical structures. Easier to parse and validate."
+
+  - decision: "Persist configuration in buildforce.json during init"
+    rationale: "Enables upgrade command to auto-detect project settings (AI assistant, script type) without re-prompting users. Single source of truth for project configuration."
+
+  - decision: "Upgrade command preserves user content (.buildforce/context/ and .buildforce/specs/)"
+    rationale: "User-created content represents significant investment and must never be modified during upgrades. Only system files (templates, scripts, commands) are updated."
 
 architecture_patterns:
   entry_point: |
@@ -144,7 +160,7 @@ architecture_patterns:
     - .buildforce/context/ - Context management system
     - .buildforce/scripts/ - Automation scripts
     - .buildforce/templates/ - Local templates
-    - .buildforce/buildforce.json - Project configuration
+    - buildforce.json - Project configuration with aiAssistant, scriptType, version
     - Agent folders (.claude/, .github/, etc.) - Agent-specific files
 
     Extraction Flow:
@@ -225,6 +241,9 @@ core_modules:
     - "init/validation.ts - Input validation for project setup"
     - "init/setup.ts - Core execution of initialization steps"
     - "init/output.ts - User-facing messaging and guidance"
+    - "upgrade/index.ts - Main orchestrator for project upgrades"
+    - "upgrade/validation.ts - Prerequisite validation for upgrades"
+    - "upgrade/execution.ts - Selective file replacement and upgrade execution"
     - "check.ts - Diagnostic tool verification command"
 
   libraries:
@@ -239,7 +258,7 @@ core_modules:
     - "git.ts - Git repository operations"
     - "github.ts - GitHub token authentication"
     - "commands.ts - Shell command execution wrapper"
-    - "config.ts - Configuration file generation"
+    - "config.ts - Configuration file read/write (buildforce.json management)"
 
   configuration:
     - "agents.ts - AI assistant definitions and folder mappings"
@@ -270,19 +289,30 @@ workflow_integration: |
      - Automation scripts in .buildforce/scripts/
 
   5. Configuration:
-     - buildforce.json - Project configuration
+     - buildforce.json - Project configuration (aiAssistant, scriptType, version)
      - Agent folders - AI-specific settings
+
+  6. Upgrade System:
+     - buildforce upgrade - Update templates to latest version
+     - Preserves user content (.buildforce/context/, .buildforce/specs/)
+     - Auto-detects configuration from buildforce.json
+     - Supports dry-run and override flags
 
   This creates a complete Spec-Driven Development workflow where AI assistants have:
   - Structured guidance through slash commands
   - Persistent knowledge via context files
   - Clear implementation phases
   - Cross-session learning capabilities
+  - Seamless upgrade path for new features and improvements
 
 evolution:
   - version: "1.0"
     date: "2025-10-27"
     changes: "Initial architecture documentation covering CLI structure, template distribution, context management, agent support, and workflow integration"
+
+  - version: "1.1"
+    date: "2025-10-28"
+    changes: "Added upgrade command, buildforce.json configuration persistence (aiAssistant, scriptType, version), and enhanced init command to save project settings"
 
 notes: |
   Key architectural strengths:

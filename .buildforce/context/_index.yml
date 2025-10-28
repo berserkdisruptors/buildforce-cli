@@ -235,6 +235,23 @@ contexts:
       ]
     related_context: [slash-commands, spec-command, document-command]
 
+  - id: upgrade-command
+    file: upgrade-command.yml
+    type: feature
+    description: "Slash command for upgrading projects to latest templates while preserving user content"
+    tags:
+      [
+        slash-command,
+        upgrade,
+        template-upgrade,
+        preservation,
+        dry-run,
+        atomic-operations,
+        backward-compatibility,
+        workflow-utility,
+      ]
+    related_context: [slash-commands, cli-architecture, spec-command, complete-command]
+
   - id: cli-architecture
     file: cli-architecture.yml
     type: module
@@ -258,4 +275,5 @@ contexts:
         research-slash-command,
         spec-command,
         plan-template,
+        upgrade-command,
       ]
