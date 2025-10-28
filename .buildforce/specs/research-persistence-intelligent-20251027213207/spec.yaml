@@ -1,0 +1,171 @@
+id: research-persistence-intelligent-20251027213207
+name: "Intelligent Research Persistence with Cache Materialization"
+type: feature
+status: draft
+created: "2025-10-27"
+last_updated: "2025-10-28"
+
+summary: |
+  Add persistence mechanism for research command output by accumulating research context
+  (both /research commands and free-form Q&A) in a .research-cache.md log, then intelligently
+  materializing it into a structured research.yml artifact when /spec is executed.
+
+# INTENT / PROBLEM STATEMENT
+
+problem: |
+  Currently, /research command output exists only in the conversation context window, leading to:
+  1. Context loss when long conversations push research out of available context before /spec
+  2. No resumability if user abandons conversation after research but before spec creation
+  3. /spec command quality degradation due to missing research context during spec generation
+  4. No persistence for valuable research findings unless manually documented
+
+motivation: |
+  By persisting research in a structured way, we ensure that:
+  1. /spec command always has access to research findings for better requirement identification
+  2. Research context is preserved with each spec as an artifact for /build and future reference
+  3. Multiple research sessions and free-form explorations accumulate into comprehensive context
+  4. Research is cheap to regenerate but valuable to preserve when it informs a specific spec
+
+# GOALS
+
+primary_goals:
+  - Accumulate all research context (both /research output and free-form Q&A) in .research-cache.md
+  - Intelligently materialize cache into structured research.yml when /spec creates or updates specs
+  - Track research type (explicit /research vs free-form conversation) in cache log
+  - Keep spec.yaml clean by separating research context into its own artifact
+
+secondary_goals:
+  - Support intelligent merging when additional research occurs after spec creation
+  - Provide condensed, structured research.yml format for easy consumption by /build agents
+  - Maintain file extension consistency across spec artifacts (.yaml pattern)
+  - Enable automatic cleanup of cache when specs are completed
+
+# REQUIREMENTS
+
+functional_requirements:
+  - FR1: /research command appends structured output to .buildforce/.research-cache.md with metadata (timestamp, type=research_command)
+  - FR2: Free-form conversation context can be manually appended to .research-cache.md with type=freeform_context
+  - FR3: Cache log format includes session separators, timestamps, research type, and full structured content (including diagrams, data models, code snippets)
+  - FR4: /spec command (CREATE mode) reads .research-cache.md and materializes it into specs/{folder}/research.yml
+  - FR5: Materialization intelligently condenses cache preserving essential elements: summary, key findings, file paths, mermaid diagrams, data models, code snippets, architectural decisions, external references, TLDR
+  - FR6: /spec command (UPDATE mode) merges new research cache into existing research.yml without duplication
+  - FR7: /complete command deletes .research-cache.md after spec finalization
+  - FR8: If .research-cache.md doesn't exist when /spec runs, proceed with info message (not error)
+  - FR9: research.yml follows flexible YAML structure allowing variable sections based on research content type
+  - FR10: Cache only accumulates when no .current-spec exists (pre-spec research phase)
+  - FR11: research-template.yml is created in src/templates/ and automatically packaged/distributed to users' .buildforce/templates/ via existing release script (no code changes needed)
+  - FR12: Template structure is flexible with optional sections, not enforcing rigid format that could lose information
+  - FR13: /spec command (both CREATE and UPDATE modes) reads research.yml when populating spec.yaml to inform requirement identification and open_questions
+  - FR14: /build command loads research.yml alongside spec.yaml and plan.yaml to inform implementation decisions
+  - FR15: /complete command reads research.yml to enrich context file documentation with research findings
+
+non_functional_requirements:
+  - NFR1: Materialization process must extract only essential information, not raw verbatim copy
+  - NFR2: research.yml should be human-readable and well-structured for manual inspection
+  - NFR3: Cache file should be gitignored to avoid version control pollution
+  - NFR4: Materialization should handle edge cases gracefully (empty cache, malformed entries)
+
+# SCOPE
+
+in_scope:
+  - Updating /research command template to append output to .research-cache.md
+  - Updating /spec command template to materialize cache into research.yml AND read research.yml to inform spec.yaml population
+  - Updating /build command template to load research.yml alongside spec.yaml and plan.yaml
+  - Updating /complete command template to read research.yml for context enrichment AND cleanup .research-cache.md
+  - Creating research-template.yml in src/templates/ with flexible, non-restrictive structure
+  - Verifying automatic distribution via existing release packaging script (lines 115-127 of create-release-packages.sh already handle this)
+  - Updating .gitignore to exclude .research-cache.md
+  - Documenting cache log format and flexible materialization strategy that preserves diagrams, models, snippets
+
+out_of_scope:
+  - Automatic detection/appending of free-form conversation context (user manually triggers)
+  - Validation of research cache content structure
+  - Research reusability across multiple specs (1:1 relationship maintained)
+  - Timestamped research repository with indexing
+  - TTL-based cache cleanup mechanisms
+  - Integration with context repository via /document (separate workflow)
+
+# DESIGN PRINCIPLES
+
+design_principles:
+  - "Research is cheap to generate but valuable when it informs a specific spec"
+  - "Keep spec.yaml clean - research context belongs in separate artifact"
+  - "Intelligent materialization - condense, don't copy-paste"
+  - "Graceful degradation - spec can proceed without research context"
+  - "Single source of truth - one research.yml per spec"
+
+# ACCEPTANCE CRITERIA
+
+acceptance_criteria:
+  - AC1: /research command successfully appends full structured output to .research-cache.md including diagrams, data models, code snippets, and TLDR
+  - AC2: .research-cache.md accumulates multiple research sessions with clear separators preserving all content types
+  - AC3: /spec CREATE mode materializes cache into research.yml preserving essential elements (not overly condensed)
+  - AC4: research.yml preserves critical elements: summary, key findings, file paths, mermaid diagrams, data models, code snippets, architectural decisions, external references, TLDR
+  - AC5: /spec UPDATE mode merges new cache content into existing research.yml intelligently without losing information
+  - AC6: /complete command deletes .research-cache.md successfully
+  - AC7: /spec proceeds with info message (not error) when cache doesn't exist
+  - AC8: .research-cache.md is gitignored and not committed to version control
+  - AC9: research.yml is committed with spec artifacts (spec.yaml, plan.yaml, research.yml)
+  - AC10: research-template.yml exists in src/templates/ and is automatically distributed to .buildforce/templates/ on project init (verified via existing release packaging script)
+  - AC11: Template structure is flexible with optional sections and clear guidance on preserving diagrams/models/snippets
+  - AC12: Template structure verification confirms all command templates are correctly updated
+  - AC13: Verify research-template.yml is packaged in release ZIP alongside spec-template.yaml and plan-template.yaml
+  - AC14: /spec command reads research.yml (if exists) to inform spec.yaml population with context-aware requirements and open_questions
+  - AC15: /build command explicitly loads research.yml alongside spec.yaml and plan.yaml in artifact loading instructions
+  - AC16: /complete command reads research.yml to extract research findings for context file enrichment
+
+# ASSUMPTIONS & DEPENDENCIES
+
+assumptions:
+  - Agents can intelligently analyze .research-cache.md and preserve important content (diagrams, models, snippets)
+  - Users understand that free-form context must be manually tagged/appended if valuable
+  - Research is primarily pre-spec activity (cache accumulates before spec creation)
+  - One spec session correlates with one research context (no cross-spec research reuse)
+  - Current /research output structure includes sections that should be preserved: Research Summary, Project Context, Codebase Findings (with file paths), External Knowledge, Mermaid diagrams, Data models, TLDR
+
+dependencies:
+  internal:
+    - research-slash-command: "Command template to be updated with append logic"
+    - spec-command: "Command template to be updated with materialization logic AND research.yml reading logic"
+    - build-command: "Command template to be updated with research.yml loading logic"
+    - complete-command: "Command template to be updated with research.yml reading and cleanup logic"
+    - spec-template.yaml: "Reference for understanding existing artifact structure and distribution"
+    - plan-template.yaml: "Reference for understanding existing artifact structure and distribution"
+    - .current-spec: "State file used to determine if cache should accumulate or materialize"
+    - cli-architecture: "Understanding of GitHub Release distribution mechanism for templates"
+  external:
+    - None (template-only changes)
+
+# OPEN QUESTIONS
+
+open_questions: []
+
+# NOTES
+
+notes: |
+  This solution balances simplicity with effectiveness while preserving information richness:
+  - Cache is append-only log during pre-spec phase
+  - Materialization happens once per spec creation
+  - research.yml provides structured reference for /build with preserved diagrams, models, code snippets
+  - No complex reusability mechanisms (research is cheap to regenerate)
+
+  The intelligent materialization preserves essential research artifacts:
+  - Mermaid diagrams (architectural flows, component relationships)
+  - Data models (properties, types, relationships)
+  - Code snippets (examples, patterns, suggested implementations)
+  - File paths discovered during exploration
+  - Architectural patterns and design decisions
+  - External references (docs, best practices, TLDR)
+
+  Template flexibility is critical - research.yml structure adapts to content type:
+  - Not all sections are required (e.g., no diagrams if research was conceptual)
+  - Sections can be added if research includes unique findings
+  - Template provides guidance, not rigid enforcement
+  - Preserves information richness without verbatim copy
+
+  Distribution mechanism (automatic, no code changes needed):
+  - research-template.yml created in src/templates/
+  - Automatically packaged in GitHub Release ZIP by create-release-packages.sh (lines 115-127)
+  - Script copies ALL files from src/templates/ (excluding commands/) to .buildforce/templates/
+  - Extracted to users' .buildforce/templates/ on project initialization alongside spec-template.yaml and plan-template.yaml
+  - Available for agents to reference during materialization at .buildforce/templates/research-template.yml
