@@ -50,7 +50,9 @@ export async function downloadTemplateFromGithub(
   const apiUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/releases`;
   let releaseData: ReleaseData;
   try {
-    const response = await client.get<ReleaseData[]>(apiUrl);
+    const response = await client.get<ReleaseData[]>(apiUrl, {
+      headers,
+    });
 
     if (response.status !== 200) {
       let msg = `GitHub API returned ${response.status} for ${apiUrl}`;

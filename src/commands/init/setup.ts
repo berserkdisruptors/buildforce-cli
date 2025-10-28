@@ -77,7 +77,7 @@ export async function setupProject(
     // Initial render
     renderTracker();
 
-    await downloadAndExtractTemplate(
+    const { version } = await downloadAndExtractTemplate(
       projectPath,
       selectedAi,
       selectedScript,
@@ -105,18 +105,35 @@ export async function setupProject(
 
     // Create buildforce.json config file
     tracker.start("config");
-    try {
-      const configPath = path.join(
-        projectPath,
-        ".buildforce",
-        "buildforce.json"
-      );
-      const configContent = createConfigContent();
-      await fs.writeFile(configPath, configContent, "utf8");
-      tracker.complete("config", ".buildforce/buildforce.json");
-    } catch (e: any) {
-      tracker.error("config", e.message);
+    // Ensure .buildforce directory exists
+    const buildforceDir = path.join(projectPath, ".buildforce");
+    await fs.ensureDir(buildforceDir);
+
+    const configPath = path.join(buildforceDir, "buildforce.json");
+    const configContent = createConfigContent(selectedAi, selectedScript, version);
+
+    if (debug) {
+      console.log(chalk.gray(`\nWriting config to: ${configPath}`));
+      console.log(chalk.gray(`Config content:\n${configContent}`));
     }
+
+    await fs.writeFile(configPath, configContent, "utf8");
+
+    // Verify file was created
+    const configExists = await fs.pathExists(configPath);
+    if (!configExists) {
+      const errorMsg = "buildforce.json was not created";
+      tracker.error("config", errorMsg);
+      throw new Error(errorMsg);
+    }
+
+    if (debug) {
+      const writtenContent = await fs.readFile(configPath, "utf8");
+      console.log(chalk.gray(`\nVerified config file exists`));
+      console.log(chalk.gray(`Content: ${writtenContent.substring(0, 100)}...`));
+    }
+
+    tracker.complete("config", ".buildforce/buildforce.json");
 
     // Git step
     if (!noGit) {

@@ -1,0 +1,158 @@
+id: add-upgrade-command-20251027000000
+name: "Add Upgrade Command to CLI"
+type: feature
+status: draft
+created: "2025-10-27"
+last_updated: "2025-10-27"
+
+summary: |
+  Add a new `upgrade` command to the Buildforce CLI that allows users to update their project's slash commands, templates, and scripts to the latest version while preserving their context repository and project-specific configuration.
+
+# INTENT / PROBLEM STATEMENT
+
+problem: |
+  Currently, when new versions of Buildforce CLI are released with updated slash commands, templates, or scripts, users have no way to upgrade their existing projects without manually copying files or re-initializing. Re-running `buildforce init` in an existing project risks overwriting important context files and project history. Users need a safe, automated way to upgrade their Buildforce tooling while preserving their accumulated project knowledge.
+
+motivation: |
+  An upgrade command enables users to stay current with the latest Buildforce features, bug fixes, and improvements without losing their project context. This reduces friction for adopting new versions and ensures users can benefit from workflow enhancements while maintaining continuity in their spec-driven development sessions. The upgrade process should be idempotent, safe, and transparent about what changes are being made.
+
+# GOALS
+
+primary_goals:
+  - Enable users to upgrade their project's Buildforce tooling (commands, templates, scripts) to the latest version
+  - Preserve the context repository (.buildforce/context/) and all accumulated project knowledge during upgrades
+  - Automatically detect the AI assistant and script type from existing configuration to avoid re-prompting users
+
+secondary_goals:
+  - Provide clear feedback about what files are being updated during the upgrade
+  - Support dry-run mode to preview changes before applying them
+  - Ensure the upgrade process is idempotent (running multiple times produces the same result)
+
+# REQUIREMENTS
+
+functional_requirements:
+  - FR1: Add a new `buildforce upgrade` command to the CLI
+  - FR2: Detect the AI assistant choice from buildforce.json configuration file
+  - FR3: Detect the script type choice from buildforce.json configuration file
+  - FR4: Replace slash command files in the detected AI assistant's folder (e.g., .claude/commands/, .github/commands/)
+  - FR5: Replace template files in .buildforce/templates/ directory
+  - FR6: Replace script files in .buildforce/scripts/ directory
+  - FR7: Preserve all files in .buildforce/context/ directory (do not modify or delete)
+  - FR8: Preserve all files in .buildforce/specs/ directory (do not modify or delete)
+  - FR9: Update buildforce.json with current version metadata after successful upgrade
+  - FR10: Store AI assistant and script type selections in buildforce.json during `buildforce init`
+  - FR11: Display upgrade progress with clear status indicators (similar to init command)
+  - FR12: Validate that .buildforce directory exists before attempting upgrade
+
+non_functional_requirements:
+  - NFR1: Upgrade command must complete in under 10 seconds for typical projects
+  - NFR2: Upgrade process must be atomic - either all files update successfully or none do (rollback on failure)
+  - NFR3: Provide clear error messages if buildforce.json is missing or malformed
+  - NFR4: Support both --ai and --script flags to override detected configuration
+  - NFR5: Maintain backward compatibility with projects initialized by older CLI versions
+
+# SCOPE
+
+in_scope:
+  - Add `buildforce upgrade` command to CLI
+  - Modify `buildforce init` to populate buildforce.json with aiAssistant and scriptType
+  - Read aiAssistant and scriptType from buildforce.json during upgrade
+  - Replace commands, templates, and scripts with latest versions
+  - Preserve context and specs directories
+  - Add upgrade progress tracking similar to init command
+  - Support --ai and --script override flags on upgrade command
+  - Add --dry-run flag to preview changes without applying them
+
+out_of_scope:
+  - Automatic migration or transformation of existing spec/plan files to new formats
+  - Diffing or merging customizations users may have made to templates
+  - Version-specific migration scripts for breaking changes
+  - Downgrading to older versions (only upgrade to latest)
+  - Interactive upgrade wizard (use command-line flags only)
+  - Upgrade notification system or version checking
+
+# DESIGN PRINCIPLES
+
+design_principles:
+  - "Safety first: Never delete or modify user-created content (context, specs)"
+  - "Preserve configuration: Detect and reuse existing AI assistant and script type settings"
+  - "Transparency: Clearly communicate what files will be updated before and during upgrade"
+  - "Fail-safe: Validate prerequisites before making changes, rollback on errors"
+  - "Consistency: Use the same UI patterns (progress tracking, spinners) as init command"
+
+# ACCEPTANCE CRITERIA
+
+acceptance_criteria:
+  - AC1: Running `buildforce upgrade` in a valid buildforce project successfully updates commands, templates, and scripts
+  - AC2: Context repository (.buildforce/context/) remains unchanged after upgrade
+  - AC3: Specs repository (.buildforce/specs/) remains unchanged after upgrade
+  - AC4: buildforce.json contains aiAssistant and scriptType fields after `buildforce init`
+  - AC5: Upgrade command reads aiAssistant and scriptType from buildforce.json automatically
+  - AC6: Upgrade fails gracefully with clear error if buildforce.json is missing
+  - AC7: --ai and --script flags override detected configuration during upgrade
+  - AC8: --dry-run flag shows what would be updated without making changes
+  - AC9: Upgrade progress is displayed with step-by-step status (similar to init)
+  - AC10: buildforce.json is updated with version metadata after successful upgrade
+
+# ASSUMPTIONS & DEPENDENCIES
+
+assumptions:
+  - Users run `buildforce upgrade` from the project root directory (where buildforce.json exists)
+  - buildforce.json is the canonical source of truth for project configuration
+  - The GitHub release structure remains consistent (template zip files with commands/templates/scripts)
+  - Users have network access to download the latest release
+
+dependencies:
+  internal:
+    - init-command: "Reuses template download and extraction logic"
+    - lib/extract: "Handles downloading and extracting latest release"
+    - utils/config: "Reads and writes buildforce.json configuration"
+    - lib/step-tracker: "Provides progress tracking UI"
+  external:
+    - commander: "CLI argument parsing for upgrade command"
+    - fs-extra: "File system operations (copy, remove)"
+
+# OPEN QUESTIONS
+
+open_questions: []
+
+# RESOLVED QUESTIONS
+
+resolved_questions:
+  - question: "Should buildforce.json store the CLI version that initialized/upgraded the project?"
+    answer: "Yes - Store version in buildforce.json. This enables version-aware migrations in future releases and helps with debugging."
+
+  - question: "Should upgrade create a backup of replaced files before overwriting?"
+    answer: "No - Don't create backups by default. Users should rely on git history for rollback. Keeps implementation simpler and avoids disk space bloat."
+
+  - question: "What should happen if user has modified template files?"
+    answer: "Warn but proceed - Display a warning message if modifications are detected, but continue with the upgrade. This balances safety with usability."
+
+  - question: "Should we validate that the detected AI assistant tool is still installed?"
+    answer: "No - Don't validate AI assistant installation. Just use the configuration value. This keeps upgrade fast and assumes users manage their own tools."
+
+# NOTES
+
+notes: |
+  This feature requires two main implementation paths:
+
+  1. Modify `buildforce init` to populate buildforce.json with aiAssistant and scriptType
+  2. Add new `buildforce upgrade` command that reads configuration and updates files
+
+  The buildforce.json schema will need to include:
+  - aiAssistant: string (e.g., "claude", "copilot")
+  - scriptType: string (e.g., "sh", "ps")
+  - version: string (optional, CLI version that last modified the project)
+
+  The upgrade command should reuse much of the existing init logic:
+  - Template download from GitHub releases (lib/extract)
+  - Progress tracking (lib/step-tracker)
+  - File copying for commands/templates/scripts
+
+  Key difference: Upgrade is selective (only certain directories) while init is comprehensive.
+
+  Consider edge cases:
+  - Project initialized before this feature (buildforce.json missing fields)
+  - Corrupted buildforce.json
+  - Missing AI assistant folder despite configuration
+  - Network failures during download

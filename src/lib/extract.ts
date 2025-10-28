@@ -21,7 +21,7 @@ export async function downloadAndExtractTemplate(
     githubToken?: string;
     skipTls?: boolean;
   } = {}
-): Promise<string> {
+): Promise<{ projectPath: string; version: string }> {
   const {
     verbose = true,
     tracker,
@@ -191,5 +191,5 @@ export async function downloadAndExtractTemplate(
     }
   }
 
-  return projectPath;
+  return { projectPath, version: meta.release };
 }
