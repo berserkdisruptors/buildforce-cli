@@ -16,7 +16,7 @@ $ARGUMENTS
 
    Check if there's an active spec to complete:
 
-   - Read `.buildforce/.current-spec` file from repo root
+   - Read `.buildforce/.current-spec` file from current working directory
    - If file doesn't exist or is empty: **ERROR** - Reply that there is no active spec and user must run `/spec` first
    - If file has content (folder name): **PROCEED** - Extract folder name and continue
 
@@ -116,7 +116,7 @@ $ARGUMENTS
 
    Remove temporary research cache file:
 
-   - Check if `.buildforce/.research-cache.md` exists in repo root
+   - Check if `.buildforce/.research-cache.md` exists in current working directory
    - If exists: Delete the file using Bash tool (e.g., `rm .buildforce/.research-cache.md`)
    - If not exists: Skip cleanup (no cache to clean)
    - **NOTE**: The materialized research.yml in specs/{folder-name}/ is preserved as a permanent artifact
@@ -125,7 +125,7 @@ $ARGUMENTS
 
    Mark the spec as complete:
 
-   - Delete `.buildforce/.current-spec` file from repo root
+   - Delete `.buildforce/.current-spec` file from current working directory
    - This signals that no active spec is in progress
 
 10. **Present Completion Summary**:

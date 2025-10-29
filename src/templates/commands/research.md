@@ -34,7 +34,7 @@ After presenting your research findings to the user, persist the COMPLETE resear
 
 1. **Check if cache should accumulate**:
 
-   - Read `.buildforce/.current-spec` from repo root
+   - Read `.buildforce/.current-spec` from current working directory
    - If file exists and has content: **SKIP cache append** (research will be merged with existing research.yml during spec update)
    - If file doesn't exist or is empty: **PROCEED with cache append** (pre-spec research phase)
 

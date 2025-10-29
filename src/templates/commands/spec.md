@@ -20,7 +20,7 @@ The text the user typed after `/spec` in the triggering message **is** the featu
    - Priority 1: Check conversation history for existing spec
    - Priority 2: Run `{SCRIPT}` FROM CURRENT WORKING DIRECTORY AND NEVER FROM SOMEWHERE ELSE! Parse JSON output for FOLDER_NAME, SPEC_FILE, SPEC_DIR, FEATURE_NUM, and IS_UPDATE flag. **NEVER proceed** if script fails - display the error message to the user, explain that the `.buildforce` directory was not found, suggest: 1) check if you're in the buildforce root directory (where you ran `buildforce init`), 2) run `buildforce init .` if needed.
 
-   - Read `.buildforce/.current-spec` file from repo root
+   - Read `.buildforce/.current-spec` file from current working directory
    - If file exists and has content (non-empty folder name): **UPDATE mode** - Load existing spec and plan from that folder
    - If file doesn't exist or is empty: **CREATE mode** - Generate new folder name and create new spec and plan
 
@@ -49,21 +49,25 @@ The text the user typed after `/spec` in the triggering message **is** the featu
    Before populating spec.yaml and plan.yaml, materialize accumulated research to inform requirement identification:
 
    1. **Check if research cache exists**:
-      - Check if `.buildforce/.research-cache.md` exists in repo root
+
+      - Check if `.buildforce/.research-cache.md` exists in current working directory
       - If not exists: Log info message "No research cache found - proceeding without research context" and SKIP to Step 2d
       - If exists: PROCEED with materialization
 
    2. **Read template structure**:
+
       - Read `.buildforce/templates/research-template.yml` for structure guidance
       - Understand flexible sections: summary, key_findings, file_paths, mermaid_diagrams, data_models, code_snippets, architectural_decisions, external_references, tldr
       - Remember: sections are OPTIONAL - adapt to research content type
 
    3. **Parse research cache**:
+
       - Read `.buildforce/.research-cache.md` completely
       - Identify all research sessions (separated by === lines)
       - Extract content from each session
 
    4. **Intelligent materialization** (CRITICAL - preserve information richness):
+
       - **PRESERVE VERBATIM**: Mermaid diagrams, data models, code snippets - these are essential for /build
       - **PRESERVE WITH CONTEXT**: File paths (with relevance notes), architectural decisions (with rationale)
       - **CONDENSE INTELLIGENTLY**: Research summary prose (2-4 sentences), project context (key points only)
@@ -124,14 +128,17 @@ The text the user typed after `/spec` in the triggering message **is** the featu
    After loading existing artifacts, check if new research was conducted:
 
    1. **Check if new research cache exists**:
-      - Check if `.buildforce/.research-cache.md` exists in repo root
+
+      - Check if `.buildforce/.research-cache.md` exists in current working directory
       - If not exists: No new research - SKIP to Step 3c
       - If exists: New research was conducted after spec creation - PROCEED with merge
 
    2. **Read template structure**:
+
       - Read `.buildforce/templates/research-template.yml` for structure guidance
 
    3. **Parse new research cache**:
+
       - Read `.buildforce/.research-cache.md` completely
       - Extract new research sessions
 
