@@ -41,7 +41,7 @@ program
   });
 
 program
-  .command("buildforce-check")
+  .command("check")
   .description("Check that all required tools are installed")
   .action(() => {
     checkCommand();

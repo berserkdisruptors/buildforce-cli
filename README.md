@@ -290,6 +290,7 @@ buildforce upgrade [options]
 ```
 
 **What it does:**
+
 - Downloads the latest Buildforce release from GitHub
 - Replaces slash command files (`.claude/commands/`, `.github/commands/`, etc.)
 - Updates templates (`.buildforce/templates/`)
@@ -326,12 +327,14 @@ buildforce upgrade --debug
 ```
 
 **Safety Features:**
+
 - ✅ Atomic operations - all files update or none do
 - ✅ Automatic rollback on failure
 - ✅ Context and specs are never modified
 - ✅ Backward compatible with projects initialized by older CLI versions
 
 **When to upgrade:**
+
 - New Buildforce CLI version released with updated slash commands
 - Bug fixes or improvements to workflow templates
 - New features added to research/spec/plan/build/complete commands
@@ -341,7 +344,7 @@ buildforce upgrade --debug
 **Check for required tools:**
 
 ```bash
-buildforce buildforce-check
+buildforce check
 ```
 
 This verifies:

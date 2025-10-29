@@ -77,7 +77,7 @@ interfaces:
       signature: "CLI command with options: --ai, --script, --dry-run, --debug, --github-token, --skip-tls"
       description: "Upgrades project templates to latest version while preserving context and specs"
 
-    - name: "buildforce-check"
+    - name: "buildforce check"
       signature: "CLI diagnostic command"
       description: "Verifies installed tools (git, AI assistants, IDEs)"
 
@@ -121,7 +121,7 @@ architecture_patterns:
     - Supports . as shorthand for current directory
     - Options: --ai, --script, --ignore-agent-tools, --no-git, --force, --skip-tls, --debug, --github-token
 
-    Diagnostic Command: buildforce-check
+    Diagnostic Command: buildforce check
     - Verifies tool installations (git, AI assistants, IDEs)
     - Uses StepTracker for visual output
 
