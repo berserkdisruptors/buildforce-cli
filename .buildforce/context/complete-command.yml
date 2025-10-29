@@ -3,7 +3,7 @@ name: "Complete Command Template"
 type: feature
 status: production
 created: 2025-01-23
-last_updated: 2025-01-23
+last_updated: 2025-10-28
 
 summary: |
   Template-only slash command that guides AI agents through finalizing specs by creating
@@ -29,6 +29,7 @@ dependencies:
     - context/_schema.yml: "Template structure for new context files"
     - spec.yaml: "Specification file containing requirements"
     - plan.yaml: "Implementation plan with design decisions"
+    - research-persistence: "Reads research.yml for context enrichment, cleans up .research-cache.md"
   external:
     - None (template-only command, no script execution)
 
@@ -78,8 +79,13 @@ evolution:
     date: "2025-01-23"
     changes: "Complete rewrite as template-only command, eliminated script dependency, added 9-step workflow with schema usage and intelligent merging, added description field to index entries"
 
+  - version: "3.0"
+    date: "2025-10-28"
+    changes: "Added research persistence integration. Updated Step 2 (Load Spec Artifacts) to read research.yml for context enrichment. Added Step 8 (Clean Research Cache) to delete .research-cache.md after context files created. Template increased from 185 to 198 lines. research.yml provides file paths, architectural decisions, key findings for richer context documentation."
+
 related_specs:
   - redesign-spec-context-20250107120000
+  - research-persistence-intelligent-20251027213207
 
 notes: |
   The /complete command follows a 9-step workflow:

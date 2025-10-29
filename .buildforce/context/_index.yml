@@ -259,3 +259,24 @@ contexts:
         spec-command,
         plan-template,
       ]
+
+  - id: research-persistence
+    file: research-persistence.yml
+    type: feature
+    description: "Research persistence with three-stage pipeline: accumulation, intelligent materialization, and cleanup"
+    tags:
+      [
+        research,
+        persistence,
+        materialization,
+        cache,
+        workflow-enhancement,
+        template-only,
+      ]
+    related_context:
+      [
+        research-slash-command,
+        spec-command,
+        build-command,
+        complete-command,
+      ]

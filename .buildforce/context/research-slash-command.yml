@@ -1,9 +1,9 @@
 id: research-slash-command
 name: "RESEARCH Slash Command"
 type: feature
-status: in-development
+status: production
 created: "2025-01-15"
-last_updated: "2025-10-24"
+last_updated: "2025-10-28"
 
 summary: |
   First command in the spec-driven development workflow.
@@ -21,6 +21,7 @@ dependencies:
     - context-repository: "Primary knowledge source via _index.yml"
     - slash-commands: "Part of 5-command workflow system"
     - cli-architecture: "Command template distributed via CLI project initialization"
+    - research-persistence: "Appends complete output to .research-cache.md for materialization"
   external:
     - None (instruction template for Claude Code)
 
@@ -149,8 +150,13 @@ evolution:
     date: "2025-10-24"
     changes: "Added TLDR section (guideline #8) for dual-audience output. Template increased from 28 to 29 lines. TLDR provides 3-7 bullet points with consistent formatting (## TLDR heading, - bullets) for quick user scanning while preserving comprehensive details for build agents."
 
+  - version: "2.0"
+    date: "2025-10-28"
+    changes: "Added research persistence section. Command now appends COMPLETE output to .research-cache.md with session metadata (timestamp, type=research_command) for intelligent materialization by /spec command. Template increased from 29 to 65 lines. Includes cache format specification and state checking (.current-spec) to determine if cache should accumulate."
+
 related_specs:
   - add-research-tldr-section-20251024104500
+  - research-persistence-intelligent-20251027213207
 
 notes: |
   Most important command in the workflow—sets foundation for /spec, /plan, /build.
