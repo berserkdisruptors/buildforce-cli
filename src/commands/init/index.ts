@@ -40,6 +40,7 @@ export async function initCommand(options: InitOptions): Promise<void> {
     skipTls = false,
     debug = false,
     githubToken,
+    local,
   } = options;
 
   // Validate and setup project structure
@@ -115,6 +116,7 @@ export async function initCommand(options: InitOptions): Promise<void> {
       skipTls,
       noGit,
       shouldInitGit,
+      local,
     });
 
     console.log();

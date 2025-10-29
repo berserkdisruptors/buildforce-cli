@@ -281,12 +281,70 @@ buildforce my-app --no-git
 buildforce my-app --debug
 ```
 
+### Upgrade Command
+
+Keep your Buildforce project up to date with the latest templates, commands, and scripts:
+
+```bash
+buildforce upgrade [options]
+```
+
+**What it does:**
+
+- Downloads the latest Buildforce release from GitHub
+- Replaces slash command files (`.claude/commands/`, `.github/commands/`, etc.)
+- Updates templates (`.buildforce/templates/`)
+- Updates scripts (`.buildforce/scripts/`)
+- **Preserves** your context repository (`.buildforce/context/`)
+- **Preserves** your specs (`.buildforce/specs/`)
+- Updates `buildforce.json` with version metadata
+
+**Options:**
+
+| Option                   | Description                                 | Example                  |
+| ------------------------ | ------------------------------------------- | ------------------------ |
+| `--ai <assistant>`       | Override AI assistant from config           | `--ai claude`            |
+| `--script <type>`        | Override script type from config            | `--script sh`            |
+| `--dry-run`              | Preview changes without applying them       | `--dry-run`              |
+| `--debug`                | Show verbose diagnostic output              | `--debug`                |
+| `--github-token <token>` | GitHub token for API requests               | `--github-token ghp_xxx` |
+| `--skip-tls`             | Skip SSL/TLS verification (not recommended) | `--skip-tls`             |
+
+**Examples:**
+
+```bash
+# Upgrade using detected configuration
+buildforce upgrade
+
+# Preview what would be updated
+buildforce upgrade --dry-run
+
+# Switch to a different AI assistant during upgrade
+buildforce upgrade --ai cursor
+
+# Debug upgrade issues
+buildforce upgrade --debug
+```
+
+**Safety Features:**
+
+- ✅ Atomic operations - all files update or none do
+- ✅ Automatic rollback on failure
+- ✅ Context and specs are never modified
+- ✅ Backward compatible with projects initialized by older CLI versions
+
+**When to upgrade:**
+
+- New Buildforce CLI version released with updated slash commands
+- Bug fixes or improvements to workflow templates
+- New features added to research/spec/plan/build/complete commands
+
 ### Utility Commands
 
 **Check for required tools:**
 
 ```bash
-buildforce buildforce-check
+buildforce check
 ```
 
 This verifies:

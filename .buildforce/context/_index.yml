@@ -98,12 +98,7 @@ contexts:
         script-execution,
       ]
     related_context:
-      [
-        slash-commands,
-        plan-template,
-        iterate-plan-command,
-        spec-command,
-      ]
+      [slash-commands, plan-template, iterate-plan-command, spec-command]
 
   - id: plan-template
     file: plan-template.yml
@@ -121,12 +116,7 @@ contexts:
         workflow-enhancement,
       ]
     related_context:
-      [
-        iterate-plan-command,
-        build-command,
-        spec-command,
-        slash-commands,
-      ]
+      [iterate-plan-command, build-command, spec-command, slash-commands]
 
   - id: iterate-plan-command
     file: iterate-plan-command.yml
@@ -144,12 +134,7 @@ contexts:
         user-approval,
       ]
     related_context:
-      [
-        slash-commands,
-        plan-template,
-        spec-command,
-        build-command,
-      ]
+      [slash-commands, plan-template, spec-command, build-command]
 
   - id: document-command
     file: document-command.yml
@@ -212,12 +197,7 @@ contexts:
         workflow-core,
       ]
     related_context:
-      [
-        slash-commands,
-        iterate-plan-command,
-        plan-template,
-        complete-command,
-      ]
+      [slash-commands, iterate-plan-command, plan-template, complete-command]
 
   - id: complete-command
     file: complete-command.yml
@@ -234,6 +214,30 @@ contexts:
         workflow-core,
       ]
     related_context: [slash-commands, spec-command, document-command]
+
+  - id: upgrade-command
+    file: upgrade-command.yml
+    type: feature
+    description: "Slash command for upgrading projects to latest templates while preserving user content"
+    tags:
+      [
+        slash-command,
+        upgrade,
+        template-upgrade,
+        preservation,
+        dry-run,
+        atomic-operations,
+        backward-compatibility,
+        workflow-utility,
+      ]
+    related_context:
+      [
+        slash-commands,
+        cli-architecture,
+        spec-command,
+        complete-command,
+        local-artifact-resolution,
+      ]
 
   - id: cli-architecture
     file: cli-architecture.yml
@@ -258,6 +262,8 @@ contexts:
         research-slash-command,
         spec-command,
         plan-template,
+        upgrade-command,
+        local-artifact-resolution,
       ]
 
   - id: research-persistence
@@ -274,9 +280,19 @@ contexts:
         template-only,
       ]
     related_context:
+      [research-slash-command, spec-command, build-command, complete-command]
+
+  - id: local-artifact-resolution
+    file: local-artifact-resolution.yml
+    type: feature
+    description: "Local artifact resolution system for offline workflows and faster testing iterations"
+    tags:
       [
-        research-slash-command,
-        spec-command,
-        build-command,
-        complete-command,
+        artifact-resolution,
+        offline-support,
+        local-development,
+        testing,
+        glob-pattern,
+        workflow-utility,
       ]
+    related_context: [cli-architecture, upgrade-command]

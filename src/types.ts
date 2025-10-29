@@ -47,9 +47,23 @@ export interface InitOptions {
   skipTls?: boolean;
   debug?: boolean;
   githubToken?: string;
+  local?: string | boolean;
 }
 
 export interface BuildforceConfig {
   specsFolder: string;
   framework: string;
+  aiAssistant?: string;
+  scriptType?: string;
+  version?: string;
+}
+
+export interface UpgradeOptions {
+  ai?: string;
+  script?: string;
+  dryRun?: boolean;
+  debug?: boolean;
+  githubToken?: string;
+  skipTls?: boolean;
+  local?: string | boolean;
 }

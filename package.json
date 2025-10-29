@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description": "Buildforce CLI - Spec-Driven Development (SDD) toolkit CLI",
   "type": "module",
-  "main": "dist/index.js",
+  "main": "dist/cli.js",
   "bin": {
     "buildforce": "./dist/cli.js"
   },
@@ -17,7 +17,8 @@
     "dev": "tsx src/cli.ts",
     "start": "node dist/cli.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "create-release-packages": ".github/workflows/scripts/create-release-packages.sh v0.0.100"
   },
   "keywords": [
     "cli",
@@ -51,6 +52,7 @@
     "cli-table3": "^0.6.3",
     "commander": "^12.0.0",
     "fs-extra": "^11.2.0",
+    "glob": "^11.0.3",
     "inquirer": "^9.2.15",
     "log-symbols": "^6.0.0",
     "ora": "^8.0.1",

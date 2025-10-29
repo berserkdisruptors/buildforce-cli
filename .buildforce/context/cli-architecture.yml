@@ -3,21 +3,25 @@ name: BuildForce CLI Architecture
 type: module
 status: production
 created: 2025-10-27
-last_updated: 2025-10-27
+last_updated: 2025-10-28
 
 summary: |
   Comprehensive architecture of the BuildForce CLI tool - a Node.js-based command-line
   interface that initializes spec-driven development projects with template distribution
-  via GitHub Releases, context management systems, and multi-agent support for 11+ AI assistants.
+  via GitHub Releases or local artifacts, context management systems, and multi-agent support
+  for 11+ AI assistants. Supports offline workflows through local artifact resolution.
 
 responsibilities:
   - Project initialization with agent-specific templates
-  - Template distribution and extraction from GitHub Releases
+  - Template distribution and extraction from GitHub Releases or local artifacts
+  - Local artifact resolution for offline workflows and testing
   - Context/knowledge management system for accumulated learning
   - Progress tracking and user interaction flows
   - AI assistant detection and configuration
   - Git repository initialization and management
   - Script permission setup for POSIX systems
+  - Project configuration persistence and management via buildforce.json
+  - Project upgrade capabilities with preservation of user content
 
 dependencies:
   internal:
@@ -26,6 +30,8 @@ dependencies:
     - research-slash-command: "Context discovery and research capabilities"
     - spec-command: "Specification template system"
     - plan-template: "Implementation planning structure"
+    - upgrade-command: "Project upgrade system for keeping templates current"
+    - local-artifact-resolution: "Local artifact discovery and resolution system"
   external:
     - commander: "^12.0.0 - CLI framework for argument parsing"
     - chalk: "^5.4.1 - Terminal color output"
@@ -37,14 +43,19 @@ dependencies:
     - boxen: "^8.0.1 - Terminal boxes"
     - which: "^5.0.0 - Executable detection"
     - cli-table3: "^0.6.5 - Table formatting"
+    - glob: "^10.3.10 - Pattern matching for local artifact discovery"
 
 files:
   primary:
     - src/cli.ts
     - src/commands/init/index.ts
     - src/commands/init/setup.ts
+    - src/commands/upgrade/index.ts
+    - src/commands/upgrade/validation.ts
+    - src/commands/upgrade/execution.ts
     - src/lib/github.ts
     - src/lib/extract.ts
+    - src/lib/local-artifacts.ts
     - src/lib/step-tracker.ts
     - src/config/agents.ts
   secondary:
@@ -64,10 +75,14 @@ files:
 interfaces:
   exports:
     - name: "buildforce [project-name]"
-      signature: "CLI command with options: --ai, --script, --here, --force, --no-git, --skip-tls, --debug, --github-token"
+      signature: "CLI command with options: --ai, --script, --here, --local, --force, --no-git, --skip-tls, --debug, --github-token"
       description: "Initializes a new BuildForce project with specified AI assistant and script type"
 
-    - name: "buildforce-check"
+    - name: "buildforce upgrade"
+      signature: "CLI command with options: --ai, --script, --local, --dry-run, --debug, --github-token, --skip-tls"
+      description: "Upgrades project templates to latest version while preserving context and specs"
+
+    - name: "buildforce check"
       signature: "CLI diagnostic command"
       description: "Verifies installed tools (git, AI assistants, IDEs)"
 
@@ -93,6 +108,15 @@ design_decisions:
   - decision: "YAML for specifications and plans"
     rationale: "More readable than JSON for humans and AI agents. Better suited for multi-line content and hierarchical structures. Easier to parse and validate."
 
+  - decision: "Persist configuration in buildforce.json during init"
+    rationale: "Enables upgrade command to auto-detect project settings (AI assistant, script type) without re-prompting users. Single source of truth for project configuration."
+
+  - decision: "Upgrade command preserves user content (.buildforce/context/ and .buildforce/specs/)"
+    rationale: "User-created content represents significant investment and must never be modified during upgrades. Only system files (templates, scripts, commands) are updated."
+
+  - decision: "Support local artifact resolution via --local flag"
+    rationale: "Enables offline workflows, local testing during development, and faster iteration cycles. Developers can test locally-built artifacts without publishing to GitHub Releases."
+
 architecture_patterns:
   entry_point: |
     CLI Entry: src/cli.ts
@@ -103,9 +127,9 @@ architecture_patterns:
     Main Command: buildforce [project-name]
     - Accepts positional project name or --here flag
     - Supports . as shorthand for current directory
-    - Options: --ai, --script, --ignore-agent-tools, --no-git, --force, --skip-tls, --debug, --github-token
+    - Options: --ai, --script, --local, --ignore-agent-tools, --no-git, --force, --skip-tls, --debug, --github-token
 
-    Diagnostic Command: buildforce-check
+    Diagnostic Command: buildforce check
     - Verifies tool installations (git, AI assistants, IDEs)
     - Uses StepTracker for visual output
 
@@ -122,7 +146,10 @@ architecture_patterns:
        - Collect AI assistant and script type
 
     3. Project Setup (setup.ts)
-       - downloadTemplateFromGithub() - Fetch template ZIP
+       - If --local flag provided:
+         * resolveLocalArtifact() - Find matching ZIP in local directory
+         * Pass localZipPath to download function
+       - downloadTemplateFromGithub() - Fetch template ZIP (GitHub or local)
        - downloadAndExtractTemplate() - Extract and merge files
        - ensureExecutableScripts() - Set permissions on .sh files
        - createConfigContent() - Generate buildforce.json
@@ -144,7 +171,7 @@ architecture_patterns:
     - .buildforce/context/ - Context management system
     - .buildforce/scripts/ - Automation scripts
     - .buildforce/templates/ - Local templates
-    - .buildforce/buildforce.json - Project configuration
+    - buildforce.json - Project configuration with aiAssistant, scriptType, version
     - Agent folders (.claude/, .github/, etc.) - Agent-specific files
 
     Extraction Flow:
@@ -225,11 +252,15 @@ core_modules:
     - "init/validation.ts - Input validation for project setup"
     - "init/setup.ts - Core execution of initialization steps"
     - "init/output.ts - User-facing messaging and guidance"
+    - "upgrade/index.ts - Main orchestrator for project upgrades"
+    - "upgrade/validation.ts - Prerequisite validation for upgrades"
+    - "upgrade/execution.ts - Selective file replacement and upgrade execution"
     - "check.ts - Diagnostic tool verification command"
 
   libraries:
     - "github.ts - GitHub Release API integration and authentication"
     - "extract.ts - ZIP extraction and project file merging"
+    - "local-artifacts.ts - Local artifact resolution and pattern matching"
     - "step-tracker.ts - Hierarchical progress visualization"
     - "interactive.ts - User interaction utilities (menus, banners)"
 
@@ -239,7 +270,7 @@ core_modules:
     - "git.ts - Git repository operations"
     - "github.ts - GitHub token authentication"
     - "commands.ts - Shell command execution wrapper"
-    - "config.ts - Configuration file generation"
+    - "config.ts - Configuration file read/write (buildforce.json management)"
 
   configuration:
     - "agents.ts - AI assistant definitions and folder mappings"
@@ -270,19 +301,34 @@ workflow_integration: |
      - Automation scripts in .buildforce/scripts/
 
   5. Configuration:
-     - buildforce.json - Project configuration
+     - buildforce.json - Project configuration (aiAssistant, scriptType, version)
      - Agent folders - AI-specific settings
+
+  6. Upgrade System:
+     - buildforce upgrade - Update templates to latest version
+     - Preserves user content (.buildforce/context/, .buildforce/specs/)
+     - Auto-detects configuration from buildforce.json
+     - Supports dry-run and override flags
 
   This creates a complete Spec-Driven Development workflow where AI assistants have:
   - Structured guidance through slash commands
   - Persistent knowledge via context files
   - Clear implementation phases
   - Cross-session learning capabilities
+  - Seamless upgrade path for new features and improvements
 
 evolution:
   - version: "1.0"
     date: "2025-10-27"
     changes: "Initial architecture documentation covering CLI structure, template distribution, context management, agent support, and workflow integration"
+
+  - version: "1.1"
+    date: "2025-10-28"
+    changes: "Added upgrade command, buildforce.json configuration persistence (aiAssistant, scriptType, version), and enhanced init command to save project settings"
+
+  - version: "1.2"
+    date: "2025-10-28"
+    changes: "Added local artifact resolution system with --local flag for init and upgrade commands, enabling offline workflows and faster local testing"
 
 notes: |
   Key architectural strengths:
@@ -290,6 +336,7 @@ notes: |
   - Context management enables cross-session learning
   - Agent folder segregation maintains security boundaries
   - GitHub Release distribution allows independent template updates
+  - Local artifact resolution supports offline development and testing
   - Step tracking provides transparent progress feedback
 
   Future considerations:
@@ -298,3 +345,4 @@ notes: |
   - Multi-template composition for complex project structures
   - Context validation and schema enforcement tooling
   - Template versioning and migration utilities
+  - Automated local artifact building with --local-build flag

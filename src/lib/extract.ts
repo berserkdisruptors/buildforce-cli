@@ -20,14 +20,16 @@ export async function downloadAndExtractTemplate(
     debug?: boolean;
     githubToken?: string;
     skipTls?: boolean;
+    localZipPath?: string;
   } = {}
-): Promise<string> {
+): Promise<{ projectPath: string; version: string }> {
   const {
     verbose = true,
     tracker,
     debug = false,
     githubToken,
     skipTls = false,
+    localZipPath,
   } = options;
 
   const currentDir = process.cwd();
@@ -48,6 +50,7 @@ export async function downloadAndExtractTemplate(
       debug,
       githubToken,
       skipTls,
+      localZipPath,
     });
 
     zipPath = result.zipPath;
@@ -191,5 +194,5 @@ export async function downloadAndExtractTemplate(
     }
   }
 
-  return projectPath;
+  return { projectPath, version: meta.release };
 }

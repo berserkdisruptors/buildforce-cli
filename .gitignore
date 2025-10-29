@@ -21,3 +21,4 @@ inspiration/
 .buildforce/.current-spec
 .buildforce/.research-cache.md
 .claude/**
+.genreleases/

@@ -9,6 +9,7 @@ import {
   initGitRepo,
 } from "../../utils/index.js";
 import { createConfigContent } from "../../utils/config.js";
+import { resolveLocalArtifact } from "../../lib/local-artifacts.js";
 
 /**
  * Execute project setup steps with progress tracking
@@ -24,9 +25,10 @@ export async function setupProject(
     skipTls: boolean;
     noGit: boolean;
     shouldInitGit: boolean;
+    local?: string | boolean;
   }
 ): Promise<void> {
-  const { debug, githubToken, skipTls, noGit, shouldInitGit } = options;
+  const { debug, githubToken, skipTls, noGit, shouldInitGit, local } = options;
   const tracker = new StepTracker("Initialize Buildforce Project");
 
   // Pre-steps recorded as completed before live rendering
@@ -77,7 +79,24 @@ export async function setupProject(
     // Initial render
     renderTracker();
 
-    await downloadAndExtractTemplate(
+    // Resolve local artifact if --local flag is provided
+    let localZipPath: string | undefined;
+    if (local) {
+      const localDir = typeof local === "string" ? local : ".genreleases";
+      try {
+        const result = await resolveLocalArtifact(
+          localDir,
+          selectedAi,
+          selectedScript
+        );
+        localZipPath = result.zipPath;
+      } catch (e: any) {
+        tracker.error("fetch", e.message);
+        throw e;
+      }
+    }
+
+    const { version } = await downloadAndExtractTemplate(
       projectPath,
       selectedAi,
       selectedScript,
@@ -88,6 +107,7 @@ export async function setupProject(
         debug,
         githubToken,
         skipTls,
+        localZipPath,
       }
     );
 
@@ -105,18 +125,35 @@ export async function setupProject(
 
     // Create buildforce.json config file
     tracker.start("config");
-    try {
-      const configPath = path.join(
-        projectPath,
-        ".buildforce",
-        "buildforce.json"
-      );
-      const configContent = createConfigContent();
-      await fs.writeFile(configPath, configContent, "utf8");
-      tracker.complete("config", ".buildforce/buildforce.json");
-    } catch (e: any) {
-      tracker.error("config", e.message);
+    // Ensure .buildforce directory exists
+    const buildforceDir = path.join(projectPath, ".buildforce");
+    await fs.ensureDir(buildforceDir);
+
+    const configPath = path.join(buildforceDir, "buildforce.json");
+    const configContent = createConfigContent(selectedAi, selectedScript, version);
+
+    if (debug) {
+      console.log(chalk.gray(`\nWriting config to: ${configPath}`));
+      console.log(chalk.gray(`Config content:\n${configContent}`));
     }
+
+    await fs.writeFile(configPath, configContent, "utf8");
+
+    // Verify file was created
+    const configExists = await fs.pathExists(configPath);
+    if (!configExists) {
+      const errorMsg = "buildforce.json was not created";
+      tracker.error("config", errorMsg);
+      throw new Error(errorMsg);
+    }
+
+    if (debug) {
+      const writtenContent = await fs.readFile(configPath, "utf8");
+      console.log(chalk.gray(`\nVerified config file exists`));
+      console.log(chalk.gray(`Content: ${writtenContent.substring(0, 100)}...`));
+    }
+
+    tracker.complete("config", ".buildforce/buildforce.json");
 
     // Git step
     if (!noGit) {

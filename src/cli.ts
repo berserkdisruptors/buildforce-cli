@@ -2,6 +2,7 @@
 
 import { Command } from "commander";
 import { initCommand } from "./commands/init/index.js";
+import { upgradeCommand } from "./commands/upgrade/index.js";
 import { checkCommand } from "./commands/check.js";
 import { showBanner } from "./lib/interactive.js";
 import { BANNER, TAGLINE } from "./constants.js";
@@ -9,11 +10,54 @@ import { BANNER, TAGLINE } from "./constants.js";
 const program = new Command();
 
 program
-  .name("buildforce")
+  .alias("bf")
   .description("Buildforce - Spec-Driven Development toolkit")
-  .version("1.0.0");
+  .version("1.0.0")
+  .enablePositionalOptions();
 
-// Main command (buildforce [project-name]) - equivalent to init
+program
+  .command("upgrade")
+  .description(
+    "Upgrade project templates, commands, and scripts to the latest version"
+  )
+  .option(
+    "--ai <assistant>",
+    "Override AI assistant (claude, gemini, copilot, cursor, qwen, opencode, codex, windsurf, kilocode, auggie, roo)"
+  )
+  .option("--script <type>", "Override script type (sh or ps)")
+  .option("--dry-run", "Preview changes without applying them")
+  .option("--debug", "Show verbose diagnostic output")
+  .option("--github-token <token>", "GitHub token for API requests")
+  .option("--skip-tls", "Skip SSL/TLS verification (not recommended)")
+  .option(
+    "--local [path]",
+    "Use local artifacts from directory instead of GitHub (default: .genreleases)"
+  )
+  .action(async (options) => {
+    await upgradeCommand({
+      ai: options.ai,
+      script: options.script,
+      dryRun: options.dryRun,
+      debug: options.debug,
+      githubToken: options.githubToken,
+      skipTls: options.skipTls,
+      local: options.local,
+    });
+  });
+
+program
+  .command("check")
+  .description("Check that all required tools are installed")
+  .action(() => {
+    checkCommand();
+  });
+
+// Custom help with banner
+program.on("--help", () => {
+  showBanner(BANNER, TAGLINE);
+});
+
+// Default behavior (init) - defined AFTER subcommands
 program
   .argument(
     "[project-name]",
@@ -46,6 +90,11 @@ program
     "--github-token <token>",
     "GitHub token to use for API requests (or set GH_TOKEN or GITHUB_TOKEN environment variable)"
   )
+  .option(
+    "--local [path]",
+    "Use local artifacts from directory instead of GitHub (default: .genreleases)\n" +
+    "Example: buildforce init my-project --local --ai claude --script sh"
+  )
   .action(async (projectName, options) => {
     // If no project name and no flags, show help
     if (!projectName && !options.here && Object.keys(options).length === 0) {
@@ -65,19 +114,8 @@ program
       skipTls: options.skipTls,
       debug: options.debug,
       githubToken: options.githubToken,
+      local: options.local,
     });
   });
-
-program
-  .command("buildforce-check")
-  .description("Check that all required tools are installed")
-  .action(() => {
-    checkCommand();
-  });
-
-// Custom help with banner
-program.on("--help", () => {
-  showBanner(BANNER, TAGLINE);
-});
 
 program.parse(process.argv);
