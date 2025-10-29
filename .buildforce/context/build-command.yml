@@ -3,7 +3,7 @@ name: "Iterate and Complete /build Slash Command"
 type: feature
 status: completed
 created: 2025-10-08
-last_updated: 2025-10-09
+last_updated: 2025-10-28
 
 summary: |
   Compressed and refined the /build slash command from 116 lines to 29 lines (75% reduction),
@@ -31,6 +31,7 @@ dependencies:
     - slash-commands: "Part of 5-command spec-driven workflow (SPEC, RESEARCH, PLAN, BUILD, COMPLETE)"
     - research-slash-command: "Used as structural template for compact guideline format (28 lines)"
     - get-spec-paths.sh: "Script for reliable FEATURE_DIR discovery and file verification"
+    - research-persistence: "Loads research.yml alongside spec.yaml and plan.yaml for implementation context"
   external:
     - None (instruction template for Claude Code agents)
 
@@ -144,10 +145,14 @@ evolution:
   - version: "2.0"
     date: "2025-10-09"
     changes: "Compressed to 29 lines with 7 guidelines, script-based discovery, dual validation, testing guidance. 75% reduction achieved."
+  - version: "3.0"
+    date: "2025-10-28"
+    changes: "Added research persistence integration. Updated guideline 1 (Script Execution & Context Loading) to load research.yml alongside spec.yml and plan.yml. Template increased from 29 to 41 lines. research.yml provides implementation context: file paths, mermaid diagrams, data models, code snippets, architectural decisions, TLDR."
 
 related_specs:
   - "build-command-20250102120000"
   - "slash-commands-20250101120000 (context for 5-command workflow)"
+  - "research-persistence-intelligent-20251027213207"
 
 notes: |
   Compact instruction template (29 lines) that enhances build agent execution without teaching HOW.

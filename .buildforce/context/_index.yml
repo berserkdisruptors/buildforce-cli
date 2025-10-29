@@ -98,12 +98,7 @@ contexts:
         script-execution,
       ]
     related_context:
-      [
-        slash-commands,
-        plan-template,
-        iterate-plan-command,
-        spec-command,
-      ]
+      [slash-commands, plan-template, iterate-plan-command, spec-command]
 
   - id: plan-template
     file: plan-template.yml
@@ -121,12 +116,7 @@ contexts:
         workflow-enhancement,
       ]
     related_context:
-      [
-        iterate-plan-command,
-        build-command,
-        spec-command,
-        slash-commands,
-      ]
+      [iterate-plan-command, build-command, spec-command, slash-commands]
 
   - id: iterate-plan-command
     file: iterate-plan-command.yml
@@ -144,12 +134,7 @@ contexts:
         user-approval,
       ]
     related_context:
-      [
-        slash-commands,
-        plan-template,
-        spec-command,
-        build-command,
-      ]
+      [slash-commands, plan-template, spec-command, build-command]
 
   - id: document-command
     file: document-command.yml
@@ -212,12 +197,7 @@ contexts:
         workflow-core,
       ]
     related_context:
-      [
-        slash-commands,
-        iterate-plan-command,
-        plan-template,
-        complete-command,
-      ]
+      [slash-commands, iterate-plan-command, plan-template, complete-command]
 
   - id: complete-command
     file: complete-command.yml
@@ -285,6 +265,22 @@ contexts:
         upgrade-command,
         local-artifact-resolution,
       ]
+
+  - id: research-persistence
+    file: research-persistence.yml
+    type: feature
+    description: "Research persistence with three-stage pipeline: accumulation, intelligent materialization, and cleanup"
+    tags:
+      [
+        research,
+        persistence,
+        materialization,
+        cache,
+        workflow-enhancement,
+        template-only,
+      ]
+    related_context:
+      [research-slash-command, spec-command, build-command, complete-command]
 
   - id: local-artifact-resolution
     file: local-artifact-resolution.yml

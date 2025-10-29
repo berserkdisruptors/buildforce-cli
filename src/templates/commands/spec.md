@@ -20,7 +20,7 @@ The text the user typed after `/spec` in the triggering message **is** the featu
    - Priority 1: Check conversation history for existing spec
    - Priority 2: Run `{SCRIPT}` FROM CURRENT WORKING DIRECTORY AND NEVER FROM SOMEWHERE ELSE! Parse JSON output for FOLDER_NAME, SPEC_FILE, SPEC_DIR, FEATURE_NUM, and IS_UPDATE flag. **NEVER proceed** if script fails - display the error message to the user, explain that the `.buildforce` directory was not found, suggest: 1) check if you're in the buildforce root directory (where you ran `buildforce init`), 2) run `buildforce init .` if needed.
 
-   - Read `.buildforce/.current-spec` file from repo root
+   - Read `.buildforce/.current-spec` file from current working directory
    - If file exists and has content (non-empty folder name): **UPDATE mode** - Load existing spec and plan from that folder
    - If file doesn't exist or is empty: **CREATE mode** - Generate new folder name and create new spec and plan
 
@@ -44,11 +44,57 @@ The text the user typed after `/spec` in the triggering message **is** the featu
    - Run `{SCRIPT}` with generated FOLDER_NAME and parse JSON output for FOLDER_NAME, SPEC_FILE, PLAN_FILE, SPEC_DIR
    - The script creates both spec.yaml and plan.yaml files from templates
 
-   **Step 2c: Populate both spec.yaml and plan.yaml**:
+   **Step 2c: Materialize research cache into research.yml** (if cache exists):
+
+   Before populating spec.yaml and plan.yaml, materialize accumulated research to inform requirement identification:
+
+   1. **Check if research cache exists**:
+
+      - Check if `.buildforce/.research-cache.md` exists in current working directory
+      - If not exists: Log info message "No research cache found - proceeding without research context" and SKIP to Step 2d
+      - If exists: PROCEED with materialization
+
+   2. **Read template structure**:
+
+      - Read `.buildforce/templates/research-template.yml` for structure guidance
+      - Understand flexible sections: summary, key_findings, file_paths, mermaid_diagrams, data_models, code_snippets, architectural_decisions, external_references, tldr
+      - Remember: sections are OPTIONAL - adapt to research content type
+
+   3. **Parse research cache**:
+
+      - Read `.buildforce/.research-cache.md` completely
+      - Identify all research sessions (separated by === lines)
+      - Extract content from each session
+
+   4. **Intelligent materialization** (CRITICAL - preserve information richness):
+
+      - **PRESERVE VERBATIM**: Mermaid diagrams, data models, code snippets - these are essential for /build
+      - **PRESERVE WITH CONTEXT**: File paths (with relevance notes), architectural decisions (with rationale)
+      - **CONDENSE INTELLIGENTLY**: Research summary prose (2-4 sentences), project context (key points only)
+      - **MERGE**: TLDR bullets from all sessions into unified tldr section
+      - **DO NOT TRUNCATE**: Diagrams, models, code snippets must be complete
+      - **DO NOT OVER-CONDENSE**: Preserve information-rich elements - /build needs comprehensive context
+
+   5. **Create research.yml**:
+      - Write to `.buildforce/specs/{FOLDER_NAME}/research.yml`
+      - Set id = "{FOLDER_NAME}-research"
+      - Follow template structure but omit sections with no content (e.g., no diagrams if research was conceptual)
+      - Ensure materialized research is condensed but information-rich
+
+   **Step 2d: Populate both spec.yaml and plan.yaml**:
 
    **For spec.yaml (WHAT to build)**:
 
    - Load `.buildforce/templates/spec-template.yaml` from the current working directory to understand structure and fields
+   - **Read research.yml if it exists** (from Step 2c):
+     - Path: `.buildforce/specs/{FOLDER_NAME}/research.yml`
+     - If exists, use research findings to inform spec.yaml population:
+       - Extract key requirements from research key_findings
+       - Reference architectural_decisions when defining scope and design principles
+       - Use file_paths to identify affected components and dependencies
+       - Merge research ambiguities into open_questions
+       - Reference external_references in notes or dependencies sections
+     - Ensure spec.yaml is context-aware based on materialized research
    - Populate with requirements, scope, goals, acceptance criteria (WHAT content)
    - For metadata: Set id = "{FOLDER_NAME}" (the full slug-timestamp you generated), status = "draft", dates = today YYYY-MM-DD
    - Ensure requirements use unique IDs (FR1, FR2, ..., NFR1, ..., AC1, ...)
@@ -67,10 +113,52 @@ The text the user typed after `/spec` in the triggering message **is** the featu
 
 3. **For UPDATE mode (existing spec)**:
 
-   **Intelligent routing** - Determine which file(s) to update based on user input:
+   **Step 3a: Load existing artifacts and research context**:
 
    - Read folder name from `.buildforce/.current-spec`
    - Load both existing spec.yaml and plan.yaml from `.buildforce/specs/{folder-name}/`
+   - **Read research.yml if it exists**:
+     - Path: `.buildforce/specs/{folder-name}/research.yml`
+     - If exists, load research findings to maintain context consistency
+     - Use research context when analyzing update requirements
+     - This ensures updates align with prior research findings
+
+   **Step 3b: Check for new research cache and merge**:
+
+   After loading existing artifacts, check if new research was conducted:
+
+   1. **Check if new research cache exists**:
+
+      - Check if `.buildforce/.research-cache.md` exists in current working directory
+      - If not exists: No new research - SKIP to Step 3c
+      - If exists: New research was conducted after spec creation - PROCEED with merge
+
+   2. **Read template structure**:
+
+      - Read `.buildforce/templates/research-template.yml` for structure guidance
+
+   3. **Parse new research cache**:
+
+      - Read `.buildforce/.research-cache.md` completely
+      - Extract new research sessions
+
+   4. **Intelligent merge with existing research.yml**:
+      - Read existing `.buildforce/specs/{folder-name}/research.yml`
+      - Compare new cache content with existing research
+      - **Append new findings** with update separator:
+        ```yaml
+        updates:
+          - date: "YYYY-MM-DD"
+            summary: "Brief description of what new research added"
+            merged_from_cache: true
+        ```
+      - **Preserve new artifacts**: Append new diagrams, models, snippets to respective sections
+      - **Merge TLDR**: Combine new TLDR bullets with existing without duplication
+      - **DO NOT duplicate**: Check for similar findings before appending
+      - Write updated research.yml back to spec folder
+
+   **Step 3c: Intelligent routing** - Determine which file(s) to update based on user input:
+
    - Analyze $ARGUMENTS to determine content type:
      - **Requirements/scope/goals** → Update spec.yaml only
      - **Architecture/tech decisions/phases** → Update plan.yaml only

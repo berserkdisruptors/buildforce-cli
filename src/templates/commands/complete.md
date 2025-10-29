@@ -16,7 +16,7 @@ $ARGUMENTS
 
    Check if there's an active spec to complete:
 
-   - Read `.buildforce/.current-spec` file from repo root
+   - Read `.buildforce/.current-spec` file from current working directory
    - If file doesn't exist or is empty: **ERROR** - Reply that there is no active spec and user must run `/spec` first
    - If file has content (folder name): **PROCEED** - Extract folder name and continue
 
@@ -27,6 +27,7 @@ $ARGUMENTS
    - Construct spec directory path: `.buildforce/specs/{folder-name}/` where folder-name comes from `.current-spec`
    - Read `spec.yml` from spec directory
    - Read `plan.yml` from spec directory if it exists
+   - Read `research.yml` from spec directory if it exist
    - Parse key metadata: spec id, name, requirements, dependencies, files modified
    - Understand what was specified, planned, and implemented
 
@@ -95,7 +96,7 @@ $ARGUMENTS
    - **Related context field** (OPTIONAL): Add array of closely related context IDs for discovery
      - Include for: feature families, dependent modules, sibling features
      - Only add significant relationships (avoid over-populating)
-     - IDs must exist in _index.yml
+     - IDs must exist in \_index.yml
      - Example: `[slash-commands, plan-template, spec-command]`
    - Maintain proper YAML indentation (2 spaces per level)
    - Preserve existing entries (do not modify or delete)
@@ -111,23 +112,32 @@ $ARGUMENTS
    - Check that plan was followed or deviations were logged
    - If requirements are missing or incomplete: **ALERT USER** before finalizing
 
-8. **Clear Spec State**:
+8. **Clean Research Cache**:
+
+   Remove temporary research cache file:
+
+   - Check if `.buildforce/.research-cache.md` exists in current working directory
+   - If exists: Delete the file using Bash tool (e.g., `rm .buildforce/.research-cache.md`)
+   - If not exists: Skip cleanup (no cache to clean)
+   - **NOTE**: The materialized research.yml in specs/{folder-name}/ is preserved as a permanent artifact
+
+9. **Clear Spec State**:
 
    Mark the spec as complete:
 
-   - Delete `.buildforce/.current-spec` file from repo root
+   - Delete `.buildforce/.current-spec` file from current working directory
    - This signals that no active spec is in progress
 
-9. **Present Completion Summary**:
+10. **Present Completion Summary**:
 
-   Provide a concise report to the user:
+Provide a concise report to the user:
 
-   - Spec ID and name that was completed
-   - List of context files created (if any) with filenames
-   - List of context files updated (if any) with what was added
-   - Confirmation that all spec requirements were implemented
-   - Brief summary of what was achieved with this spec (1-2 sentences)
-   - **ALWAYS request user confirmation** that the completion is satisfactory
+- Spec ID and name that was completed
+- List of context files created (if any) with filenames
+- List of context files updated (if any) with what was added
+- Confirmation that all spec requirements were implemented
+- Brief summary of what was achieved with this spec (1-2 sentences)
+- **ALWAYS request user confirmation** that the completion is satisfactory
 
 ## Behavior Rules
 
