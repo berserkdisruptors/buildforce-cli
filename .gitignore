@@ -18,7 +18,7 @@ dist/
 
 inspiration/
 .buildforce/scripts
-.buildforce/.current-spec
+.buildforce/buildforce.json
 .buildforce/.research-cache.md
 .claude/**
 .genreleases/

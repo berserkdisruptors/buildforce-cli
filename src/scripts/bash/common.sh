@@ -30,18 +30,81 @@ EOF
     return 1
 }
 
-# Get current spec from state file
+# Get current spec from buildforce.json
 get_current_spec() {
-    local state_file="$1/.buildforce/.current-spec"
-    if [[ -f "$state_file" ]]; then
-        cat "$state_file"
+    local json_file="$1/.buildforce/buildforce.json"
+
+    # Return empty if file doesn't exist
+    if [[ ! -f "$json_file" ]]; then
+        return 0
+    fi
+
+    # Parse currentSpec field from JSON
+    # This uses native bash instead of requiring jq
+    local content=$(cat "$json_file" 2>/dev/null || echo "")
+
+    # Extract currentSpec value (handles null and string values)
+    local spec=$(echo "$content" | grep -o '"currentSpec"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*"currentSpec"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+
+    # Return the spec value (empty if null or not found)
+    if [[ -n "$spec" ]]; then
+        echo "$spec"
     fi
 }
 
-# Set current spec in state file
+# Set current spec in buildforce.json
 set_current_spec() {
-    local state_file="$1/.buildforce/.current-spec"
-    echo "$2" > "$state_file"
+    local json_file="$1/.buildforce/buildforce.json"
+    local spec_value="$2"
+    local temp_file="${json_file}.tmp"
+
+    # Read existing JSON if file exists
+    if [[ -f "$json_file" ]]; then
+        local existing_content=$(cat "$json_file" 2>/dev/null || echo "{}")
+
+        # Check if currentSpec field already exists
+        if echo "$existing_content" | grep -q '"currentSpec"'; then
+            # Replace existing currentSpec value
+            local json_content=$(echo "$existing_content" | sed 's/"currentSpec"[[:space:]]*:[[:space:]]*"[^"]*"/"currentSpec":"'"$spec_value"'"/' | sed 's/"currentSpec"[[:space:]]*:[[:space:]]*null/"currentSpec":"'"$spec_value"'"/')
+        else
+            # Add currentSpec field before closing brace
+            local json_content=$(echo "$existing_content" | sed 's/}$/,"currentSpec":"'"$spec_value"'"}/' | sed 's/{,/{/')
+        fi
+    else
+        # Create new JSON with currentSpec only
+        local json_content="{\"currentSpec\":\"${spec_value}\"}"
+    fi
+
+    # Atomic write: write to temp file first, then move
+    echo "$json_content" > "$temp_file"
+    mv "$temp_file" "$json_file"
+}
+
+# Clear current spec in buildforce.json (set to null)
+clear_current_spec() {
+    local json_file="$1/.buildforce/buildforce.json"
+    local temp_file="${json_file}.tmp"
+
+    # Read existing JSON if file exists
+    if [[ -f "$json_file" ]]; then
+        local existing_content=$(cat "$json_file" 2>/dev/null || echo "{}")
+
+        # Check if currentSpec field already exists
+        if echo "$existing_content" | grep -q '"currentSpec"'; then
+            # Replace existing currentSpec value with null
+            local json_content=$(echo "$existing_content" | sed 's/"currentSpec"[[:space:]]*:[[:space:]]*"[^"]*"/"currentSpec":null/' | sed 's/"currentSpec"[[:space:]]*:[[:space:]]*null/"currentSpec":null/')
+        else
+            # Add currentSpec field as null before closing brace
+            local json_content=$(echo "$existing_content" | sed 's/}$/,"currentSpec":null}/' | sed 's/{,/{/')
+        fi
+    else
+        # Create new JSON with currentSpec null
+        local json_content="{\"currentSpec\":null}"
+    fi
+
+    # Atomic write: write to temp file first, then move
+    echo "$json_content" > "$temp_file"
+    mv "$temp_file" "$json_file"
 }
 
 get_spec_paths() {

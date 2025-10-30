@@ -20,9 +20,9 @@ The text the user typed after `/spec` in the triggering message **is** the featu
    - Priority 1: Check conversation history for existing spec
    - Priority 2: Run `{SCRIPT}` FROM CURRENT WORKING DIRECTORY AND NEVER FROM SOMEWHERE ELSE! Parse JSON output for FOLDER_NAME, SPEC_FILE, SPEC_DIR, FEATURE_NUM, and IS_UPDATE flag. **NEVER proceed** if script fails - display the error message to the user, explain that the `.buildforce` directory was not found, suggest: 1) check if you're in the buildforce root directory (where you ran `buildforce init`), 2) run `buildforce init .` if needed.
 
-   - Read `.buildforce/.current-spec` file from current working directory
-   - If file exists and has content (non-empty folder name): **UPDATE mode** - Load existing spec and plan from that folder
-   - If file doesn't exist or is empty: **CREATE mode** - Generate new folder name and create new spec and plan
+   - Read `.buildforce/buildforce.json` file from current working directory and parse the `currentSpec` field
+   - If file exists and `currentSpec` field has a value (non-empty folder name): **UPDATE mode** - Load existing spec and plan from that folder
+   - If file doesn't exist or `currentSpec` is null/empty: **CREATE mode** - Generate new folder name and create new spec and plan
 
 2. **For CREATE mode (new spec)**:
 
@@ -115,7 +115,7 @@ The text the user typed after `/spec` in the triggering message **is** the featu
 
    **Step 3a: Load existing artifacts and research context**:
 
-   - Read folder name from `.buildforce/.current-spec`
+   - Read folder name from `.buildforce/buildforce.json` (`currentSpec` field)
    - Load both existing spec.yaml and plan.yaml from `.buildforce/specs/{folder-name}/`
    - **Read research.yml if it exists**:
      - Path: `.buildforce/specs/{folder-name}/research.yml`

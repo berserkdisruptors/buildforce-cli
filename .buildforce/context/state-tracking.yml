@@ -1,0 +1,102 @@
+id: state-tracking
+name: "State Tracking System"
+type: feature
+status: production
+created: 2025-10-29
+last_updated: 2025-10-29
+
+summary: |
+  JSON-based state tracking system using buildforce.json to manage active spec sessions,
+  replacing the legacy .current-spec plain text file. Provides structured configuration
+  with currentSpec field for tracking active spec-driven development sessions.
+
+responsibilities:
+  - Track active spec folder name via currentSpec field in buildforce.json
+  - Preserve existing buildforce.json fields (agent, script, version) when updating state
+  - Enable CREATE vs UPDATE mode determination for /spec command
+  - Control research cache accumulation based on active spec presence
+  - Support /complete command state verification and cleanup
+  - Provide atomic write operations to prevent state corruption
+
+dependencies:
+  internal:
+    - spec-command: "Reads currentSpec to determine CREATE vs UPDATE mode"
+    - research-persistence: "Checks currentSpec to control cache accumulation"
+    - complete-command: "Reads and clears currentSpec on spec finalization"
+    - cli-architecture: "Init command creates buildforce.json with initial configuration"
+  external: []
+
+files:
+  primary:
+    - src/scripts/bash/common.sh
+    - .buildforce/scripts/bash/common.sh
+  secondary:
+    - src/scripts/bash/create-spec-files.sh
+    - src/scripts/bash/clear-spec-state.sh
+    - .buildforce/scripts/bash/clear-spec-state.sh
+    - src/templates/commands/spec.md
+    - src/templates/commands/research.md
+    - src/templates/commands/complete.md
+    - src/commands/init/setup.ts
+    - .gitignore
+
+interfaces:
+  exports:
+    - name: "get_current_spec"
+      signature: "(buildforce_root: string) => string"
+      description: "Reads currentSpec field from buildforce.json, returns empty if null or missing"
+
+    - name: "set_current_spec"
+      signature: "(buildforce_root: string, spec_value: string) => void"
+      description: "Updates currentSpec field in buildforce.json, preserving all other fields"
+
+    - name: "clear_current_spec"
+      signature: "(buildforce_root: string) => void"
+      description: "Sets currentSpec to null in buildforce.json, preserving all other fields"
+
+design_decisions:
+  - decision: "Use buildforce.json instead of .current-spec plain text file"
+    rationale: "Enables structured configuration with extensibility for future metadata fields while maintaining single source of truth for project settings"
+
+  - decision: "Store buildforce.json at .buildforce/buildforce.json"
+    rationale: "Maintains consistency with existing .buildforce directory structure where all buildforce metadata resides"
+
+  - decision: "Preserve existing JSON fields when updating currentSpec"
+    rationale: "Init creates buildforce.json with agent, script, and version fields. State functions must merge changes rather than overwrite to prevent configuration loss"
+
+  - decision: "Clear currentSpec by setting to null rather than deleting file"
+    rationale: "Preserves buildforce.json file for other configuration fields and avoids recreating file on every spec creation"
+
+  - decision: "Use native bash string manipulation for JSON operations"
+    rationale: "Keeps buildforce lightweight with no jq dependency. Simple single-field updates can be handled with sed/grep without external tools"
+
+  - decision: "Implement atomic writes via temp file + mv pattern"
+    rationale: "Prevents partial state corruption on write failures or interruptions by ensuring file update is atomic at filesystem level"
+
+  - decision: "No backward compatibility with .current-spec"
+    rationale: "Clean break simplifies implementation and eliminates dual-read complexity. Users upgrade to system that only reads/writes buildforce.json"
+
+  - decision: "Add buildforce.json to .gitignore automatically"
+    rationale: "Maintains behavior where active spec state is local session state, not committed to repository"
+
+evolution:
+  - version: "1.0"
+    date: "2025-10-29"
+    changes: "Initial implementation - migrated from .current-spec to buildforce.json with JSON merge logic"
+
+related_specs:
+  - migrate-currentspec-to-json-20251029000000
+
+notes: |
+  This migration establishes foundation for future buildforce.json enhancements:
+  - Project metadata (name, author, description)
+  - Feature flags or configuration options
+  - Custom spec directory paths
+  - Agent-specific settings
+
+  Critical implementation detail: set_current_spec() and clear_current_spec() must preserve
+  all existing fields in buildforce.json. Init creates the file with agent, script, and version
+  fields that must not be lost when updating state.
+
+  The .gitignore is updated during init via src/commands/init/setup.ts to replace legacy
+  .current-spec entry with buildforce.json, ensuring seamless transition on project upgrade.

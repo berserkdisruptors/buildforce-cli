@@ -3,5 +3,6 @@
   "framework": "buildforce",
   "aiAssistant": "claude",
   "scriptType": "sh",
-  "version": "local"
+  "version": "local",
+  "currentSpec":null
 }
