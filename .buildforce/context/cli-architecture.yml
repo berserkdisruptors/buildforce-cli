@@ -1,12 +1,12 @@
 id: cli-architecture
-name: BuildForce CLI Architecture
+name: Buildforce CLI Architecture
 type: module
 status: production
 created: 2025-10-27
 last_updated: 2025-10-28
 
 summary: |
-  Comprehensive architecture of the BuildForce CLI tool - a Node.js-based command-line
+  Comprehensive architecture of the Buildforce CLI tool - a Node.js-based command-line
   interface that initializes spec-driven development projects with template distribution
   via GitHub Releases or local artifacts, context management systems, and multi-agent support
   for 11+ AI assistants. Supports offline workflows through local artifact resolution.
@@ -76,7 +76,7 @@ interfaces:
   exports:
     - name: "buildforce [project-name]"
       signature: "CLI command with options: --ai, --script, --here, --local, --force, --no-git, --skip-tls, --debug, --github-token"
-      description: "Initializes a new BuildForce project with specified AI assistant and script type"
+      description: "Initializes a new Buildforce project with specified AI assistant and script type"
 
     - name: "buildforce upgrade"
       signature: "CLI command with options: --ai, --script, --local, --dry-run, --debug, --github-token, --skip-tls"

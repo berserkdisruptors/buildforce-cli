@@ -202,7 +202,7 @@ related_specs:
 notes: |
   This feature bridges the gap between local artifact generation (create-release-packages.sh)
   and the init/upgrade commands. It's a quality-of-life improvement for developers working on
-  BuildForce CLI itself or anyone who wants to test custom template modifications.
+  Buildforce CLI itself or anyone who wants to test custom template modifications.
 
   The .genreleases/ directory convention is established by the existing build script, making
   this a natural integration point. The --local flag is consistent with CLI conventions

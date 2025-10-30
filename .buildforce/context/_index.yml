@@ -163,7 +163,7 @@ contexts:
   - id: readme-documentation
     file: readme-documentation.yml
     type: feature
-    description: "Primary documentation for BuildForce CLI covering installation, workflow, and contribution"
+    description: "Primary documentation for Buildforce CLI covering installation, workflow, and contribution"
     tags:
       [
         documentation,

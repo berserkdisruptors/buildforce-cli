@@ -6,7 +6,7 @@ created: 2025-10-28
 last_updated: 2025-10-28
 
 summary: |
-  Slash command for upgrading existing BuildForce projects to the latest templates, scripts,
+  Slash command for upgrading existing Buildforce projects to the latest templates, scripts,
   and slash commands while preserving user-created content (context repository and specs).
   Automatically detects project configuration and supports selective override via flags.
   Supports local artifact loading via --local flag for offline workflows and testing.
@@ -252,7 +252,7 @@ related_specs:
   - add-local-flag-init-upgrade-20251028143052
 
 notes: |
-  The upgrade command is a critical feature for maintaining BuildForce projects over time.
+  The upgrade command is a critical feature for maintaining Buildforce projects over time.
   It enables users to benefit from:
   - New slash command features and improvements
   - Bug fixes in templates and scripts

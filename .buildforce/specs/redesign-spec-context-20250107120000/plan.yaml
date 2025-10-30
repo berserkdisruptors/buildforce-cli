@@ -533,5 +533,5 @@ lessons_learned:
 future_enhancements:
   - "Consider adding script flag to generate timestamp automatically if --folder-name omitted (for CLI direct usage)"
   - "Add bash completion for --folder-name parameter"
-  - "Create migration script for external projects (if BuildForce gains users)"
+  - "Create migration script for external projects (if Buildforce gains users)"
   - "Add telemetry to track folder name length distribution (validate 50-char limit is sufficient)"
