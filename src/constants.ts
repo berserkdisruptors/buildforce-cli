@@ -14,7 +14,7 @@ export const BANNER = `
 ╚═════╝  ╚═════╝ ╚═╝╚══════╝╚═════╝ ╚═╝      ╚═════╝ ╚═╝  ╚═╝ ╚═════╝╚══════╝
 `;
 
-export const TAGLINE = "Buildforce - Spec-Driven Development Toolkit";
+export const TAGLINE = "Context-first Spec-Driven Development framework";
 
 export const CLAUDE_LOCAL_PATH = `${process.env.HOME}/.claude/local/claude`;
 
