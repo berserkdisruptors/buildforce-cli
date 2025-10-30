@@ -16,15 +16,15 @@ $ARGUMENTS
 
    Check if there's an active spec to complete:
 
-   - Read `.buildforce/.current-spec` file from current working directory
-   - If file doesn't exist or is empty: **ERROR** - Reply that there is no active spec and user must run `/spec` first
-   - If file has content (folder name): **PROCEED** - Extract folder name and continue
+   - Read `.buildforce/buildforce.json` file from current working directory and parse the `currentSpec` field
+   - If file doesn't exist or `currentSpec` is null/empty: **ERROR** - Reply that there is no active spec and user must run `/spec` first
+   - If `currentSpec` field has a value (folder name): **PROCEED** - Extract folder name and continue
 
 2. **Load Spec Artifacts**:
 
    Load the spec and plan files from the active spec folder:
 
-   - Construct spec directory path: `.buildforce/specs/{folder-name}/` where folder-name comes from `.current-spec`
+   - Construct spec directory path: `.buildforce/specs/{folder-name}/` where folder-name comes from `buildforce.json` `currentSpec` field
    - Read `spec.yml` from spec directory
    - Read `plan.yml` from spec directory if it exists
    - Read `research.yml` from spec directory if it exist
@@ -125,8 +125,9 @@ $ARGUMENTS
 
    Mark the spec as complete:
 
-   - Delete `.buildforce/.current-spec` file from current working directory
+   - Run `bash .buildforce/scripts/bash/clear-spec-state.sh` from current working directory to clear the `currentSpec` field in `buildforce.json` (sets to null)
    - This signals that no active spec is in progress
+   - The `buildforce.json` file is preserved for future specs
 
 10. **Present Completion Summary**:
 
@@ -153,7 +154,7 @@ Provide a concise report to the user:
 **CREATE mode** (new component):
 
 ```
-1. Read .current-spec → "20250123150000-add-auth"
+1. Read buildforce.json currentSpec → "20250123150000-add-auth"
 2. Load spec.yaml and plan.yaml from .buildforce/specs/20250123150000-add-auth/
 3. Analyze: Introduced new authentication module
 4. Check _index.yml: No existing "authentication" context
@@ -161,34 +162,34 @@ Provide a concise report to the user:
 6. Load _schema.yml template
 7. Create .buildforce/context/authentication.yml with full content
 8. Add entry to _index.yml
-9. Delete .current-spec
+9. Clear currentSpec in buildforce.json (set to null)
 10. Report: "Created authentication.yml context file for new auth module"
 ```
 
 **UPDATE mode** (existing component):
 
 ```
-1. Read .current-spec → "20250123160000-refactor-auth"
+1. Read buildforce.json currentSpec → "20250123160000-refactor-auth"
 2. Load spec.yaml and plan.yaml
 3. Analyze: Modified existing authentication module
 4. Check _index.yml: Found existing "authentication.yml"
 5. Read existing authentication.yml
 6. Add evolution entry, update files list, append to related_specs
 7. No index update needed (entry exists)
-8. Delete .current-spec
+8. Clear currentSpec in buildforce.json (set to null)
 9. Report: "Updated authentication.yml with refactoring changes"
 ```
 
 **MIXED mode** (multiple components):
 
 ```
-1. Read .current-spec → "20250123170000-add-feature-x"
+1. Read buildforce.json currentSpec → "20250123170000-add-feature-x"
 2. Load spec.yaml and plan.yaml
 3. Analyze: Modified auth module, created new config module, touched error handling
 4. Check _index.yml: Found "authentication.yml" and "error-handling.yml", no "config-management.yml"
 5. UPDATE authentication.yml and error-handling.yml
 6. CREATE config-management.yml
 7. Add config-management entry to _index.yml
-8. Delete .current-spec
+8. Clear currentSpec in buildforce.json (set to null)
 9. Report: "Updated 2 context files (authentication, error-handling) and created 1 new file (config-management)"
 ```

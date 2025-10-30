@@ -296,3 +296,23 @@ contexts:
         workflow-utility,
       ]
     related_context: [cli-architecture, upgrade-command]
+
+  - id: state-tracking
+    file: state-tracking.yml
+    type: feature
+    description: "JSON-based state tracking using buildforce.json to manage active spec sessions"
+    tags:
+      [
+        core,
+        state-management,
+        buildforce-json,
+        configuration,
+        workflow-foundation,
+      ]
+    related_context:
+      [
+        spec-command,
+        research-persistence,
+        complete-command,
+        cli-architecture,
+      ]
