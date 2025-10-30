@@ -16,6 +16,7 @@ $ARGUMENTS
 **Key guidelines**:
 
 1. **Script Execution & Context Loading**: Run `{SCRIPT}` FROM CURRENT WORKING DIRECTORY AND NEVER FROM SOMEWHERE ELSE!. **NEVER proceed** if script fails - display the error message to the user, explain that the `.buildforce` directory was not found, suggest: 1) check if you're in the buildforce root directory (where you ran `buildforce init`), 2) run `buildforce init .` if needed. Parse the JSON response to extract **SPEC_DIR** (absolute path). Load {SPEC_DIR}/spec.yml and {SPEC_DIR}/plan.yml into context. **Load {SPEC_DIR}/research.yml if it exists** - this provides critical implementation context including:
+
    - **File paths** discovered during research (primary/secondary files)
    - **Mermaid diagrams** showing architecture flows and component relationships
    - **Data models** with properties, types, and relationships
@@ -36,6 +37,6 @@ $ARGUMENTS
 
 6. **Code Quality & Testing Guidance**: Before presenting work, verify: (1) code compiles with no errors, (2) run new or relevant automated tests and report results, (3) check for obvious missing pieces. Then provide testing guidance: **what to test** (specific features/scenarios), **how to test** (steps to verify), and **test results** (if automated tests ran). Think of this as submitting a PR—ensure nothing is obviously broken.
 
-7. **Iterative Refinement**: Expect multiple `/build` iterations. Each time `/build` is called, determine if this is the first implementation or a subsequent refinement based on $ARGUMENTS. Track deviations across all iterations. Ensure each iteration converges toward the user's desired outcome based on their feedback.
+7. **Iterative Refinement**: Expect multiple `/buildforce:build` iterations. Each time `/buildforce:build` is called, determine if this is the first implementation or a subsequent refinement based on $ARGUMENTS. Track deviations across all iterations. Ensure each iteration converges toward the user's desired outcome based on their feedback.
 
 Context: {$ARGUMENTS}

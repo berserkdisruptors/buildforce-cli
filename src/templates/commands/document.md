@@ -16,8 +16,8 @@ Before proceeding, verify sufficient context exists:
 
 - Check conversation history for file reads and substantive discussion about components, architecture, or patterns
 - If minimal context detected (0-2 file reads AND no substantive technical discussion):
-  - Respond: "I notice there's limited context in our conversation. Would you like to run `/research [topic]` first to gather information about what you'd like to document?"
-  - Wait for user to either provide more context or run `/research`
+  - Respond: "I notice there's limited context in our conversation. Would you like to run `/buildforce:research [topic]` first to gather information about what you'd like to document?"
+  - Wait for user to either provide more context or run `/buildforce:research`
 - If sufficient context exists, proceed with workflow below
 
 ## Workflow Steps
@@ -87,7 +87,7 @@ Before proceeding, verify sufficient context exists:
    - **Related context field** (OPTIONAL): Add array of closely related context IDs for discovery
      - Include for: feature families, dependent modules, sibling features
      - Only add significant relationships (avoid over-populating)
-     - IDs must exist in _index.yml
+     - IDs must exist in \_index.yml
      - Example: `[slash-commands, plan-template, spec-command]`
    - Maintain proper YAML indentation (2 spaces per level)
    - Preserve existing entries (do not modify or delete)

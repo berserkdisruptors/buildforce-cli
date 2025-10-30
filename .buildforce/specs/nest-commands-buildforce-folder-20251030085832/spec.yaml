@@ -1,0 +1,121 @@
+id: nest-commands-buildforce-folder-20251030085832
+name: "Nest Commands in buildforce Subdirectory"
+type: feature
+status: draft
+created: "2025-10-30"
+last_updated: "2025-10-30"
+
+summary: |
+  Reorganize agent-specific command deployment to nest all BuildForce slash commands
+  inside a `buildforce/` subdirectory within each agent's command folder, improving
+  command organization and namespace clarity.
+
+# INTENT / PROBLEM STATEMENT
+
+problem: |
+  Currently, BuildForce commands are deployed directly into each agent's command folder
+  (e.g., `.claude/commands/*.md`). As projects grow and users add custom commands, this
+  flat structure can lead to namespace collisions and makes it unclear which commands are
+  BuildForce-specific versus user-defined or project-specific commands.
+
+motivation: |
+  Nesting BuildForce commands in a dedicated subdirectory provides clear namespace
+  separation, making it easier for users to distinguish BuildForce commands from their
+  own custom commands. This improves discoverability, reduces confusion, and follows
+  common organizational patterns where tooling commands are grouped together.
+
+# GOALS
+
+primary_goals:
+  - Nest all BuildForce commands inside a `buildforce/` subdirectory within each agent's command folder
+  - Update the release packaging script to deploy commands to the correct nested path
+  - Ensure backward compatibility during transition period
+
+secondary_goals:
+  - Verify deployment correctness via automated packaging script
+  - Document the new command structure for users
+
+# REQUIREMENTS
+
+functional_requirements:
+  - FR1: Commands MUST be deployed to `{agent-folder}/commands/buildforce/*.md` instead of `{agent-folder}/commands/*.md`
+  - FR2: The release packaging script (create-release-packages.sh) MUST create the buildforce subdirectory during ZIP generation
+  - FR3: All 6 slash commands (research, spec, plan, build, complete, document) MUST be deployed to the nested path
+  - FR4: The deployment path structure MUST be consistent across all 11 supported agents
+  - FR5: Running `npm run create-release-packages` MUST produce ZIPs with correctly nested command files
+  - FR6: Extracted project templates MUST contain commands at the new nested path after `buildforce init`
+
+non_functional_requirements:
+  - NFR1: Changes MUST NOT break existing projects already initialized with flat command structure
+  - NFR2: The build pipeline MUST complete successfully without errors
+  - NFR3: ZIP archive size MUST NOT increase significantly (nested structure is organization-only)
+  - NFR4: Command path generation logic MUST be maintainable and easy to understand
+
+# SCOPE
+
+in_scope:
+  - Modify `generate_commands()` function in create-release-packages.sh to create buildforce subdirectory
+  - Update output directory path for all agent-specific command generation
+  - Verify nested structure in generated ZIP archives for all agent × script combinations
+  - Test local artifact resolution with new nested structure
+  - Update any documentation referencing command paths
+
+out_of_scope:
+  - Migrating existing initialized projects to new command structure (users can upgrade)
+  - Changing command file names or content
+  - Modifying agent-specific command formats (.md, .toml, .prompt.md)
+  - Adding new commands or removing existing commands
+  - Changing the .buildforce/templates/ or .buildforce/scripts/ structure
+
+# DESIGN PRINCIPLES
+
+design_principles:
+  - "Namespace isolation: BuildForce commands should be clearly separated from user commands"
+  - "Consistency: All agents should follow the same nested structure pattern"
+  - "Simplicity: Minimal code changes with maximum organizational benefit"
+  - "Backward compatibility: New projects use nested structure, old projects continue working"
+
+# ACCEPTANCE CRITERIA
+
+acceptance_criteria:
+  - AC1: Running `AGENTS=claude SCRIPTS=sh .github/workflows/scripts/create-release-packages.sh v0.0.99` produces a ZIP with commands at `.claude/commands/buildforce/*.md`
+  - AC2: All 11 agents × 2 script variants (22 total combinations) have commands nested in buildforce/ subdirectory
+  - AC3: Unzipping a generated artifact and running `buildforce init --local` deploys commands to `{agent}/commands/buildforce/`
+  - AC4: The 6 slash commands (research.md, spec.md, plan.md, build.md, complete.md, document.md) are present in the buildforce/ subdirectory
+  - AC5: No commands remain in the parent `{agent}/commands/` directory (all moved to buildforce/ subdirectory)
+  - AC6: Build pipeline completes without errors and produces valid ZIP archives
+
+# ASSUMPTIONS & DEPENDENCIES
+
+assumptions:
+  - Agents support nested command subdirectories (most modern AI assistants do)
+  - Users upgrading to new version will run `buildforce upgrade` or `buildforce init` to get new structure
+  - The generate_commands() function has write access to create subdirectories
+
+dependencies:
+  internal:
+    - create-release-packages.sh: "Core script that generates agent-specific command files"
+    - CLI init command: "Will extract commands to new nested path"
+    - CLI upgrade command: "Will update existing projects to new command structure"
+  external:
+    - bash: "4.0+ for script execution"
+    - zip: "For creating release archives"
+
+# OPEN QUESTIONS
+
+open_questions: []
+
+# NOTES
+
+notes: |
+  This change improves long-term maintainability and organization without affecting
+  command functionality. Users with existing projects can continue using flat structure
+  or upgrade to nested structure via `buildforce upgrade`.
+
+  The nested structure follows common patterns:
+  - .claude/commands/buildforce/research.md
+  - .gemini/commands/buildforce/research.toml
+  - .github/prompts/buildforce/research.prompt.md
+
+  Testing strategy: Generate release packages locally, inspect ZIP contents, and verify
+  command paths are correct before pushing to CI/CD pipeline.
