@@ -1,0 +1,170 @@
+id: readme-v3-developer-focused-20250130000000
+name: "README v3 - Developer-Focused Documentation"
+type: feature
+status: draft
+created: "2025-01-30"
+last_updated: "2025-01-30"
+
+summary: |
+  Create a developer-focused README v3 that follows OSS best practices observed in successful CLI tools (bat, ripgrep, fd, fzf), eliminates marketing language, restores full command documentation inline, and positions Buildforce as a technical reference manual rather than a landing page.
+
+# INTENT / PROBLEM STATEMENT
+
+problem: |
+  README-v2.md attempted to solve a marketing problem that doesn't exist for CLI tools targeting individual developers. It introduced several issues:
+  - Reduced command documentation from 270 lines to 15 lines (95% reduction), killing discoverability
+  - Added marketing language ("The Problem", "dramatically more effective") that reduces developer trust
+  - Included FAQ and Enterprise/Security sections that feel defensive and off-target for individual developers
+  - Positioned tool as SaaS product rather than technical utility
+  - Installation appears too late (line 160) when developers need immediate action path
+
+  Analysis of successful OSS CLI tools (bat, ripgrep, fd, fzf with 10k-68k stars) shows they:
+  - Lead with visual proof (screenshots, benchmarks) not prose
+  - Keep 100-200+ lines of inline command documentation
+  - Have minimal "why use this" sections (1 sentence, not paragraphs)
+  - Never have "The Problem" sections or defensive FAQs
+  - Put installation early (within first 50 lines)
+  - Optimize for technical depth over marketing appeal
+
+motivation: |
+  Developers evaluate CLI tools by asking "can it do X?" They need comprehensive inline documentation to make that assessment without clicking away. The README should be a reference manual that happens to market itself through utility and technical depth, not a marketing page with reduced documentation.
+
+  The proposed v3 structure addresses user's concern about "too salesy" while maintaining v2's improved organizational flow. It combines:
+  - Technical depth from original README
+  - Structural clarity from v2
+  - Zero marketing fluff
+  - Developer-first presentation
+
+# GOALS
+
+primary_goals:
+  - Create README that converts developers through technical depth and utility, not marketing language
+  - Restore full command documentation inline (200+ lines) so developers can evaluate tool capabilities without leaving README
+  - Follow observable patterns from successful OSS CLI tools (bat, ripgrep, fd, fzf)
+  - Position Buildforce as technical reference manual, not SaaS product
+  - Implement user's proposed 13-section structure while avoiding v2's pitfalls
+
+secondary_goals:
+  - Reduce time-to-first-action (installation within first 100 lines, ideally 50)
+  - Add visual proof element (demo output, terminal examples)
+  - Maintain content reusability from v2 where appropriate (Contributing, Support & Community, License sections)
+  - Balance brevity with completeness (target 600-800 lines, 70% code examples and technical detail)
+
+# REQUIREMENTS
+
+functional_requirements:
+  - FR1: Implement 13-section structure as specified by user (Title, One-liner, What is Buildforce, Why context-first, Comparison table, Quick Start, How it works, Commands breakdown, Supported agents, Contributing, Support & Community, License, Star the project)
+  - FR2: Restore full command documentation inline with 30-40 lines per command covering purpose, usage, examples, output, key features (total 200-250 lines for 6 commands)
+  - FR3: Create "What is Buildforce?" section (3-5 sentences max) blending problem statement with solution, avoiding v2's verbose "The Problem" section
+  - FR4: Create "Why context-first?" section (4-6 sentences) explaining context persistence value proposition without marketing language
+  - FR5: Update comparison table from v2 to focus on "Traditional AI Assistant" vs "AI Assistant + Buildforce" with concrete technical differences
+  - FR6: Rename "Try It in 2 Minutes" to "Quick Start" with both global install and npx usage examples, positioned early (target line 80-120)
+  - FR7: Create "How It Works" section as critical pedagogical step that delivers the "aha" moment before detailed command docs. Must include: (a) visual workflow representation showing command progression, (b) brief explanation of what happens at each step in the workflow, (c) 3 concrete scenarios demonstrating different entry points (basic /spec+/build, full workflow /research+/spec+/build+/complete, manual context /research+/document). This section bridges the gap between "what is Buildforce" and "how do I use each command" by showing the slash command orchestration pattern that distinguishes Buildforce from typical CLI tools.
+  - FR8: Include AI assistants table from v2 showing 11 supported assistants with configuration folders
+  - FR9: Reuse Contributing, Support & Community, and License sections from v2 verbatim
+  - FR10: Add "Star the Project" call-to-action section at end (from v2)
+
+non_functional_requirements:
+  - NFR1: Total length 600-800 lines (comparable to fd, fzf) with 70% technical content (examples, commands, options)
+  - NFR2: Zero marketing language - no "dramatically", "revolutionizing", "game-changing", "The Problem" sections, defensive FAQs
+  - NFR3: Scannability - use tables, bullet lists, code blocks liberally; minimize prose paragraphs
+  - NFR4: Developer trust signals - technical depth, accurate command documentation, real examples, no adjective inflation
+  - NFR5: GitHub-optimized - proper heading hierarchy for auto-generated TOC, no manual TOC
+
+# SCOPE
+
+in_scope:
+  - Complete rewrite of README.md using v2 content as base material
+  - 13-section structure as specified by user
+  - Full restoration of command documentation (200-250 lines)
+  - Removal of all marketing language and defensive positioning
+  - Creation of new "Why context-first?" section
+  - Updated comparison table with technical focus
+  - Workflow examples showing command patterns
+  - Reuse of appropriate v2 sections (Contributing, Support, License, Star CTA)
+
+out_of_scope:
+  - Demo screenshots or GIFs (noted as future enhancement, not blocking v3)
+  - Performance benchmarks (no data available yet)
+  - Video tutorials or interactive walkthroughs
+  - Separate COMMANDS.md file (keep inline for v3, can split later if needed)
+  - Migration guide from v1 to v3
+  - Translations or localization
+
+# DESIGN PRINCIPLES
+
+design_principles:
+  - "Show, don't sell: Let technical depth and utility speak for themselves"
+  - "Inline reference: Developers should find answers without clicking away"
+  - "Scannability over prose: Tables and bullets over paragraphs"
+  - "Trust through accuracy: Precise command documentation builds credibility"
+  - "Action-first: Get developers from curious to installed in <100 lines"
+
+# ACCEPTANCE CRITERIA
+
+acceptance_criteria:
+  - AC1: README contains all 13 sections in specified order with correct naming
+  - AC2: Command documentation totals 200-250 lines with 30-40 lines per command (6 commands total)
+  - AC3: Zero instances of marketing language: no "dramatically", "revolutionizing", "game-changing", "The Problem" section, or defensive FAQ
+  - AC4: "What is Buildforce?" section is 3-5 sentences maximum, blends problem and solution
+  - AC5: "Why context-first?" section is 4-6 sentences explaining technical value proposition
+  - AC6: Comparison table compares "Traditional AI Assistant" vs "AI Assistant + Buildforce" with 5-7 concrete technical differences
+  - AC7: Quick Start section appears before line 150 and includes both npm global install and npx examples
+  - AC8: "How It Works" section contains: (a) visual workflow representation (arrows or simple diagram), (b) brief step-by-step explanation of what happens at each command, (c) exactly 3 workflow scenarios showing different usage patterns, (d) clear positioning BEFORE command documentation section to provide context
+  - AC9: Contributing, Support & Community, and License sections match v2 verbatim
+  - AC10: Total length is 600-800 lines with minimum 70% technical content (code blocks, tables, command docs, bullet lists)
+  - AC11: All command documentation includes: purpose statement, usage syntax, 2-3 concrete examples, key features list
+  - AC12: "How It Works" section successfully delivers the "aha" moment - developers understand the slash command orchestration pattern before diving into individual command details
+
+# ASSUMPTIONS & DEPENDENCIES
+
+assumptions:
+  - User has access to both README.md (original) and README-v2.md for content reference
+  - 11 AI assistants list and configuration details are current and accurate
+  - npm package name (@buildforce/cli) and installation commands are stable
+  - Contributing, Support & Community, and License sections from v2 are satisfactory and don't need modification
+  - Command documentation accuracy can be verified against actual slash command template files in src/templates/commands/
+
+dependencies:
+  internal:
+    - README-v2.md: "Source for reusable sections (Contributing, Support, License, Star CTA)"
+    - README.md: "Original source for command documentation detail to restore"
+    - src/templates/commands/*.md: "Ground truth for command features and usage"
+    - package.json: "npm package metadata, version, repository URL"
+    - .buildforce/context/slash-commands.yml: "Command specifications and workflow details"
+  external:
+    - None
+
+# OPEN QUESTIONS
+
+open_questions:
+  - Should we add a visual demo section placeholder for future screenshot/GIF addition?
+  - Should comparison table include specific metrics (e.g., "Context persists across sessions" vs "Context lost after each session")?
+  - Should "How It Works" examples show actual terminal output or just command sequences?
+  - Should we include buildforce.json configuration file explanation in a separate section, or integrate it into Quick Start?
+
+# NOTES
+
+notes: |
+  Key insights from successful OSS CLI tools analysis:
+  - bat (49k stars): 80+ lines of usage examples inline, minimal "why" section
+  - ripgrep (48k stars): 200+ lines technical docs, benchmarks establish trust
+  - fd (34k stars): 100+ lines of examples, one-sentence value prop
+  - fzf (68k stars): 150+ lines usage, screenshot before explanation
+
+  These tools let metrics and technical depth speak for themselves rather than marketing copy.
+
+  User's proposed structure is sound - it addresses the "too salesy" concern while maintaining organizational improvements from v2. The key is execution: filling sections with technical content not marketing prose.
+
+  "Context-first" positioning is strong differentiation - it's technical and specific, not generic like "better workflow". The proposed structure elevates this to a dedicated section which is appropriate.
+
+  Comparison table from v2 had good structure but needs content refinement to be technical rather than aspirational.
+
+  CRITICAL DISTINCTION: Buildforce is NOT a typical CLI tool (like bat, fd, ripgrep) where commands are directly executed. Buildforce provides slash commands used INSIDE AI assistant conversations to orchestrate a workflow. This fundamental difference means:
+  - Developers won't immediately understand how to use it just from seeing command syntax
+  - "How It Works" section (Section 7) is the critical pedagogical moment
+  - It must show workflow orchestration BEFORE diving into individual command docs
+  - Without this "aha" moment, developers will read command docs without context and bounce
+  - Section 7 bridges: "what is Buildforce" → "how commands work together" → "what each command does"
+
+  This is similar to testing frameworks (Jest) showing a complete test file before explaining describe(), test(), expect() functions individually.

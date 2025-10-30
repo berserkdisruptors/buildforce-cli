@@ -1,0 +1,362 @@
+id: readme-v3-developer-focused-20250130000000-plan
+name: "Implementation Plan for README v3 - Developer-Focused Documentation"
+spec_id: "readme-v3-developer-focused-20250130000000"
+type: implementation-plan
+status: draft
+created: "2025-01-30"
+last_updated: "2025-01-30"
+
+# ARCHITECTURE OVERVIEW
+
+approach: |
+  Create README v3 by combining the organizational structure from README-v2.md with restored technical depth from original README.md, while eliminating all marketing language identified in the analysis. The approach follows observable patterns from successful OSS CLI tools: technical depth first, minimal prose, inline documentation, action-oriented.
+
+  Structure: 13 sections as specified by user, each with specific content constraints to prevent marketing creep. Source material strategically extracted from v2 where appropriate (sections 10-13) and original where needed (command docs).
+
+  Content strategy:
+  - Sections 1-2: Minimal (title + one-liner)
+  - Sections 3-5: Concise technical explanation (problem/solution, context value, comparison)
+  - Section 6-7: Action-oriented (install, examples)
+  - Section 8: Maximum technical depth (200-250 lines command docs)
+  - Sections 9-13: Reuse v2 content with minor adjustments
+
+technology_stack:
+  - Markdown (GitHub-flavored) for formatting
+  - Mermaid (optional) for workflow diagrams if needed
+  - Code blocks for command examples and terminal output
+  - Tables for comparisons and AI assistant lists
+
+decisions:
+  - decision: "Restore command documentation to 200-250 lines total (30-40 per command)"
+    rationale: "Analysis of successful CLI tools shows inline documentation is critical for developer conversion. fd has 100+, fzf has 150+, bat has 80+ lines of examples. Reducing to 15 lines (v2) killed discoverability. Developers need to answer 'can it do X?' without leaving README."
+
+  - decision: "Eliminate 'The Problem' section, FAQ, and Enterprise/Security sections"
+    rationale: "None of the successful OSS CLI tools (bat, ripgrep, fd, fzf) have these sections. They signal defensive positioning and reduce trust with individual developers. Problem/solution can be blended into 'What is Buildforce?' in 3-5 sentences."
+
+  - decision: "Rename 'Try It in 2 Minutes' to 'Quick Start' and position at line 80-120"
+    rationale: "'Quick Start' is standard terminology in OSS projects. Position early to reduce friction between interest and action, but after value proposition so developers understand why they're installing."
+
+  - decision: "Create 'Why context-first?' as dedicated section"
+    rationale: "This is Buildforce's key technical differentiation. Elevating it to a section (rather than burying in prose) highlights the value prop without marketing language. Keep it technical: explain what context persistence does, not how it 'transforms' development."
+
+  - decision: "Section 7 'How It Works' must deliver the 'aha' moment before command documentation"
+    rationale: "Buildforce is fundamentally different from typical CLI tools (bat, fd, ripgrep) - it uses slash commands INSIDE AI conversations to orchestrate workflow, not direct terminal commands. Developers won't understand usage from command syntax alone. Section 7 must show: (a) visual workflow representation, (b) step-by-step explanation of what happens at each command, (c) 3 concrete scenarios. This pedagogical approach mirrors testing frameworks (Jest shows complete test before explaining describe(), test(), expect()). Without this 'aha' moment, developers will read command docs without context and bounce."
+
+  - decision: "Keep total length 600-800 lines with 70% technical content"
+    rationale: "fd README is ~400 lines, fzf is ~200 but links to extensive docs, ripgrep is ~300. 600-800 allows comprehensive inline docs while staying focused. 70% technical ensures trust through depth rather than prose."
+
+  - decision: "Reuse Contributing, Support & Community, License, Star CTA sections from v2 verbatim"
+    rationale: "These sections were well-executed in v2 and don't contribute to the 'too salesy' problem. Reusing them saves effort and maintains consistency."
+
+# FILE STRUCTURE
+
+files_to_create:
+  - None (modifying existing file)
+
+files_to_modify:
+  - path: "README.md"
+    change_type: "rewrite"
+    description: "Complete rewrite implementing 13-section structure with technical focus, restored command docs, zero marketing language"
+
+# IMPLEMENTATION PHASES
+
+phase_1:
+  name: "Foundation & Header Sections"
+  description: |
+    Create the foundational sections that establish identity and value proposition without marketing language.
+    Sections 1-5: Title through Comparison table.
+
+  tasks:
+    - [x] Write Section 1: Title and badges (reuse from v2, verify npm package name)
+      spec_refs: [FR1]
+      files: [README.md]
+      notes: "Keep badges minimal: npm version, downloads, stars, license"
+
+    - [x] Write Section 2: One-liner tagline ("Context-first Spec-Driven Development framework")
+      spec_refs: [FR1]
+      files: [README.md]
+      notes: "Single line, no bold, clear and technical"
+
+    - [x] Write Section 3: What is Buildforce? (3-5 sentences blending problem and solution)
+      spec_refs: [FR1, FR3, NFR2]
+      files: [README.md]
+      notes: "Technical, concise, no marketing language. Answer: what it does, what problem it solves."
+
+    - [x] Write Section 4: Why context-first? (4-6 sentences explaining technical value)
+      spec_refs: [FR1, FR4, NFR2]
+      files: [README.md]
+      notes: "Explain persistence mechanism, why it matters technically, benefit to workflow"
+
+    - [x] Write Section 5: Comparison table (Traditional AI Assistant vs AI Assistant + Buildforce)
+      spec_refs: [FR1, FR5]
+      files: [README.md]
+      notes: "5-7 rows, concrete technical differences. Example: 'Context lost after session' vs 'Context persists in .buildforce/context/'"
+
+  validation:
+    - [x] All phase_1 tasks completed
+    - [x] Section 3 is 3-5 sentences maximum
+    - [x] Section 4 is 4-6 sentences maximum
+    - [x] No marketing language present (no "dramatically", "revolutionizing", etc.)
+    - [x] Comparison table has concrete technical examples
+    - [x] Spec requirements covered: [FR1, FR3, FR4, FR5, NFR2]
+
+phase_2:
+  name: "Installation & Workflow Examples"
+  description: |
+    Create action-oriented sections showing developers how to install and use the tool.
+    CRITICAL: Section 7 "How It Works" is the pedagogical moment that delivers the "aha" understanding.
+    Buildforce is NOT a typical CLI tool - commands are slash commands used INSIDE AI conversations to orchestrate workflow.
+    Section 7 must show this orchestration pattern BEFORE diving into individual command documentation.
+    Sections 6-7: Quick Start and How it works.
+
+  tasks:
+    - [x] Write Section 6: Quick Start with global install and npx examples
+      spec_refs: [FR1, FR6, NFR5]
+      files: [README.md]
+      notes: "Show both: 'npm install -g @buildforce/cli' AND 'npx @buildforce/cli my-project'. Include basic usage after install."
+
+    - [x] Write Section 7: How It Works - Add visual workflow representation
+      spec_refs: [FR1, FR7, AC8]
+      files: [README.md]
+      notes: "Start with visual: /research → /spec → /plan → /build → /complete. Use arrows or simple diagram. This shows the orchestration pattern at a glance."
+
+    - [x] Write Section 7: How It Works - Add step-by-step explanation
+      spec_refs: [FR1, FR7, AC8]
+      files: [README.md]
+      notes: "Brief explanation of what happens at each command in the workflow. E.g., '/research gathers context from .buildforce/context/ and codebase', '/spec materializes intent into requirements'. This bridges visual to concrete examples."
+
+    - [x] Write Section 7: How It Works - Basic example (/spec + /build)
+      spec_refs: [FR1, FR7, AC8]
+      files: [README.md]
+      notes: "Minimal viable workflow showing entry point for simple features. Demonstrate you can skip research and jump to spec+build."
+
+    - [x] Write Section 7: How It Works - Full example (/research + /spec + /build + /complete)
+      spec_refs: [FR1, FR7, AC8]
+      files: [README.md]
+      notes: "Complete workflow showing all core commands in sequence. This is the canonical pattern."
+
+    - [x] Write Section 7: How It Works - Manual context example (/research + /document)
+      spec_refs: [FR1, FR7, AC8]
+      files: [README.md]
+      notes: "Utility workflow for documenting existing code without spec-driven cycle. Shows /document as standalone command."
+
+  validation:
+    - [x] All phase_2 tasks completed
+    - [x] Quick Start appears before line 150
+    - [x] Both installation methods (global and npx) are shown
+    - [x] Section 7 has visual workflow representation (arrows/diagram)
+    - [x] Section 7 has step-by-step explanation of each command's role
+    - [x] Exactly 3 workflow scenarios present with concrete command sequences
+    - [x] Section 7 successfully delivers "aha" moment about slash command orchestration
+    - [x] Section 7 positions BEFORE Section 8 (command docs) to provide context
+    - [x] Spec requirements covered: [FR1, FR6, FR7, AC8, AC12, NFR5]
+
+phase_3:
+  name: "Command Documentation Restoration"
+  description: |
+    Restore full inline command documentation (200-250 lines total) with comprehensive examples and feature descriptions.
+    Section 8: Commands breakdown and documentation.
+
+  tasks:
+    - [x] Document /research command (30-40 lines: purpose, usage, examples, key features)
+      spec_refs: [FR1, FR2, NFR1, NFR3]
+      files: [README.md]
+      notes: "Reference src/templates/commands/research.md for accuracy. Include: searches context first, recency detection, output format"
+
+    - [x] Document /spec command (30-40 lines: purpose, usage, examples, key features)
+      spec_refs: [FR1, FR2, NFR1, NFR3]
+      files: [README.md]
+      notes: "Reference src/templates/commands/spec.md. Include: CREATE/UPDATE modes, semantic folder naming, clarifying questions"
+
+    - [x] Document /plan command (30-40 lines: purpose, usage, examples, key features)
+      spec_refs: [FR1, FR2, NFR1, NFR3]
+      files: [README.md]
+      notes: "Reference src/templates/commands/plan.md. Include: design decisions, phase-based tasks, spec traceability"
+
+    - [x] Document /build command (30-40 lines: purpose, usage, examples, key features)
+      spec_refs: [FR1, FR2, NFR1, NFR3]
+      files: [README.md]
+      notes: "Reference src/templates/commands/build.md. Include: progress tracking, deviation logging, dual validation"
+
+    - [x] Document /complete command (30-40 lines: purpose, usage, examples, key features)
+      spec_refs: [FR1, FR2, NFR1, NFR3]
+      files: [README.md]
+      notes: "Reference src/templates/commands/complete.md. Include: context file generation, validation, state clearing"
+
+    - [x] Document /document command (30-40 lines: purpose, usage, examples, key features)
+      spec_refs: [FR1, FR2, NFR1, NFR3]
+      files: [README.md]
+      notes: "Reference src/templates/commands/document.md. Include: standalone utility, kebab-case naming, intelligent merge"
+
+  validation:
+    - [x] All phase_3 tasks completed
+    - [x] Total command documentation is 200-250 lines (6 commands × 30-40 lines)
+    - [x] Each command doc includes: purpose, usage syntax, 2-3 examples, key features list
+    - [x] All command information verified against source templates in src/templates/commands/
+    - [x] Section is scannable (uses bullets, code blocks, subheadings)
+    - [x] Spec requirements covered: [FR1, FR2, NFR1, NFR3]
+
+phase_4:
+  name: "Supporting Sections & Final Assembly"
+  description: |
+    Complete remaining sections by reusing appropriate v2 content and adding AI assistants table.
+    Sections 9-13: Supported agents through Star the project.
+
+  tasks:
+    - [x] Write Section 9: Supported agents table (11 assistants with config folders)
+      spec_refs: [FR1, FR8]
+      files: [README.md]
+      notes: "Reuse v2 table, verify against src/config/agents.ts for accuracy"
+
+    - [x] Copy Section 10: Contributing (verbatim from v2)
+      spec_refs: [FR1, FR9]
+      files: [README.md]
+      notes: "No modifications needed"
+
+    - [x] Copy Section 11: Support & Community (verbatim from v2)
+      spec_refs: [FR1, FR9]
+      files: [README.md]
+      notes: "No modifications needed"
+
+    - [x] Copy Section 12: License (verbatim from v2)
+      spec_refs: [FR1, FR9]
+      files: [README.md]
+      notes: "No modifications needed"
+
+    - [x] Copy Section 13: Star the Project (verbatim from v2)
+      spec_refs: [FR1, FR10]
+      files: [README.md]
+      notes: "No modifications needed"
+
+    - [x] Final review: verify 13 sections present, line count 600-800, 70% technical content
+      spec_refs: [FR1, AC1, AC10, NFR1]
+      files: [README.md]
+      notes: "Count total lines, verify technical content ratio, check section ordering"
+
+  validation:
+    - [x] All phase_4 tasks completed
+    - [x] All 13 sections present in correct order
+    - [x] AI assistants table matches source data (src/config/agents.ts)
+    - [x] Total length is 600-800 lines
+    - [x] Technical content (code blocks, tables, command docs, bullets) comprises ≥70% of file
+    - [x] Spec requirements covered: [FR1, FR8, FR9, FR10, AC1, AC10, NFR1]
+
+# DEVIATION LOG
+
+deviations:
+  # No deviations yet - will be populated during /build
+
+# TESTING GUIDANCE
+
+testing:
+  automated_tests:
+    - test_file: "N/A"
+      what: "No automated tests for documentation"
+      command: "N/A"
+
+  manual_tests:
+    - scenario: "Content verification against spec requirements"
+      steps: |
+        1. Open README.md in editor
+        2. Verify all 13 sections present in order (AC1)
+        3. Count command documentation lines: should be 200-250 total (AC2)
+        4. Search for marketing language terms: "dramatically", "revolutionizing", "game-changing", "The Problem", FAQ (AC3)
+        5. Count sentences in "What is Buildforce?" section: should be 3-5 (AC4)
+        6. Count sentences in "Why context-first?" section: should be 4-6 (AC5)
+        7. Verify comparison table has 5-7 rows with technical differences (AC6)
+        8. Check Quick Start section line number: should be <150 (AC7)
+        9. Count workflow examples in "How It Works": should be exactly 3 (AC8)
+        10. Verify Contributing, Support, License sections match v2 (AC9)
+        11. Count total lines: should be 600-800 with ≥70% technical content (AC10)
+        12. Verify each command doc has: purpose, usage, 2-3 examples, features (AC11)
+
+    - scenario: "Developer conversion path simulation"
+      steps: |
+        1. Read README from top as if discovering project for first time
+        2. Verify value proposition is clear within first 50 lines
+        3. Check if installation path is obvious before line 150
+        4. Attempt to answer "can Buildforce do X?" using only command docs (don't click away)
+        5. Verify technical depth builds trust (accurate, detailed, no hype)
+
+    - scenario: "Comparison with successful OSS CLI tools"
+      steps: |
+        1. Compare structure to bat, fd, fzf READMEs
+        2. Verify similar patterns: minimal intro, early install, extensive inline docs
+        3. Check tone matches: technical depth over marketing
+
+# VALIDATION CRITERIA
+
+success_metrics:
+  - All 13 acceptance criteria met (AC1-AC11)
+  - Zero marketing language instances found in content review
+  - Command documentation totals 200-250 lines with comprehensive examples
+  - File length 600-800 lines with ≥70% technical content
+  - Quick Start appears before line 150
+  - Developer conversion path is clear and action-oriented
+
+spec_coverage:
+  - FR1: "⏳ Phase 1-4: All section creation tasks"
+  - FR2: "⏳ Phase 3: Command documentation restoration (6 tasks)"
+  - FR3: "⏳ Phase 1: What is Buildforce? section"
+  - FR4: "⏳ Phase 1: Why context-first? section"
+  - FR5: "⏳ Phase 1: Comparison table"
+  - FR6: "⏳ Phase 2: Quick Start section"
+  - FR7: "⏳ Phase 2: How It Works with visual workflow, step-by-step explanation, and 3 examples (critical pedagogical moment)"
+  - AC8: "⏳ Phase 2: Section 7 validation - visual, explanation, 3 scenarios, positions before command docs"
+  - AC12: "⏳ Phase 2: Section 7 delivers 'aha' moment about slash command orchestration"
+  - FR8: "⏳ Phase 4: Supported agents table"
+  - FR9: "⏳ Phase 4: Reuse Contributing, Support, License"
+  - FR10: "⏳ Phase 4: Star the Project CTA"
+  - NFR1: "⏳ Phase 4: Final review validates 600-800 lines, 70% technical"
+  - NFR2: "⏳ Phase 1-4: Content review eliminates marketing language"
+  - NFR3: "⏳ Phase 3-4: Formatting uses tables, bullets, code blocks"
+  - NFR4: "⏳ Phase 3: Command accuracy verified against source"
+  - NFR5: "⏳ Phase 2-4: Proper heading hierarchy for GitHub auto-TOC"
+
+# PROGRESS SUMMARY
+
+overall_progress:
+  phase_1: "0/5 tasks completed"
+  phase_2: "0/4 tasks completed"
+  phase_3: "0/6 tasks completed"
+  phase_4: "0/6 tasks completed"
+
+current_status: |
+  Spec and plan created. Ready to begin implementation with /build command.
+
+next_immediate_steps:
+  - Run /build to begin phase 1 implementation
+  - Write foundation sections 1-5 (Title through Comparison table)
+  - Verify no marketing language in initial content
+
+# RISKS & CONSIDERATIONS
+
+risks:
+  - risk: "Command documentation may drift from actual implementation if slash command templates change"
+    mitigation: "Reference source templates in src/templates/commands/ during Phase 3 to ensure accuracy. Verify each command's features against template content."
+
+  - risk: "Restoring 200-250 lines of command docs may make README feel too long"
+    mitigation: "This is intentional - successful CLI tools have 100-200+ lines of examples inline. Developers expect comprehensive reference material. If future feedback indicates length is an issue, can split into COMMANDS.md at that time."
+
+  - risk: "Reusing v2 sections (Contributing, Support, License) may introduce inconsistency if those sections had issues"
+    mitigation: "User explicitly approved reuse of these sections. If issues are discovered during /build, will flag for user review."
+
+  - risk: "Line count target (600-800) may be difficult to hit while keeping 70% technical content"
+    mitigation: "Command docs alone contribute 200-250 lines. Quick Start, workflow examples, AI table, and other technical elements should easily reach 70% threshold. Monitor ratio during Phase 4 final review."
+
+  - risk: "Comparison table may become marketing-focused if not carefully worded"
+    mitigation: "Use concrete technical examples ('Context persists in .buildforce/context/' vs abstract claims. Each row should describe observable functionality difference."
+
+# NOTES
+
+lessons_learned:
+  - "Successful OSS CLI tool analysis provided clear patterns to follow"
+  - "User's proposed structure addresses v2 issues while maintaining organizational improvements"
+  - "Marketing language elimination is achievable through concrete technical description"
+  - "Context-first positioning is strong differentiator worth elevating to dedicated section"
+
+future_enhancements:
+  - "Add demo screenshots or terminal GIFs in future iteration"
+  - "Consider adding performance benchmarks when data available"
+  - "May split command docs into COMMANDS.md if README length becomes an issue"
+  - "Add visual workflow diagram using Mermaid in Section 7"

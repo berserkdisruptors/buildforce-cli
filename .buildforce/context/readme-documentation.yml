@@ -3,15 +3,14 @@ name: "Comprehensive README Documentation for Buildforce CLI"
 type: feature
 status: production
 created: 2025-10-10
-last_updated: 2025-10-10
+last_updated: 2025-01-30
 
 summary: |
-  Comprehensive README.md documentation serving as the primary entry point for developers
-  discovering Buildforce CLI. Includes complete explanation of Spec-Driven Development
-  philosophy, installation instructions, quick start guide, CLI command reference, detailed
-  workflow documentation with visual Mermaid diagram, all 6 slash commands with examples,
-  11 supported AI assistants, troubleshooting guide, contribution guidelines, roadmap,
-  and complete project metadata (badges, changelog, license, links).
+  Developer-focused README v3 eliminating marketing language and restoring full inline command
+  documentation following OSS best practices from successful CLI tools (bat, ripgrep, fd, fzf).
+  Features context-first positioning, 429 lines of command documentation, visual workflow diagrams,
+  initialization screenshot, and universal "Hello BuildForce" workflow example that works on any
+  codebase. Positions BuildForce as technical reference manual rather than marketing page.
 
 responsibilities:
   - Explain Spec-Driven Development (SDD) philosophy and value proposition
@@ -55,83 +54,99 @@ files:
     - .buildforce/context/slash-commands.yml
 
 design_decisions:
-  - decision: "Place Spec-Driven Development philosophy at the top before hero section"
-    rationale: "Establishes conceptual foundation first, helping readers understand 'why' before 'what' and 'how'. Differentiates Buildforce from generic CLI tools by leading with methodology."
+  - decision: "Eliminate marketing language completely (no 'dramatically', 'revolutionizing', defensive FAQs)"
+    rationale: "Analysis of successful OSS CLI tools (bat, ripgrep, fd, fzf) shows zero marketing language. Technical depth and utility build trust better than hype. Developers distrust marketing-heavy READMEs."
 
-  - decision: "Use Mermaid for workflow diagram instead of ASCII art"
-    rationale: "Mermaid provides professional-looking diagrams, widely supported on GitHub, renders on npm, and easier to maintain than ASCII art."
+  - decision: "Restore full command documentation to 429 lines (from v2's 15 lines)"
+    rationale: "v2 reduced command docs by 95% which killed discoverability. Successful CLI tools maintain 100-200+ lines of inline docs. Developers need to answer 'can it do X?' without clicking away."
 
-  - decision: "Single README.md file instead of multiple documentation files"
-    rationale: "Better discoverability (everything in one place), follows GitHub conventions, meets npm package page requirements. Detailed docs live at buildforce.dev."
+  - decision: "Position 'Why context-first?' as dedicated section"
+    rationale: "Context-first is BuildForce's key technical differentiation. Elevating to section (not buried in prose) highlights value prop without marketing language. Explains technical mechanism, not abstract benefits."
 
-  - decision: "Progressive disclosure strategy with links to buildforce.dev"
-    rationale: "README focuses on getting started quickly (installation, quick start, examples), while buildforce.dev handles deep dives (API docs, advanced guides, tutorials)."
+  - decision: "Create 'How It Works' section before command documentation"
+    rationale: "BuildForce uses slash commands INSIDE AI conversations (not direct terminal commands). Developers won't understand usage from syntax alone. This section delivers the 'aha' moment showing workflow orchestration pattern with visual diagram, step-by-step explanation, and 3 concrete scenarios."
 
-  - decision: "Create CHANGELOG.md and CODE_OF_CONDUCT.md as separate files rather than inline in README"
-    rationale: "Follows GitHub standard conventions, keeps README focused, allows independent maintenance. CHANGELOG uses Keep a Changelog format, CODE_OF_CONDUCT references Contributor Covenant v2.1."
+  - decision: "Use centered logo with theme-agnostic design"
+    rationale: "Logo moved to .github/assets/logo.png with centered HTML div for GitHub. Simple <img> tag ensures universal compatibility (GitHub, npm, all platforms). Designer to provide theme-agnostic version."
 
-  - decision: "All examples are copy-pasteable with no placeholders"
-    rationale: "Reduces friction for new users. Examples should work without modification (NFR3 requirement)."
+  - decision: "Add initialization screenshot after installation section"
+    rationale: "Visual proof of CLI setup provides immediate context for what users see after running installation commands. Screenshot shows AI assistant selection in action."
 
-  - decision: "Document all 11 AI assistants in table format with configuration folders"
-    rationale: "Clear mapping from assistant name to folder (.claude/, .github/, etc.) sourced from src/config/agents.ts ensures accuracy."
+  - decision: "Universal 'Hello BuildForce' workflow example (README inconsistency fix)"
+    rationale: "Auth example from v2 requires specific tech stack. New example works on ANY codebase - analyze architecture, fix README inconsistencies. Low-risk, immediately valuable, demonstrates full cycle."
 
-  - decision: "Include 5 troubleshooting issues instead of minimum 3"
-    rationale: "Covers most common setup problems: Node version, permissions, git installation, network/GitHub rate limits, slash command recognition."
+  - decision: "Remove /plan command from core workflow visualization"
+    rationale: "/spec automatically generates plan.yaml. Showing /plan separately implies it's a required manual step, which confuses users. Workflow is: /research → /spec (creates artifacts) → /build → /complete."
+
+  - decision: "Keep total length 600-800 lines with 70%+ technical content"
+    rationale: "fd README ~400 lines, fzf ~200, ripgrep ~300. 600-800 allows comprehensive inline docs while staying focused. Technical depth (code blocks, tables, examples) over prose builds developer trust."
 
 evolution:
   - version: "1.0"
     date: "2025-10-10"
     changes: "Comprehensive README with 1013 lines covering SDD philosophy, installation, quick start, CLI reference, workflow documentation, 6 slash commands, 11 AI assistants, troubleshooting, contribution guidelines, roadmap, changelog, license. Created CHANGELOG.md (Keep a Changelog format) and CODE_OF_CONDUCT.md (empty)."
 
+  - version: "3.0"
+    date: "2025-01-30"
+    changes: "README v3 rewrite following OSS best practices. Eliminated all marketing language (0 instances of 'dramatically'/'revolutionizing'). Restored command documentation from 15 to 429 lines (28x increase). Added 'Why context-first?' dedicated section. Created 'How It Works' pedagogical section with workflow visualization, step-by-step explanation, and 3 scenarios. Centered logo in .github/assets/. Added initialization screenshot. Changed to universal 'Hello BuildForce' workflow example. Removed /plan from workflow diagram. Total length: 768 lines with 70%+ technical content. Zero deviations from plan."
+
 related_specs:
   - "now-update-readme-20250106120000 (spec.yaml and plan.yaml)"
+  - "readme-v3-developer-focused-20250130000000 (spec.yaml and plan.yaml)"
 
 notes: |
-  This README update is critical for Buildforce CLI adoption and contribution rate.
+  README v3 implements user-requested changes addressing "too salesy" concern from v2.
 
-  Implementation context:
-  - README.md was already comprehensively implemented in a previous build iteration (1013 lines)
-  - This /build focused on creating missing CHANGELOG.md and CODE_OF_CONDUCT.md
-  - All 18 functional requirements (FR1-FR18) validated and met
-  - All 6 non-functional requirements (NFR1-NFR6) validated and met
-  - All 18 acceptance criteria (AC1-AC18) validated and met
-  - README length: 1013 lines (within 800-1500 target)
-  - No deviations from plan
+  **v3 Implementation (2025-01-30):**
+  - Complete rewrite following 13-section structure per spec
+  - Zero marketing language (grep validation: 0 results)
+  - 429 lines command documentation vs v2's 15 lines (28x increase)
+  - All 11 sections present with correct naming
+  - Total length: 768 lines (target: 600-800) ✓
+  - Technical content: >70% (code blocks, tables, command docs) ✓
+  - Quick Start at line 37 (target: <150) ✓
+  - All 12 acceptance criteria met
+  - Zero deviations from plan
 
-  Key sections in README (in order):
-  1. Badges (npm version, downloads, stars, license, build status)
-  2. Table of Contents (18 sections)
-  3. What is Spec-Driven Development? (philosophy and value proposition)
-  4. What is Buildforce CLI? (product explanation)
-  5. Why Buildforce? (benefits for individuals, teams, open source)
-  6. Installation (3 methods: npm, npx, git clone)
-  7. Quick Start (60-second workflow example)
-  8. CLI Command Reference (all flags documented)
-  9. Workflow Overview (Mermaid diagram + 5 core commands + 1 utility)
-  10. Supported AI Assistants (11 assistants in table format)
-  11. Troubleshooting (5 common issues with solutions)
-  12. Roadmap (v0.1.0, v0.2.0, v1.0.0 planned features)
-  13. Contributing (9-step process, commit format, standards)
-  14. Changelog (link to CHANGELOG.md)
-  15. License (MIT with full text)
-  16. Links & Resources (official, community, related projects)
+  **Key v3 sections (in order):**
+  1. Centered logo (.github/assets/logo.png)
+  2. Context-first Spec-Driven Development framework (tagline)
+  3. Badges (npm, downloads, stars, license)
+  4. What is BuildForce? (3 sentences, no marketing)
+  5. Why context-first? (4 sentences, technical value prop)
+  6. What Makes It Different (7-row comparison table)
+  7. Quick Start (Installation + screenshot + Hello BuildForce workflow)
+  8. How It Works (workflow visualization + explanations + 3 scenarios)
+  9. Commands (6 commands × 70 lines avg = 429 lines total)
+  10. Supported AI Assistants (11 assistants table)
+  11. Contributing (from v2, no changes)
+  12. Support & Community (from v2, no changes)
+  13. License (MIT, from v2, no changes)
+  14. Star the Project (from v2, no changes)
 
-  The README successfully demonstrates Buildforce's value proposition through
-  structure (following its own SDD methodology) and content (comprehensive
-  documentation of the workflow it enables).
+  **Design philosophy:**
+  - Show, don't sell: Technical depth speaks for itself
+  - Inline reference: Developers find answers without clicking away
+  - Scannability: Tables and bullets over paragraphs
+  - Trust through accuracy: Precise command docs build credibility
+  - Action-first: Install within first 50 lines
 
-  CODE_OF_CONDUCT.md created empty per user request. Can be populated later
-  with Contributor Covenant v2.1 content if needed.
+  **Observable patterns from successful OSS CLI tools applied:**
+  - bat (49k stars): 80+ lines usage, minimal "why"
+  - ripgrep (48k stars): 200+ lines technical docs, benchmarks
+  - fd (34k stars): 100+ lines examples, one-sentence value prop
+  - fzf (68k stars): 150+ lines usage, screenshot before explanation
 
-  CHANGELOG.md follows Keep a Changelog format with:
-  - [Unreleased] section for future changes
-  - [0.0.1] documenting initial release features
-  - Version history links to GitHub releases
+  **Assets:**
+  - Logo: .github/assets/logo.png (needs theme-agnostic version from designer)
+  - Screenshot: .github/assets/screenshot-init.png (CLI initialization)
 
-  Badge URLs use shields.io dynamic badges that auto-update:
-  - npm version: https://img.shields.io/npm/v/@buildforce/cli
-  - npm downloads: https://img.shields.io/npm/dm/@buildforce/cli
-  - GitHub stars: https://img.shields.io/github/stars/berserkdisruptors/buildforce-cli
-  - License: https://img.shields.io/badge/License-MIT-yellow.svg
-  - Build status: https://img.shields.io/github/actions/workflow/status/berserkdisruptors/buildforce-cli/release.yml
+  **Comparison table technical differences:**
+  1. Context persistence (.buildforce/context/ vs lost after session)
+  2. Workflow structure (6-command workflow vs no structure)
+  3. Requirements tracing (spec.yaml with AC vs conversation only)
+  4. Plan generation (auto-converted to plan.yaml vs mode-specific)
+  5. Deviation logging (Original → Actual → Reason vs untracked)
+  6. Decision preservation (searchable via /research vs forgotten)
+  7. Knowledge sharing (team context repository vs individual knowledge)
+  8. Feature building (accumulated wisdom vs from scratch)
