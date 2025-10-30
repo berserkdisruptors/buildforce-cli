@@ -36,6 +36,6 @@ $ARGUMENTS
    - **Testing Strategy**: Automated tests (file, what, command) and manual tests (scenario, steps)
    - **Risks & Considerations**: List of risks paired with mitigation strategies
 
-7. **Request User Approval**: After presenting plan, ask user for approval or feedback on design decisions. User is ultimate decision maker. Suggest running `/build` if approved, or refining plan via another `/plan` call if changes needed.
+7. **Request User Approval**: After presenting plan, ask user for approval or feedback on design decisions. User is ultimate decision maker. Suggest running `/buildforce:build` if approved, or refining plan via another `/buildforce:plan` call if changes needed.
 
 Context: {$ARGUMENTS}

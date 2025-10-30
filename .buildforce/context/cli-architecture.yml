@@ -3,7 +3,7 @@ name: Buildforce CLI Architecture
 type: module
 status: production
 created: 2025-10-27
-last_updated: 2025-10-28
+last_updated: 2025-10-30
 
 summary: |
   Comprehensive architecture of the Buildforce CLI tool - a Node.js-based command-line
@@ -58,6 +58,7 @@ files:
     - src/lib/local-artifacts.ts
     - src/lib/step-tracker.ts
     - src/config/agents.ts
+    - .github/workflows/scripts/create-release-packages.sh
   secondary:
     - src/commands/init/validation.ts
     - src/commands/init/output.ts
@@ -117,6 +118,9 @@ design_decisions:
   - decision: "Support local artifact resolution via --local flag"
     rationale: "Enables offline workflows, local testing during development, and faster iteration cycles. Developers can test locally-built artifacts without publishing to GitHub Releases."
 
+  - decision: "Nest BuildForce commands in buildforce/ subdirectory"
+    rationale: "Provides namespace isolation to prevent collision with user-defined custom commands. All 11 agents deploy commands to {agent-folder}/commands/buildforce/ (or prompts/buildforce/ for Copilot), improving discoverability and following common organizational patterns. Users can easily distinguish BuildForce commands from their own."
+
 architecture_patterns:
   entry_point: |
     CLI Entry: src/cli.ts
@@ -172,7 +176,7 @@ architecture_patterns:
     - .buildforce/scripts/ - Automation scripts
     - .buildforce/templates/ - Local templates
     - buildforce.json - Project configuration with aiAssistant, scriptType, version
-    - Agent folders (.claude/, .github/, etc.) - Agent-specific files
+    - Agent folders (.claude/, .github/, etc.) - Agent-specific files with commands nested in buildforce/ subdirectory
 
     Extraction Flow:
     1. Download ZIP to temp directory
@@ -208,17 +212,23 @@ architecture_patterns:
 
   agent_configuration: |
     Supported Assistants (11+):
-    - Claude → .claude/
-    - Copilot → .github/
-    - Cursor → .cursor/
-    - Gemini → .gemini/
-    - Qwen → .qwen/
-    - Windsurf → .windsurf/
-    - Kilocode → .kilocode/
-    - Auggie → .augment/
-    - Roo → .roo/
-    - OpenCode → .opencode/
-    - Codex → .codex/
+    - Claude → .claude/commands/buildforce/
+    - Copilot → .github/prompts/buildforce/
+    - Cursor → .cursor/commands/buildforce/
+    - Gemini → .gemini/commands/buildforce/
+    - Qwen → .qwen/commands/buildforce/
+    - Windsurf → .windsurf/workflows/buildforce/
+    - Kilocode → .kilocode/workflows/buildforce/
+    - Auggie → .augment/commands/buildforce/
+    - Roo → .roo/commands/buildforce/
+    - OpenCode → .opencode/command/buildforce/
+    - Codex → .codex/prompts/buildforce/
+
+    Command Deployment Structure:
+    - All BuildForce commands nested in buildforce/ subdirectory
+    - Format varies by agent: .md (Claude, Cursor), .toml (Gemini, Qwen), .prompt.md (Copilot)
+    - 6 slash commands deployed: research, spec, plan, build, complete, document
+    - Namespace isolation prevents collision with user-defined custom commands
 
     Detection Mechanism:
     - Uses which(tool) to find executables in PATH
@@ -329,6 +339,13 @@ evolution:
   - version: "1.2"
     date: "2025-10-28"
     changes: "Added local artifact resolution system with --local flag for init and upgrade commands, enabling offline workflows and faster local testing"
+
+  - version: "1.3"
+    date: "2025-10-30"
+    changes: "Implemented nested command structure: all BuildForce commands now deploy to buildforce/ subdirectory within agent folders (e.g., .claude/commands/buildforce/). Modified generate_commands() function in create-release-packages.sh to create buildforce/ subdirectory and update output paths. Fixed validate_subset() return code bug. Verified across all 11 agents × 2 script variants (22 combinations)."
+
+related_specs:
+  - nest-commands-buildforce-folder-20251030085832
 
 notes: |
   Key architectural strengths:

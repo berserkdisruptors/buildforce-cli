@@ -39,7 +39,7 @@ rewrite_paths() {
 
 generate_commands() {
   local agent=$1 ext=$2 arg_format=$3 output_dir=$4 script_variant=$5
-  mkdir -p "$output_dir"
+  mkdir -p "$output_dir/buildforce"
   for template in src/templates/commands/*.md; do
     [[ -f "$template" ]] || continue
     local name description script_command body
@@ -74,11 +74,11 @@ generate_commands() {
     
     case $ext in
       toml)
-        { echo "description = \"$description\""; echo; echo "prompt = \"\"\""; echo "$body"; echo "\"\"\""; } > "$output_dir/$name.$ext" ;;
+        { echo "description = \"$description\""; echo; echo "prompt = \"\"\""; echo "$body"; echo "\"\"\""; } > "$output_dir/buildforce/$name.$ext" ;;
       md)
-        echo "$body" > "$output_dir/$name.$ext" ;;
+        echo "$body" > "$output_dir/buildforce/$name.$ext" ;;
       prompt.md)
-        echo "$body" > "$output_dir/$name.$ext" ;;
+        echo "$body" > "$output_dir/buildforce/$name.$ext" ;;
     esac
   done
 }
@@ -216,7 +216,7 @@ validate_subset() {
       ok=0
     fi
   done
-  return $ok
+  [[ $ok -eq 1 ]]
 }
 
 if [[ -n ${AGENTS:-} ]]; then
