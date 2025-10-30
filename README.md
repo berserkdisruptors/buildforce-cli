@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src=".github/assets/logo.png" alt="BuildForce CLI Logo" width="200"/>
+<img src=".github/assets/logo.png" alt="BuildForce CLI Logo" width="300"/>
 
 **Context-first Spec-Driven Development framework**
 
@@ -13,9 +13,11 @@
 
 ---
 
-## What is Buildforce?
+Buildforce is a **context-first framework for Spec-Driven Development** that works through CLI initialization and slash commands for AI coding agents.
 
-Buildforce is a **context-first framework for Spec-Driven Development** that works through CLI initialization and slash commands for AI coding agents. It materializes user intent into **structured specifications**, generates **implementation plans**, and **tracks execution** with **full traceability**. Buildforce solves the **context loss** problem in AI-assisted development by creating a persistent **context repository** that accumulates project knowledge across sessions. Instead of re-explaining architectural decisions every time you start a new feature, Buildforce preserves them within your repository where they're searchable and reusable by build agents.
+It materializes user intent into structured specifications, generates implementation plans, and tracks execution with full traceability. By creating a persistent **context repository** that accumulates important context across sessions, it enables AI agents to learn from past decisions and maintain consistency across features.
+
+Instead of re-explaining architectural decisions every time you start a new feature, Buildforce preserves them within your repository where they're searchable and reusable.
 
 ## Why context-first?
 
