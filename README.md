@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src=".github/assets/logo.png" alt="BuildForce CLI Logo" width="300"/>
+<img src=".github/assets/logo.png" alt="Buildforce CLI Logo" width="300"/>
 
 **Context-first Spec-Driven Development framework**
 
@@ -50,7 +50,7 @@ AI agents start fresh with each session and reverse engineer the codebase on-dem
 ```
 
 <div align="center">
-<img src=".github/assets/screenshot-init.png" alt="BuildForce initialization screenshot" width="700"/>
+<img src=".github/assets/screenshot-init.png" alt="Buildforce initialization screenshot" width="700"/>
 </div>
 
 ### Your First Workflow (Hello Buildforce)
@@ -67,7 +67,7 @@ Open your AI assistant (Claude Code, Cursor, etc.) in any existing project and r
 /complete
 ```
 
-This workflow works on any codebase! BuildForce will analyze your project, identify README inconsistencies, and fix them systematically. Context from `/research` informs your spec. Spec requirements guide the plan. Build executes with deviation tracking. Completion validates everything and saves knowledge to your context repository for future work.
+This workflow works on any codebase! Buildforce will analyze your project, identify README inconsistencies, and fix them systematically. Context from `/research` informs your spec. Spec requirements guide the plan. Build executes with deviation tracking. Completion validates everything and saves knowledge to your context repository for future work.
 
 ## How It Works
 
@@ -491,146 +491,34 @@ Buildforce installs slash command files (research.md, spec.md, plan.md, build.md
 
 ## Contributing
 
-We welcome contributions from the community! Whether you're fixing bugs, adding features, improving documentation, or sharing feedback, your help makes Buildforce better for everyone.
+Buildforce is **open source** and welcomes contributions! We're building the future of AI-assisted development together.
+
+### Quick Start for Contributors
+
+```bash
+git clone https://github.com/berserkdisruptors/buildforce-cli.git
+cd buildforce-cli
+npm install
+npm run build
+npm link
+```
 
 ### How to Contribute
 
-1. **Check existing issues** - Someone might already be working on it
+1. **Check existing issues** - [View open issues](https://github.com/berserkdisruptors/buildforce-cli/issues)
+2. **Create an issue** - Describe the problem or feature request
+3. **Fork & branch** - Create a feature branch
+4. **Use Buildforce for development** - Follow the structured workflow
+5. **Test locally** - `npm link` and test your changes
+6. **Submit PR** - Describe your changes and link related issues
 
-   - [View open issues](https://github.com/berserkdisruptors/buildforce-cli/issues)
-   - [View open pull requests](https://github.com/berserkdisruptors/buildforce-cli/pulls)
+See [CONTRIBUTING.md](CONTRIBUTING.md) for more details.
 
-2. **Create an issue** (optional but recommended)
+---
 
-   - Describe the problem or feature request
-   - Wait for feedback before starting work
-   - [Create new issue](https://github.com/berserkdisruptors/buildforce-cli/issues/new)
+## Roadmap
 
-3. **Fork the repository**
-
-   ```bash
-   # Click "Fork" on GitHub, then clone your fork
-   git clone https://github.com/YOUR-USERNAME/buildforce-cli.git
-   cd buildforce-cli
-   ```
-
-4. **Create a branch**
-
-   ```bash
-   git checkout -b feature/your-feature-name
-   # or
-   git checkout -b fix/your-bugfix-name
-   ```
-
-5. **Make your changes**
-
-   - Write clean, well-documented code
-   - Follow existing code style
-   - Add tests if applicable
-   - Update documentation
-
-6. **Test your changes**
-
-   ```bash
-   # Build the project
-   npm run build
-
-   # Test locally
-   npm link
-   buildforce test-project --debug
-
-   # Run tests (when available)
-   npm test
-   ```
-
-7. **Commit your changes**
-
-   ```bash
-   git add .
-   git commit -m "feat: Add amazing new feature"
-   # or
-   git commit -m "fix: Fix critical bug"
-   ```
-
-   **Commit message format**:
-
-   - `feat:` - New feature
-   - `fix:` - Bug fix
-   - `docs:` - Documentation changes
-   - `style:` - Code style changes (formatting, etc.)
-   - `refactor:` - Code refactoring
-   - `test:` - Adding tests
-   - `chore:` - Maintenance tasks
-
-8. **Push to your fork**
-
-   ```bash
-   git push origin feature/your-feature-name
-   ```
-
-9. **Submit a Pull Request**
-   - Go to the original repository
-   - Click "New Pull Request"
-   - Describe your changes
-   - Link related issues
-   - Wait for review
-
-### Coding Standards
-
-- **TypeScript** - Use strict mode, proper types
-- **ESModules** - Use import/export (not require)
-- **Formatting** - No enforced linter yet, match existing code style
-- **Comments** - Explain WHY, not WHAT (code should be self-explanatory)
-- **Error handling** - Always handle errors gracefully
-- **Documentation** - Update README for user-facing changes
-
-### Testing
-
-Currently, Buildforce doesn't have automated tests. We welcome contributions to add:
-
-- Unit tests for utilities
-- Integration tests for CLI commands
-- End-to-end tests for workflows
-
-### Documentation
-
-Help improve documentation:
-
-- Fix typos or unclear sections in README
-- Add examples to command documentation
-- Write tutorials or guides for [buildforce.dev](https://buildforce.dev)
-- Improve code comments
-
-### Reporting Bugs
-
-Found a bug? [Create an issue](https://github.com/berserkdisruptors/buildforce-cli/issues/new) with:
-
-- Clear title and description
-- Steps to reproduce
-- Expected vs actual behavior
-- Environment (Node version, OS, AI assistant)
-- Error messages or screenshots
-
-### Requesting Features
-
-Have an idea? [Create a feature request](https://github.com/berserkdisruptors/buildforce-cli/issues/new) with:
-
-- Use case - Why is this needed?
-- Proposed solution - How should it work?
-- Alternatives considered
-- Additional context
-
-### Code of Conduct
-
-This project follows the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.md). By participating, you agree to uphold this code. Please report unacceptable behavior to the maintainers.
-
-### Need Help?
-
-- **Questions?** - Ask in [Discussions](https://github.com/berserkdisruptors/buildforce-cli/discussions)
-- **Stuck?** - Comment on the issue or PR
-- **Want to chat?** - [Join our community](https://buildforce.dev/community) (coming soon)
-
-Thank you for contributing to Buildforce!
+See [ROADMAP.md](ROADMAP.md) for our development roadmap and upcoming features.
 
 ---
 
@@ -643,35 +531,13 @@ Thank you for contributing to Buildforce!
 - **GitHub Issues**: [Report bugs or request features](https://github.com/berserkdisruptors/buildforce-cli/issues)
 - **Discussions**: [Ask questions or share ideas](https://github.com/berserkdisruptors/buildforce-cli/discussions)
 
+> **Note**: Discord server invite link needs to be created and updated above
+
 ---
 
 ## License
 
-Buildforce CLI is [MIT licensed](LICENSE).
-
-```
-MIT License
-
-Copyright (c) 2025 Berserk Disruptors
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-```
+MIT License - see [LICENSE](LICENSE) for details.
 
 ---
 
@@ -684,3 +550,5 @@ If Buildforce helps you build better software with AI assistants, please star th
 ---
 
 **Made with ❤️ by [Berserk Disruptors](https://github.com/berserkdisruptors)**
+
+_Building the future of AI-assisted development, one context file at a time._

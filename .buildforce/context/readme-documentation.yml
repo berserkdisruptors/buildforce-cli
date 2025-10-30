@@ -9,8 +9,8 @@ summary: |
   Developer-focused README v3 eliminating marketing language and restoring full inline command
   documentation following OSS best practices from successful CLI tools (bat, ripgrep, fd, fzf).
   Features context-first positioning, 429 lines of command documentation, visual workflow diagrams,
-  initialization screenshot, and universal "Hello BuildForce" workflow example that works on any
-  codebase. Positions BuildForce as technical reference manual rather than marketing page.
+  initialization screenshot, and universal "Hello Buildforce" workflow example that works on any
+  codebase. Positions Buildforce as technical reference manual rather than marketing page.
 
 responsibilities:
   - Explain Spec-Driven Development (SDD) philosophy and value proposition
@@ -61,10 +61,10 @@ design_decisions:
     rationale: "v2 reduced command docs by 95% which killed discoverability. Successful CLI tools maintain 100-200+ lines of inline docs. Developers need to answer 'can it do X?' without clicking away."
 
   - decision: "Position 'Why context-first?' as dedicated section"
-    rationale: "Context-first is BuildForce's key technical differentiation. Elevating to section (not buried in prose) highlights value prop without marketing language. Explains technical mechanism, not abstract benefits."
+    rationale: "Context-first is Buildforce's key technical differentiation. Elevating to section (not buried in prose) highlights value prop without marketing language. Explains technical mechanism, not abstract benefits."
 
   - decision: "Create 'How It Works' section before command documentation"
-    rationale: "BuildForce uses slash commands INSIDE AI conversations (not direct terminal commands). Developers won't understand usage from syntax alone. This section delivers the 'aha' moment showing workflow orchestration pattern with visual diagram, step-by-step explanation, and 3 concrete scenarios."
+    rationale: "Buildforce uses slash commands INSIDE AI conversations (not direct terminal commands). Developers won't understand usage from syntax alone. This section delivers the 'aha' moment showing workflow orchestration pattern with visual diagram, step-by-step explanation, and 3 concrete scenarios."
 
   - decision: "Use centered logo with theme-agnostic design"
     rationale: "Logo moved to .github/assets/logo.png with centered HTML div for GitHub. Simple <img> tag ensures universal compatibility (GitHub, npm, all platforms). Designer to provide theme-agnostic version."
@@ -72,7 +72,7 @@ design_decisions:
   - decision: "Add initialization screenshot after installation section"
     rationale: "Visual proof of CLI setup provides immediate context for what users see after running installation commands. Screenshot shows AI assistant selection in action."
 
-  - decision: "Universal 'Hello BuildForce' workflow example (README inconsistency fix)"
+  - decision: "Universal 'Hello Buildforce' workflow example (README inconsistency fix)"
     rationale: "Auth example from v2 requires specific tech stack. New example works on ANY codebase - analyze architecture, fix README inconsistencies. Low-risk, immediately valuable, demonstrates full cycle."
 
   - decision: "Remove /plan command from core workflow visualization"
@@ -88,7 +88,7 @@ evolution:
 
   - version: "3.0"
     date: "2025-01-30"
-    changes: "README v3 rewrite following OSS best practices. Eliminated all marketing language (0 instances of 'dramatically'/'revolutionizing'). Restored command documentation from 15 to 429 lines (28x increase). Added 'Why context-first?' dedicated section. Created 'How It Works' pedagogical section with workflow visualization, step-by-step explanation, and 3 scenarios. Centered logo in .github/assets/. Added initialization screenshot. Changed to universal 'Hello BuildForce' workflow example. Removed /plan from workflow diagram. Total length: 768 lines with 70%+ technical content. Zero deviations from plan."
+    changes: "README v3 rewrite following OSS best practices. Eliminated all marketing language (0 instances of 'dramatically'/'revolutionizing'). Restored command documentation from 15 to 429 lines (28x increase). Added 'Why context-first?' dedicated section. Created 'How It Works' pedagogical section with workflow visualization, step-by-step explanation, and 3 scenarios. Centered logo in .github/assets/. Added initialization screenshot. Changed to universal 'Hello Buildforce' workflow example. Removed /plan from workflow diagram. Total length: 768 lines with 70%+ technical content. Zero deviations from plan."
 
 related_specs:
   - "now-update-readme-20250106120000 (spec.yaml and plan.yaml)"
@@ -112,10 +112,10 @@ notes: |
   1. Centered logo (.github/assets/logo.png)
   2. Context-first Spec-Driven Development framework (tagline)
   3. Badges (npm, downloads, stars, license)
-  4. What is BuildForce? (3 sentences, no marketing)
+  4. What is Buildforce? (3 sentences, no marketing)
   5. Why context-first? (4 sentences, technical value prop)
   6. What Makes It Different (7-row comparison table)
-  7. Quick Start (Installation + screenshot + Hello BuildForce workflow)
+  7. Quick Start (Installation + screenshot + Hello Buildforce workflow)
   8. How It Works (workflow visualization + explanations + 3 scenarios)
   9. Commands (6 commands × 70 lines avg = 429 lines total)
   10. Supported AI Assistants (11 assistants table)
