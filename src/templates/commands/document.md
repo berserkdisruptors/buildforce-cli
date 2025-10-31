@@ -87,7 +87,7 @@ Before proceeding, verify sufficient context exists:
    - **Related context field** (OPTIONAL): Add array of closely related context IDs for discovery
      - Include for: feature families, dependent modules, sibling features
      - Only add significant relationships (avoid over-populating)
-     - IDs must exist in \_index.yml
+     - IDs must exist in _index.yml
      - Example: `[slash-commands, plan-template, spec-command]`
    - Maintain proper YAML indentation (2 spaces per level)
    - Preserve existing entries (do not modify or delete)
