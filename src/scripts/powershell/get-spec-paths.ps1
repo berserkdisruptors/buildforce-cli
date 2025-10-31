@@ -51,11 +51,11 @@ $paths = Get-SpecPaths
 if ($PathsOnly) {
     if ($Json) {
         [PSCustomObject]@{
-            REPO_ROOT    = $paths.REPO_ROOT
-            SPEC_DIR  = $paths.SPEC_DIR
+            BUILDFORCE_ROOT = $paths.BUILDFORCE_ROOT
+            SPEC_DIR        = $paths.SPEC_DIR
         } | ConvertTo-Json -Compress
     } else {
-        Write-Output "REPO_ROOT: $($paths.REPO_ROOT)"
+        Write-Output "BUILDFORCE_ROOT: $($paths.BUILDFORCE_ROOT)"
         Write-Output "SPEC_DIR: $($paths.SPEC_DIR)"
     }
     exit 0
