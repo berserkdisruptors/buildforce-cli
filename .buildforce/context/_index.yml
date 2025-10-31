@@ -69,7 +69,6 @@ contexts:
       [
         research-slash-command,
         spec-command,
-        iterate-plan-command,
         build-command,
         complete-command,
         document-command,
@@ -98,7 +97,7 @@ contexts:
         script-execution,
       ]
     related_context:
-      [slash-commands, plan-template, iterate-plan-command, spec-command]
+      [slash-commands, plan-template, spec-command]
 
   - id: plan-template
     file: plan-template.yml
@@ -116,25 +115,9 @@ contexts:
         workflow-enhancement,
       ]
     related_context:
-      [iterate-plan-command, build-command, spec-command, slash-commands]
+      [build-command, spec-command, slash-commands]
 
-  - id: iterate-plan-command
-    file: iterate-plan-command.yml
-    type: feature
-    description: "Slash command for creating and refining implementation plans from specifications"
-    tags:
-      [
-        slash-command,
-        plan,
-        command-iteration,
-        compression,
-        workflow-enhancement,
-        script-execution,
-        fixed-output-format,
-        user-approval,
-      ]
-    related_context:
-      [slash-commands, plan-template, spec-command, build-command]
+  
 
   - id: document-command
     file: document-command.yml
@@ -197,7 +180,7 @@ contexts:
         workflow-core,
       ]
     related_context:
-      [slash-commands, iterate-plan-command, plan-template, complete-command]
+      [slash-commands, plan-template, complete-command]
 
   - id: complete-command
     file: complete-command.yml
