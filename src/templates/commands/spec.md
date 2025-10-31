@@ -15,10 +15,7 @@ The text the user typed after `/spec` in the triggering message **is** the featu
 
 ## Workflow Steps
 
-1. **Determine create vs update mode**: Read and follow the pattern described in `.buildforce/templates/shared/create-update-pattern.md` from the buildforce root directory.
-
-   - Priority 1: Check conversation history for existing spec
-   - Priority 2: Run `{SCRIPT}` FROM CURRENT WORKING DIRECTORY AND NEVER FROM SOMEWHERE ELSE! Parse JSON output for FOLDER_NAME, SPEC_FILE, SPEC_DIR, FEATURE_NUM, and IS_UPDATE flag. **NEVER proceed** if script fails - display the error message to the user, explain that the `.buildforce` directory was not found, suggest: 1) check if you're in the buildforce root directory (where you ran `buildforce init`), 2) run `buildforce init .` if needed.
+1. **Determine CREATE vs UPDATE mode**:
 
    - Read `.buildforce/.current-spec` file from current working directory
    - If file exists and has content (non-empty folder name): **UPDATE mode** - Load existing spec and plan from that folder
@@ -41,7 +38,7 @@ The text the user typed after `/spec` in the triggering message **is** the featu
 
    **Step 2b: Run script to create folder and files**:
 
-   - Run `{SCRIPT}` with generated FOLDER_NAME and parse JSON output for FOLDER_NAME, SPEC_FILE, PLAN_FILE, SPEC_DIR
+   - Run `{SCRIPT}` from current working directory with generated FOLDER_NAME and parse JSON output for FOLDER_NAME, SPEC_FILE, PLAN_FILE, SPEC_DIR
    - The script creates both spec.yaml and plan.yaml files from templates
 
    **Step 2c: Materialize research cache into research.yml** (if cache exists):
