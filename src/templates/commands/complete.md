@@ -125,7 +125,7 @@ $ARGUMENTS
 
    Mark the spec as complete:
 
-   - Run `bash .buildforce/scripts/bash/clear-spec-state.sh` from current working directory to clear the `currentSpec` field in `buildforce.json` (sets to null)
+   - Read `.buildforce/buildforce.json` and set the `currentSpec` field to `null`
    - This signals that no active spec is in progress
    - The `buildforce.json` file is preserved for future specs
 
