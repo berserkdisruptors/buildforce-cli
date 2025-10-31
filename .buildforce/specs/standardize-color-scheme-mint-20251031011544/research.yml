@@ -1,0 +1,187 @@
+id: "standardize-color-scheme-mint-20251031011544-research"
+created: "2025-10-31"
+last_updated: "2025-10-31"
+
+summary: |
+  Research identified 14 files requiring color standardization updates to replace 25+ yellow and 20+ cyan color instances with mint (#3EB489) for cohesive UI. Mint is already established as the standard in CLI help formatting, banners, and interactive menus. Boxen border colors need investigation for mint support.
+
+key_findings:
+  - "Mint color (#3EB489) is the established standard, currently defined in `src/cli.ts` and `src/lib/interactive.ts`"
+  - "14 files need updates: replace `chalk.yellow()` (25+ occurrences) and `chalk.cyan()` (20+ occurrences) with mint"
+  - "Boxen borders use string color names (`borderColor: 'cyan'`, `borderColor: 'yellow'`) - need to verify mint support"
+  - "Error colors (red/magenta) should remain for error states"
+  - "Centralization opportunity: export mint from `src/constants.ts` instead of local definitions"
+
+file_paths:
+  primary:
+    - path: "src/cli.ts"
+      relevance: "Already uses mint for CLI help formatting - serves as reference"
+    - path: "src/lib/interactive.ts"
+      relevance: "Already uses mint for banners and menus - serves as reference"
+    - path: "src/constants.ts"
+      relevance: "Potential location for centralized mint color export"
+
+  high_priority:
+    - path: "src/commands/init/index.ts"
+      relevance: "Uses yellow for warnings, cyan for info messages"
+    - path: "src/commands/upgrade/index.ts"
+      relevance: "Multiple yellow/cyan usage for warnings and info messages"
+    - path: "src/commands/examples.ts"
+      relevance: "Uses yellow for arrows and warnings"
+    - path: "src/commands/init/output.ts"
+      relevance: "Extensive cyan usage and cyan/yellow box borders"
+    - path: "src/lib/step-tracker.ts"
+      relevance: "Uses cyan for title and running status, yellow for skipped status"
+
+  medium_priority:
+    - path: "src/lib/local-artifacts.ts"
+      relevance: "Uses cyan/yellow for messages and warnings"
+    - path: "src/lib/github.ts"
+      relevance: "Multiple cyan/yellow usage for informational messages"
+    - path: "src/lib/extract.ts"
+      relevance: "Uses cyan/yellow for info and merge warnings"
+    - path: "src/commands/init/validation.ts"
+      relevance: "Uses yellow/cyan for warnings and messages"
+    - path: "src/commands/upgrade/execution.ts"
+      relevance: "Uses yellow for rollback messages"
+    - path: "src/utils/git.ts"
+      relevance: "Uses cyan for git initialization message"
+
+mermaid_diagrams:
+  - title: "Color System Architecture"
+    description: "Shows current color system with mint as standard, yellow/cyan to replace, and red/magenta kept for errors"
+    diagram: |
+      ```mermaid
+      graph TD
+          A[Mint Color #3EB489<br/>STANDARD] --> B[CLI Help<br/>cli.ts]
+          A --> C[Interactive Menus<br/>interactive.ts]
+          A --> D[Section Labels<br/>examples.ts]
+          
+          E[Yellow - REPLACE] --> F[Warnings/Suggestions<br/>init, upgrade, examples]
+          E --> G[Arrows<br/>examples.ts]
+          E --> H[Step Tracker<br/>step-tracker.ts]
+          E --> I[Box Borders<br/>output.ts]
+          
+          J[Cyan - REPLACE] --> K[Info Messages<br/>init, upgrade, github]
+          J --> L[Step Tracker<br/>step-tracker.ts]
+          J --> M[Box Borders<br/>output.ts]
+          J --> N[Git Utils<br/>git.ts]
+          
+          O[Red/Magenta - KEEP] --> P[Error States<br/>validation, setup]
+          
+          F -.->|Replace with| A
+          G -.->|Replace with| A
+          H -.->|Replace with| A
+          I -.->|Replace with| A
+          K -.->|Replace with| A
+          L -.->|Replace with| A
+          M -.->|Replace with| A
+          N -.->|Replace with| A
+          
+          style A fill:#90EE90
+          style E fill:#FFD700
+          style J fill:#00CED1
+          style O fill:#FF6B6B
+      ```
+
+data_models:
+  - name: "ColorDefinition"
+    description: "Color definition pattern for mint color standardization"
+    properties:
+      - name: "currentPattern"
+        type: "scattered"
+        required: true
+        description: "Mint defined locally in multiple files as `const mint = chalk.hex('#3EB489')`"
+      
+      - name: "recommendedPattern"
+        type: "centralized"
+        required: false
+        description: "Export mint from `src/constants.ts` as `export const MINT_COLOR = chalk.hex('#3EB489')`"
+
+    relationships:
+      - "Used by: cli.ts, interactive.ts (currently), all files after standardization"
+
+  - name: "ColorReplacementMapping"
+    description: "Mapping of current colors to mint replacements"
+    properties:
+      - name: "yellow"
+        type: "chalk.yellow()"
+        replacement: "MINT_COLOR() or mint()"
+        context: "Warnings, suggestions, arrows, step tracker symbols"
+      
+      - name: "cyan"
+        type: "chalk.cyan()"
+        replacement: "MINT_COLOR() or mint()"
+        context: "Info messages, titles, step tracker, git utils"
+      
+      - name: "yellowBorder"
+        type: "borderColor: 'yellow'"
+        replacement: "borderColor: 'mint' or hex equivalent"
+        context: "Boxen borders for warnings"
+      
+      - name: "cyanBorder"
+        type: "borderColor: 'cyan'"
+        replacement: "borderColor: 'mint' or hex equivalent"
+        context: "Boxen borders for info"
+
+code_snippets:
+  - title: "Current Mint Definition Pattern"
+    language: "typescript"
+    description: "Current scattered mint color definitions"
+    code: |
+      // src/cli.ts line 21
+      const mint = chalk.hex("#3EB489");
+      
+      // src/lib/interactive.ts lines 16, 42
+      const mint = chalk.hex("#3EB489");
+
+  - title: "Recommended Centralized Pattern"
+    language: "typescript"
+    description: "Centralized mint color export for consistency"
+    code: |
+      // src/constants.ts
+      import chalk from "chalk";
+      export const MINT_COLOR = chalk.hex("#3EB489");
+      
+      // Usage in files
+      import { MINT_COLOR } from "../constants.js";
+      console.log(MINT_COLOR("Text"));
+
+  - title: "Color Replacement Examples"
+    language: "typescript"
+    description: "Examples of replacing yellow and cyan with mint"
+    code: |
+      // Before
+      console.log(chalk.yellow("Warning message"));
+      console.log(chalk.cyan("Info message"));
+      
+      // After (centralized)
+      import { MINT_COLOR } from "../constants.js";
+      console.log(MINT_COLOR("Warning message"));
+      console.log(MINT_COLOR("Info message"));
+      
+      // After (local definition if not centralizing)
+      const mint = chalk.hex("#3EB489");
+      console.log(mint("Warning message"));
+      console.log(mint("Info message"));
+
+architectural_decisions:
+  - pattern: "Color Consistency"
+    description: "Standardize all non-error UI colors to mint (#3EB489) for cohesive visual identity"
+    rationale: "Mint is already established for CLI help, banners, and menus. Extending to all UI elements creates consistent brand experience"
+
+  - pattern: "Error Color Preservation"
+    description: "Keep red/magenta colors for error states and debug information"
+    rationale: "Error colors provide critical visual distinction for failure states. Changing to mint would reduce error visibility"
+
+  - pattern: "Centralized Color Constants (Optional Enhancement)"
+    description: "Consider exporting mint from constants.ts to eliminate duplication"
+    rationale: "Single source of truth for color definitions reduces maintenance burden and ensures consistency"
+
+tldr:
+  - "Mint (#3EB489) is established standard - replace 25+ yellow and 20+ cyan instances across 14 files"
+  - "Boxen borders need investigation - verify if 'mint' string or hex support exists"
+  - "Error colors (red/magenta) should remain unchanged for error states"
+  - "Consider centralizing mint definition in constants.ts for consistency"
+  - "Files affected: init commands (4 files), upgrade commands (2 files), examples, step-tracker, github, extract, local-artifacts, git utils"
+

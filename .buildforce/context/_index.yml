@@ -296,3 +296,18 @@ contexts:
         workflow-utility,
       ]
     related_context: [cli-architecture, upgrade-command]
+
+  - id: examples-command
+    file: examples-command.yml
+    type: feature
+    description: "Interactive CLI command for displaying workflow examples extracted dynamically from README.md"
+    tags:
+      [
+        cli-command,
+        workflow,
+        examples,
+        interactive,
+        documentation,
+        discoverability,
+      ]
+    related_context: [cli-architecture, readme-documentation]

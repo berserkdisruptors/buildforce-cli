@@ -1,6 +1,6 @@
 import chalk from "chalk";
 import { UpgradeOptions } from "../../types.js";
-import { BANNER, TAGLINE } from "../../constants.js";
+import { TAGLINE, MINT_COLOR } from "../../constants.js";
 import { showBanner } from "../../lib/interactive.js";
 import { validateUpgradePrerequisites } from "./validation.js";
 import { executeUpgrade } from "./execution.js";
@@ -14,7 +14,7 @@ import { selectWithArrows } from "../../lib/interactive.js";
  */
 export async function upgradeCommand(options: UpgradeOptions): Promise<void> {
   // Show banner
-  showBanner(BANNER, TAGLINE);
+  showBanner("", TAGLINE);
 
   const {
     ai: aiOverride,
@@ -36,7 +36,7 @@ export async function upgradeCommand(options: UpgradeOptions): Promise<void> {
     console.log(chalk.red("✗ Upgrade failed:"), validation.error);
     console.log();
     if (validation.suggestion) {
-      console.log(chalk.yellow("Suggestion:"), validation.suggestion);
+      console.log(MINT_COLOR("Suggestion:"), validation.suggestion);
       console.log();
     }
     process.exit(1);
@@ -55,25 +55,25 @@ export async function upgradeCommand(options: UpgradeOptions): Promise<void> {
         chalk.red("✗ Invalid AI assistant:"),
         aiOverride
       );
-      console.log(chalk.yellow("Valid options:"), Object.keys(AI_CHOICES).join(", "));
+      console.log(MINT_COLOR("Valid options:"), Object.keys(AI_CHOICES).join(", "));
       console.log();
       process.exit(1);
     }
     selectedAi = aiOverride;
     console.log(
-      chalk.cyan("AI assistant (override):"),
+      MINT_COLOR("AI assistant (override):"),
       AI_CHOICES[selectedAi]
     );
   } else if (config?.aiAssistant) {
     selectedAi = config.aiAssistant;
     console.log(
-      chalk.cyan("AI assistant (detected):"),
+      MINT_COLOR("AI assistant (detected):"),
       AI_CHOICES[selectedAi] || selectedAi
     );
   } else {
     // Backward compatibility: prompt for AI assistant if missing
     console.log(
-      chalk.yellow(
+      MINT_COLOR(
         "No AI assistant found in buildforce.json. Please select one:"
       )
     );
@@ -95,7 +95,7 @@ export async function upgradeCommand(options: UpgradeOptions): Promise<void> {
         scriptOverride
       );
       console.log(
-        chalk.yellow("Valid options:"),
+        MINT_COLOR("Valid options:"),
         Object.keys(SCRIPT_TYPE_CHOICES).join(", ")
       );
       console.log();
@@ -103,20 +103,20 @@ export async function upgradeCommand(options: UpgradeOptions): Promise<void> {
     }
     selectedScript = scriptOverride;
     console.log(
-      chalk.cyan("Script type (override):"),
+      MINT_COLOR("Script type (override):"),
       SCRIPT_TYPE_CHOICES[selectedScript]
     );
   } else if (config?.scriptType) {
     selectedScript = config.scriptType;
     console.log(
-      chalk.cyan("Script type (detected):"),
+      MINT_COLOR("Script type (detected):"),
       SCRIPT_TYPE_CHOICES[selectedScript] || selectedScript
     );
   } else {
     // Backward compatibility: prompt for script type if missing
     const defaultScript = process.platform === "win32" ? "ps" : "sh";
     console.log(
-      chalk.yellow(
+      MINT_COLOR(
         "No script type found in buildforce.json. Please select one:"
       )
     );

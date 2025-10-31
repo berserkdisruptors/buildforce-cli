@@ -6,7 +6,7 @@ import chalk from "chalk";
 import { StepTracker } from "../../lib/step-tracker.js";
 import { downloadTemplateFromGithub } from "../../lib/github.js";
 import { saveBuildforceConfig } from "../../utils/config.js";
-import { AGENT_FOLDER_MAP } from "../../constants.js";
+import { AGENT_FOLDER_MAP, MINT_COLOR } from "../../constants.js";
 import { resolveLocalArtifact } from "../../lib/local-artifacts.js";
 
 /**
@@ -289,7 +289,7 @@ export async function executeUpgrade(
           await fs.copy(scriptsBackup, scriptsDest);
         }
 
-        console.log(chalk.yellow("\nRollback: Restored previous files from backup"));
+        console.log(MINT_COLOR("\nRollback: Restored previous files from backup"));
       } catch (rollbackError: any) {
         console.log(
           chalk.red("\nRollback failed:"),

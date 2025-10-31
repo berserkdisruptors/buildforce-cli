@@ -2,12 +2,12 @@
 
 import { Command } from "commander";
 import chalk from "chalk";
-import figlet from "figlet";
 import { initCommand } from "./commands/init/index.js";
 import { upgradeCommand } from "./commands/upgrade/index.js";
 import { checkCommand } from "./commands/check.js";
-import { showBanner } from "./lib/interactive.js";
-import { TAGLINE } from "./constants.js";
+import { examplesCommand } from "./commands/examples.js";
+import { showBanner, generateBanner } from "./lib/interactive.js";
+import { MINT_COLOR } from "./constants.js";
 
 const program = new Command();
 
@@ -19,26 +19,11 @@ program
 
 // --- Custom help formatting -------------------------------------------------
 // Mint color for option/argument/command terms
-const mint = chalk.hex("#3EB489");
+const mint = MINT_COLOR;
 
 // Put banner above Commander help (usage, options, commands)
 const renderBannerForHelp = () => {
-  const terminalWidth = process.stdout.columns || 80;
-  const rendered = figlet.textSync("BUILDFORCE", {
-    font: "ANSI Shadow",
-    horizontalLayout: "default",
-    verticalLayout: "default",
-  });
-  const lines = rendered.split("\n");
-  const centered = lines
-    .map((line) => {
-      const pad = Math.max(0, Math.floor((terminalWidth - line.length) / 2));
-      return " ".repeat(pad) + chalk.white(line);
-    })
-    .join("\n");
-  const taglinePad = Math.max(0, Math.floor((terminalWidth - TAGLINE.length) / 2));
-  const centeredTagline = " ".repeat(taglinePad) + mint(TAGLINE);
-  return `\n${centered}\n${centeredTagline}\n\n`;
+  return generateBanner();
 };
 program.addHelpText("beforeAll", renderBannerForHelp());
 
@@ -264,6 +249,13 @@ program
     checkCommand();
   });
 
+program
+  .command("examples")
+  .description("View workflow examples")
+  .action(async () => {
+    await examplesCommand();
+  });
+
 // We no longer append banner after help; it's injected before via addHelpText
 
 // Default behavior (init) - defined AFTER subcommands
@@ -307,23 +299,8 @@ program
   .action(async (projectName, options) => {
     // If no project name and no flags, show help
     if (!projectName && !options.here && Object.keys(options).length === 0) {
-      // Render banner with figlet
-      const terminalWidth = process.stdout.columns || 80;
-      const rendered = figlet.textSync("BUILDFORCE", {
-        font: "ANSI Shadow",
-        horizontalLayout: "default",
-        verticalLayout: "default",
-      });
-      const lines = rendered.split("\n");
-      const centered = lines
-        .map((line) => {
-          const pad = Math.max(0, Math.floor((terminalWidth - line.length) / 2));
-          return " ".repeat(pad) + chalk.white(line);
-        })
-        .join("\n");
-      const taglinePad = Math.max(0, Math.floor((terminalWidth - TAGLINE.length) / 2));
-      const centeredTagline = " ".repeat(taglinePad) + mint(TAGLINE);
-      console.log(`\n${centered}\n${centeredTagline}\n`);
+      // Banner is already registered via program.addHelpText("beforeAll", renderBannerForHelp())
+      // so program.help() will display it automatically
       program.help();
       return;
     }

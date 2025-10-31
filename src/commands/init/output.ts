@@ -1,6 +1,7 @@
 import path from "path";
 import chalk from "chalk";
 import boxen from "boxen";
+import { MINT_COLOR } from "../../constants.js";
 
 /**
  * Display project setup information
@@ -13,7 +14,7 @@ export function displaySetupInfo(
   const currentDir = process.cwd();
 
   const setupLines = [
-    chalk.cyan("Buildforce Project Setup"),
+    MINT_COLOR("Buildforce Project Setup"),
     "",
     `${"Project".padEnd(15)} ${chalk.green(projectName)}`,
     `${"Working Path".padEnd(15)} ${chalk.dim(currentDir)}`,
@@ -26,7 +27,7 @@ export function displaySetupInfo(
   console.log(
     boxen(setupLines.join("\n"), {
       padding: 1,
-      borderColor: "cyan",
+      borderColor: "#3EB489",
     })
   );
   console.log();
@@ -45,15 +46,15 @@ export function displayAgentSecurityNotice(
     console.log(
       boxen(
         `Some agents may store credentials, auth tokens, or other identifying and private artifacts in the agent folder within your project.\n` +
-          `Consider adding ${chalk.cyan(
+          `Consider adding ${MINT_COLOR(
             agentFolder
-          )} (or parts of it) to ${chalk.cyan(
+          )} (or parts of it) to ${MINT_COLOR(
             ".gitignore"
           )} to prevent accidental credential leakage.`,
         {
-          title: chalk.yellow("Agent Folder Security"),
+          title: MINT_COLOR("Agent Folder Security"),
           padding: 1,
-          borderColor: "yellow",
+          borderColor: "#3EB489",
         }
       )
     );
@@ -72,7 +73,7 @@ export function displayNextSteps(
   const stepsLines: string[] = [];
   if (!isHere) {
     stepsLines.push(
-      `1. Go to the project folder: ${chalk.cyan(`cd ${projectName}`)}`
+      `1. Go to the project folder: ${MINT_COLOR(`cd ${projectName}`)}`
     );
   } else {
     stepsLines.push("1. You're already in the project directory!");
@@ -89,9 +90,9 @@ export function displayNextSteps(
         : `export CODEX_HOME="${codexPath}"`;
 
     stepsLines.push(
-      `${stepNum}. Set ${chalk.cyan(
+      `${stepNum}. Set ${MINT_COLOR(
         "CODEX_HOME"
-      )} environment variable before running Codex: ${chalk.cyan(cmd)}`
+      )} environment variable before running Codex: ${MINT_COLOR(cmd)}`
     );
     stepNum++;
   }
@@ -101,27 +102,27 @@ export function displayNextSteps(
   );
   stepsLines.push(
     "   " +
-      chalk.cyan("/research") +
+      MINT_COLOR("/research") +
       " - Gather context and prepare for development"
   );
   stepsLines.push(
     "   " +
-      chalk.cyan("/spec") +
+      MINT_COLOR("/spec") +
       "     - Define what to build (requirements & scope)"
   );
   stepsLines.push(
     "   " +
-      chalk.cyan("/plan") +
+      MINT_COLOR("/plan") +
       "     - Design how to build (architecture & steps)"
   );
   stepsLines.push(
     "   " +
-      chalk.cyan("/build") +
+      MINT_COLOR("/build") +
       "    - Execute implementation with validation"
   );
   stepsLines.push(
     "   " +
-      chalk.cyan("/complete") +
+      MINT_COLOR("/complete") +
       " - Finalize spec and update knowledge base"
   );
 
@@ -130,7 +131,7 @@ export function displayNextSteps(
     boxen(stepsLines.join("\n"), {
       title: "Next Steps",
       padding: 1,
-      borderColor: "cyan",
+      borderColor: "#3EB489",
     })
   );
 
@@ -139,10 +140,10 @@ export function displayNextSteps(
     chalk.bold("Understanding the Workflow"),
     "",
     `The .buildforce directory stores project knowledge:`,
-    `  ${chalk.cyan(
+    `  ${MINT_COLOR(
       ".buildforce/context/"
     )} - Accumulated project context from completed specs`,
-    `  ${chalk.cyan(
+    `  ${MINT_COLOR(
       ".buildforce/specs/"
     )}   - Active and historical spec directories`,
     "",
@@ -151,10 +152,10 @@ export function displayNextSteps(
     `  ${chalk.gray("002-another/")}       - Second feature`,
     `  ${chalk.gray("...")}`,
     "",
-    `Start your first feature with ${chalk.cyan(
+    `Start your first feature with ${MINT_COLOR(
       "/research"
     )} to gather context,`,
-    `then ${chalk.cyan("/spec")} to define what you're building.`,
+    `then ${MINT_COLOR("/spec")} to define what you're building.`,
   ];
 
   console.log();
@@ -162,19 +163,19 @@ export function displayNextSteps(
     boxen(workflowLines.join("\n"), {
       title: "Workflow Guide",
       padding: 1,
-      borderColor: "cyan",
+      borderColor: "#3EB489",
     })
   );
 
   // Codex warning
   if (selectedAi === "codex") {
     const warningText =
-      chalk.bold.yellow("Important Note:") +
+      MINT_COLOR(chalk.bold("Important Note:")) +
       "\n\n" +
-      `Custom prompts do not yet support arguments in Codex. You may need to manually specify additional project instructions directly in prompt files located in ${chalk.cyan(
+      `Custom prompts do not yet support arguments in Codex. You may need to manually specify additional project instructions directly in prompt files located in ${MINT_COLOR(
         ".codex/prompts/"
       )}.\n\n` +
-      `For more information, see: ${chalk.cyan(
+      `For more information, see: ${MINT_COLOR(
         "https://github.com/openai/codex/issues/2890"
       )}`;
 
@@ -183,7 +184,7 @@ export function displayNextSteps(
       boxen(warningText, {
         title: "Slash Commands in Codex",
         padding: 1,
-        borderColor: "yellow",
+        borderColor: "#3EB489",
       })
     );
   }

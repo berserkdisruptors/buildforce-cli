@@ -192,12 +192,67 @@ The key insight: Buildforce isn't just about individual commands. It's about how
 
 **What it does:**
 
+**CREATE mode** (when no active spec exists):
+
 1. Determines CREATE vs UPDATE mode by checking `.buildforce/.current-spec` file
 2. Generates semantic folder name with timestamp (e.g., `add-jwt-auth-20250130143052`)
 3. Runs `.buildforce/scripts/bash/create-spec-files.sh` to create folder and template files
 4. Materializes research cache from `.buildforce/.research-cache.md` into `research.yml` (if exists)
 5. Populates `spec.yaml` with problem statement, functional requirements (FR1, FR2...), non-functional requirements (NFR1, NFR2...), acceptance criteria (AC1, AC2...), scope (in/out), design principles, open questions
 6. Asks clarifying questions if intent is vague or context insufficient
+
+**UPDATE mode** (when `.buildforce/.current-spec` exists with an active spec):
+
+The UPDATE mode enables powerful iterative refinement of specifications, especially useful when you've built a spec and want to add new requirements or context:
+
+1. **Load existing artifacts** (Step 3a):
+
+   - Reads folder name from `.buildforce/.current-spec`
+   - Loads existing `spec.yaml` and `plan.yaml` from the active spec folder
+   - Loads `research.yml` if it exists to maintain context consistency
+
+2. **Merge new research cache** (Step 3b):
+
+   - Checks if `.buildforce/.research-cache.md` exists (new research conducted since spec creation)
+   - If new research exists: Intelligently merges new research sessions into existing `research.yml`
+   - Preserves new diagrams, models, code snippets
+   - Merges TLDR bullets without duplication
+   - Adds update separators with timestamps to track research evolution
+
+3. **Intelligent routing** (Step 3c):
+   - Analyzes your new input to determine what to update:
+     - **Requirements/scope/goals** → Updates `spec.yaml` only
+     - **Architecture/tech decisions/phases** → Updates `plan.yaml` only
+     - **Mixed content** → Updates both files appropriately
+   - Preserves all existing field values (id, created date, etc.)
+   - Adds new requirements with sequential IDs (maintains FR1, FR2, ... sequence)
+   - Updates `last_updated` timestamp in modified file(s)
+
+**Iterative workflow scenario:**
+
+```
+1. /spec Add JWT authentication
+   → CREATE mode: Creates spec folder, populates spec.yaml
+   → Sets .current-spec = "add-jwt-auth-20250130143052"
+
+2. /build
+   → Implements JWT authentication
+   → .current-spec remains active (still pointing to same folder)
+
+3. /spec Add error handling for authentication failures
+   → UPDATE mode detected (because .current-spec exists)
+   → Loads existing spec.yaml, plan.yaml, research.yml
+   → Checks for new research cache and merges if found
+   → Analyzes "Add error handling" → Recognizes as requirements
+   → Updates spec.yaml with new FR (e.g., FR3: Handle auth failures gracefully)
+   → Preserves all existing FR1, FR2, and other content
+
+4. /build
+   → Implements error handling additions
+   → Continues with same spec folder
+```
+
+This workflow enables you to incrementally expand features without losing previous work. The `.current-spec` file persists through `/build` commands, allowing multiple `/spec` → `/build` cycles on the same feature.
 
 **Output file structure:**
 
@@ -237,10 +292,14 @@ open_questions:
 - Semantic folder naming: Feature identity preserved in folder name (not just timestamp)
 - CREATE/UPDATE modes: Intelligently detects if updating existing spec or creating new
 - Research materialization: Automatically converts research cache into structured `research.yml`
+- **UPDATE mode workflow**: Enables iterative refinement with intelligent research merging and content-aware routing
+- **Persistent state**: `.current-spec` file persists through `/build` commands, enabling multiple `/spec` → `/build` cycles
+- **Research cache merging**: Automatically merges new research findings when updating existing specs
+- **Intelligent routing**: Analyzes input to determine whether to update `spec.yaml`, `plan.yaml`, or both
 - Requirement traceability: Every requirement gets unique ID (FR1, NFR1, AC1) for tracking through plan and build
 - Clarifying questions: Asks user to resolve ambiguities before proceeding
 
-**Pro tip**: Run `/spec` multiple times to refine requirements. UPDATE mode loads existing spec and allows iteration without losing previous work.
+**Pro tip**: Use the iterative workflow (`/spec` → `/build` → `/spec` → `/build`) to incrementally expand features. UPDATE mode intelligently merges new requirements, research, and context without losing previous work. See "Iterative workflow scenario" above for a detailed example.
 
 ---
 

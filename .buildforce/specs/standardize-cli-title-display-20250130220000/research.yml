@@ -1,0 +1,119 @@
+id: "standardize-cli-title-display-20250130220000-research"
+created: "2025-01-30"
+last_updated: "2025-01-30"
+
+summary: |
+  Research identified inconsistency in CLI title display: `--help` shows 3 lines (figlet title, tagline, instruction),
+  but all other commands show only 2 lines via `showBanner()` function (ASCII title + tagline, missing instruction).
+  Found duplicate banner code in `cli.ts` and identified 4 commands needing updates.
+
+key_findings:
+  - "`--help` command uses figlet-generated 'BUILDFORCE' title with 3-line format (title, tagline, instruction)"
+  - "`showBanner()` function in `interactive.ts` only shows 2 lines (uses ASCII BANNER constant, missing instruction)"
+  - "Four commands use `showBanner()`: examples, check, upgrade, init"
+  - "Duplicate figlet banner code exists in `cli.ts` lines 321-337 for default init help (also missing instruction)"
+  - "Color scheme: mint green (#3EB489) for tagline, white for title, dim gray for instruction"
+
+file_paths:
+  primary:
+    - path: "src/cli.ts"
+      relevance: "Contains `renderBannerForHelp()` with 3-line implementation and duplicate banner code"
+    - path: "src/lib/interactive.ts"
+      relevance: "Contains `showBanner()` function that needs update to match 3-line format"
+    - path: "src/constants.ts"
+      relevance: "Contains TAGLINE constant and unused BANNER constant"
+
+  secondary:
+    - path: "src/commands/examples.ts"
+      relevance: "Uses showBanner() at line 269"
+    - path: "src/commands/check.ts"
+      relevance: "Uses showBanner() at line 24"
+    - path: "src/commands/upgrade/index.ts"
+      relevance: "Uses showBanner() at line 17"
+    - path: "src/commands/init/index.ts"
+      relevance: "Uses showBanner() at line 30"
+
+mermaid_diagrams:
+  - title: "Current CLI Banner Architecture"
+    description: "Shows current inconsistent banner display across CLI entry points"
+    diagram: |
+      ```mermaid
+      graph TD
+        A[CLI Entry Point<br/>cli.ts] --> B[--help<br/>renderBannerForHelp]
+        A --> C[Commands<br/>showBanner]
+        
+        B --> D["3 lines:<br/>1. Figlet title<br/>2. TAGLINE mint<br/>3. Instruction dim"]
+        
+        C --> E["2 lines:<br/>1. BANNER ASCII<br/>2. TAGLINE mint<br/>❌ Missing instruction"]
+        
+        F[examples.ts] --> C
+        G[check.ts] --> C
+        H[upgrade/index.ts] --> C
+        I[init/index.ts] --> C
+        
+        J[Duplicate Code<br/>cli.ts 321-337] --> K["2 lines:<br/>1. Figlet title<br/>2. TAGLINE mint<br/>❌ Missing instruction"]
+        
+        style D fill:#90EE90
+        style E fill:#FFB6C1
+        style K fill:#FFB6C1
+      ```
+
+code_snippets:
+  - title: "Current 3-Line Implementation (--help)"
+    language: "typescript"
+    description: "renderBannerForHelp() function showing the desired 3-line format"
+    code: |
+      const renderBannerForHelp = () => {
+        const terminalWidth = process.stdout.columns || 80;
+        const rendered = figlet.textSync("BUILDFORCE", {
+          font: "ANSI Shadow",
+          horizontalLayout: "default",
+          verticalLayout: "default",
+        });
+        const lines = rendered.split("\n");
+        const centered = lines
+          .map((line) => {
+            const pad = Math.max(0, Math.floor((terminalWidth - line.length) / 2));
+            return " ".repeat(pad) + chalk.white(line);
+          })
+          .join("\n");
+        const taglinePad = Math.max(0, Math.floor((terminalWidth - TAGLINE.length) / 2));
+        const centeredTagline = " ".repeat(taglinePad) + mint(TAGLINE);
+        const examplesMessage = "Check our example workflows by typing `buildforce examples`";
+        const examplesPad = Math.max(0, Math.floor((terminalWidth - examplesMessage.length) / 2));
+        const centeredExamplesMessage = " ".repeat(examplesPad) + chalk.dim(examplesMessage);
+        return `\n${centered}\n${centeredTagline}\n${centeredExamplesMessage}\n\n`;
+      };
+
+  - title: "Current 2-Line Implementation (showBanner)"
+    language: "typescript"
+    description: "showBanner() function that needs update to include instruction line"
+    code: |
+      export function showBanner(banner: string, tagline: string): void {
+        const bannerLines = banner.trim().split('\n');
+        const mint = chalk.hex("#3EB489");
+
+        console.log();
+        for (let i = 0; i < bannerLines.length; i++) {
+          console.log(chalk.white(bannerLines[i]));
+        }
+        console.log(mint(tagline));
+        console.log();
+      }
+
+architectural_decisions:
+  - pattern: "Consistent CLI UX"
+    description: "All CLI entry points should display identical banner format for cohesive user experience"
+    rationale: "Users expect consistent visual identity and messaging across all CLI interactions. Inconsistency breaks trust and creates confusion."
+
+  - pattern: "Shared Banner Function"
+    description: "Centralize banner rendering logic in a single reusable function to eliminate duplication"
+    rationale: "DRY principle - single source of truth for banner format, easier to maintain and modify"
+
+tldr:
+  - "Current state: --help shows 3 lines (figlet title, tagline, instruction), commands show 2 lines (ASCII title, tagline)"
+  - "Impact: Inconsistent UX across CLI entry points"
+  - "Solution: Update showBanner() to use figlet and include instruction line, replace all calls and remove duplicate code"
+  - "Files: interactive.ts (update), cli.ts (refactor), 4 command files (automatic update via shared function)"
+  - "Color scheme: mint green (#3EB489) for tagline, white for title, dim gray for instruction"
+

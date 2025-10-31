@@ -3,6 +3,7 @@ import path from "path";
 import chalk from "chalk";
 import boxen from "boxen";
 import inquirer from "inquirer";
+import { MINT_COLOR } from "../../constants.js";
 
 /**
  * Validate and normalize project name and location
@@ -52,18 +53,18 @@ export async function validateProjectSetup(
     const existingItems = await fs.readdir(projectPath);
     if (existingItems.length > 0) {
       console.log(
-        chalk.yellow("Warning:"),
+        MINT_COLOR("Warning:"),
         `Current directory is not empty (${existingItems.length} items)`
       );
       console.log(
-        chalk.yellow(
+        MINT_COLOR(
           "Template files will be merged with existing content and may overwrite existing files"
         )
       );
 
       if (force) {
         console.log(
-          chalk.cyan(
+          MINT_COLOR(
             "--force supplied: skipping confirmation and proceeding with merge"
           )
         );
@@ -79,7 +80,7 @@ export async function validateProjectSetup(
         ]);
 
         if (!confirmed) {
-          console.log(chalk.yellow("Operation cancelled"));
+          console.log(MINT_COLOR("Operation cancelled"));
           process.exit(0);
         }
       }
@@ -92,7 +93,7 @@ export async function validateProjectSetup(
       console.log();
       console.log(
         boxen(
-          `Directory '${chalk.cyan(projectName)}' already exists\n` +
+          `Directory '${MINT_COLOR(projectName)}' already exists\n` +
             "Please choose a different project name or remove the existing directory.",
           {
             title: chalk.red("Directory Conflict"),
@@ -168,10 +169,10 @@ export function checkAgentTool(
       console.log();
       console.log(
         boxen(
-          `${chalk.cyan(selectedAi)} not found\n` +
-            `Install with: ${chalk.cyan(installUrl)}\n` +
+          `${MINT_COLOR(selectedAi)} not found\n` +
+            `Install with: ${MINT_COLOR(installUrl)}\n` +
             `${aiChoices[selectedAi]} is required to continue with this project type.\n\n` +
-            `Tip: Use ${chalk.cyan("--ignore-agent-tools")} to skip this check`,
+            `Tip: Use ${MINT_COLOR("--ignore-agent-tools")} to skip this check`,
           {
             title: chalk.red("Agent Detection Error"),
             padding: 1,

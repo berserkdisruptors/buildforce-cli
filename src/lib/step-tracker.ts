@@ -1,5 +1,6 @@
 import chalk from 'chalk';
 import { Step, StepStatus } from '../types.js';
+import { MINT_COLOR } from '../constants.js';
 
 /**
  * Track and render hierarchical steps without emojis, similar to Claude Code tree output.
@@ -75,7 +76,7 @@ export class StepTracker {
 
   render(): string {
     const lines: string[] = [];
-    lines.push(chalk.cyan(this.title));
+    lines.push(MINT_COLOR(this.title));
 
     for (const step of this.steps) {
       const label = step.label;
@@ -88,11 +89,11 @@ export class StepTracker {
       } else if (step.status === 'pending') {
         symbol = chalk.green.dim('○');
       } else if (step.status === 'running') {
-        symbol = chalk.cyan('○');
+        symbol = MINT_COLOR('○');
       } else if (step.status === 'error') {
         symbol = chalk.red('●');
       } else if (step.status === 'skipped') {
-        symbol = chalk.yellow('○');
+        symbol = MINT_COLOR('○');
       } else {
         symbol = ' ';
       }

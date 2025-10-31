@@ -2,6 +2,7 @@ import { glob } from "glob";
 import fs from "fs-extra";
 import path from "path";
 import chalk from "chalk";
+import { MINT_COLOR } from "../constants.js";
 
 interface LocalArtifactResult {
   zipPath: string;
@@ -30,7 +31,7 @@ export async function resolveLocalArtifact(
       chalk.red(
         `Local artifacts directory not found: ${absoluteLocalDir}\n\n` +
           `Please create the directory or run the artifact generation script:\n` +
-          chalk.cyan(
+          MINT_COLOR(
             `AGENTS=${aiAssistant} SCRIPTS=${scriptType} .github/workflows/scripts/create-release-packages.sh v0.0.99`
           )
       )
@@ -60,10 +61,10 @@ export async function resolveLocalArtifact(
     throw new Error(
       chalk.red(
         `Local artifact not found.\n\n` +
-          `Expected pattern: ${chalk.yellow(pattern)}\n` +
+          `Expected pattern: ${MINT_COLOR(pattern)}\n` +
           `Searched in: ${absoluteLocalDir}${availableList}\n\n` +
           `To generate the required artifact, run:\n` +
-          chalk.cyan(
+          MINT_COLOR(
             `AGENTS=${aiAssistant} SCRIPTS=${scriptType} .github/workflows/scripts/create-release-packages.sh v0.0.99`
           )
       )
@@ -106,7 +107,7 @@ export async function resolveLocalArtifact(
   // Notify user if multiple matches were found
   if (sortedMatches.length > 1) {
     console.log(
-      chalk.yellow(
+      MINT_COLOR(
         `⚠️  Found ${sortedMatches.length} matching artifacts. Using latest: ${path.basename(selectedArtifact)}`
       )
     );

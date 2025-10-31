@@ -3,7 +3,7 @@ name: Buildforce CLI Architecture
 type: module
 status: production
 created: 2025-10-27
-last_updated: 2025-10-28
+last_updated: 2025-10-31
 
 summary: |
   Comprehensive architecture of the Buildforce CLI tool - a Node.js-based command-line
@@ -117,12 +117,31 @@ design_decisions:
   - decision: "Support local artifact resolution via --local flag"
     rationale: "Enables offline workflows, local testing during development, and faster iteration cycles. Developers can test locally-built artifacts without publishing to GitHub Releases."
 
+  - decision: "Centralized banner rendering with consistent 3-line format across all CLI entry points"
+    rationale: "All commands (init, upgrade, check, examples, --help) display identical banner format (figlet title, tagline, instruction) for cohesive user experience. Centralized in generateBanner() function eliminates duplication and ensures visual consistency."
+
+  - decision: "Standardized mint color (#3EB489) for all non-error UI elements"
+    rationale: "Cohesive visual identity achieved through single color standard. Mint color is centralized in constants.ts as MINT_COLOR and used consistently across all CLI output: help formatting, banners, interactive menus, warnings, info messages, box borders, and status indicators. Error colors (red/magenta) remain distinct for critical failure states to ensure visibility and user safety."
+
 architecture_patterns:
   entry_point: |
     CLI Entry: src/cli.ts
     - Commander.js parses arguments
     - Routes to command handlers
-    - Displays ASCII banner and tagline
+    - Displays standardized 3-line banner (figlet title, tagline, instruction) via generateBanner()
+    
+    Banner Display:
+    - All CLI entry points use consistent 3-line format via showBanner() function
+    - Centralized banner generation in src/lib/interactive.ts (generateBanner())
+    - Format: figlet "BUILDFORCE" title (white), tagline (mint #3EB489), instruction (dim gray)
+    - All lines centered based on terminal width (process.stdout.columns || 80)
+
+    Color System:
+    - Standard mint color (#3EB489) defined in src/constants.ts as MINT_COLOR
+    - All non-error UI elements use mint: help text, banners, interactive menus, warnings, info messages, box borders, status indicators
+    - Error colors (red/magenta) preserved for error states to maintain critical visual distinction
+    - Boxen borders use hex code "#3EB489" for mint compatibility
+    - Import MINT_COLOR from constants.ts across all 14 files requiring color output
 
     Main Command: buildforce [project-name]
     - Accepts positional project name or --here flag
@@ -141,7 +160,8 @@ architecture_patterns:
        - checkAgentTool() - Confirms AI agent installed
 
     2. User Interaction (interactive.ts)
-       - showBanner() - ASCII art display
+       - showBanner() - Standardized 3-line banner display (figlet title, tagline, instruction)
+       - generateBanner() - Shared banner generation function for all CLI entry points
        - selectWithArrows() - Interactive menu
        - Collect AI assistant and script type
 
@@ -234,7 +254,8 @@ architecture_patterns:
     StepTracker Class:
     - Hierarchical step tracking with status states
     - States: pending, running, done, error, skipped
-    - Color-coded output (green ✓, red ✗, yellow -)
+    - Color-coded output (green ✓, red ✗, mint ○ for running/skipped)
+    - Title displayed in mint color (#3EB489)
     - Supports live refresh callbacks
     - Non-emoji symbols for universal compatibility
 
@@ -262,7 +283,7 @@ core_modules:
     - "extract.ts - ZIP extraction and project file merging"
     - "local-artifacts.ts - Local artifact resolution and pattern matching"
     - "step-tracker.ts - Hierarchical progress visualization"
-    - "interactive.ts - User interaction utilities (menus, banners)"
+    - "interactive.ts - User interaction utilities (menus, banners, centralized banner generation)"
 
   utilities:
     - "tools.ts - Tool detection in PATH"
@@ -274,7 +295,7 @@ core_modules:
 
   configuration:
     - "agents.ts - AI assistant definitions and folder mappings"
-    - "constants.ts - ASCII banner, taglines, repository metadata"
+    - "constants.ts - Tagline, repository metadata, and centralized MINT_COLOR export (BANNER constant removed, replaced by figlet)"
     - "types.ts - TypeScript interfaces and type definitions"
 
 workflow_integration: |
@@ -330,6 +351,18 @@ evolution:
     date: "2025-10-28"
     changes: "Added local artifact resolution system with --local flag for init and upgrade commands, enabling offline workflows and faster local testing"
 
+  - version: "1.3"
+    date: "2025-01-30"
+    changes: "Standardized banner display across all CLI entry points. Created centralized generateBanner() function with 3-line format (figlet title, tagline, instruction). Removed unused ASCII art BANNER constant. All commands now display consistent banner for cohesive UX."
+
+  - version: "1.4"
+    date: "2025-10-31"
+    changes: "Standardized color scheme to mint (#3EB489) across all CLI UI elements. Centralized MINT_COLOR constant in constants.ts and replaced 25+ yellow and 20+ cyan color instances across 14 files. Updated boxen border colors to mint hex codes. Maintained error colors (red/magenta) for critical failure states. Achieved cohesive visual identity throughout CLI output."
+
+related_specs:
+  - "standardize-cli-title-display-20250130220000"
+  - "standardize-color-scheme-mint-20251031011544"
+
 notes: |
   Key architectural strengths:
   - Template-based initialization reduces setup friction
@@ -338,6 +371,7 @@ notes: |
   - GitHub Release distribution allows independent template updates
   - Local artifact resolution supports offline development and testing
   - Step tracking provides transparent progress feedback
+  - Cohesive visual identity through standardized mint color scheme
 
   Future considerations:
   - Plugin system for custom workflow extensions

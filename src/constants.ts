@@ -1,3 +1,5 @@
+import chalk from "chalk";
+
 // Re-export agent configurations
 export {
   AI_CHOICES,
@@ -5,16 +7,10 @@ export {
   AGENT_FOLDER_MAP,
 } from "./config/agents.js";
 
-export const BANNER = `
-██████╗ ██╗   ██╗██╗██╗     ██████╗ ███████╗ ██████╗ ██████╗  ██████╗███████╗
-██╔══██╗██║   ██║██║██║     ██╔══██╗██╔════╝██╔═══██╗██╔══██╗██╔════╝██╔════╝
-██████╔╝██║   ██║██║██║     ██║  ██║█████╗  ██║   ██║██████╔╝██║     █████╗
-██╔══██╗██║   ██║██║██║     ██║  ██║██╔══╝  ██║   ██║██╔══██╗██║     ██╔══╝
-██████╔╝╚██████╔╝██║███████╗██████╔╝██║     ╚██████╔╝██║  ██║╚██████╗███████╗
-╚═════╝  ╚═════╝ ╚═╝╚══════╝╚═════╝ ╚═╝      ╚═════╝ ╚═╝  ╚═╝ ╚═════╝╚══════╝
-`;
-
 export const TAGLINE = "Context-first Spec-Driven Development framework";
+
+// Centralized mint color for cohesive UI
+export const MINT_COLOR = chalk.hex("#3EB489");
 
 export const CLAUDE_LOCAL_PATH = `${process.env.HOME}/.claude/local/claude`;
 

@@ -1,0 +1,115 @@
+id: standardize-color-scheme-mint-20251031011544
+name: "Standardize Color Scheme to Mint"
+type: feature
+status: draft
+created: "2025-10-31"
+last_updated: "2025-10-31"
+
+summary: |
+  Replace all yellow, cyan (blue-tinted), and blue color instances with mint (#3EB489) across the CLI codebase to achieve cohesive UI. Mint is already established as the standard color for CLI help formatting, banners, and interactive menus. This standardization will extend mint to all UI elements including warnings, info messages, borders, and status indicators.
+
+# INTENT / PROBLEM STATEMENT
+
+problem: |
+  The CLI currently uses inconsistent color schemes across different components. Yellow is used for warnings and suggestions, cyan for informational messages, while mint (#3EB489) is already established as the standard for CLI help formatting, banners, and interactive menus. This inconsistency creates visual fragmentation and reduces the cohesive brand experience. Users encounter different colors for similar types of information, which weakens the overall UI coherence.
+
+motivation: |
+  Achieving cohesive UI with a single color standard (mint) will improve visual consistency, strengthen brand identity, and enhance user experience. When all non-error UI elements use mint consistently, the CLI presents a unified, professional appearance. This standardization makes the interface more predictable and easier to visually parse, while maintaining error colors (red/magenta) for critical failure states.
+
+# GOALS
+
+primary_goals:
+  - Replace all yellow and cyan color instances with mint (#3EB489) across 14 files
+  - Standardize boxen border colors to mint theme
+  - Maintain error colors (red/magenta) for error states and debug information
+
+secondary_goals:
+  - Centralize mint color definition in constants.ts for maintainability and single source of truth
+  - Ensure visual consistency across all CLI commands and output formats
+
+# REQUIREMENTS
+
+functional_requirements:
+  - FR1: Replace all `chalk.yellow()` calls (25+ occurrences) with mint color across init, upgrade, examples, step-tracker, and utility files
+  - FR2: Replace all `chalk.cyan()` calls (20+ occurrences) with mint color across init, upgrade, github, extract, local-artifacts, git utils, and step-tracker files
+  - FR3: Update boxen `borderColor: "yellow"` properties (2 occurrences in output.ts) to mint-compatible values
+  - FR4: Update boxen `borderColor: "cyan"` properties (3 occurrences in output.ts) to mint-compatible values
+  - FR5: Update step-tracker.ts to use mint for title, running status symbol, and skipped status symbol
+  - FR6: Preserve error colors (red/magenta) for error states in validation.ts and setup.ts
+  - FR7: Verify boxen library supports mint color (as string or hex) and implement appropriate replacement
+  - FR8: Centralize mint color definition by exporting MINT_COLOR from src/constants.ts and updating all files to import it
+
+non_functional_requirements:
+  - NFR1: All color replacements must maintain existing visual hierarchy and readability
+  - NFR2: Changes must not break existing functionality - colors are cosmetic only
+  - NFR3: Color changes should be backward compatible with existing terminal color support
+
+# SCOPE
+
+in_scope:
+  - Replace yellow/cyan chalk colors with mint in 14 identified files
+  - Update boxen border colors to mint-compatible values
+  - Update step-tracker color scheme to mint
+  - Centralize mint color definition in src/constants.ts and update cli.ts and interactive.ts to import it
+  - Keep error colors (red/magenta) unchanged in error handling contexts
+
+out_of_scope:
+  - Modifying error colors (red/magenta) - these remain for error states
+  - Changing color schemes for third-party libraries (boxen internal colors if not configurable)
+  - Creating new UI components or features
+  - Adding new color constants beyond mint
+  - Modifying functionality - only cosmetic color changes
+
+# DESIGN PRINCIPLES
+
+design_principles:
+  - "Consistency First: All non-error UI elements use mint (#3EB489) for unified visual identity"
+  - "Error Visibility: Maintain distinct error colors (red/magenta) for critical failure states"
+  - "Maintainability: Prefer centralized color constants over scattered local definitions"
+  - "Minimal Disruption: Changes are cosmetic only, no functional modifications"
+
+# ACCEPTANCE CRITERIA
+
+acceptance_criteria:
+  - AC1: All 25+ `chalk.yellow()` instances across 14 files are replaced with mint color
+  - AC2: All 20+ `chalk.cyan()` instances across 14 files are replaced with mint color
+  - AC3: All boxen border colors (cyan/yellow) are updated to mint-compatible values
+  - AC4: Step-tracker displays mint color for title, running, and skipped status indicators
+  - AC5: Error colors (red/magenta) remain unchanged in validation.ts and setup.ts
+  - AC6: All commands (init, upgrade, examples, check) display consistent mint UI when executed
+  - AC7: Visual inspection confirms cohesive mint color scheme across all CLI output
+  - AC8: Mint color is centralized in constants.ts and imported by all files (replacing local definitions)
+  - AC9: Code compiles without errors and no functionality is broken
+
+# ASSUMPTIONS & DEPENDENCIES
+
+assumptions:
+  - Boxen library supports mint color either as string name "mint" or via hex color configuration (will investigate during implementation, use hex if string not supported)
+  - Terminal environments support hex color codes (#3EB489) - already proven in existing usage
+  - Centralizing mint color in constants.ts will improve maintainability
+  - Error colors should remain distinct from informational/emphasis colors
+
+dependencies:
+  internal:
+    - cli-architecture: "CLI color system architecture"
+    - examples-command: "Uses colors in workflow display"
+    - slash-commands: "Command output formatting uses colors"
+  external:
+    - chalk: "Color library for terminal output"
+    - boxen: "Box border library - need to verify mint color support"
+
+# OPEN QUESTIONS
+
+open_questions: []
+
+# NOTES
+
+notes: |
+  This is a synchronization task to achieve cohesive UI. The mint color (#3EB489) is already established and working well in cli.ts and interactive.ts. This spec extends that standard to all UI elements.
+  
+  Decisions made:
+  - Boxen: Investigate during implementation, use hex codes if string "mint" not supported
+  - Centralization: Export MINT_COLOR from src/constants.ts and update all files to import it
+  - Accessibility: No special considerations needed - mint already proven in existing usage
+  
+  Research identified specific file locations and line numbers for replacements. The implementation should be methodical, file-by-file, to ensure nothing is missed.

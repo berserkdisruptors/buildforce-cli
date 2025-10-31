@@ -2,9 +2,9 @@ import chalk from "chalk";
 import {
   AI_CHOICES,
   SCRIPT_TYPE_CHOICES,
-  BANNER,
   TAGLINE,
   AGENT_FOLDER_MAP,
+  MINT_COLOR,
 } from "../../constants.js";
 import { InitOptions } from "../../types.js";
 import { checkTool } from "../../utils/index.js";
@@ -27,7 +27,7 @@ import {
  */
 export async function initCommand(options: InitOptions): Promise<void> {
   // Show banner first
-  showBanner(BANNER, TAGLINE);
+  showBanner("", TAGLINE);
 
   const {
     projectName: inputProjectName,
@@ -59,7 +59,7 @@ export async function initCommand(options: InitOptions): Promise<void> {
     shouldInitGit = checkTool("git");
     if (!shouldInitGit) {
       console.log(
-        chalk.yellow("Git not found - will skip repository initialization")
+        MINT_COLOR("Git not found - will skip repository initialization")
       );
     }
   }
@@ -104,8 +104,8 @@ export async function initCommand(options: InitOptions): Promise<void> {
     }
   }
 
-  console.log(chalk.cyan("Selected AI assistant:"), selectedAi);
-  console.log(chalk.cyan("Selected script type:"), selectedScript);
+  console.log(MINT_COLOR("Selected AI assistant:"), selectedAi);
+  console.log(MINT_COLOR("Selected script type:"), selectedScript);
   console.log();
 
   // Execute project setup
