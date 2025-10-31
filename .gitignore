@@ -20,5 +20,6 @@ inspiration/
 .buildforce/scripts
 .buildforce/.current-spec
 .buildforce/.research-cache.md
-.claude/**
+.claude/commands/**
+.cursor/commands/**
 .genreleases/
