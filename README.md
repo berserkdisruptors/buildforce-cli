@@ -1,6 +1,10 @@
 <div align="center">
 
-<img src=".github/assets/logo.png" alt="Buildforce CLI Logo" width="300"/>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset=".github/assets/logo-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset=".github/assets/logo-light.png">
+  <img src=".github/assets/logo.png" alt="BuildForce CLI Logo" width="250"/>
+</picture>
 
 **Context-first Spec-Driven Development framework**
 
