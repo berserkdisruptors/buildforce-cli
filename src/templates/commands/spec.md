@@ -1,4 +1,5 @@
 ---
+version: "0.0.22"
 description: Create or update a structured specification YAML file that captures WHAT needs to be built.
 scripts:
   sh: src/scripts/bash/create-spec-files.sh --folder-name "{FOLDER_NAME}" --json
