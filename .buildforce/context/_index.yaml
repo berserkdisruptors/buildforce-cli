@@ -313,3 +313,18 @@ contexts:
       ]
     related_context:
       [spec-command, research-persistence, complete-command, cli-architecture]
+
+  - id: template-versioning
+    file: template-versioning.yml
+    type: feature
+    description: "Automatic version injection for templates in release workflow with pre-commit strategy"
+    tags:
+      [
+        release-workflow,
+        templates,
+        versioning,
+        github-actions,
+        automation,
+        workflow-enhancement,
+      ]
+    related_context: [cli-architecture, plan-template, upgrade-command]

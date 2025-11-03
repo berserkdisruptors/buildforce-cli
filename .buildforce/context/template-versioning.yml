@@ -1,0 +1,219 @@
+id: template-versioning
+name: "Automatic Template Versioning in Release Workflow"
+type: feature
+status: production
+created: 2025-11-03
+last_updated: 2025-11-03
+
+summary: |
+  Automatic version injection system for BuildForce templates during GitHub release workflow.
+  Implements pre-release commit strategy that versions all template files (spec, plan, research,
+  and command templates) with semantic version matching the release tag. Ensures distributed
+  template packages are self-describing and version-aware, enabling traceability and future
+  upgrade tooling. Uses bash scripting for YAML manipulation with full idempotency support.
+
+responsibilities:
+  - Automatically inject version numbers into all template files during release process
+  - Create pre-release version bump commit with [skip ci] flag to prevent workflow loops
+  - Update 9 template files (3 YAML templates + 6 markdown command templates) with version field
+  - Ensure distributed release packages contain templates matching release tag version
+  - Maintain idempotent script behavior for safe re-execution
+  - Preserve template structure and content while updating version field only
+
+dependencies:
+  internal:
+    - release-workflow: "Integrated into .github/workflows/release.yml between version calculation and package creation"
+    - template-structure: "All templates must support version field in YAML frontmatter or as first YAML field"
+    - cli-architecture: "Templates distributed via GitHub releases are consumed by buildforce init command"
+  external:
+    - bash: "Scripting language for update-template-versions.sh"
+    - awk: "YAML manipulation for pure YAML files (cross-platform compatibility)"
+    - sed: "YAML frontmatter manipulation for markdown files"
+    - git: "Commit and push version bump changes to main branch"
+    - github-actions: "Workflow orchestration and GITHUB_TOKEN for authenticated pushes"
+
+files:
+  primary:
+    - .github/workflows/scripts/update-template-versions.sh
+    - .github/workflows/release.yml
+  secondary:
+    - src/templates/spec-template.yaml
+    - src/templates/plan-template.yaml
+    - src/templates/research-template.yml
+    - src/templates/commands/spec.md
+    - src/templates/commands/plan.md
+    - src/templates/commands/build.md
+    - src/templates/commands/complete.md
+    - src/templates/commands/document.md
+    - src/templates/commands/research.md
+
+design_decisions:
+  - decision: "Use awk for updating version fields in pure YAML files instead of sed"
+    rationale: "macOS sed doesn't support '0,/pattern/s//' syntax for first-occurrence-only replacement. Awk provides portable cross-platform behavior and better control over first-match replacement logic."
+
+  - decision: "Separate update functions for pure YAML vs markdown with YAML frontmatter"
+    rationale: "Template files have two distinct formats: pure YAML (spec, plan, research) and markdown with YAML frontmatter delimited by --- (command templates). Separate functions provide clearer logic and better error handling for each format type."
+
+  - decision: "Version format uses semantic version without 'v' prefix (0.1.0 not v0.1.0)"
+    rationale: "YAML frontmatter typically uses clean semver format. The 'v' prefix is for git tags, not for version metadata. This keeps templates cleaner and more professional while workflow strips 'v' from tag before calling script."
+
+  - decision: "Place version field as first field in YAML (immediately after opening --- for frontmatter)"
+    rationale: "Placing version as the very first field makes it immediately visible when opening templates and ensures maximum consistency across all templates. Users can quickly identify template version at a glance."
+
+  - decision: "Use [skip ci] in commit message to prevent infinite workflow loops"
+    rationale: "Version bump commits should not trigger new workflow runs. The [skip ci] flag is a GitHub Actions convention that prevents infinite loop scenario where version bump triggers workflow which bumps version again."
+
+  - decision: "Script is idempotent - skips update if version already matches target"
+    rationale: "Idempotency prevents unnecessary git changes and allows safe re-runs. If version already matches, no changes are made, resulting in clean git status. Critical for workflow reliability and debugging."
+
+  - decision: "Version bump placed after get-next-version, before check-release-exists in workflow"
+    rationale: "This placement ensures version is calculated first from git tags, templates are updated with that version, changes are committed and pushed, and then release checks and package creation proceed with the versioned commit as the source."
+
+interfaces:
+  script_signature:
+    command: "update-template-versions.sh <version>"
+    arguments:
+      - name: "version"
+        type: "string"
+        required: true
+        description: "Semantic version without 'v' prefix (e.g., 0.1.0)"
+        validation: "Matches regex ^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    exit_codes:
+      - code: 0
+        meaning: "Success - templates updated or already at target version"
+      - code: 1
+        meaning: "Error - invalid version format, missing templates directory, or no templates found"
+    examples:
+      - "bash .github/workflows/scripts/update-template-versions.sh 0.1.0"
+      - "bash .github/workflows/scripts/update-template-versions.sh 1.2.3"
+
+  workflow_integration:
+    step_name: "Update template versions"
+    inputs:
+      - "VERSION from get-next-version step (format: v0.1.0)"
+      - "VERSION_NO_V stripped of 'v' prefix (format: 0.1.0)"
+    outputs:
+      - "Modified template files in src/templates/ directory"
+    subsequent_steps:
+      - "Commit version bump with [skip ci]"
+      - "Push to main branch using GITHUB_TOKEN"
+      - "Continue with release package creation"
+
+  version_field_format:
+    pure_yaml:
+      format: 'version: "0.1.0"'
+      placement: "First line of file"
+      example: |
+        version: "0.1.0"
+        id: [FOLDER_NAME]
+        name: "[Feature Name]"
+
+    markdown_frontmatter:
+      format: 'version: "0.1.0"'
+      placement: "First field after opening --- delimiter"
+      example: |
+        ---
+        version: "0.1.0"
+        description: Create or update a structured specification
+        scripts:
+          sh: src/scripts/bash/create-spec-files.sh
+        ---
+
+evolution:
+  - version: "1.0"
+    date: "2025-11-03"
+    changes: |
+      Initial implementation of automatic template versioning:
+      - Created update-template-versions.sh script with dual-format support
+      - Integrated version bump into release.yml workflow (3 new steps)
+      - Added version field to all 9 template files
+      - Implemented idempotency with version matching checks
+      - Added comprehensive error handling and validation
+      - Tested locally with versions 0.0.97, 0.0.98, 0.0.99
+
+      Key features:
+      - Handles pure YAML files and markdown with YAML frontmatter
+      - Version validation with semver regex
+      - Skips files already at target version (idempotent)
+      - Exits with error if no templates found or invalid version
+      - Uses awk for portable YAML manipulation
+      - Integrates seamlessly with existing release workflow
+
+related_specs:
+  - template-versioning-20251103000000
+
+workflow_sequence:
+  step_1: "Build TypeScript CLI (existing)"
+  step_2: "Get next version from git tags (existing)"
+  step_3: "Update templates with version (NEW)"
+  step_4: "Commit with 'chore: bump version to vX.Y.Z [skip ci]' (NEW)"
+  step_5: "Push commit to main (NEW)"
+  step_6: "Check if release already exists (existing)"
+  step_7: "Create release packages from versioned commit (existing)"
+  step_8: "Create GitHub release with tag (existing)"
+
+technical_details:
+  script_functions:
+    - name: "has_yaml_frontmatter"
+      purpose: "Detect markdown files with --- YAML frontmatter --- structure"
+
+    - name: "is_pure_yaml"
+      purpose: "Detect files with .yaml or .yml extension"
+
+    - name: "version_matches_yaml"
+      purpose: "Check if version in pure YAML file already matches target"
+
+    - name: "version_matches_frontmatter"
+      purpose: "Check if version in YAML frontmatter already matches target"
+
+    - name: "update_version_yaml"
+      purpose: "Update version in pure YAML file using awk"
+
+    - name: "update_version_frontmatter"
+      purpose: "Update version in markdown YAML frontmatter using awk"
+
+    - name: "update_version"
+      purpose: "Main router function that delegates to appropriate handler"
+
+  validation_logic:
+    - "Version format validation using regex"
+    - "Templates directory existence check"
+    - "Total files processed counter (must be > 0)"
+    - "Version matching check before updating (idempotency)"
+    - "Successful file update reporting with colored output"
+
+  error_handling:
+    - "set -euo pipefail for strict error handling"
+    - "Exit code 1 on validation failures"
+    - "Graceful handling of missing template directories"
+    - "Silent skipping of files without YAML frontmatter"
+    - "|| true for while loop exit code handling (bash EOF behavior)"
+
+notes: |
+  This implementation provides a solid foundation for template versioning and enables
+  future upgrade tooling. Users running `buildforce init` will receive templates with
+  version information, making it possible to:
+
+  - Identify which release version a project was initialized from
+  - Provide better support and troubleshooting guidance
+  - Make informed decisions about when to upgrade templates
+  - Build automatic upgrade detection and migration tools
+
+  The [skip ci] flag is critical to prevent infinite loops where the version bump commit
+  triggers another workflow run, which would bump the version again, ad infinitum.
+
+  The script's idempotency makes it safe for debugging and re-execution. If templates
+  already have the target version, the script reports this and exits successfully without
+  making any changes.
+
+  Future enhancements could include:
+  - PowerShell variant of the update script (NFR4 currently out of scope)
+  - Individual template versioning if templates evolve at different rates
+  - Version compatibility checks or breaking change detection
+  - Automatic changelog generation based on version bumps
+  - Backfilling versions for existing releases (currently out of scope)
+  - Integration with upgrade command to compare user's template version with latest
+
+  The implementation aligns with "Approach 1: Pre-Release Version Bump Commit" from
+  the initial brainstorming, which was selected for its clean git history and
+  guarantee that tags point to commits containing versioned templates.
