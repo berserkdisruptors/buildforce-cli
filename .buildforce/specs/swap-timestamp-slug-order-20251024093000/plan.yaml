@@ -140,7 +140,7 @@ phase_2:
 
     - [x] Update related_specs in all context files
       spec_refs: [FR10]
-      files: [.buildforce/context/*.yml]
+      files: [.buildforce/context/*.yaml]
       notes: "Skipped per user request - user will handle separately if needed."
 
     - [x] Update .current-spec state file
@@ -291,7 +291,7 @@ lessons_learned:
   - Regex validation catching edge cases (digit-leading slugs) works as expected
 
 future_enhancements:
-  - Consider creating a spec index file (.buildforce/specs/_index.yml) with chronological listing if users need it
+  - Consider creating a spec index file (.buildforce/specs/_index.yaml) with chronological listing if users need it
   - Add alias support to reference specs by semantic slug only (without timestamp)
   - Implement fuzzy search for spec references (e.g., @spec:auth could resolve to auth-related spec)
   - Add command to list specs by creation date if chronological browsing is needed

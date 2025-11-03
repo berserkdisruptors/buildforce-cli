@@ -1,5 +1,5 @@
 id: related-context-field-index-20251027115121
-name: "Related Context Field in _index.yml for Agent Discovery"
+name: "Related Context Field in _index.yaml for Agent Discovery"
 type: feature
 status: draft
 created: "2025-10-27"
@@ -29,43 +29,43 @@ motivation: |
 # GOALS
 
 primary_goals:
-  - Add `related_context` field to _index.yml entries containing arrays of related context IDs
-  - Add comprehensive inline documentation to src/context/_index.yml template explaining all index fields including related_context
-  - Update src/context/_index.yml template to include example entries with related_context populated
+  - Add `related_context` field to _index.yaml entries containing arrays of related context IDs
+  - Add comprehensive inline documentation to src/context/_index.yaml template explaining all index fields including related_context
+  - Update src/context/_index.yaml template to include example entries with related_context populated
 
 secondary_goals:
   - Update /complete and /document command templates to instruct agents on populating related_context
-  - Remove unused index_structure section from _schema.yml to avoid confusion
+  - Remove unused index_structure section from _schema.yaml to avoid confusion
 
 # REQUIREMENTS
 
 functional_requirements:
-  - FR1: Add `related_context` field to _index.yml entry structure (optional array of context IDs)
-  - FR2: Add comprehensive inline documentation comment block at the top of src/context/_index.yml explaining all index entry fields (id, file, type, description, tags, related_context) with format, examples, and usage guidelines
-  - FR3: Update src/context/_index.yml template to include at least two example entries with populated related_context field
-  - FR4: Remove unused index_structure section from src/context/_schema.yml (the product template) to reduce confusion
+  - FR1: Add `related_context` field to _index.yaml entry structure (optional array of context IDs)
+  - FR2: Add comprehensive inline documentation comment block at the top of src/context/_index.yaml explaining all index entry fields (id, file, type, description, tags, related_context) with format, examples, and usage guidelines
+  - FR3: Update src/context/_index.yaml template to include at least two example entries with populated related_context field
+  - FR4: Remove unused index_structure section from src/context/_schema.yaml (the product template) to reduce confusion
   - FR5: Update /complete command template to instruct agents to populate related_context when creating/updating index entries
   - FR6: Update /document command template to instruct agents to populate related_context when creating/updating index entries
-  - FR7: Ensure inline documentation specifies related_context should contain valid context IDs that exist in _index.yml
+  - FR7: Ensure inline documentation specifies related_context should contain valid context IDs that exist in _index.yaml
 
 non_functional_requirements:
   - NFR1: The related_context field should be optional to avoid breaking existing context files
   - NFR2: Documentation should be clear enough that agents understand when to add related_context without over-populating
-  - NFR3: The field should maintain YAML formatting consistency with existing _index.yml structure
+  - NFR3: The field should maintain YAML formatting consistency with existing _index.yaml structure
 
 # SCOPE
 
 in_scope:
-  - Adding comprehensive inline documentation to src/context/_index.yml template explaining all index fields
-  - Adding related_context field to example entries in src/context/_index.yml template
-  - Removing unused index_structure section from src/context/_schema.yml (the product template that users get)
+  - Adding comprehensive inline documentation to src/context/_index.yaml template explaining all index fields
+  - Adding related_context field to example entries in src/context/_index.yaml template
+  - Removing unused index_structure section from src/context/_schema.yaml (the product template that users get)
   - Updating complete.md and document.md command templates with related_context instructions
   - Documenting when agents should populate related_context (e.g., for closely related modules, features that depend on each other)
 
 out_of_scope:
-  - Retroactively populating related_context for all existing context entries in .buildforce/context/_index.yml (can be done incrementally)
+  - Retroactively populating related_context for all existing context entries in .buildforce/context/_index.yaml (can be done incrementally)
   - Implementing automated related_context detection (agents will manually determine relationships)
-  - Adding related_context field to context YAML files themselves (only in _index.yml entries)
+  - Adding related_context field to context YAML files themselves (only in _index.yaml entries)
   - Creating validation scripts to check related_context ID validity
 
 # DESIGN PRINCIPLES
@@ -78,12 +78,12 @@ design_principles:
 # ACCEPTANCE CRITERIA
 
 acceptance_criteria:
-  - AC1: src/context/_index.yml template includes comprehensive inline documentation comment block explaining all index entry fields (id, file, type, description, tags, related_context)
+  - AC1: src/context/_index.yaml template includes comprehensive inline documentation comment block explaining all index entry fields (id, file, type, description, tags, related_context)
   - AC2: Inline documentation includes format specifications, usage guidelines, and examples for each field
-  - AC3: src/context/_index.yml template includes at least two example entries with related_context populated
-  - AC4: src/context/_schema.yml (template) has index_structure section removed
-  - AC5: complete.md template instructs agents to populate related_context when adding entries to _index.yml
-  - AC6: document.md template instructs agents to populate related_context when adding entries to _index.yml
+  - AC3: src/context/_index.yaml template includes at least two example entries with related_context populated
+  - AC4: src/context/_schema.yaml (template) has index_structure section removed
+  - AC5: complete.md template instructs agents to populate related_context when adding entries to _index.yaml
+  - AC6: document.md template instructs agents to populate related_context when adding entries to _index.yaml
   - AC7: Documentation specifies related_context should contain IDs of contexts that are closely related (e.g., dependent modules, sibling features)
   - AC8: All changes maintain proper YAML formatting and indentation consistency
 
@@ -91,13 +91,13 @@ acceptance_criteria:
 
 assumptions:
   - Agents will use related_context as a discovery hint when they find a relevant context entry
-  - Context ID uniqueness is maintained (no duplicate IDs across _index.yml)
+  - Context ID uniqueness is maintained (no duplicate IDs across _index.yaml)
   - Agents reading context files will check related_context arrays and load those contexts
 
 dependencies:
   internal:
-    - _schema.yml: "Will have unused index_structure section removed"
-    - _index.yml: "Index file that will receive inline documentation and related_context field"
+    - _schema.yaml: "Will have unused index_structure section removed"
+    - _index.yaml: "Index file that will receive inline documentation and related_context field"
     - complete-command: "Needs to instruct agents on populating related_context"
     - document-command: "Needs to instruct agents on populating related_context"
   external: {}
@@ -120,8 +120,8 @@ notes: |
   significant enough to warrant automatic loading by agents. Agents should populate this
   during /complete and /document operations based on their understanding of component relationships.
 
-  Key change from original plan: Instead of documenting the field in _schema.yml (which has an
+  Key change from original plan: Instead of documenting the field in _schema.yaml (which has an
   unused index_structure section), we're adding comprehensive inline documentation directly in
-  src/context/_index.yml template. This is cleaner since agents read _index.yml directly and
-  the documentation will be in context. The _schema.yml remains focused on context YAML file
+  src/context/_index.yaml template. This is cleaner since agents read _index.yaml directly and
+  the documentation will be in context. The _schema.yaml remains focused on context YAML file
   structure only.

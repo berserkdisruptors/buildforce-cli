@@ -24,11 +24,11 @@ problem: |
      insufficient for large/long-lived projects.
 
   3. **Context Files - Wrong Abstraction**: Context filenames inherit from spec folder names
-     (007-auth-feature.yml), but specs capture *change intent* while contexts document *system
+     (007-auth-feature.yaml), but specs capture *change intent* while contexts document *system
      components*. One spec may update multiple contexts; one context may be updated by many specs.
 
   4. **Context Files - Numeric Pollution**: Timestamp/sequential prefixes in context filenames
-     (002-build-command.yml) reduce discoverability, harm IDE autocomplete, and contradict documented
+     (002-build-command.yaml) reduce discoverability, harm IDE autocomplete, and contradict documented
      design principle requiring snake-case names without prefixes.
 
 motivation: |
@@ -40,8 +40,8 @@ motivation: |
   - **Team Scalability**: Multiple developers can create specs concurrently without coordination
     or merge conflicts on folder names
 
-  - **Semantic Context**: Context files named by component identity (authentication.yml,
-    build-command.yml) improve searchability and align with living documentation purpose
+  - **Semantic Context**: Context files named by component identity (authentication.yaml,
+    build-command.yaml) improve searchability and align with living documentation purpose
 
   - **Agent Intelligence**: AI agents generate meaningful, conflict-free names based on intent
     analysis rather than mechanical incrementing
@@ -95,7 +95,7 @@ in_scope:
   - Remove sequential numbering logic and highest-number detection from scripts
   - Remove fuzzy matching logic from create-spec-files scripts entirely
   - Update /spec command template to generate semantic slug + prepend timestamp
-  - Update /complete command template to instruct agent to read .buildforce/context/_index.yml and determine context file updates/creation
+  - Update /complete command template to instruct agent to read .buildforce/context/_index.yaml and determine context file updates/creation
   - Update spec-template.yaml placeholder from [FEATURE_NUM]-[feature-name] to [FOLDER_NAME]
   - Add validation for folder names: timestamp format, length limits, character restrictions
   - Add validation for context names: length limits (≤50 chars), character restrictions, no prefixes
@@ -132,9 +132,9 @@ acceptance_criteria:
   - AC3: create-spec-files.sh --folder-name "20250122143052-add-auth-jwt" creates .buildforce/specs/20250122143052-add-auth-jwt/
   - AC4: Spec folder names validate format: 14-digit timestamp, hyphen, semantic slug, total ≤50 chars, alphanumeric+hyphens only
   - AC5: Attempting to create spec without --folder-name parameter results in error (no fallback generation in script)
-  - AC6: /complete for authentication spec analyzes conversation/spec/plan and generates context filename "authentication.yml" (no prefix)
-  - AC7: /complete detecting existing authentication.yml updates that file rather than creating duplicate
-  - AC8: /complete when authentication.yml exceeds 500 lines creates new decomposed files (e.g., "auth-middleware.yml", "auth-config.yml")
+  - AC6: /complete for authentication spec analyzes conversation/spec/plan and generates context filename "authentication.yaml" (no prefix)
+  - AC7: /complete detecting existing authentication.yaml updates that file rather than creating duplicate
+  - AC8: /complete when authentication.yaml exceeds 500 lines creates new decomposed files (e.g., "auth-middleware.yaml", "auth-config.yaml")
   - AC9: /complete for spec touching multiple components (auth, error-handling, config) updates multiple context files
   - AC10: Spec created with timestamp prefix has id field set to full folder name (20250122143052-redesign-naming)
   - AC11: Context filenames validate: ≤50 chars, kebab-case, alphanumeric+hyphens only, no numeric/timestamp prefixes
@@ -207,8 +207,8 @@ notes: |
   timestamp to create final folder name: "20250122143052-add-auth-jwt-refresh".
 
   Context file independence: A single spec (e.g., "Refactor authentication module") may update
-  multiple context files (authentication.yml, error-handling.yml, config-management.yml). Conversely,
-  authentication.yml may be updated by many specs over time. This many-to-many relationship requires
+  multiple context files (authentication.yaml, error-handling.yaml, config-management.yaml). Conversely,
+  authentication.yaml may be updated by many specs over time. This many-to-many relationship requires
   independent naming decoupled from spec IDs.
 
   Context file size threshold: When existing context file exceeds 500 lines, /complete agent should
@@ -219,7 +219,7 @@ notes: |
   1. Remove sequential numbering and fuzzy matching from create-spec-files scripts
   2. Add --folder-name parameter support with validation (timestamp format, length, characters)
   3. Update /spec template to generate semantic slug, prepend timestamp, pass to script
-  4. Update /complete template to instruct agent to read .buildforce/context/_index.yml, analyze conversation/spec/plan, determine which context files to update/create and if decomposition needed
+  4. Update /complete template to instruct agent to read .buildforce/context/_index.yaml, analyze conversation/spec/plan, determine which context files to update/create and if decomposition needed
   5. Update spec-template.yaml placeholder from [FEATURE_NUM]-[feature-name] to [FOLDER_NAME] for clarity
   6. Rename existing 00X- spec folders to timestamp format (001→20250101120000-, 002→20250102120000-, etc.) maintaining chronological order
   7. Update id field in renamed spec.yaml files to match new folder names (001-something → 20250101120000-something)
@@ -230,4 +230,4 @@ notes: |
 
   Validation rules:
   - Spec folder names: Must match ^\d{14}-[a-z0-9-]+$, total length ≤50, semantic slug ≤35 chars
-  - Context filenames: Must match ^[a-z0-9-]+\.yml$, total length ≤50 chars, no numeric prefixes
+  - Context filenames: Must match ^[a-z0-9-]+\.yaml$, total length ≤50 chars, no numeric prefixes

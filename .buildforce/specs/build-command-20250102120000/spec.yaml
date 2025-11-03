@@ -1,0 +1,167 @@
+id: build-command-20250102120000
+name: "Iterate and Complete /build Slash Command"
+type: feature
+status: in-progress
+created: "2025-10-08"
+last_updated: "2025-10-08"
+
+# INTENT / PROBLEM STATEMENT
+
+problem: |
+  The /build command template is currently 116 lines with verbose HOW-TO instructions.
+  Following the successful RESEARCH command iteration (87 � 28 lines, 68% reduction),
+  BUILD needs similar compression while maintaining workflow effectiveness.
+
+  Current issues:
+  - 10 detailed execution steps teach agents HOW to implement (they already know)
+  - Separate behavior rules section duplicates guideline content
+  - Code block examples are unnecessary for experienced AI agents
+  - Verbose explanations obscure the core workflow enhancements
+
+motivation: |
+  Align BUILD with the proven RESEARCH pattern: compact but powerful commands that
+  enhance agent queries with workflow-specific context without teaching fundamentals.
+  The command should guide the BUILD workflow while trusting agents to execute.
+
+# GOALS
+
+primary_goals:
+  - Reduce BUILD command from 116 lines to ~35-45 lines (65-70% reduction)
+  - Convert 10 execution steps + 11 behavior rules into ~7 numbered guidelines
+  - Maintain all critical features: progress tracking, deviation logging, spec validation, code quality verification, testing guidance
+  - Use ALWAYS/NEVER bold emphasis for critical instructions
+  - Trust agents to know HOW to implement and handle errors; provide WHAT workflow enhancements
+
+secondary_goals:
+  - Match RESEARCH command's concise, guideline-based format
+  - Integrate behavior rules inline with guidelines (not separate section)
+  - Remove redundant examples and explanations
+  - Ensure prerequisites are checked first (guideline #1)
+  - End with confirmation and iteration support (final guideline)
+
+# REQUIREMENTS
+
+functional_requirements:
+  - FR1: Command MUST execute `.buildforce/scripts/bash/get-spec-paths.sh --json` to discover FEATURE_DIR (script verifies files exist)
+  - FR2: Command MUST parse JSON response to extract FEATURE_DIR (absolute path to current feature directory)
+  - FR3: Command MUST explicitly require loading {FEATURE_DIR}/spec.yaml and {FEATURE_DIR}/plan.yaml into context
+  - FR4: Command MUST support progress tracking via visible checklist
+  - FR5: Command MUST log deviations from plan with Original → Actual → Reason format
+  - FR6: Command MUST support multiple /build iterations with $ARGUMENTS
+  - FR7: Command MUST validate implementation against spec requirements and plan adherence
+  - FR8: Command MUST verify code quality (no compilation errors, tests pass, no obvious gaps)
+  - FR9: Command MUST provide testing guidance (what to test, how to test, test results if automated)
+  - FR10: Command MUST track iteration number (1st build, 2nd build, etc.)
+
+non_functional_requirements:
+  - NFR1: Total length ~40-50 lines (header + guidelines + minimal formatting, increased for script execution)
+  - NFR2: Guidelines numbered by priority (1-8 or similar)
+  - NFR3: Critical instructions use bold and ALWAYS/NEVER keywords
+  - NFR4: No HOW-TO instructions (trust agent execution knowledge)
+  - NFR5: No code block examples (agents understand patterns)
+  - NFR6: Behavior rules integrated inline with guidelines
+
+# SCOPE
+
+in_scope:
+  - Rewrite src/templates/commands/build.md from 116 to ~40-50 lines
+  - Add script execution step: `.buildforce/scripts/bash/get-spec-paths.sh --json`
+  - Add FEATURE_DIR parsing and absolute path handling
+  - Convert 10 execution steps into ~8 numbered guidelines
+  - Integrate 11 behavior rules into guidelines
+  - Remove redundant examples and explanations
+  - Maintain all critical workflow features (tracking, logging, validation, confirmation)
+  - Use RESEARCH command as structural template
+
+out_of_scope:
+  - Testing the command (will happen after iteration)
+  - Updating other commands (SPEC, PLAN, COMPLETE)
+  - Changing command functionality (only format/verbosity changes)
+  - Modifying context repository structure
+
+# KEY FEATURES TO PRESERVE
+
+critical_features:
+  - Script execution: Run `.buildforce/scripts/bash/get-spec-paths.sh --json` first (script verifies files exist)
+  - Feature directory discovery: Parse FEATURE_DIR from JSON response (absolute path)
+  - Context loading: Explicitly load {FEATURE_DIR}/spec.yaml and {FEATURE_DIR}/plan.yaml into context
+  - Progress tracking: Visible checklist of plan steps with completion marking
+  - Deviation logging: Record changes from original plan across iterations
+  - Sequential execution: Follow plan steps in order
+  - Spec validation: Cross-check implementation against requirements and plan adherence
+  - Code quality verification: Ensure no compilation errors, tests pass, no obvious missing pieces
+  - Testing guidance: Provide what to test, how to test, automated test results
+  - Iterative support: Handle multiple /build iterations with feedback
+
+# COMPARISON: CURRENT VS. TARGET
+
+current_state:
+  total_lines: 116
+  structure:
+    - header: 15 lines
+    - execution_steps: 82 lines (10 steps)
+    - behavior_rules: 11 lines
+    - footer: 2 lines
+  format: Verbose prose with detailed explanations
+
+target_state:
+  total_lines: 40-50
+  structure:
+    - header: ~8 lines (YAML + context + task)
+    - guidelines: ~30-40 lines (8 numbered guidelines, including script execution)
+    - footer: ~2 lines (context placeholder)
+  format: Concise numbered guidelines with bold emphasis
+
+reduction_target: "57-65% reduction while adding script-based discovery and preserving 100% functionality"
+
+# ACCEPTANCE CRITERIA
+
+success_criteria:
+  - AC1: Command length ≤ 50 lines total (slightly increased for script execution and FEATURE_DIR handling)
+  - AC2: All 10 functional requirements preserved
+  - AC3: Guidelines numbered and prioritized (1-7, removed error handling guideline)
+  - AC4: Critical instructions use ALWAYS/NEVER bold emphasis
+  - AC5: No HOW-TO instructions (only WHAT workflow enhancements)
+  - AC6: Behavior rules integrated inline (no separate section)
+  - AC7: Format matches RESEARCH command pattern
+  - AC8: Script execution and FEATURE_DIR parsing explicitly stated
+  - AC9: All critical features preserved (tracking, logging, validation, code quality, testing guidance)
+  - AC10: Guideline 6 emphasizes spec compliance and plan adherence validation
+  - AC11: Guideline 7 provides testing guidance instead of user confirmation request
+
+# DESIGN PRINCIPLES
+
+principles:
+  - "Compact but powerful: Less is more when instructions are clear"
+  - "Trust the agent: They know HOW to implement, guide WHAT workflow"
+  - "Bold emphasis: ALWAYS/NEVER for non-negotiable instructions"
+  - "Priority ordering: Critical checks first, confirmation last"
+  - "Integration: Rules belong inline with guidelines, not separate"
+
+# ASSUMPTIONS & DEPENDENCIES
+
+assumptions:
+  - AI agents understand implementation patterns without examples
+  - RESEARCH command pattern (28 lines) is proven successful
+  - Numbered guidelines are clearer than verbose prose steps
+  - Bold emphasis effectively draws attention to critical instructions
+
+dependencies:
+  - RESEARCH command as structural reference
+  - Spec 001 (slash commands) for context
+  - Current build.md as source material
+
+# NOTES
+
+inspiration: "RESEARCH iteration: 87 � 28 lines (68% reduction) while achieving 100% flow capture"
+target_pattern: "~8 numbered guidelines with bold emphasis, no separate behavior rules"
+key_insight: "Agents don't need to be taught HOWthey need workflow context about WHAT"
+
+script_details:
+  script_path: ".buildforce/scripts/bash/get-spec-paths.sh"
+  flags: "--json"
+  json_response: |
+    {
+      "FEATURE_DIR": "/absolute/path/to/.buildforce/specs/002-build-command"
+    }
+  usage: "Execute script, parse JSON, extract FEATURE_DIR, load spec.yaml and plan.yaml"

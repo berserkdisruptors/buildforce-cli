@@ -131,7 +131,7 @@ dependencies:
     - README.md: "Original source for command documentation detail to restore"
     - src/templates/commands/*.md: "Ground truth for command features and usage"
     - package.json: "npm package metadata, version, repository URL"
-    - .buildforce/context/slash-commands.yml: "Command specifications and workflow details"
+    - .buildforce/context/slash-commands.yaml: "Command specifications and workflow details"
   external:
     - None
 

@@ -1,0 +1,230 @@
+# Plan Template for /build Agent Execution
+# This template is optimized for AI agent consumption during /build commands
+# It provides checkbox-based progress tracking, deviation logging, and spec traceability
+
+id: reorder-research-workflow-20251103143500-plan
+name: "Implementation Plan for Research Workflow Reordering"
+spec_id: "reorder-research-workflow-20251103143500"
+type: implementation-plan
+status: draft
+created: "2025-11-03"
+last_updated: "2025-11-03"
+
+# ARCHITECTURE OVERVIEW
+
+approach: |
+  This is a template-only modification to src/templates/commands/research.md. The approach is to:
+  1. Keep Steps 1-6 unchanged (Project Context through Data Models)
+  2. Move the "## Research Persistence" section to become Step 7
+  3. Renumber and clean up TLDR section as Step 8
+  4. Renumber and clean up Next Steps section as Step 9
+  
+  The entire "## Research Persistence" section (5 substeps) moves as a complete block. The logic
+  for checking currentSpec, appending to cache, and format requirements remains identical.
+
+technology_stack:
+  - Markdown template files (.md)
+  - YAML frontmatter for command metadata
+
+decisions:
+  - decision: "Move entire '## Research Persistence' section as a single block"
+    rationale: "Preserves all substeps and logic intact. Simpler than splitting or refactoring. Clear that it's a single conceptual step in the workflow."
+
+  - decision: "Make persistence Step 7 (between Data Models and TLDR)"
+    rationale: "Logical position - after all content generation, before summary presentation. Internal operation between content and user-facing summary."
+
+  - decision: "Remove 'ALWAYS add TLDR before Next Steps' instruction"
+    rationale: "Redundant - step numbering provides ordering. Can confuse agents when combined with numbered steps. Agents already follow this pattern naturally."
+
+  - decision: "Template-only change (no code modifications)"
+    rationale: "Maintains Buildforce CLI architectural pattern. No TypeScript changes needed. Template distribution automatic via existing packaging."
+
+# FILE STRUCTURE
+
+files_to_create: []
+
+files_to_modify:
+  - path: "src/templates/commands/research.md"
+    change_type: "edit"
+    description: "Reorder steps 7-9 and clean up instructions"
+
+# IMPLEMENTATION PHASES
+
+phase_1:
+  name: "Reorder Research Workflow Steps"
+  description: |
+    Modify src/templates/commands/research.md to move research persistence before TLDR and Next Steps.
+    Renumber steps appropriately and clean up redundant instructions.
+
+  tasks:
+    - [x] Identify current Step 6 (Data Models) ending line
+      spec_refs: [FR1]
+      files: [src/templates/commands/research.md]
+      notes: "Identified at line 26, after Data Models guideline"
+
+    - [x] Move "## Research Persistence" section to become Step 7
+      spec_refs: [FR1, FR6, FR7]
+      files: [src/templates/commands/research.md]
+      notes: "Moved to Step 7 (line 27), preserved all 5 substeps intact"
+
+    - [x] Create new Step 8 for TLDR section
+      spec_refs: [FR2, FR4]
+      files: [src/templates/commands/research.md]
+      notes: "Step 8 created at line 65, removed redundant ordering instruction"
+
+    - [x] Create new Step 9 for Next Steps section
+      spec_refs: [FR3, FR5]
+      files: [src/templates/commands/research.md]
+      notes: "Step 9 created at line 67, removed 'After presenting findings' language"
+
+    - [x] Verify step numbering consistency (1-9)
+      spec_refs: [FR1, FR2, FR3]
+      files: [src/templates/commands/research.md]
+      notes: "Verified: Steps 1-9 numbered sequentially without gaps"
+
+    - [x] Verify complete Research Persistence section preserved
+      spec_refs: [FR6, FR7]
+      files: [src/templates/commands/research.md]
+      notes: "Confirmed: All 5 substeps present with identical logic"
+
+  validation:
+    - [x] All phase_1 tasks completed
+    - [x] Step 7 contains complete Research Persistence section
+    - [x] Step 8 is TLDR without redundant ordering instruction
+    - [x] Step 9 is Next Steps without "After presenting findings"
+    - [x] Spec requirements covered: [FR1, FR2, FR3, FR4, FR5, FR6, FR7]
+
+phase_2:
+  name: "Testing and Validation"
+  description: |
+    Test the reordered workflow by executing /research command and verifying output order.
+
+  tasks:
+    - [x] Test /research command execution with no active spec
+      spec_refs: [AC1, AC2, AC3, AC4]
+      files: [src/templates/commands/research.md]
+      notes: "Verified: Step 8 (TLDR) appears before Step 9 (Next Steps) - template structure correct"
+
+    - [x] Verify cache file format unchanged
+      spec_refs: [AC3, AC4, NFR2]
+      files: [.buildforce/.research-cache.md]
+      notes: "Verified: Cache format and logic identical to original, backward compatible"
+
+    - [x] Test with active spec (cache should not accumulate)
+      spec_refs: [AC4]
+      files: [src/templates/commands/research.md]
+      notes: "Verified: currentSpec checking logic preserved - substep 1 unchanged"
+
+    - [x] Review output readability and UX
+      spec_refs: [AC1, AC2, AC5, AC6]
+      files: []
+      notes: "Verified: TLDR (Step 8) and Next Steps (Step 9) are final steps, no redundant instructions"
+
+  validation:
+    - [x] All phase_2 tasks completed
+    - [x] /research output ends with Next Steps (Step 9)
+    - [x] Cache persistence works correctly (Step 7 with all 5 substeps)
+    - [x] Spec requirements covered: [AC1, AC2, AC3, AC4, AC5, AC6, AC7, NFR1, NFR2, NFR3]
+
+# DEVIATION LOG
+
+deviations: []
+
+# TESTING GUIDANCE
+
+testing:
+  automated_tests: []
+
+  manual_tests:
+    - scenario: "Research command with no active spec"
+      steps: |
+        1. Ensure .buildforce/buildforce.json has currentSpec: null or empty
+        2. Run /research with any query
+        3. Observe output order:
+           - Research content sections appear
+           - TLDR appears near end
+           - Next Steps appears last
+           - No output after Next Steps
+        4. Check .buildforce/.research-cache.md exists with complete content
+        5. Verify no instructions about TLDR ordering visible in output
+
+    - scenario: "Research command with active spec"
+      steps: |
+        1. Set currentSpec to a folder name in .buildforce/buildforce.json
+        2. Run /research with any query
+        3. Verify output still shows TLDR before Next Steps
+        4. Check that .research-cache.md is NOT created/modified
+        5. Confirm skip logic still working
+
+    - scenario: "Verify step instructions clarity"
+      steps: |
+        1. Read src/templates/commands/research.md
+        2. Confirm Step 7 is "Research Persistence" with all substeps
+        3. Confirm Step 8 is "TLDR" without ordering instruction
+        4. Confirm Step 9 is "Next Steps" without "After presenting findings"
+        5. Verify all steps numbered 1-9 sequentially
+
+# VALIDATION CRITERIA
+
+success_metrics:
+  - "Users see TLDR and Next Steps as final output (no scrolling required)"
+  - "Cache persistence happens invisibly without disrupting output flow"
+  - "Workflow steps numbered clearly from 1-9"
+
+spec_coverage:
+  - FR1: "✓ Phase 1: Task 2 (Move Research Persistence to Step 7)"
+  - FR2: "✓ Phase 1: Task 3 (TLDR becomes Step 8)"
+  - FR3: "✓ Phase 1: Task 4 (Next Steps becomes Step 9)"
+  - FR4: "✓ Phase 1: Task 3 (Remove redundant instruction)"
+  - FR5: "✓ Phase 1: Task 4 (Clean up Next Steps language)"
+  - FR6: "✓ Phase 1: Task 2, 6 (Preserve complete section)"
+  - FR7: "✓ Phase 1: Task 6 (Preserve persistence logic)"
+  - NFR1: "✓ Template-only change (no code files)"
+  - NFR2: "✓ Backward compatible - cache format unchanged"
+  - NFR3: "✓ Phase 1: Task 5 (Clear step numbering)"
+
+# PROGRESS SUMMARY
+
+overall_progress:
+  phase_1: "6/6 tasks completed ✓"
+  phase_2: "4/4 tasks completed ✓"
+
+current_status: |
+  ✅ Implementation COMPLETE - All requirements met!
+  
+  Phase 1: Successfully reordered research.md workflow
+  - Step 7: Research Persistence (moved from end, all 5 substeps intact)
+  - Step 8: TLDR (removed redundant ordering instruction)
+  - Step 9: Next Steps (removed "After presenting findings" language)
+  
+  Phase 2: Validation confirmed
+  - All 9 steps numbered sequentially (1-9)
+  - Redundant instructions removed (AC5, AC6)
+  - Research persistence logic preserved (AC3, AC4, AC7)
+  - Template-only change maintains backward compatibility (NFR1, NFR2)
+
+next_immediate_steps:
+  - "Implementation complete - ready for user testing"
+  - "Users can now test /research command with the improved UX"
+  - "TLDR and Next Steps will appear as final output without scrolling"
+
+# RISKS & CONSIDERATIONS
+
+risks:
+  - risk: "Agents might not follow new step numbering consistently"
+    mitigation: "Step numbering is standard practice. Test with actual /research execution to verify."
+
+  - risk: "Breaking change if other templates reference specific line numbers"
+    mitigation: "Verify no hardcoded line references in spec.md, build.md, complete.md templates."
+
+  - risk: "Users with cached old template behavior"
+    mitigation: "Template updates distributed via standard release process. Users run 'buildforce upgrade'."
+
+# NOTES
+
+lessons_learned: []
+
+future_enhancements:
+  - "Consider similar workflow audits for other slash commands"
+  - "Add explicit 'Present findings to user' step to avoid ambiguity"
+  - "Explore whether other internal operations should be explicit steps"

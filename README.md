@@ -148,27 +148,7 @@ The key insight: Buildforce isn't just about individual commands. It's about how
 
 **What it does:**
 
-1. Reads `.buildforce/context/_index.yml` and searches accumulated project knowledge first
-2. Explores codebase using glob/grep when codebase patterns are relevant
-3. Fetches current information via web search if query contains recency indicators ("current", "latest", "2025", "best practices")
-4. Produces structured report with file paths, architecture diagrams (Mermaid), data models, and recommendations
-5. Caches research output to `.buildforce/.research-cache.md` for materialization into `research.yml` during `/spec`
-
-**Output sections:**
-
-- Research Summary
-- Project Context (from `.buildforce/context/`)
-- Codebase Findings (file paths, code patterns)
-- External Knowledge (documentation links, best practices)
-- TLDR (3-7 bullet points of key findings)
-- Next Steps
-
-**Key features:**
-
-- Context-first: Always searches your accumulated knowledge before external sources
-- Recency detection: Automatically triggers web search when query implies current information needed
-- Structured output: Explicitly documents file paths, architecture, and data models for easy reference
-- Research persistence: Caches output for intelligent materialization into spec's `research.yml`
+Searches your project's accumulated context repository first, then explores your codebase and fetches current information from the web when needed. Produces a structured report with file paths, architecture diagrams, data models, and actionable recommendations. Research findings persist in conversation history and can be materialized into structured files during spec creation, ensuring your specifications are always informed by existing patterns and current best practices.
 
 **Pro tip**: Run `/research` before `/spec` to ensure specifications are informed by existing patterns and current best practices. Research output stays in context window to guide requirement identification.
 
@@ -196,53 +176,7 @@ The key insight: Buildforce isn't just about individual commands. It's about how
 
 **What it does:**
 
-1. Determines CREATE vs UPDATE mode by checking `.buildforce/.current-spec` file
-2. Generates semantic folder name with timestamp (e.g., `add-jwt-auth-20250130143052`)
-3. Runs `.buildforce/scripts/bash/create-spec-files.sh` to create folder and template files
-4. Materializes research cache from `.buildforce/.research-cache.md` into `research.yml` (if exists)
-5. Populates `spec.yaml` with problem statement, functional requirements (FR1, FR2...), non-functional requirements (NFR1, NFR2...), acceptance criteria (AC1, AC2...), scope (in/out), design principles, open questions
-6. Asks clarifying questions if intent is vague or context insufficient
-
-**Output file structure:**
-
-```yaml
-id: add-jwt-auth-20250130143052
-name: "JWT Authentication"
-type: feature
-status: draft
-summary: |
-  Brief description of what this spec addresses
-
-problem: |
-  What problem this solves and why it matters
-
-functional_requirements:
-  - FR1: Issue JWT token on successful login
-  - FR2: Validate JWT on protected endpoints
-
-acceptance_criteria:
-  - AC1: Login returns 200 with JWT within 300ms p95
-  - AC2: Invalid credentials return 401 within 100ms
-
-in_scope:
-  - User login with email/password
-  - JWT token issuance and validation
-
-out_of_scope:
-  - OAuth integration
-  - Two-factor authentication
-
-open_questions:
-  - Should tokens be stored in httpOnly cookies or localStorage?
-```
-
-**Key features:**
-
-- Semantic folder naming: Feature identity preserved in folder name (not just timestamp)
-- CREATE/UPDATE modes: Intelligently detects if updating existing spec or creating new
-- Research materialization: Automatically converts research cache into structured `research.yml`
-- Requirement traceability: Every requirement gets unique ID (FR1, NFR1, AC1) for tracking through plan and build
-- Clarifying questions: Asks user to resolve ambiguities before proceeding
+Converts your feature description into a structured specification with clear requirements, acceptance criteria, and scope boundaries. Creates both a `spec.yaml` (defining WHAT to build) and `plan.yaml` (defining HOW to build it) in a timestamped folder. If you've done research beforehand, it intelligently materializes those findings into a structured file. When requirements are unclear, it asks clarifying questions to ensure everyone's aligned before implementation begins.
 
 **Pro tip**: Run `/spec` multiple times to refine requirements. UPDATE mode loads existing spec and allows iteration without losing previous work.
 
@@ -270,51 +204,7 @@ open_questions:
 
 **What it does:**
 
-1. Loads `spec.yaml` and `plan.yaml` from current feature directory
-2. Loads `research.yml` if it exists for implementation context (file paths, patterns, data models, code snippets)
-3. Executes tasks sequentially from plan phases
-4. Updates task checkboxes in `plan.yaml` as work completes: `- [ ]` becomes `- [x]`
-5. Logs deviations when implementation differs from plan (phase, task, original, actual, reason)
-6. Validates implementation against BOTH spec requirements AND plan steps
-7. Runs tests and provides testing guidance (what to test, how to test, results)
-8. Supports iterative refinement: run `/build` multiple times with different instructions
-
-**Deviation tracking example:**
-
-```yaml
-deviations:
-  - phase: "phase_1"
-    task: "Create JWT service"
-    original: "Use jsonwebtoken library"
-    actual: "Used jose library instead"
-    reason: "jsonwebtoken lacks native ESM support; jose is ESM-first with better TypeScript types"
-
-  - phase: "phase_2"
-    task: "Add login endpoint"
-    original: "Return JWT in response body"
-    actual: "Set JWT in httpOnly cookie"
-    reason: "Cookie approach provides better XSS protection per security review"
-```
-
-**Progress tracking in plan.yaml:**
-
-```yaml
-phase_1:
-  name: "Core Authentication"
-  tasks:
-    - [x] Create JWT service
-    - [x] Add login endpoint
-    - [ ] Create authentication middleware
-```
-
-**Key features:**
-
-- Progress tracking: Live checkbox updates in `plan.yaml` show completion status
-- Deviation logging: Transparency about what changed and why (Original → Actual → Reason)
-- Dual validation: Checks against spec requirements AND plan steps
-- Iterative refinement: Multiple `/build` invocations accumulate deviations (not replaced)
-- Testing guidance: Suggests what/how to test, runs automated tests, reports results
-- Code quality checks: Verifies compilation, runs tests, checks for obvious issues before presenting work
+Executes your implementation following the spec and plan, checking off tasks as work progresses and logging any deviations from the original approach. Validates the work against both requirements and plan steps, runs tests, and provides clear guidance on what still needs verification. Supports iterative refinement—you can run it multiple times with feedback to converge on the right solution while maintaining full transparency about what changed and why.
 
 **Pro tip**: Don't try to do everything in one `/build`. Run it, review output, then run `/build [refinement instructions]` to iterate. Deviation log tracks entire journey from first attempt to final implementation.
 
@@ -332,61 +222,7 @@ phase_1:
 
 **What it does:**
 
-1. Loads `spec.yaml` and `plan.yaml` from current feature directory
-2. Validates all spec requirements implemented (FR1, FR2, NFR1, AC1, AC2 all met?)
-3. Reviews deviation log across all `/build` iterations
-4. Generates completion report: requirement validation, implementation summary, deviations, files modified, testing status
-5. Creates context file(s) in `.buildforce/context/` with semantic kebab-case naming (e.g., `jwt-authentication.yml`)
-6. Updates `.buildforce/context/_index.yml` with references, tags, and relationships
-7. Intelligently updates related context files with cross-references
-8. Clears `.buildforce/.current-spec` to reset spec state
-9. Optionally archives or deletes research cache
-10. Requires explicit user confirmation before finalizing
-
-**Generated context file structure:**
-
-```yaml
-id: jwt-authentication
-name: "JWT Authentication System"
-type: feature
-created_at: "2025-01-30T14:30:52Z"
-last_updated: "2025-01-30T16:45:12Z"
-
-summary: |
-  JWT-based authentication system using jose library with httpOnly cookie storage.
-
-spec_reference: ".buildforce/specs/add-jwt-auth-20250130143052/spec.yaml"
-plan_reference: ".buildforce/specs/add-jwt-auth-20250130143052/plan.yaml"
-
-key_decisions:
-  - Used jose library instead of jsonwebtoken for ESM support
-  - Tokens stored in httpOnly cookies (not localStorage) for XSS protection
-  - 1h access token expiry with refresh token rotation
-
-primary_files:
-  - src/auth/jwt.service.ts
-  - src/auth/auth.controller.ts
-  - src/middleware/auth.middleware.ts
-
-related_contexts:
-  - authentication-patterns
-  - api-security
-  - user-service
-
-tags:
-  - authentication
-  - security
-  - JWT
-```
-
-**Key features:**
-
-- Requirement validation: Explicit check that all FR, NFR, AC from spec are satisfied
-- Context file generation: Converts spec+plan+implementation into reusable knowledge
-- Automatic cross-referencing: Updates related context files to link to new context
-- Index maintenance: Keeps `.buildforce/context/_index.yml` current with all contexts
-- State clearing: Resets spec state so next `/spec` starts fresh
-- Confirmation required: User must approve before finalization (prevents accidental completion)
+Validates that all spec requirements are met, reviews the deviation log, and generates a comprehensive completion report. Captures the knowledge from your feature (design decisions, key files, implementation choices) into structured context files that live in your project's context repository. Updates cross-references and clears the active spec state. Requires your explicit confirmation before finalizing—once complete, this feature's knowledge becomes searchable for future work.
 
 **Pro tip**: Don't rush to `/complete`. Validate thoroughly first. Once complete, the feature knowledge enters your context repository and will inform future `/research` queries.
 
@@ -414,56 +250,7 @@ tags:
 
 **What it does:**
 
-1. Checks conversation history for sufficient context (file reads, technical discussion)
-2. Reads `.buildforce/context/_index.yml` to identify existing contexts
-3. Determines UPDATE vs CREATE: updates existing file if component already documented, creates new file otherwise
-4. Auto-detects context type (module, feature, component, pattern, architecture)
-5. Generates semantic kebab-case filename without numeric prefixes (e.g., `authentication.yml`, `error-handling.yml`)
-6. Checks for ID conflicts in `_index.yml` and resolves duplicates
-7. Populates context file from conversation history: design decisions, implementation details, patterns, responsibilities, dependencies
-8. Updates `.buildforce/context/_index.yml` with tags for discoverability
-9. Automatically updates related context files with cross-references
-
-**Generated context file example:**
-
-```yaml
-id: error-handling
-name: "Error Handling Patterns"
-type: pattern
-created_at: "2025-01-30T10:15:00Z"
-
-summary: |
-  Centralized error handling using Express error middleware with typed error classes.
-
-pattern_details: |
-  All errors extend AppError base class with statusCode and isOperational properties.
-  Error middleware at app.ts catches all errors and returns consistent JSON response.
-  Unhandled promise rejections caught by global handler.
-
-primary_files:
-  - src/errors/AppError.ts
-  - src/errors/errorHandler.middleware.ts
-  - src/app.ts
-
-related_contexts:
-  - api-architecture
-  - logging-strategy
-
-tags:
-  - error-handling
-  - middleware
-  - patterns
-```
-
-**Key features:**
-
-- Standalone utility: Works independently without spec/build cycle
-- Empty context check: Prompts for `/research` if insufficient context in conversation
-- Smart update vs create: Prevents duplicate contexts for same component
-- Multiple components: Single `/document` can update/create multiple context files
-- Semantic naming: Uses component identity, not spec intent (no timestamps or numbers)
-- ID conflict resolution: Ensures unique IDs in context repository
-- Cross-referencing: Maintains relationships between related contexts
+Creates or updates structured context files in your project's knowledge repository by analyzing conversation history. Works independently of the spec-driven workflow—perfect for documenting existing code, architectural patterns, or legacy components. Intelligently determines whether to create new files or update existing ones, automatically resolves naming conflicts, and maintains cross-references between related contexts. If your conversation lacks sufficient context, it prompts you to gather more information first.
 
 **Pro tip**: Prepare context window first (read files, discuss architecture) before running `/document`. The command analyzes conversation history to extract documentation, so richer context produces better results. Natural complement to `/research`: research reads context, document writes context.
 
@@ -489,7 +276,7 @@ Buildforce works with 11 AI coding assistants:
 
 **How configuration works:**
 
-Buildforce installs slash command files (research.md, spec.md, plan.md, build.md, complete.md, document.md) into your chosen assistant's configuration folder during initialization. Commands become available in your AI chat via `/research`, `/spec`, etc. All templates and scripts are copied to `.buildforce/` in your project directory. You can switch assistants later by manually copying command files between folders.
+Buildforce installs slash command files (research.md, spec.md, build.md, complete.md, document.md) into your chosen assistant's configuration folder during initialization. Commands become available in your AI chat via `/research`, `/spec`, etc. All templates and scripts are copied to `.buildforce/` in your project directory. You can switch assistants later by manually copying command files between folders.
 
 ---
 

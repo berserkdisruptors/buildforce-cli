@@ -17,14 +17,14 @@ problem: |
   During testing and real-world usage, we discovered that the /plan command is an unnecessary
   intermediate step. Users already provide comprehensive details during the /spec phase, including
   clarifying questions and iterative refinement. When it comes to the /plan command, users simply
-  run it to populate plan.yml without providing meaningful additional technical details, as originally
+  run it to populate plan.yaml without providing meaningful additional technical details, as originally
   anticipated. The current two-step process (spec → plan) adds friction without adding value.
 
 motivation: |
   By unifying /spec and /plan into a single command, we can:
   - Streamline the workflow from 5 commands to 4 (research → spec → build → complete)
   - Eliminate the get-spec-paths.sh script and its PowerShell equivalent
-  - Reduce cognitive overhead for users who currently run /plan just to populate plan.yml
+  - Reduce cognitive overhead for users who currently run /plan just to populate plan.yaml
   - Maintain the same level of planning rigor while removing an unnecessary step
   - Make the workflow more intuitive: spec.yaml captures WHAT, plan.yaml captures HOW, both in one command
 
@@ -130,7 +130,7 @@ open_questions: []
 notes: |
   This refactoring is based on real user testing and usage patterns. The key insight is that users
   already provide all necessary information during the /spec phase, and the /plan command has become
-  a mechanical step that just populates plan.yml without adding meaningful value.
+  a mechanical step that just populates plan.yaml without adding meaningful value.
 
   The unified /spec command maintains the same rigor and structure, but eliminates the unnecessary
   intermediate step. The command will need to be smart about routing user input to the appropriate

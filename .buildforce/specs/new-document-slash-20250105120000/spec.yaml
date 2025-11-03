@@ -39,8 +39,8 @@ primary_goals:
   - Create a /document command that generates context files for existing functionality
   - Combine /research's exploration capabilities with /complete's context file creation
   - Operate independently of the spec-driven workflow (no spec/plan/build required)
-  - Follow context schema structure from .buildforce/context/_schema.yml
-  - Update .buildforce/context/_index.yml automatically
+  - Follow context schema structure from .buildforce/context/_schema.yaml
+  - Update .buildforce/context/_index.yaml automatically
 
 secondary_goals:
   - Match the compact, guideline-based format of other slash commands
@@ -52,14 +52,14 @@ secondary_goals:
 
 functional_requirements:
   - FR1: Command MUST assume topic/module information is already in context window (no codebase search required)
-  - FR2: Command MUST load .buildforce/context/_schema.yml to understand required structure
-  - FR3: Command MUST generate context file name as 2-3 word snake-case from topic (e.g., "authentication-module.yml", NO numeric prefix)
-  - FR4: Command MUST search _index.yml for ID conflicts before finalizing context file name; if conflict exists, choose alternative ID
+  - FR2: Command MUST load .buildforce/context/_schema.yaml to understand required structure
+  - FR3: Command MUST generate context file name as 2-3 word snake-case from topic (e.g., "authentication-module.yaml", NO numeric prefix)
+  - FR4: Command MUST search _index.yaml for ID conflicts before finalizing context file name; if conflict exists, choose alternative ID
   - FR5: Command MUST auto-detect context type (module/feature/component/pattern) from topic analysis
-  - FR6: Command MUST generate/update a context YAML file following _schema.yml structure
+  - FR6: Command MUST generate/update a context YAML file following _schema.yaml structure
   - FR7: Command MUST populate ALL required schema fields (id, name, type, status, created, last_updated, summary)
   - FR8: Command MUST populate optional fields where information is available from context window (responsibilities, dependencies, files, evolution)
-  - FR9: Command MUST automatically update .buildforce/context/_index.yml with new context entry (auto-generated tags)
+  - FR9: Command MUST automatically update .buildforce/context/_index.yaml with new context entry (auto-generated tags)
   - FR10: Command MUST detect related context files and automatically update them for cross-references
   - FR11: Command MUST support both CREATE mode (new context file) and UPDATE mode (existing context file)
   - FR12: When in UPDATE mode, MUST intelligently merge new information into existing context file (preserving existing content, mutating to new state)
@@ -80,9 +80,9 @@ in_scope:
   - Implement context file name generation (2-3 word snake-case, NO numeric prefix)
   - Implement ID conflict detection and resolution
   - Implement auto-detection of context type (module/feature/component/pattern)
-  - Implement context file generation following _schema.yml
+  - Implement context file generation following _schema.yaml
   - Implement intelligent merging for UPDATE mode
-  - Implement _index.yml update logic with auto-generated tags
+  - Implement _index.yaml update logic with auto-generated tags
   - Implement automatic related context file updates
   - Support both CREATE and UPDATE modes
   - Provide validation and user confirmation flow
@@ -102,7 +102,7 @@ out_of_scope:
 
 design_principles:
   - "Research-first: Understand deeply before documenting"
-  - "Schema-compliant: All context files must follow _schema.yml structure"
+  - "Schema-compliant: All context files must follow _schema.yaml structure"
   - "No placeholders: Every field must have real content or be omitted"
   - "User-validated: Always confirm before writing context files"
   - "Incremental: Support iterative refinement of context documentation"
@@ -116,9 +116,9 @@ acceptance_criteria:
   - AC4: Can update existing context files with intelligent merging
   - AC5: ID conflicts are detected and alternative IDs are chosen automatically
   - AC6: Context type (module/feature/component/pattern) is auto-detected
-  - AC7: All generated context files follow _schema.yml structure
+  - AC7: All generated context files follow _schema.yaml structure
   - AC8: Generated files contain no placeholder text like "[Agent will populate]"
-  - AC9: _index.yml is automatically updated with auto-generated tags
+  - AC9: _index.yaml is automatically updated with auto-generated tags
   - AC10: Related context files are automatically updated when dependencies exist
   - AC11: User confirmation is required before writing any files
   - AC12: Command follows the compact, guideline-based format of other slash commands
@@ -127,8 +127,8 @@ acceptance_criteria:
 # ASSUMPTIONS & DEPENDENCIES
 
 assumptions:
-  - Context schema (_schema.yml) exists and is stable
-  - Context index (_index.yml) exists and follows expected structure
+  - Context schema (_schema.yaml) exists and is stable
+  - Context index (_index.yaml) exists and follows expected structure
   - Information about topic/module is already loaded in context window
   - User has prepared context window before running /document (e.g., via file reads, earlier conversation)
   - Existing context files can be safely updated (no concurrent modifications)
@@ -136,7 +136,7 @@ assumptions:
 
 dependencies:
   internal:
-    - context-repository: "Reads _schema.yml, updates _index.yml, creates/updates context files"
+    - context-repository: "Reads _schema.yaml, updates _index.yaml, creates/updates context files"
     - slash-commands: "Part of the 5-command workflow system (new 6th command)"
   external: {}
 
@@ -161,11 +161,11 @@ notes: |
 
   Design decisions clarified:
   - Command name: /document (simple and clear)
-  - File naming: 2-3 word snake-case (e.g., "authentication-module.yml"), NO numeric prefix
+  - File naming: 2-3 word snake-case (e.g., "authentication-module.yaml"), NO numeric prefix
   - Type detection: Automatic (agent determines module/feature/component/pattern)
   - Update strategy: Intelligent merge (current state → new state, regardless of previous editor)
   - Related updates: Automatic (no per-file confirmation)
-  - ID conflicts: Auto-resolve (search _index.yml first, pick alternative if conflict)
+  - ID conflicts: Auto-resolve (search _index.yaml first, pick alternative if conflict)
   - Dry-run: Not needed (user confirms before writing anyway)
   - Tags: Auto-generated by agent
   - Integration: Standalone (assumes context window is pre-loaded by user)

@@ -19,6 +19,6 @@ dist/
 inspiration/
 .buildforce/scripts
 .buildforce/buildforce.json
-.buildforce/.research-cache.md
-.claude/**
+.claude/commands/**
+.cursor/commands/**
 .genreleases/

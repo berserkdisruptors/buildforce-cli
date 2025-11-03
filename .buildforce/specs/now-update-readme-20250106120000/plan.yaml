@@ -131,32 +131,32 @@ phase_3:
 
     - [x] Document /research command with syntax and example
       spec_refs: [FR7, AC6]
-      files: [README.md, .buildforce/context/slash-commands.yml]
-      notes: "Show usage, arguments, output. Reference context/slash-commands.yml for accuracy."
+      files: [README.md, .buildforce/context/slash-commands.yaml]
+      notes: "Show usage, arguments, output. Reference context/slash-commands.yaml for accuracy."
 
     - [x] Document /spec command with syntax and example
       spec_refs: [FR7, AC6]
-      files: [README.md, .buildforce/context/slash-commands.yml]
+      files: [README.md, .buildforce/context/slash-commands.yaml]
       notes: "Show how to create specifications, explain open questions workflow"
 
     - [x] Document /plan command with syntax and example
       spec_refs: [FR7, AC6]
-      files: [README.md, .buildforce/context/slash-commands.yml]
+      files: [README.md, .buildforce/context/slash-commands.yaml]
       notes: "Explain design decisions, architecture planning, task breakdown"
 
     - [x] Document /build command with syntax and example
       spec_refs: [FR7, AC6]
-      files: [README.md, .buildforce/context/slash-commands.yml]
+      files: [README.md, .buildforce/context/slash-commands.yaml]
       notes: "Show progress tracking, deviation logging, iterative refinement"
 
     - [x] Document /complete command with syntax and example
       spec_refs: [FR7, AC6]
-      files: [README.md, .buildforce/context/slash-commands.yml]
+      files: [README.md, .buildforce/context/slash-commands.yaml]
       notes: "Explain validation, context file generation, completion workflow"
 
     - [x] Document /document command with syntax and example
       spec_refs: [FR7, AC6]
-      files: [README.md, .buildforce/context/slash-commands.yml]
+      files: [README.md, .buildforce/context/slash-commands.yaml]
       notes: "Show how to create context files without specs, explain utility use case"
 
     - [x] Document all 11 supported AI assistants with configuration folder names

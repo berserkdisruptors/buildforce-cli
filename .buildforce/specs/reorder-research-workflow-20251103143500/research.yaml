@@ -1,0 +1,162 @@
+id: "reorder-research-workflow-20251103143500-research"
+created: "2025-11-03"
+last_updated: "2025-11-03"
+
+summary: |
+  Research on the research persistence feature workflow, identifying UX issue where cache saving appears
+  after TLDR/Next Steps, forcing users to scroll back. Analysis covers the three-stage pipeline architecture
+  (accumulation, materialization, cleanup) and identifies needed workflow reordering.
+
+key_findings:
+  - "Current workflow presents TLDR and Next Steps, then saves cache - this breaks user experience"
+  - "Research saving should become an explicit workflow step, positioned before TLDR/Next Steps"
+  - "TLDR and Next Steps order should be swapped - users expect next steps last"
+  - "Redundant instruction 'ALWAYS add TLDR before Next Steps' should be removed to avoid agent confusion"
+  - "Research persistence is template-only implementation across 4 command files"
+  - "State-based accumulation controlled by buildforce.json currentSpec field"
+
+file_paths:
+  primary:
+    - path: "src/templates/commands/research.md"
+      relevance: "Research command template requiring workflow reordering - lines 31-70 contain persistence logic"
+    - path: ".buildforce/context/research-persistence.yaml"
+      relevance: "Context file documenting the three-stage pipeline and design decisions"
+    - path: "src/templates/research-template.yaml"
+      relevance: "Template guiding intelligent materialization from cache to YAML"
+
+  secondary:
+    - path: "src/templates/commands/spec.md"
+      relevance: "Spec command handles materialization stage"
+    - path: "src/templates/commands/complete.md"
+      relevance: "Complete command handles cleanup stage"
+    - path: ".buildforce/specs/migrate-currentspec-to-json-20251029000000/research.yaml"
+      relevance: "Real-world example of materialized research structure"
+    - path: ".buildforce/specs/standardize-yaml-extensions-20251103000000/research.yaml"
+      relevance: "Another real-world example with diagrams and data models"
+
+mermaid_diagrams:
+  - title: "Three-Stage Research Persistence Pipeline"
+    description: "Architecture showing accumulation, materialization, and cleanup stages"
+    diagram: |
+      ```mermaid
+      graph TD
+          A[/research command] -->|1. ACCUMULATION| B[.research-cache.md]
+          B -->|Raw sessions with metadata| C[Session 1, 2, 3...]
+          
+          D[/spec CREATE] -->|2. MATERIALIZATION| E[Read cache]
+          E -->|Intelligent condensation| F[research.yaml]
+          F -->|Inform spec| G[spec.yaml population]
+          
+          H[/spec UPDATE] -->|Check new cache| I{New research?}
+          I -->|Yes| J[Merge with existing research.yaml]
+          I -->|No| K[Use existing research.yaml]
+          
+          L[/build command] -->|3. CONSUMPTION| F
+          M[/complete command] -->|Consumption + cleanup| F
+          M -->|Delete| B
+          
+          style B fill:#fff3cd,stroke:#ffc107
+          style F fill:#d1ecf1,stroke:#0dcaf0
+          style G fill:#d4edda,stroke:#28a745
+      ```
+
+data_models:
+  - name: "ResearchCacheEntry"
+    description: "Structure of each session in .research-cache.md"
+    properties:
+      - name: "timestamp"
+        type: "string"
+        required: true
+        description: "Format: YYYY-MM-DD HH:MM:SS"
+
+      - name: "type"
+        type: "'research_command'"
+        required: true
+        description: "Session type identifier"
+
+      - name: "content"
+        type: "object"
+        required: true
+        description: "Complete research output with all sections preserved"
+
+    relationships:
+      - "Multiple entries separated by === delimiters in cache file"
+
+  - name: "MaterializedResearch"
+    description: "Flexible YAML structure for research.yaml files"
+    properties:
+      - name: "id"
+        type: "string"
+        required: true
+        description: "Format: {spec-id}-research"
+
+      - name: "summary"
+        type: "string"
+        required: true
+        description: "Condensed 2-4 sentence overview"
+
+      - name: "key_findings"
+        type: "string[]"
+        required: false
+        description: "Actionable discoveries from research"
+
+      - name: "file_paths"
+        type: "object"
+        required: false
+        description: "Primary and secondary file paths with relevance context"
+
+      - name: "mermaid_diagrams"
+        type: "array"
+        required: false
+        description: "Preserved verbatim from research"
+
+      - name: "data_models"
+        type: "array"
+        required: false
+        description: "Preserved structure details"
+
+      - name: "code_snippets"
+        type: "array"
+        required: false
+        description: "Complete code examples preserved"
+
+      - name: "architectural_decisions"
+        type: "array"
+        required: false
+        description: "Patterns with rationale"
+
+      - name: "tldr"
+        type: "string[]"
+        required: true
+        description: "3-7 critical points merged from all sessions"
+
+    relationships:
+      - "One research.yaml per spec folder"
+      - "Informs spec.yaml population during CREATE mode"
+
+architectural_decisions:
+  - pattern: "Research Persistence After Data Models, Before TLDR"
+    description: "Move cache saving step to happen after data models section but before TLDR/Next Steps"
+    rationale: "Prevents breaking user experience - TLDR and Next Steps remain visible without scrolling. Internal operation happens between content presentation and summary."
+
+  - pattern: "TLDR Before Next Steps (Natural Reading Order)"
+    description: "Present TLDR summary before suggesting next steps to user"
+    rationale: "Users naturally want summary first, then action items. Current instruction forcing opposite order is redundant since agents already follow this pattern."
+
+  - pattern: "Remove Redundant Ordering Instructions"
+    description: "Remove 'ALWAYS add TLDR before Next Steps' instruction"
+    rationale: "Instruction is redundant - agents already present TLDR before Next Steps. Can cause confusion with other agents. Step numbering provides implicit ordering."
+
+  - pattern: "Template-Only Implementation"
+    description: "Single file modification (research.md) without code changes"
+    rationale: "Maintains consistency with Buildforce CLI's template-based architecture. No TypeScript changes needed."
+
+tldr:
+  - "Current workflow shows TLDR/Next Steps, then saves cache - users must scroll back to see summary"
+  - "Solution: Reorder workflow to save cache BEFORE presenting TLDR and Next Steps"
+  - "Make research persistence an explicit numbered step (Step 7) between Data Models and TLDR"
+  - "Swap TLDR and Next Steps order - TLDR becomes Step 8, Next Steps becomes Step 9"
+  - "Remove redundant instruction 'ALWAYS add TLDR before Next Steps' - step numbering provides ordering"
+  - "Template-only fix: modify src/templates/commands/research.md workflow structure"
+  - "Preserves three-stage pipeline architecture - only reorders user-facing presentation"
+

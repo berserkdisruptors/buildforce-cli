@@ -107,12 +107,7 @@ export function displayNextSteps(
   stepsLines.push(
     "   " +
       chalk.cyan("/spec") +
-      "     - Define what to build (requirements & scope)"
-  );
-  stepsLines.push(
-    "   " +
-      chalk.cyan("/plan") +
-      "     - Design how to build (architecture & steps)"
+      "     - Define what to build (requirements) and how (plan)"
   );
   stepsLines.push(
     "   " +

@@ -24,8 +24,8 @@ approach: |
 
 technology_stack:
   - Markdown template: Command template format with YAML frontmatter (no script execution needed)
-  - context/_schema.yml: Schema reference for generating properly structured context files
-  - context/_index.yml: Index file for ID conflict detection and entry management
+  - context/_schema.yaml: Schema reference for generating properly structured context files
+  - context/_index.yaml: Index file for ID conflict detection and entry management
 
 decisions:
   - decision: "Use 7-8 numbered guidelines following /research and /complete pattern"
@@ -38,10 +38,10 @@ decisions:
     rationale: "User specified no --type flag. Agent analyzes topic to determine module/feature/component/pattern. Reduces user friction."
 
   - decision: "Snake-case naming (2-3 words) with NO numeric prefix"
-    rationale: "User specified: context files don't need numbers like specs do. Examples: 'authentication-module.yml', 'error-handling.yml'. Clean, descriptive names."
+    rationale: "User specified: context files don't need numbers like specs do. Examples: 'authentication-module.yaml', 'error-handling.yaml'. Clean, descriptive names."
 
-  - decision: "ID conflict detection via _index.yml search"
-    rationale: "User specified: search _index.yml before finalizing ID, choose alternative if conflict exists. Prevents overwrites and naming collisions."
+  - decision: "ID conflict detection via _index.yaml search"
+    rationale: "User specified: search _index.yaml before finalizing ID, choose alternative if conflict exists. Prevents overwrites and naming collisions."
 
   - decision: "Intelligent merge for UPDATE mode"
     rationale: "User specified: current state → new state mutation, regardless of who edited. Preserves existing content while adding new information. No distinction between human/AI edits."
@@ -50,7 +50,7 @@ decisions:
     rationale: "User specified: no per-file confirmation needed. Auto-detect dependencies and update cross-references. Streamlined workflow."
 
   - decision: "User confirmation before writing files"
-    rationale: "Critical safety gate. User reviews generated context files and _index.yml updates before committing. Follows /complete pattern."
+    rationale: "Critical safety gate. User reviews generated context files and _index.yaml updates before committing. Follows /complete pattern."
 
 # FILE STRUCTURE
 # List all files to be created or modified during implementation
@@ -99,41 +99,41 @@ phase_2:
   description: |
     Create compact numbered guidelines covering the entire /document workflow: CREATE/UPDATE
     mode detection, schema loading, context file generation, ID conflict handling, type
-    auto-detection, intelligent merging, _index.yml updates, related context updates, and
+    auto-detection, intelligent merging, _index.yaml updates, related context updates, and
     user confirmation. Use ALWAYS/NEVER emphasis for critical instructions.
 
   tasks:
     - [x] Guideline 1: Determine CREATE vs UPDATE mode (check if context file with similar name/ID already exists)
       spec_refs: [FR11, FR12, AC3, AC4]
       files: [src/templates/commands/document.md]
-      notes: "Search _index.yml and .buildforce/context/ for existing file matching topic. Set mode accordingly."
+      notes: "Search _index.yaml and .buildforce/context/ for existing file matching topic. Set mode accordingly."
 
-    - [x] Guideline 2: Load schema and analyze topic (read _schema.yml, analyze topic from context window to extract info)
+    - [x] Guideline 2: Load schema and analyze topic (read _schema.yaml, analyze topic from context window to extract info)
       spec_refs: [FR1, FR2, FR5, AC6, AC13]
       files: [src/templates/commands/document.md]
-      notes: "ALWAYS load _schema.yml first. Auto-detect type (module/feature/component/pattern) from topic analysis."
+      notes: "ALWAYS load _schema.yaml first. Auto-detect type (module/feature/component/pattern) from topic analysis."
 
-    - [x] Guideline 3: Generate context file name and check for ID conflicts (create 2-3 word snake-case name, search _index.yml for conflicts, choose alternative if needed)
+    - [x] Guideline 3: Generate context file name and check for ID conflicts (create 2-3 word snake-case name, search _index.yaml for conflicts, choose alternative if needed)
       spec_refs: [FR3, FR4, AC3, AC5]
       files: [src/templates/commands/document.md]
-      notes: "NEVER use numeric prefix. Examples: 'authentication-module.yml', 'error-handling.yml'. If ID exists in _index.yml, append descriptor or use synonym."
+      notes: "NEVER use numeric prefix. Examples: 'authentication-module.yaml', 'error-handling.yaml'. If ID exists in _index.yaml, append descriptor or use synonym."
 
-    - [x] Guideline 4: Generate/update context YAML file (populate all required fields, add optional fields where info available, follow _schema.yml structure)
+    - [x] Guideline 4: Generate/update context YAML file (populate all required fields, add optional fields where info available, follow _schema.yaml structure)
       spec_refs: [FR6, FR7, FR8, AC7, AC8]
       files: [src/templates/commands/document.md]
       notes: "NEVER leave placeholders like '[Agent will populate]'. For UPDATE mode: intelligently merge (current state → new state). Required fields: id, name, type, status, created, last_updated, summary."
 
-    - [x] Guideline 5: Update _index.yml with context entry (add new entry with auto-generated tags, or verify existing entry is correct)
+    - [x] Guideline 5: Update _index.yaml with context entry (add new entry with auto-generated tags, or verify existing entry is correct)
       spec_refs: [FR9, AC9]
       files: [src/templates/commands/document.md]
-      notes: "Auto-generate tags from topic analysis (e.g., 'authentication', 'module', 'security'). Maintain proper YAML structure in _index.yml."
+      notes: "Auto-generate tags from topic analysis (e.g., 'authentication', 'module', 'security'). Maintain proper YAML structure in _index.yaml."
 
     - [x] Guideline 6: Detect and update related context files (search for dependencies mentioned in new context, automatically update related files with cross-references)
       spec_refs: [FR10, AC10]
       files: [src/templates/commands/document.md]
       notes: "Automatic updates (no per-file confirmation). Preserve existing content in related files while adding new relationships."
 
-    - [x] Guideline 7: Present findings and request user confirmation (show generated context file content, _index.yml updates, related context updates, ask for approval before writing)
+    - [x] Guideline 7: Present findings and request user confirmation (show generated context file content, _index.yaml updates, related context updates, ask for approval before writing)
       spec_refs: [FR13, AC11]
       files: [src/templates/commands/document.md]
       notes: "ALWAYS request user confirmation before writing any files. Present clear summary of what will be created/updated."
@@ -172,7 +172,7 @@ phase_3:
     - [x] Verify ALWAYS/NEVER bold emphasis for critical instructions
       spec_refs: [NFR3, AC12]
       files: [src/templates/commands/document.md]
-      notes: "Critical points: ALWAYS load _schema.yml, NEVER leave placeholders, NEVER use numeric prefix, ALWAYS confirm before writing"
+      notes: "Critical points: ALWAYS load _schema.yaml, NEVER leave placeholders, NEVER use numeric prefix, ALWAYS confirm before writing"
 
     - [x] Verify template follows proven command pattern (frontmatter, user input, context, numbered guidelines, context reference)
       spec_refs: [NFR2, NFR4, AC12]
@@ -208,12 +208,12 @@ testing:
         1. Prepare context window with information about a module (e.g., read relevant files)
         2. Run /document command with topic name
         3. Verify agent determines CREATE mode (no existing file)
-        4. Verify agent loads _schema.yml
+        4. Verify agent loads _schema.yaml
         5. Verify agent generates 2-3 word snake-case filename (NO numeric prefix)
-        6. Verify agent checks _index.yml for ID conflicts
+        6. Verify agent checks _index.yaml for ID conflicts
         7. Verify agent auto-detects context type (module/feature/component/pattern)
         8. Verify agent populates all required schema fields (no placeholders)
-        9. Verify agent generates auto-tagged _index.yml entry
+        9. Verify agent generates auto-tagged _index.yaml entry
         10. Verify agent identifies related context files and suggests updates
         11. Verify agent requests user confirmation before writing
         12. Confirm and verify files are created correctly
@@ -232,10 +232,10 @@ testing:
 
     - scenario: "Test /document command with ID conflict resolution"
       steps: |
-        1. Manually create a context file with a common name (e.g., 'auth.yml')
+        1. Manually create a context file with a common name (e.g., 'auth.yaml')
         2. Prepare context about authentication module
         3. Run /document command
-        4. Verify agent detects ID conflict in _index.yml
+        4. Verify agent detects ID conflict in _index.yaml
         5. Verify agent chooses alternative ID automatically (e.g., 'auth-module', 'authentication')
         6. Verify new file is created with alternative name (no collision)
 
@@ -268,21 +268,21 @@ success_metrics:
   - "Context file names are snake-case without numeric prefixes"
   - "ID conflicts are detected and resolved automatically"
   - "Context type is auto-detected correctly"
-  - "_index.yml is updated with auto-generated tags"
+  - "_index.yaml is updated with auto-generated tags"
   - "Related context files are updated automatically"
   - "No placeholder text in generated context files"
 
 spec_coverage:
   # Functional Requirements
   - FR1: "⏳ Phase 1: Tasks 1-3 (context window assumption), Phase 2: Task 2 (analyze topic from context)"
-  - FR2: "⏳ Phase 2: Task 2 (load _schema.yml)"
+  - FR2: "⏳ Phase 2: Task 2 (load _schema.yaml)"
   - FR3: "⏳ Phase 2: Task 3 (generate snake-case name, NO numeric prefix)"
-  - FR4: "⏳ Phase 2: Task 3 (search _index.yml for conflicts, choose alternative)"
+  - FR4: "⏳ Phase 2: Task 3 (search _index.yaml for conflicts, choose alternative)"
   - FR5: "⏳ Phase 2: Task 2 (auto-detect type from topic analysis)"
-  - FR6: "⏳ Phase 2: Task 4 (generate/update context YAML following _schema.yml)"
+  - FR6: "⏳ Phase 2: Task 4 (generate/update context YAML following _schema.yaml)"
   - FR7: "⏳ Phase 2: Task 4 (populate required fields: id, name, type, status, dates, summary)"
   - FR8: "⏳ Phase 2: Task 4 (populate optional fields where info available)"
-  - FR9: "⏳ Phase 2: Task 5 (update _index.yml with auto-generated tags)"
+  - FR9: "⏳ Phase 2: Task 5 (update _index.yaml with auto-generated tags)"
   - FR10: "⏳ Phase 2: Task 6 (detect and update related context files)"
   - FR11: "⏳ Phase 2: Task 1 (CREATE vs UPDATE mode detection)"
   - FR12: "⏳ Phase 2: Task 4 (intelligent merge for UPDATE mode)"
@@ -302,9 +302,9 @@ spec_coverage:
   - AC4: "⏳ Phase 2: Task 1, Task 4 (UPDATE mode with intelligent merge)"
   - AC5: "⏳ Phase 2: Task 3 (ID conflict detection and resolution)"
   - AC6: "⏳ Phase 2: Task 2 (auto-detect context type)"
-  - AC7: "⏳ Phase 2: Task 4 (follow _schema.yml structure)"
+  - AC7: "⏳ Phase 2: Task 4 (follow _schema.yaml structure)"
   - AC8: "⏳ Phase 2: Task 4 (NEVER leave placeholders)"
-  - AC9: "⏳ Phase 2: Task 5 (_index.yml with auto-generated tags)"
+  - AC9: "⏳ Phase 2: Task 5 (_index.yaml with auto-generated tags)"
   - AC10: "⏳ Phase 2: Task 6 (automatic related context updates)"
   - AC11: "⏳ Phase 2: Task 7 (user confirmation required)"
   - AC12: "⏳ Phase 3: Task 5 (follows compact guideline-based format)"

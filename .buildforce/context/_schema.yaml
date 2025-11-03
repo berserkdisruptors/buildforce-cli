@@ -1,0 +1,156 @@
+# Context File Schema Guidelines
+# Use this as a reference when creating new context files in .buildforce/context/
+
+# Required fields for all context files
+required_fields:
+  - id # Unique identifier (kebab-case)
+  - name # Human-readable name
+  - type # module | feature | component | pattern
+  - status # in-development | production | deprecated
+  - created # ISO date (YYYY-MM-DD)
+  - last_updated # ISO date (YYYY-MM-DD)
+  - summary # Multi-line description (use | for literal block)
+
+# Optional but recommended fields
+optional_fields:
+  - responsibilities # List of key responsibilities
+  - dependencies # Internal and external dependencies
+  - files # Primary and secondary file paths
+  - interfaces # Exported functions/APIs (if applicable)
+  - evolution # Version history with dates and changes
+  - related_specs # Links to spec files
+  - notes # Additional context or future considerations
+
+# Field descriptions and examples
+
+id:
+  description: "Unique identifier for this context (used in _index.yaml)"
+  format: "kebab-case"
+  example: "authentication"
+
+name:
+  description: "Human-readable name"
+  format: "String with proper capitalization"
+  example: "Authentication Module"
+
+type:
+  description: "Context type for organization"
+  values:
+    - module: "High-level system module (e.g., authentication, payment processing)"
+    - feature: "Specific feature within a module (e.g., OAuth login, password reset)"
+    - component: "Reusable UI or code component"
+    - pattern: "Design pattern or architectural decision"
+  example: "module"
+
+status:
+  description: "Current state of the implementation"
+  values:
+    - in-development: "Active development"
+    - production: "Deployed and stable"
+    - deprecated: "Scheduled for removal or replacement"
+  example: "production"
+
+created:
+  description: "Date when this context was first created"
+  format: "ISO date (YYYY-MM-DD)"
+  example: "2025-01-15"
+
+last_updated:
+  description: "Date when this context was last modified"
+  format: "ISO date (YYYY-MM-DD)"
+  example: "2025-09-20"
+
+summary:
+  description: "Multi-line description of what this context covers"
+  format: "Use | for literal block to preserve formatting"
+  example: |
+    JWT-based authentication with OAuth2 social login support.
+    Handles session management and token refresh.
+
+responsibilities:
+  description: "List of key responsibilities or capabilities"
+  format: "YAML list with concise descriptions"
+  example:
+    - JWT token generation and validation
+    - OAuth2 integration (Google, GitHub)
+    - Session lifecycle management
+
+dependencies:
+  description: "Internal project dependencies and external packages"
+  structure:
+    internal:
+      format: "module-name: 'Description of relationship'"
+      example:
+        - user-management: "Retrieves user data for token generation"
+    external:
+      format: "package-name: 'version'"
+      example:
+        - jsonwebtoken: "^9.0.0"
+
+files:
+  description: "File paths organized by importance"
+  structure:
+    primary:
+      description: "Core implementation files"
+      example:
+        - src/auth/jwt.service.ts
+    secondary:
+      description: "Supporting files (middleware, utilities)"
+      example:
+        - src/middleware/auth.middleware.ts
+
+interfaces:
+  description: "Exported functions, APIs, or contracts (optional)"
+  structure:
+    exports:
+      format: "List of function signatures or API endpoints"
+      example:
+        - name: "generateToken"
+          signature: "(userId: string, claims: object) => string"
+
+evolution:
+  description: "Version history with dates and change descriptions"
+  format: "List of version entries"
+  example:
+    - version: "1.0"
+      date: "2025-01-15"
+      changes: "Initial implementation"
+    - version: "2.0"
+      date: "2025-09-20"
+      changes: "Migrated to refresh token pattern"
+
+related_specs:
+  description: "Links to specification files that led to this implementation"
+  format: "List of spec file names or paths"
+  example:
+    - spec-2024-11-auth-refresh-tokens.md
+    - spec-2025-01-oauth-integration.md
+
+notes:
+  description: "Additional context, future considerations, or important details"
+  format: "Multi-line text (use | for literal block)"
+  example: |
+    Future consideration: Add biometric authentication support.
+    Current token expiry: 1 hour (refresh: 30 days)
+
+# Additional fields for specific types
+
+# For command/workflow contexts
+command_signature:
+  description: "Command syntax and arguments (for slash commands)"
+  structure:
+    syntax: "/command <arg>"
+    arguments:
+      - name: "arg_name"
+        type: "string"
+        required: true
+        description: "What this argument does"
+    examples:
+      - "/research how authentication works"
+
+# For pattern contexts
+design_decisions:
+  description: "Key design decisions with rationale"
+  structure:
+    - decision: "What was decided"
+      rationale: "Why it was decided"

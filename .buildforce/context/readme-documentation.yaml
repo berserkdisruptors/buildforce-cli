@@ -1,0 +1,161 @@
+id: readme-documentation
+name: "Comprehensive README Documentation for Buildforce CLI"
+type: feature
+status: production
+created: 2025-10-10
+last_updated: 2025-11-03
+
+summary: |
+  Developer-focused README featuring simplified, user-perspective slash command documentation.
+  Command sections now focus on outcomes and trust-building rather than technical implementation
+  details. Features context-first positioning, streamlined command documentation (130 lines,
+  62% reduction), visual workflow diagrams, initialization screenshot, and universal "Hello
+  Buildforce" workflow example. Positions Buildforce as accessible technical reference with
+  user-focused language that builds trust through clarity over complexity.
+
+responsibilities:
+  - Explain Spec-Driven Development (SDD) philosophy and value proposition
+  - Provide installation instructions for npm, npx, and git clone on all platforms
+  - Document quick start workflow from project initialization to first feature completion
+  - Reference all CLI command options and flags (--ai, --script, --here, --force, etc.)
+  - Document all 5 slash commands (/research, /spec, /build, /complete, /document) with simplified user-perspective descriptions
+  - Visualize workflow with Mermaid diagram showing 4-command core + 1 utility command
+  - List all 11 supported AI assistants with configuration folders
+  - Provide troubleshooting guidance for 5 common setup issues
+  - Define contribution guidelines (issues, PRs, code standards, commit format)
+  - Link to external documentation site (https://buildforce.dev)
+  - Present roadmap with planned features across v0.1.0, v0.2.0, v1.0.0
+  - Reference CHANGELOG.md and CODE_OF_CONDUCT.md
+  - Display project badges (npm version, downloads, stars, license, build status)
+
+dependencies:
+  internal:
+    - package.json: "Source of version, license, repository URL, engine requirements"
+    - src/config/agents.ts: "List of supported AI assistants with folder mappings"
+    - src/cli.ts: "CLI command structure and options"
+    - .buildforce/context/slash-commands.yaml: "Slash command workflow documentation"
+    - CHANGELOG.md: "Version history and release notes"
+    - CODE_OF_CONDUCT.md: "Community guidelines (referenced but currently empty)"
+    - LICENSE: "MIT license file"
+  external:
+    - https://buildforce.dev: "External documentation site for detailed guides"
+    - shields.io: "Badge generation for npm, downloads, stars, build status"
+    - Keep a Changelog: "CHANGELOG.md format standard"
+    - Contributor Covenant: "CODE_OF_CONDUCT.md standard (v2.1)"
+
+files:
+  primary:
+    - README.md
+    - CHANGELOG.md
+    - CODE_OF_CONDUCT.md
+  secondary:
+    - package.json
+    - src/config/agents.ts
+    - src/cli.ts
+    - .buildforce/context/slash-commands.yaml
+
+design_decisions:
+  - decision: "Eliminate marketing language completely (no 'dramatically', 'revolutionizing', defensive FAQs)"
+    rationale: "Analysis of successful OSS CLI tools (bat, ripgrep, fd, fzf) shows zero marketing language. Technical depth and utility build trust better than hype. Developers distrust marketing-heavy READMEs."
+
+  - decision: "Simplify command documentation to user-perspective descriptions (130 lines, 62% reduction from v3's 429 lines)"
+    rationale: "v3's technical step-by-step workflows (8-10 numbered steps per command) created cognitive overhead. Users need to understand WHAT commands do and whether to trust them, not HOW they work internally. Simplified to 2-4 sentence outcome-focused descriptions with examples and pro tips. Removed YAML file structure examples and key features sections. Technical details available in command templates for those who need them."
+
+  - decision: "Position 'Why context-first?' as dedicated section"
+    rationale: "Context-first is Buildforce's key technical differentiation. Elevating to section (not buried in prose) highlights value prop without marketing language. Explains technical mechanism, not abstract benefits."
+
+  - decision: "Create 'How It Works' section before command documentation"
+    rationale: "Buildforce uses slash commands INSIDE AI conversations (not direct terminal commands). Developers won't understand usage from syntax alone. This section delivers the 'aha' moment showing workflow orchestration pattern with visual diagram, step-by-step explanation, and 3 concrete scenarios."
+
+  - decision: "Use centered logo with theme-agnostic design"
+    rationale: "Logo moved to .github/assets/logo.png with centered HTML div for GitHub. Simple <img> tag ensures universal compatibility (GitHub, npm, all platforms). Designer to provide theme-agnostic version."
+
+  - decision: "Add initialization screenshot after installation section"
+    rationale: "Visual proof of CLI setup provides immediate context for what users see after running installation commands. Screenshot shows AI assistant selection in action."
+
+  - decision: "Universal 'Hello Buildforce' workflow example (README inconsistency fix)"
+    rationale: "Auth example from v2 requires specific tech stack. New example works on ANY codebase - analyze architecture, fix README inconsistencies. Low-risk, immediately valuable, demonstrates full cycle."
+
+  - decision: "Remove /plan command from core workflow visualization"
+    rationale: "/spec automatically generates plan.yaml. Showing /plan separately implies it's a required manual step, which confuses users. Workflow is: /research → /spec (creates artifacts) → /build → /complete."
+
+  - decision: "Keep total length 600-800 lines with 70%+ technical content"
+    rationale: "fd README ~400 lines, fzf ~200, ripgrep ~300. 600-800 allows comprehensive inline docs while staying focused. Technical depth (code blocks, tables, examples) over prose builds developer trust."
+
+evolution:
+  - version: "1.0"
+    date: "2025-10-10"
+    changes: "Comprehensive README with 1013 lines covering SDD philosophy, installation, quick start, CLI reference, workflow documentation, 6 slash commands, 11 AI assistants, troubleshooting, contribution guidelines, roadmap, changelog, license. Created CHANGELOG.md (Keep a Changelog format) and CODE_OF_CONDUCT.md (empty)."
+
+  - version: "3.0"
+    date: "2025-01-30"
+    changes: "README v3 rewrite following OSS best practices. Eliminated all marketing language (0 instances of 'dramatically'/'revolutionizing'). Restored command documentation from 15 to 429 lines (28x increase). Added 'Why context-first?' dedicated section. Created 'How It Works' pedagogical section with workflow visualization, step-by-step explanation, and 3 scenarios. Centered logo in .github/assets/. Added initialization screenshot. Changed to universal 'Hello Buildforce' workflow example. Removed /plan from workflow diagram. Total length: 768 lines with 70%+ technical content. Zero deviations from plan."
+
+  - version: "3.1"
+    date: "2025-11-03"
+    changes: "Simplified slash command documentation (lines 127-257) focusing on user perspective and trust-building. Reduced command docs from 429 lines to 130 lines (62% reduction, 213 lines removed). Transformed technical 'What it does' sections (8-10 numbered steps) into 2-4 sentence outcome-focused descriptions. Removed all 8 YAML file structure examples. Removed all 5 'Key features' sections. Maintained Purpose, Usage, Examples (1-3 per command), and Pro tips. Structure now: Purpose → Usage → Examples → What it does → Pro tip. All 5 commands (/research, /spec, /build, /complete, /document) follow identical simplified structure. Documentation now emphasizes outcomes over implementation details while maintaining 100% accuracy. Zero deviations from plan."
+
+related_specs:
+  - "now-update-readme-20250106120000 (spec.yaml and plan.yaml)"
+  - "readme-v3-developer-focused-20250130000000 (spec.yaml and plan.yaml)"
+  - "simplify-slash-cmd-docs-20251103140000 (spec.yaml and plan.yaml)"
+
+notes: |
+  README evolution: v1 comprehensive → v2 minimal → v3 developer-focused → v3.1 simplified user-perspective.
+
+  **v3.1 Simplification (2025-11-03):**
+  - Reduced command documentation from 429 lines to 130 lines (62% reduction)
+  - Transformed technical implementation steps into user-perspective descriptions
+  - Removed 8 YAML file structure examples (spec.yaml, plan.yaml, context.yaml)
+  - Removed 5 "Key features" sections
+  - Maintained essential sections: Purpose, Usage, Examples, Pro tips
+  - All 5 commands follow identical structure for consistency
+  - Focus shifted from "how it works" to "what you gain"
+  - All 7 acceptance criteria met, exceeded 30-40% reduction target
+  - Zero deviations from plan
+
+  **v3 Implementation (2025-01-30):**
+  - Complete rewrite following 13-section structure per spec
+  - Zero marketing language (grep validation: 0 results)
+  - 429 lines command documentation vs v2's 15 lines (28x increase)
+  - All 11 sections present with correct naming
+  - Total length: 768 lines (target: 600-800) ✓
+  - Technical content: >70% (code blocks, tables, command docs) ✓
+  - Quick Start at line 37 (target: <150) ✓
+  - All 12 acceptance criteria met
+  - Zero deviations from plan
+
+  **Current command documentation structure (v3.1):**
+  Each of 5 commands follows:
+  1. **Purpose**: One-sentence goal statement
+  2. **Usage**: Command syntax
+  3. **Examples**: 1-3 practical use cases
+  4. **What it does**: 2-4 sentence user-perspective description (not technical steps)
+  5. **Pro tip**: Practical optimization advice
+
+  **Design philosophy (updated for v3.1):**
+  - Show, don't sell: Technical depth speaks for itself
+  - User perspective: Focus on outcomes, not implementation mechanics
+  - Trust through accessibility: Quick understanding over complete transparency
+  - Scannability: Consistent structure, concise descriptions
+  - Action-first: Install within first 50 lines
+
+  **v3.1 key changes:**
+  - Before: "1. Loads spec.yaml 2. Validates requirements 3. Reviews deviations..." (10 steps)
+  - After: "Validates that all spec requirements are met, reviews the deviation log, and generates a comprehensive completion report..." (2-4 sentences)
+  - Implementation details remain available in command template files for advanced users
+  - Optimization for new user experience and trust-building
+
+  **Assets:**
+  - Logo: .github/assets/logo.png (theme-agnostic version)
+  - Screenshot: .github/assets/screenshot-init.png (CLI initialization)
+
+  **Comparison table technical differences:**
+  1. Context persistence (.buildforce/context/ vs lost after session)
+  2. Workflow structure (5-command workflow vs no structure)
+  3. Requirements tracing (spec.yaml with AC vs conversation only)
+  4. Plan generation (auto-converted to plan.yaml vs mode-specific)
+  5. Deviation logging (Original → Actual → Reason vs untracked)
+  6. Decision preservation (searchable via /research vs forgotten)
+  7. Knowledge sharing (team context repository vs individual knowledge)
+  8. Feature building (accumulated wisdom vs from scratch)

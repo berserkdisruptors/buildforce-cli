@@ -1,0 +1,115 @@
+id: simplify-slash-cmd-docs-20251103140000
+name: "Simplify Slash Command Documentation"
+type: feature
+status: draft
+created: "2025-11-03"
+last_updated: "2025-11-03"
+
+summary: |
+  Simplify the slash command documentation in README.md by removing technical implementation
+  details, file structure examples, and key features sections while retaining user-focused
+  high-level descriptions, practical examples, and optimization tips.
+
+# INTENT / PROBLEM STATEMENT
+
+problem: |
+  Current slash command documentation in README.md (lines 127-470) is overly technical with
+  8-10 numbered implementation steps showing internal mechanics (scripts, file paths, validation).
+  YAML file structure examples and "Key features" sections add length without helping users
+  understand the value proposition. Users need to quickly understand WHAT each command does
+  from their perspective to decide if they trust the system, not HOW it works under the hood.
+
+motivation: |
+  Simplified documentation will reduce cognitive load and improve user experience. By focusing
+  on user perspective rather than technical implementation, developers can quickly scan commands,
+  understand their purpose, see practical examples, and get optimization tips without wading
+  through implementation details. This makes the README more accessible and actionable.
+
+# GOALS
+
+primary_goals:
+  - Simplify "What it does" sections from technical step-by-step to high-level user-perspective descriptions
+  - Remove all YAML file structure examples from command documentation
+  - Remove "Key features" sections while retaining essential information
+
+secondary_goals:
+  - Maintain consistency across all 5 command sections
+  - Preserve the helpful pro tips that users appreciate
+  - Keep 1-3 practical examples per command (reduce from 3+ where excessive)
+
+# REQUIREMENTS
+
+functional_requirements:
+  - FR1: Transform "What it does" sections into 2-4 sentence high-level descriptions focusing on user outcomes, not technical implementation steps
+  - FR2: Remove all YAML code block examples showing file structures (spec.yaml, plan.yaml, context.yaml examples)
+  - FR3: Remove "Key features" bullet list sections from all command documentation
+  - FR4: Preserve "Purpose", "Usage", and "Pro tip" sections unchanged
+  - FR5: Retain 1-3 practical examples per command, reducing from 3+ where appropriate
+  - FR6: Maintain consistent structure across all 5 commands (/research, /spec, /build, /complete, /document)
+
+non_functional_requirements:
+  - NFR1: Documentation should feel lightweight and scannable while remaining informative
+  - NFR2: User-perspective language should build trust without exposing unnecessary complexity
+  - NFR3: Changes should not alter the accuracy of documentation (no functional misrepresentation)
+
+# SCOPE
+
+in_scope:
+  - README.md lines 127-470 (all 5 slash command sections)
+  - Simplifying /research command documentation (lines 129-174)
+  - Simplifying /spec command documentation (lines 176-248)
+  - Simplifying /build command documentation (lines 250-320)
+  - Simplifying /complete command documentation (lines 322-392)
+  - Simplifying /document command documentation (lines 394-469)
+
+out_of_scope:
+  - Command template files in src/templates/commands/ (these remain unchanged)
+  - Context files in .buildforce/context/ (no changes needed)
+  - Other README sections (Quick Start, How It Works, Installation, etc.)
+  - Actual command functionality or behavior
+
+# DESIGN PRINCIPLES
+
+design_principles:
+  - "User perspective over implementation details: Focus on outcomes, not mechanics"
+  - "Simplicity without sacrificing clarity: Remove noise while preserving understanding"
+  - "Consistency across sections: All commands follow identical simplified structure"
+  - "Trust through accessibility: Users should quickly grasp value without technical overhead"
+
+# ACCEPTANCE CRITERIA
+
+acceptance_criteria:
+  - AC1: All 5 "What it does" sections are 2-4 sentences describing user outcomes instead of 8-10 technical steps
+  - AC2: Zero YAML code block examples remain in slash command sections (lines 127-470)
+  - AC3: All "Key features" sections are removed from command documentation
+  - AC4: All "Purpose", "Usage", "Examples", and "Pro tip" sections remain intact
+  - AC5: Each command has 1-3 examples (none have more than 3)
+  - AC6: Documentation structure is consistent across all 5 commands
+  - AC7: Total documentation length reduced by approximately 30-40% while maintaining clarity
+
+# ASSUMPTIONS & DEPENDENCIES
+
+assumptions:
+  - Users prefer high-level understanding over technical transparency in documentation
+  - Pro tips provide sufficient optimization guidance without key features sections
+  - 1-3 examples are adequate to demonstrate command usage patterns
+
+dependencies:
+  internal:
+    - README.md: "Primary documentation file to be modified"
+  external:
+    - None
+
+# OPEN QUESTIONS
+
+open_questions: []
+
+# NOTES
+
+notes: |
+  Research revealed current documentation is accurate but overly detailed. This change optimizes
+  for user experience and trust-building rather than complete transparency. Implementation
+  details remain available in command template files and context files for those who need them.
+  
+  The simplified format will make README more approachable for new users while maintaining
+  accuracy and consistency.

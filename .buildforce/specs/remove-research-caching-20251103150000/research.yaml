@@ -1,0 +1,198 @@
+id: "remove-research-caching-20251103150000-research"
+created: "2025-11-03"
+last_updated: "2025-11-03"
+
+summary: |
+  Investigation of the Buildforce CLI's dual persistence system: research persistence (three-stage pipeline with cache accumulation, materialization, and cleanup) and state tracking via buildforce.json. Research identifies the architectural components, file structure, and design decisions underlying the current implementation.
+
+key_findings:
+  - "Current research persistence uses three-stage pipeline: accumulation (.research-cache.md) → materialization (research.yaml) → cleanup"
+  - "Research cache accumulation controlled by buildforce.json currentSpec field (null = accumulate, non-null = merge)"
+  - "State tracking system uses buildforce.json with atomic writes to manage active spec sessions"
+  - "Research cache is temporary (gitignored), research.yaml is permanent (committed)"
+  - "Template-only implementation: No TypeScript changes, modified 4 command templates + created research-template.yaml"
+  - "Six primary files implement research persistence: research.md, spec.md, complete.md, research-template.yaml, and 2 context files"
+
+file_paths:
+  primary:
+    - path: "src/templates/commands/research.md"
+      relevance: "Implements cache accumulation logic (Step 7)"
+    - path: "src/templates/commands/spec.md"
+      relevance: "Handles materialization from cache to research.yaml"
+    - path: "src/templates/research-template.yaml"
+      relevance: "Guides intelligent materialization with flexible YAML structure"
+    - path: ".buildforce/context/research-persistence.yaml"
+      relevance: "Complete architectural documentation of the feature"
+    - path: ".buildforce/context/state-tracking.yaml"
+      relevance: "Documents buildforce.json state management"
+    - path: "src/templates/commands/complete.md"
+      relevance: "Handles cache cleanup after spec finalization"
+
+  secondary:
+    - path: "src/templates/commands/build.md"
+      relevance: "Consumes research.yaml for implementation context"
+    - path: "src/templates/commands/document.md"
+      relevance: "May reference research findings"
+    - path: ".gitignore"
+      relevance: "Excludes .research-cache.md and buildforce.json from version control"
+    - path: "README.md"
+      relevance: "Documents research persistence workflow"
+
+mermaid_diagrams:
+  - title: "Three-Stage Research Persistence Pipeline"
+    description: "Architecture showing accumulation, materialization, and cleanup stages"
+    diagram: |
+      ```mermaid
+      graph TD
+          A[/research command] -->|1. ACCUMULATION| B[.research-cache.md]
+          B -->|Raw sessions with metadata| C[Session 1, 2, 3...]
+          
+          D[/spec CREATE] -->|2. MATERIALIZATION| E[Read cache]
+          E -->|Intelligent condensation| F[research.yaml]
+          F -->|Inform spec| G[spec.yaml population]
+          
+          H[/spec UPDATE] -->|Check new cache| I{New research?}
+          I -->|Yes| J[Merge with existing research.yaml]
+          I -->|No| K[Use existing research.yaml]
+          
+          L[/build command] -->|3. CONSUMPTION| F
+          M[/complete command] -->|Consumption + cleanup| F
+          M -->|Delete| B
+          
+          style B fill:#fff3cd,stroke:#ffc107
+          style F fill:#d1ecf1,stroke:#0dcaf0
+          style G fill:#d4edda,stroke:#28a745
+      ```
+
+data_models:
+  - name: "ResearchCacheEntry"
+    description: "Structure of each session in .research-cache.md"
+    properties:
+      - name: "timestamp"
+        type: "string"
+        required: true
+        description: "Format: YYYY-MM-DD HH:MM:SS"
+      - name: "type"
+        type: "'research_command'"
+        required: true
+        description: "Session type identifier"
+      - name: "content"
+        type: "object"
+        required: true
+        description: "Complete research output with all sections preserved"
+    relationships:
+      - "Multiple entries separated by === delimiters in cache file"
+
+  - name: "MaterializedResearch"
+    description: "Flexible YAML structure for research.yaml files"
+    properties:
+      - name: "id"
+        type: "string"
+        required: true
+        description: "Format: {spec-id}-research"
+      - name: "summary"
+        type: "string"
+        required: true
+        description: "Condensed 2-4 sentence overview"
+      - name: "key_findings"
+        type: "string[]"
+        required: false
+        description: "Actionable discoveries from research"
+      - name: "file_paths"
+        type: "object"
+        required: false
+        description: "Primary and secondary file paths with relevance context"
+      - name: "mermaid_diagrams"
+        type: "array"
+        required: false
+        description: "Preserved verbatim from research"
+      - name: "data_models"
+        type: "array"
+        required: false
+        description: "Preserved structure details"
+      - name: "tldr"
+        type: "string[]"
+        required: true
+        description: "3-7 critical points merged from all sessions"
+    relationships:
+      - "One research.yaml per spec folder"
+      - "Informs spec.yaml population during CREATE mode"
+
+  - name: "BuildforceState"
+    description: "State tracking in buildforce.json"
+    properties:
+      - name: "specsFolder"
+        type: "string"
+        required: true
+        description: "Path to specs directory (default: './specs')"
+      - name: "framework"
+        type: "string"
+        required: true
+        description: "Framework identifier (default: 'buildforce')"
+      - name: "currentSpec"
+        type: "string | null"
+        required: true
+        description: "Active spec folder name or null"
+
+code_snippets:
+  - title: "Cache Accumulation Logic"
+    language: "typescript"
+    description: "Pseudo-code showing state-based cache control"
+    code: |
+      function shouldAccumulateCache(): boolean {
+        const buildforceJson = readFile('.buildforce/buildforce.json');
+        const currentSpec = buildforceJson.currentSpec;
+        
+        if (!currentSpec || currentSpec === null) {
+          return true;  // ACCUMULATE - no active spec
+        }
+        return false;  // SKIP - UPDATE mode will merge
+      }
+
+  - title: "State Management Operations"
+    language: "typescript"
+    description: "Core state operations in buildforce.json"
+    code: |
+      function get_current_spec(buildforce_root: string): string {
+        // Returns empty string if null or missing
+      }
+
+      function set_current_spec(buildforce_root: string, spec_value: string): void {
+        // Preserves all other JSON fields (agent, script, version)
+      }
+
+      function clear_current_spec(buildforce_root: string): void {
+        // Sets currentSpec to null, preserves file and other fields
+      }
+
+architectural_decisions:
+  - pattern: "Three-stage pipeline (accumulation → materialization → cleanup)"
+    description: "Separates concerns with clear lifecycle from ephemeral to permanent"
+    rationale: "Cache accumulates raw research, materialization condenses intelligently, cleanup prevents orphaned files"
+
+  - pattern: "Markdown for cache, YAML for artifacts"
+    description: "Markdown for temporary cache, YAML for permanent research artifacts"
+    rationale: "Markdown is append-friendly and preserves diagrams/code naturally. YAML maintains consistency with spec artifacts"
+
+  - pattern: "Intelligent materialization preserving diagrams/models/snippets"
+    description: "Balances condensation with information richness"
+    rationale: "Mermaid diagrams, data models, code snippets are essential for /build context - preserve verbatim. Condense prose, merge TLDR bullets"
+
+  - pattern: "State-based cache accumulation"
+    description: "Cache accumulation controlled by buildforce.json currentSpec field"
+    rationale: "Enforces 1:1 research-spec relationship. When spec is active, research merges with existing research.yaml in UPDATE mode"
+
+  - pattern: "Gitignore cache, commit research.yaml"
+    description: "Cache is temporary working file, research.yaml is permanent spec artifact"
+    rationale: "Cache is like build artifacts (temporary). research.yaml is versioned alongside spec.yaml and plan.yaml"
+
+tldr:
+  - "Dual persistence system: Research cache + state tracking working together for stateful workflows"
+  - "Research persistence follows three-stage pipeline: accumulation (.research-cache.md) → materialization (research.yaml) → cleanup"
+  - "State tracking via buildforce.json with currentSpec field controls research accumulation vs. merge behavior"
+  - "Cache location: .buildforce/.research-cache.md (temporary, gitignored)"
+  - "Materialized location: .buildforce/specs/{folder}/research.yaml (permanent, committed)"
+  - "Intelligent materialization: Preserves diagrams/models/snippets verbatim, condenses prose, merges TLDR bullets"
+  - "Template-only implementation: No TypeScript code changes - modified 4 command templates + created research-template.yaml"
+  - "Consumption: /spec reads research for context-aware spec population, /build loads for implementation context, /complete enriches context files and cleans up cache"
+

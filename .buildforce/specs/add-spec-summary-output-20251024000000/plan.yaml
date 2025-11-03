@@ -159,12 +159,12 @@ phase_3:
 phase_4:
   name: "Documentation and Final Validation"
   description: |
-    Update the spec-command.yml context file to document this enhancement and validate that the template modification meets all acceptance criteria.
+    Update the spec-command.yaml context file to document this enhancement and validate that the template modification meets all acceptance criteria.
 
   tasks:
-    - [x] Update .buildforce/context/spec-command.yml with v5.0 evolution entry
+    - [x] Update .buildforce/context/spec-command.yaml with v5.0 evolution entry
       spec_refs: [NFR3]
-      files: [.buildforce/context/spec-command.yml]
+      files: [.buildforce/context/spec-command.yaml]
       notes: "Added v5.0 evolution entry (line 92-94), design decision (line 72-73), and related spec reference (line 100)"
 
     - [x] Validate all acceptance criteria are met
@@ -174,7 +174,7 @@ phase_4:
 
     - [x] Add notes section explaining spec summary format and usage
       spec_refs: [NFR3]
-      files: [.buildforce/context/spec-command.yml]
+      files: [.buildforce/context/spec-command.yaml]
       notes: "Added detailed notes section (lines 145-153) documenting spec summary format, behavior, and usage"
 
   validation:
@@ -274,7 +274,7 @@ current_status: |
   ✅ Implementation complete! All 15 tasks across 4 phases have been successfully executed.
 
   The spec summary feature has been added to src/templates/commands/spec.md (Step 6: Report completion).
-  Documentation has been updated in .buildforce/context/spec-command.yml with v5.0 evolution entry.
+  Documentation has been updated in .buildforce/context/spec-command.yaml with v5.0 evolution entry.
   All acceptance criteria (AC1-AC8) have been validated and met.
 
 next_immediate_steps:

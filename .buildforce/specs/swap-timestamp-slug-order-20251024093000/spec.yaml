@@ -24,8 +24,8 @@ problem: |
   3. **Reduced Readability**: In git history, file browsers, and terminal listings, the semantic slug is
      pushed 15+ characters to the right, reducing scannability.
 
-  4. **Inconsistent with Context Files**: Context files use semantic-first naming (authentication.yml,
-     build-command.yml) while specs use timestamp-first, creating mental model mismatch.
+  4. **Inconsistent with Context Files**: Context files use semantic-first naming (authentication.yaml,
+     build-command.yaml) while specs use timestamp-first, creating mental model mismatch.
 
 motivation: |
   Reversing the order ({semantic-slug}-{timestamp}) provides:
@@ -123,7 +123,7 @@ dependencies:
   internal:
     - create-spec-files: "Scripts must validate new format and reject old format"
     - spec.md: "Command template must instruct agent to append timestamp, not prepend"
-    - spec-command.yml: "Context documentation must reflect new naming convention"
+    - spec-command.yaml: "Context documentation must reflect new naming convention"
     - existing-specs: "All existing spec folders must be renamed to maintain consistency"
   external:
     - bash: "date command for UTC timestamp generation (unchanged)"
