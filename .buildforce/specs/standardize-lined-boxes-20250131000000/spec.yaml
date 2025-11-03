@@ -1,0 +1,113 @@
+id: standardize-lined-boxes-20250131000000
+name: "Standardize Lined-Boxes Visual Elements Across CLI"
+type: feature
+status: draft
+created: "2025-01-31"
+last_updated: "2025-01-31"
+
+summary: |
+  Standardize the lined-boxes visual component used for structuring information across all CLI commands. Currently, two different implementations exist (boxen library with mint borders vs custom boxSection with gray borders), creating visual inconsistency. This feature will unify all box components to use a shared boxen-based utility with consistent mint (#3EB489) borders, eliminating code duplication and ensuring cohesive visual identity.
+
+# INTENT / PROBLEM STATEMENT
+
+problem: |
+  The CLI currently uses two different box implementations for structuring information: the `boxen` library in the init command (mint green borders) and a custom `boxSection` function in help/examples commands (gray borders). This inconsistency creates visual fragmentation where users encounter different styles for similar information types. Additionally, the custom `boxSection` function is duplicated in `cli.ts` and `examples.ts`, violating DRY principles. The gray borders in help/examples also violate the established mint color (#3EB489) standard defined in the CLI architecture.
+
+motivation: |
+  Achieving visual consistency across all CLI commands improves user experience and strengthens brand identity. When all lined-boxes use the same mint border color and rounded appearance, the CLI presents a unified, professional interface. Standardizing on a shared utility eliminates code duplication, reduces maintenance burden, and ensures future commands automatically follow the same visual standards. This standardization continues the UI consistency work initiated in previous color standardization efforts.
+
+# GOALS
+
+primary_goals:
+  - Unify all box components to use `boxen` library with consistent mint (#3EB489) borders
+  - Eliminate code duplication by extracting box creation to a shared utility function
+  - Ensure visual consistency across all CLI commands (init, help, examples, check, upgrade)
+
+secondary_goals:
+  - Maintain error box styling (red borders for errors, mint for info) for critical state visibility
+  - Preserve existing functionality while improving visual presentation
+  - Enable easy addition of boxes to future commands via shared utility
+
+# REQUIREMENTS
+
+functional_requirements:
+  - FR1: Create a shared box utility function (`src/utils/box.ts` or `src/lib/box.ts`) that wraps `boxen` with standardized mint border color (#3EB489) as default
+  - FR2: Update `src/cli.ts` to replace custom `boxSection` function with shared box utility, maintaining help output formatting
+  - FR3: Update `src/commands/examples.ts` to replace duplicated `boxSection` function with shared box utility
+  - FR4: Update `src/commands/init/output.ts` to use shared box utility instead of direct `boxen` calls
+  - FR5: Update `src/commands/init/validation.ts` error boxes to use shared utility with red borders for errors
+  - FR6: Update `src/commands/init/setup.ts` error/debug boxes to use shared utility with appropriate border colors (red for errors, magenta for debug)
+  - FR7: Ensure all non-error boxes use mint (#3EB489) border color consistently
+  - FR8: Ensure error boxes use red border color to maintain critical state visibility
+
+non_functional_requirements:
+  - NFR1: All box components must render correctly across different terminal environments and platforms
+  - NFR2: Shared utility must support title, padding, border color, and width customization options
+  - NFR3: Code changes must not break existing functionality or change behavior beyond visual styling
+  - NFR4: Migration must preserve all existing box content and formatting (only visual appearance changes)
+
+# SCOPE
+
+in_scope:
+  - Creating shared box utility function using `boxen` library
+  - Updating init command files (output.ts, validation.ts, setup.ts) to use shared utility
+  - Replacing custom `boxSection` in cli.ts with shared utility
+  - Replacing duplicated `boxSection` in examples.ts with shared utility
+  - Standardizing border colors (mint for info, red for errors)
+  - Removing code duplication
+
+out_of_scope:
+  - Adding boxes to `check` and `upgrade` commands (can be done in future work)
+  - Changing box content or structure (only visual styling changes)
+  - Modifying other visual components like StepTracker or banner generation
+  - Updating boxen library version (staying on current v7.1.1)
+  - Changing box positioning or layout (only border color and implementation)
+
+# DESIGN PRINCIPLES
+
+design_principles:
+  - "Consistency First: All non-error boxes use mint (#3EB489) for unified visual identity"
+  - "Error Visibility: Maintain distinct red borders for error states to ensure critical information visibility"
+  - "DRY Principle: Single shared utility eliminates code duplication"
+  - "Backward Compatibility: Preserve all existing functionality and content, only change visual appearance"
+  - "Centralization: Mint color constant (MINT_COLOR) from constants.ts used consistently"
+
+# ACCEPTANCE CRITERIA
+
+acceptance_criteria:
+  - AC1: Shared box utility function exists at `src/utils/box.ts` or `src/lib/box.ts` with `createBox` function and `BoxOptions` interface
+  - AC2: All boxes in `src/cli.ts` (help output) display with mint borders instead of gray
+  - AC3: All boxes in `src/commands/examples.ts` display with mint borders instead of gray
+  - AC4: All non-error boxes in init command use mint borders via shared utility
+  - AC5: Error boxes in init command use red borders via shared utility
+  - AC6: Custom `boxSection` function removed from `cli.ts` (no duplication)
+  - AC7: Custom `boxSection` function removed from `examples.ts` (no duplication)
+  - AC8: All boxes maintain consistent rounded appearance (boxen style) across all commands
+  - AC9: Code compiles without errors and all commands function correctly
+  - AC10: Visual inspection confirms all boxes have mint borders (except errors which are red)
+
+# ASSUMPTIONS & DEPENDENCIES
+
+assumptions:
+  - boxen library (v7.1.1) already available as dependency and supports hex color codes (#3EB489)
+  - Terminal environments support 24-bit color rendering for mint hex code
+  - All existing box content and structure should remain unchanged (only visual styling updates)
+  - Shared utility location (utils/ vs lib/) can be chosen based on existing project patterns
+
+dependencies:
+  internal:
+    - constants: "MINT_COLOR constant from src/constants.ts must be used for title styling"
+    - boxen: "External npm package boxen@7.1.1 required for box rendering"
+  external:
+    - boxen: "v7.1.1 (already in package.json dependencies)"
+
+# OPEN QUESTIONS
+
+open_questions: []
+
+# NOTES
+
+notes: |
+  This standardization effort continues the UI consistency work from the color standardization spec (standardize-color-scheme-mint-20251031011544). The research identified that init command already uses mint borders correctly, so the primary work is migrating help/examples commands to match that standard.
+
+  The shared utility should be designed flexibly to support future commands that may need boxes. Error state handling (red borders) should remain distinct from informational boxes (mint) to ensure critical information visibility.

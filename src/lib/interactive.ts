@@ -12,7 +12,7 @@ export async function selectWithArrows(
   promptText: string = 'Select an option',
   defaultKey?: string
 ): Promise<string> {
-  // Mint color for option keys to match CLI help output (cli.ts line 162)
+  // Green color for option keys to match CLI help output (cli.ts line 162)
   const choices = Object.entries(options).map(([key, description]) => ({
     name: `${MINT_COLOR(key)} ${chalk.dim(`(${description})`)}`,
     value: key,
@@ -79,7 +79,7 @@ export function generateBanner(): string {
 
 /**
  * Show banner with 3-line format (figlet title, tagline, instruction)
- * Uses white color for title, mint green for tagline, and dim gray for instruction
+ * Uses white color for title, green for tagline, and dim gray for instruction
  * Maintains backward compatibility with existing function signature (banner parameter is ignored)
  */
 export function showBanner(banner: string, tagline: string): void {

@@ -192,16 +192,13 @@ export async function handleSetupError(
   isHere: boolean,
   debug: boolean
 ): Promise<void> {
-  const boxen = (await import("boxen")).default;
+  const { createBox } = await import("../../utils/box.js");
 
   console.log();
-  console.log(
-    boxen(`Initialization failed: ${e.message}`, {
-      title: "Failure",
-      padding: 1,
-      borderColor: "red",
-    })
-  );
+  console.log(createBox(`Initialization failed: ${e.message}`, {
+    title: "Failure",
+    borderColor: "red",
+  }));
 
   if (debug) {
     const envInfo = [
@@ -210,13 +207,10 @@ export async function handleSetupError(
       `CWD       → ${chalk.gray(process.cwd())}`,
     ];
     console.log();
-    console.log(
-      boxen(envInfo.join("\n"), {
-        title: "Debug Environment",
-        padding: 1,
-        borderColor: "magenta",
-      })
-    );
+    console.log(createBox(envInfo.join("\n"), {
+      title: "Debug Environment",
+      borderColor: "magenta",
+    }));
   }
 
   if (!isHere && (await fs.pathExists(projectPath))) {

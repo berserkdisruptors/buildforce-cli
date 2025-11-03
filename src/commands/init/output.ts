@@ -1,7 +1,7 @@
 import path from "path";
 import chalk from "chalk";
-import boxen from "boxen";
-import { MINT_COLOR } from "../../constants.js";
+import { MINT_COLOR, GREEN_COLOR } from "../../constants.js";
+import { createBox } from "../../utils/box.js";
 
 /**
  * Display project setup information
@@ -16,7 +16,7 @@ export function displaySetupInfo(
   const setupLines = [
     MINT_COLOR("Buildforce Project Setup"),
     "",
-    `${"Project".padEnd(15)} ${chalk.green(projectName)}`,
+    `${"Project".padEnd(15)} ${GREEN_COLOR(projectName)}`,
     `${"Working Path".padEnd(15)} ${chalk.dim(currentDir)}`,
   ];
 
@@ -24,12 +24,7 @@ export function displaySetupInfo(
     setupLines.push(`${"Target Path".padEnd(15)} ${chalk.dim(projectPath)}`);
   }
 
-  console.log(
-    boxen(setupLines.join("\n"), {
-      padding: 1,
-      borderColor: "#3EB489",
-    })
-  );
+  console.log(createBox(setupLines.join("\n")));
   console.log();
 }
 
@@ -43,21 +38,14 @@ export function displayAgentSecurityNotice(
   if (agentFolderMap[selectedAi]) {
     const agentFolder = agentFolderMap[selectedAi];
     console.log();
-    console.log(
-      boxen(
-        `Some agents may store credentials, auth tokens, or other identifying and private artifacts in the agent folder within your project.\n` +
-          `Consider adding ${MINT_COLOR(
-            agentFolder
-          )} (or parts of it) to ${MINT_COLOR(
-            ".gitignore"
-          )} to prevent accidental credential leakage.`,
-        {
-          title: MINT_COLOR("Agent Folder Security"),
-          padding: 1,
-          borderColor: "#3EB489",
-        }
-      )
-    );
+    const securityContent =
+      `Some agents may store credentials, auth tokens, or other identifying and private artifacts in the agent folder within your project.\n` +
+      `Consider adding ${MINT_COLOR(
+        agentFolder
+      )} (or parts of it) to ${MINT_COLOR(
+        ".gitignore"
+      )} to prevent accidental credential leakage.`;
+    console.log(createBox(securityContent, { title: "Agent Folder Security" }));
   }
 }
 
@@ -127,13 +115,7 @@ export function displayNextSteps(
   );
 
   console.log();
-  console.log(
-    boxen(stepsLines.join("\n"), {
-      title: "Next Steps",
-      padding: 1,
-      borderColor: "#3EB489",
-    })
-  );
+  console.log(createBox(stepsLines.join("\n"), { title: "Next Steps" }));
 
   // Workflow details
   const workflowLines = [
@@ -159,13 +141,7 @@ export function displayNextSteps(
   ];
 
   console.log();
-  console.log(
-    boxen(workflowLines.join("\n"), {
-      title: "Workflow Guide",
-      padding: 1,
-      borderColor: "#3EB489",
-    })
-  );
+  console.log(createBox(workflowLines.join("\n"), { title: "Workflow Guide" }));
 
   // Codex warning
   if (selectedAi === "codex") {
@@ -180,12 +156,6 @@ export function displayNextSteps(
       )}`;
 
     console.log();
-    console.log(
-      boxen(warningText, {
-        title: "Slash Commands in Codex",
-        padding: 1,
-        borderColor: "#3EB489",
-      })
-    );
+    console.log(createBox(warningText, { title: "Slash Commands in Codex" }));
   }
 }

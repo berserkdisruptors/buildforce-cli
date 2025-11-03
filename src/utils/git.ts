@@ -1,7 +1,7 @@
 import { execSync } from "child_process";
 import { statSync } from "fs";
 import chalk from "chalk";
-import { MINT_COLOR } from "../constants.js";
+import { MINT_COLOR, GREEN_COLOR } from "../constants.js";
 
 /**
  * Check if a directory is inside a git repository
@@ -51,7 +51,7 @@ export function initGitRepo(
     });
 
     if (!quiet) {
-      console.log(chalk.green("✓") + " Git repository initialized");
+      console.log(GREEN_COLOR("✓") + " Git repository initialized");
     }
 
     process.chdir(originalCwd);

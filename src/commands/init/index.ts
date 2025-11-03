@@ -5,6 +5,7 @@ import {
   TAGLINE,
   AGENT_FOLDER_MAP,
   MINT_COLOR,
+  GREEN_COLOR,
 } from "../../constants.js";
 import { InitOptions } from "../../types.js";
 import { checkTool } from "../../utils/index.js";
@@ -120,7 +121,7 @@ export async function initCommand(options: InitOptions): Promise<void> {
     });
 
     console.log();
-    console.log(chalk.bold.green("Project ready."));
+    console.log(GREEN_COLOR.bold("Project ready."));
 
     // Display post-setup information
     displayAgentSecurityNotice(selectedAi, AGENT_FOLDER_MAP);

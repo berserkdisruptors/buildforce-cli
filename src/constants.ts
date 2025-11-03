@@ -9,8 +9,11 @@ export {
 
 export const TAGLINE = "Context-first Spec-Driven Development framework";
 
-// Centralized mint color for cohesive UI
-export const MINT_COLOR = chalk.hex("#3EB489");
+// Centralized green color for cohesive UI
+export const MINT_COLOR = chalk.hex("#D3FFCA");
+
+// Centralized green color for success indicators
+export const GREEN_COLOR = chalk.hex("#D3FFCA");
 
 export const CLAUDE_LOCAL_PATH = `${process.env.HOME}/.claude/local/claude`;
 

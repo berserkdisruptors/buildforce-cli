@@ -1,7 +1,7 @@
 {
   "specsFolder": "./specs",
   "framework": "buildforce",
-  "aiAssistant": "claude",
+  "aiAssistant": "cursor",
   "scriptType": "sh",
-  "version": "local"
+  "version": "v0.0.20"
 }

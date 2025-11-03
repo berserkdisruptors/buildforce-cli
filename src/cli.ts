@@ -8,6 +8,7 @@ import { checkCommand } from "./commands/check.js";
 import { examplesCommand } from "./commands/examples.js";
 import { showBanner, generateBanner } from "./lib/interactive.js";
 import { MINT_COLOR } from "./constants.js";
+import { createBox } from "./utils/box.js";
 
 const program = new Command();
 
@@ -18,7 +19,7 @@ program
   .enablePositionalOptions();
 
 // --- Custom help formatting -------------------------------------------------
-// Mint color for option/argument/command terms
+// Green color for option/argument/command terms
 const mint = MINT_COLOR;
 
 // Put banner above Commander help (usage, options, commands)
@@ -53,55 +54,13 @@ function hardWrap(text: string, width: number): string[] {
   return lines;
 }
 
-function boxSection(
-  title: string,
-  contentLines: string[],
-  helpWidth?: number,
-  fixedInnerWidth?: number,
-): string {
-  const pad = 1;
-  const titlePlain = title.replace(/\u001b\[[0-9;]*m/g, "");
-  const maxAllowedInner = helpWidth ? Math.max(10, helpWidth - 2) : Infinity;
-
-  // Ensure each line fits within the inner width (account for padding later)
-  const normalized: string[] = [];
-  for (const l of contentLines) {
-    const raw = l.replace(/\u001b\[[0-9;]*m/g, "");
-    const innerWidth = Math.min(maxAllowedInner - pad * 2, raw.length);
-    const wrapped = helpWidth ? hardWrap(l, Math.max(10, innerWidth)) : [l];
-    normalized.push(...wrapped);
-  }
-
-  const computed = Math.max(
-    titlePlain.length + pad * 2,
-    ...normalized.map((l) => l.replace(/\u001b\[[0-9;]*m/g, "").length + pad * 2),
-  );
-  const maxLine = Math.min(maxAllowedInner, fixedInnerWidth ?? computed);
-  const top = `┌${"─".repeat(maxLine)}┐`;
-  const sep = `├${"─".repeat(maxLine)}┤`;
-  const bot = `└${"─".repeat(maxLine)}┘`;
-
-  const titleLine = `│${" ".repeat(pad)}${chalk.bold.white(title)}${" ".repeat(
-    maxLine - pad - titlePlain.length,
-  )}│`;
-
-  const body = normalized.map((l) => {
-    const rawLen = l.replace(/\u001b\[[0-9;]*m/g, "").length;
-    const spaces = Math.max(0, maxLine - pad - rawLen);
-    return `│${" ".repeat(pad)}${l}${" ".repeat(spaces)}│`;
-  });
-
-  return [chalk.gray(top), titleLine, chalk.gray(sep), ...body.map((b) => b), chalk.gray(bot)].join(
-    "\n",
-  );
-}
 
 function formatKeyValueRows(
   rows: Array<{ term: string; desc: string }>,
   termWidth: number,
   helpWidth: number,
 ): string[] {
-  const pad = 1; // same pad as boxSection
+  const pad = 1;
   // Smaller box width - max 70 chars for content (excluding borders)
   const boxMaxWidth = 70;
   const innerMax = Math.min(boxMaxWidth, Math.max(20, helpWidth - 2));
@@ -164,7 +123,7 @@ program.configureHelp({
     const usageText = helper.commandUsage(cmd);
     const boxMaxWidth = 70;
     const fixedInner = Math.min(boxMaxWidth, Math.max(20, helpWidth - 2));
-    lines.push("\n" + boxSection("Usage", [usageText], helpWidth, fixedInner));
+    lines.push("\n" + createBox(usageText, { title: "Usage", width: fixedInner }));
 
     // Arguments
     const argumentsList = helper.visibleArguments(cmd);
@@ -177,7 +136,7 @@ program.configureHelp({
       // Smaller box width - max 70 chars for content
       const boxMaxWidth = 70;
       const fixedInner = Math.min(boxMaxWidth, Math.max(20, helpWidth - 2));
-      lines.push("\n" + boxSection("Arguments", argLines, helpWidth, fixedInner));
+      lines.push("\n" + createBox(argLines, { title: "Arguments", width: fixedInner }));
     }
 
     // Options
@@ -191,7 +150,7 @@ program.configureHelp({
       // Smaller box width - max 70 chars for content
       const boxMaxWidth = 70;
       const fixedInner = Math.min(boxMaxWidth, Math.max(20, helpWidth - 2));
-      lines.push("\n" + boxSection("Options", optLines, helpWidth, fixedInner));
+      lines.push("\n" + createBox(optLines, { title: "Options", width: fixedInner }));
     }
 
     // Commands
@@ -205,7 +164,7 @@ program.configureHelp({
       // Smaller box width - max 70 chars for content
       const boxMaxWidth = 70;
       const fixedInner = Math.min(boxMaxWidth, Math.max(20, helpWidth - 2));
-      lines.push("\n" + boxSection("Commands", cmdLines, helpWidth, fixedInner));
+      lines.push("\n" + createBox(cmdLines, { title: "Commands", width: fixedInner }));
     }
 
     return lines.join("\n") + "\n";

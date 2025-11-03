@@ -1,6 +1,6 @@
 import chalk from "chalk";
 import { UpgradeOptions } from "../../types.js";
-import { TAGLINE, MINT_COLOR } from "../../constants.js";
+import { TAGLINE, MINT_COLOR, GREEN_COLOR } from "../../constants.js";
 import { showBanner } from "../../lib/interactive.js";
 import { validateUpgradePrerequisites } from "./validation.js";
 import { executeUpgrade } from "./execution.js";
@@ -140,7 +140,7 @@ export async function upgradeCommand(options: UpgradeOptions): Promise<void> {
     });
 
     console.log();
-    console.log(chalk.bold.green("✓ Upgrade complete!"));
+    console.log(GREEN_COLOR.bold("✓ Upgrade complete!"));
     console.log();
   } catch (e: any) {
     console.log();

@@ -1,6 +1,7 @@
 import chalk from "chalk";
 import { showBanner, selectWithArrows } from "../lib/interactive.js";
-import { TAGLINE, MINT_COLOR } from "../constants.js";
+import { TAGLINE, MINT_COLOR, GREEN_COLOR } from "../constants.js";
+import { createBox } from "../utils/box.js";
 import fs from "fs-extra";
 import path from "path";
 
@@ -24,53 +25,6 @@ function hardWrap(text: string, width: number): string[] {
   return lines;
 }
 
-/**
- * Create a boxed section with title and content
- * Matches the style used in CLI help output
- */
-function boxSection(
-  title: string,
-  contentLines: string[],
-  helpWidth?: number,
-  fixedInnerWidth?: number,
-): string {
-  const pad = 1;
-  const titlePlain = title.replace(/\u001b\[[0-9;]*m/g, "");
-  const maxAllowedInner = helpWidth ? Math.max(10, helpWidth - 2) : Infinity;
-
-  // Ensure each line fits within the inner width (account for padding later)
-  const normalized: string[] = [];
-  for (const l of contentLines) {
-    const raw = l.replace(/\u001b\[[0-9;]*m/g, "");
-    const innerWidth = Math.min(maxAllowedInner - pad * 2, raw.length);
-    const wrapped = helpWidth ? hardWrap(l, Math.max(10, innerWidth)) : [l];
-    normalized.push(...wrapped);
-  }
-
-  const computed = Math.max(
-    titlePlain.length + pad * 2,
-    ...normalized.map((l) => l.replace(/\u001b\[[0-9;]*m/g, "").length + pad * 2),
-  );
-  const maxLine = Math.min(maxAllowedInner, fixedInnerWidth ?? computed);
-  const top = `┌${"─".repeat(maxLine)}┐`;
-  const sep = `├${"─".repeat(maxLine)}┤`;
-  const bot = `└${"─".repeat(maxLine)}┘`;
-
-  // White color for title to match CLI help output (cli.ts line 100)
-  const titleLine = `│${" ".repeat(pad)}${chalk.bold.white(title)}${" ".repeat(
-    maxLine - pad - titlePlain.length,
-  )}│`;
-
-  const body = normalized.map((l) => {
-    const rawLen = l.replace(/\u001b\[[0-9;]*m/g, "").length;
-    const spaces = Math.max(0, maxLine - pad - rawLen);
-    return `│${" ".repeat(pad)}${l}${" ".repeat(spaces)}│`;
-  });
-
-  return [chalk.gray(top), titleLine, chalk.gray(sep), ...body.map((b) => b), chalk.gray(bot)].join(
-    "\n",
-  );
-}
 
 /**
  * Workflow definition interface
@@ -237,23 +191,20 @@ function displayWorkflow(workflow: Workflow): void {
   const helpWidth = process.stdout.columns || 80;
   const fixedInner = Math.min(70, Math.max(20, helpWidth - 2));
 
+  const contentLines = [
+    MINT_COLOR("Command Sequence:"),
+    "",
+    ...workflow.commandSequence.map(cmd => `  ${MINT_COLOR("→")} ${chalk.bold(cmd)}`),
+    "",
+    MINT_COLOR("Description:"),
+    chalk.dim(workflow.description || "No description available"),
+    "",
+    MINT_COLOR("When to Use:"),
+    chalk.dim(workflow.useCase || "Various development tasks"),
+  ];
+
   console.log();
-  console.log(boxSection(
-    workflow.name,
-    [
-      MINT_COLOR("Command Sequence:"),
-      "",
-      ...workflow.commandSequence.map(cmd => `  ${MINT_COLOR("→")} ${chalk.bold(cmd)}`),
-      "",
-      MINT_COLOR("Description:"),
-      chalk.dim(workflow.description || "No description available"),
-      "",
-      MINT_COLOR("When to Use:"),
-      chalk.dim(workflow.useCase || "Various development tasks"),
-    ],
-    helpWidth,
-    fixedInner,
-  ));
+  console.log(createBox(contentLines, { title: workflow.name, width: fixedInner }));
   console.log();
   // Add blank row below workflow display for visual separation
   console.log();
@@ -320,7 +271,7 @@ export async function examplesCommand(): Promise<void> {
 
       // Always display the workflow
       displayWorkflow(selectedWorkflow);
-      console.log(chalk.green("✓ Workflow example displayed"));
+      console.log(GREEN_COLOR("✓ Workflow example displayed"));
       
       // Ask if user wants to view another workflow
       const continueChoices: Record<string, string> = {
