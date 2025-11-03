@@ -38,9 +38,9 @@
 #
 # Multiple sessions accumulate with clear separators. Preserve ALL content types.
 
-# MATERIALIZED RESEARCH.YML STRUCTURE (Flexible):
+# MATERIALIZED RESEARCH.yaml STRUCTURE (Flexible):
 
-id: "<spec-id>-research"  # Must match parent spec ID
+id: "<spec-id>-research" # Must match parent spec ID
 created: "<date>"
 last_updated: "<date>"
 

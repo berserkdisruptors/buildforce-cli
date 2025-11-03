@@ -32,7 +32,7 @@ dependencies:
     - package.json: "Source of version, license, repository URL, engine requirements"
     - src/config/agents.ts: "List of supported AI assistants with folder mappings"
     - src/cli.ts: "CLI command structure and options"
-    - .buildforce/context/slash-commands.yml: "Slash command workflow documentation"
+    - .buildforce/context/slash-commands.yaml: "Slash command workflow documentation"
     - CHANGELOG.md: "Version history and release notes"
     - CODE_OF_CONDUCT.md: "Community guidelines (referenced but currently empty)"
     - LICENSE: "MIT license file"
@@ -51,7 +51,7 @@ files:
     - package.json
     - src/config/agents.ts
     - src/cli.ts
-    - .buildforce/context/slash-commands.yml
+    - .buildforce/context/slash-commands.yaml
 
 design_decisions:
   - decision: "Eliminate marketing language completely (no 'dramatically', 'revolutionizing', defensive FAQs)"

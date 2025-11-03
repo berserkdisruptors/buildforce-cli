@@ -3,41 +3,41 @@ created: "2025-11-03"
 last_updated: "2025-11-03"
 
 summary: |
-  Comprehensive investigation of .yaml vs .yml file extension inconsistencies across the buildforce-cli codebase.
+  Comprehensive investigation of .yaml vs .yaml file extension inconsistencies across the buildforce-cli codebase.
   Analysis reveals mixed usage that causes file-not-found errors when AI agents attempt to read workflow and context files.
   Strategy decision: Standardize on .yaml extension for ALL YAML files - no exceptions, maximum consistency.
 
 key_findings:
-  - "Current state has 2 template files using .yaml (spec, plan) and 4 files using .yml (research template, context system files)"
-  - "Command templates contain 40+ inconsistent references mixing .yml and .yaml extensions"
+  - "Current state has 2 template files using .yaml (spec, plan) and 4 files using .yaml (research template, context system files)"
+  - "Command templates contain 40+ inconsistent references mixing .yaml and .yaml extensions"
   - "Shell scripts already use .yaml correctly - no script changes needed"
   - "File renames are breaking changes affecting initialization and in-progress specs"
   - "Two-phase migration required: Phase 1 fixes source templates/commands, Phase 2 migrates .buildforce/ generated files"
 
 file_paths:
   primary:
-    - path: "src/templates/research-template.yml"
+    - path: "src/templates/research-template.yaml"
       relevance: "Must rename to .yaml - template file inconsistency"
-    - path: "src/context/_index.yml"
+    - path: "src/context/_index.yaml"
       relevance: "Must rename to .yaml - context system file"
-    - path: "src/context/_schema.yml"
+    - path: "src/context/_schema.yaml"
       relevance: "Must rename to .yaml - context system file"
-    - path: "src/context/_graph.yml"
+    - path: "src/context/_graph.yaml"
       relevance: "Must rename to .yaml - context system file"
 
   secondary:
     - path: "src/templates/commands/build.md"
-      relevance: "Contains 10+ .yml references to update"
+      relevance: "Contains 10+ .yaml references to update"
     - path: "src/templates/commands/complete.md"
-      relevance: "Contains 8+ .yml references to update"
+      relevance: "Contains 8+ .yaml references to update"
     - path: "src/templates/commands/spec.md"
-      relevance: "Contains 12+ .yml references to update"
+      relevance: "Contains 12+ .yaml references to update"
     - path: "src/templates/commands/research.md"
-      relevance: "Contains 3+ .yml references to update"
+      relevance: "Contains 3+ .yaml references to update"
     - path: "src/templates/commands/document.md"
-      relevance: "Contains 3+ .yml references to update"
+      relevance: "Contains 3+ .yaml references to update"
     - path: "README.md"
-      relevance: "Contains 5+ research.yml references to update"
+      relevance: "Contains 5+ research.yaml references to update"
     - path: "src/scripts/bash/create-spec-files.sh"
       relevance: "Already correct - uses .yaml"
     - path: "src/scripts/powershell/create-spec-files.ps1"
@@ -45,7 +45,7 @@ file_paths:
 
 mermaid_diagrams:
   - title: "Current File Extension Architecture Flow"
-    description: "Shows how command templates, scripts, and generated files interact with mixed .yaml/.yml extensions"
+    description: "Shows how command templates, scripts, and generated files interact with mixed .yaml/.yaml extensions"
     diagram: |
       ```mermaid
       graph TB
@@ -66,13 +66,13 @@ mermaid_diagrams:
           subgraph "Template Files src/templates/"
               SPEC_TPL[spec-template.yaml ✓]
               PLAN_TPL[plan-template.yaml ✓]
-              RESEARCH_TPL[research-template.yml ❌<br/>→ .yaml]
+              RESEARCH_TPL[research-template.yaml ❌<br/>→ .yaml]
           end
           
           subgraph "Context System src/context/"
-              INDEX_SRC[_index.yml ❌ → .yaml]
-              SCHEMA_SRC[_schema.yml ❌ → .yaml]
-              GRAPH_SRC[_graph.yml ❌ → .yaml]
+              INDEX_SRC[_index.yaml ❌ → .yaml]
+              SCHEMA_SRC[_schema.yaml ❌ → .yaml]
+              GRAPH_SRC[_graph.yaml ❌ → .yaml]
           end
           
           subgraph "Generated Files .buildforce/"
@@ -130,12 +130,12 @@ data_models:
         description: "Apply to all YAML files without exception"
 
   - name: "FileRename"
-    description: "Files that require renaming from .yml to .yaml"
+    description: "Files that require renaming from .yaml to .yaml"
     properties:
       - name: "currentPath"
         type: "string"
         required: true
-        description: "Current file path with .yml extension"
+        description: "Current file path with .yaml extension"
       - name: "newPath"
         type: "string"
         required: true
@@ -186,10 +186,9 @@ architectural_decisions:
 
 tldr:
   - "Single extension goal: Standardize ALL YAML files to .yaml - no exceptions, maximum consistency"
-  - "4 files need rename: research-template.yml, _index.yml, _schema.yml, _graph.yml → all to .yaml"
+  - "4 files need rename: research-template.yaml, _index.yaml, _schema.yaml, _graph.yaml → all to .yaml"
   - "7 files need reference updates: 5 command templates + README.md + research-template self-references"
-  - "40+ individual references to change: All .yml references changed to .yaml across documentation and commands"
+  - "40+ individual references to change: All .yaml references changed to .yaml across documentation and commands"
   - "No script changes needed: Bash and PowerShell scripts already use .yaml correctly"
   - "Breaking change: File renames affect initialization and any in-progress specs using old context system"
   - "Rationale for .yaml: More explicit, modern standard, already used by primary workflow templates (spec/plan)"
-

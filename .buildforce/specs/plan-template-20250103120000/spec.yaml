@@ -117,8 +117,8 @@ assumptions:
 
 dependencies:
   internal:
-    - /build command: "Consumes plan.yml for implementation execution"
-    - /plan command: "Generates plan.yml from plan-template.yaml"
+    - /build command: "Consumes plan.yaml for implementation execution"
+    - /plan command: "Generates plan.yaml from plan-template.yaml"
     - spec-template.yaml: "Source of spec_refs IDs"
   external:
     - None
@@ -134,7 +134,7 @@ open_questions:
 # NOTES
 
 notes: |
-  This spec uses itself as a reference implementation - the corresponding plan.yml will use
+  This spec uses itself as a reference implementation - the corresponding plan.yaml will use
   the enhanced template structure to plan its own implementation (meta-planning).
 
   The enhanced template should maintain the human-readable structure for /plan command while

@@ -48,14 +48,14 @@ The 5-command lifecycle:
 1_research:
   command: "/research <query>"
   purpose: "Gather context for spec-driven development session"
-  innovation: "Searches .buildforce/context/_index.yml FIRST for accumulated project knowledge"
+  innovation: "Searches .buildforce/context/_index.yaml FIRST for accumulated project knowledge"
   outputs:
     - Structured report (Research Summary, Project Context, Codebase Findings, External Knowledge)
     - Explicit file path lists (saves manual @ references)
     - Mermaid architecture diagrams (for codebase queries)
     - Concrete data models (not summaries)
   key_guidelines:
-    - Project Context Search (ALWAYS start with _index.yml)
+    - Project Context Search (ALWAYS start with _index.yaml)
     - Recency awareness (web search for current topics)
     - Structured output for next workflow steps
 
@@ -114,10 +114,10 @@ The 5-command lifecycle:
 context_repository:
   location: ".buildforce/context/"
   structure:
-    - "_index.yml: Searchable index with references to all context files"
-    - "_schema.yml: Schema guidelines for creating context files"
+    - "_index.yaml: Searchable index with references to all context files"
+    - "_schema.yaml: Schema guidelines for creating context files"
     - "_graph.mmd: Mermaid diagram showing architecture (constantly updated)"
-    - "*.yml: Individual context files (modules, features, components, patterns)"
+    - "*.yaml: Individual context files (modules, features, components, patterns)"
 
   purpose: |
     Accumulated knowledge from all completed spec-driven development sessions.
@@ -125,7 +125,7 @@ context_repository:
     Acts as primary source of truth about project architecture, patterns, and decisions.
 
   workflow_integration: |
-    RESEARCH command ALWAYS searches _index.yml first before any other research.
+    RESEARCH command ALWAYS searches _index.yaml first before any other research.
     Eliminates redundant codebase exploration by leveraging past sessions.
     Provides instant access to architecture, data models, design decisions, file paths.
 
@@ -133,7 +133,7 @@ context_repository:
 
 functional_requirements:
   - FR1: All 5 commands must be implementable as Claude Code slash commands (markdown files with $ARGUMENTS)
-  - FR2: RESEARCH must search .buildforce/context/_index.yml before any other research
+  - FR2: RESEARCH must search .buildforce/context/_index.yaml before any other research
   - FR3: RESEARCH must detect recency indicators and use web search appropriately
   - FR4: RESEARCH must produce structured reports with file lists, diagrams, data models
   - FR5: SPEC must validate context and ask clarifying questions if needed
@@ -172,7 +172,7 @@ in_scope:
   - Implement BUILD command with progress tracking and deviation logging
   - Implement COMPLETE command with validation and confirmation
   - Create initial context repository structure (.buildforce/context/)
-  - Create _index.yml, _schema.yml, _graph.mmd, slash-commands.yml, research-slash-command.yml
+  - Create _index.yaml, _schema.yaml, _graph.mmd, slash-commands.yaml, research-slash-command.yaml
 
 out_of_scope:
   - Actual CLI implementation that reads/executes these commands (future work)
@@ -188,7 +188,7 @@ success_criteria:
   - AC3: Each command captures 100% of the manual workflow currently performed
   - AC4: Commands are compact (~20-40 lines each) but fully specified
   - AC5: Context repository structure is established with example files
-  - AC6: _index.yml properly references all context files
+  - AC6: _index.yaml properly references all context files
   - AC7: Manual testing confirms commands guide build agents correctly
 
 # ASSUMPTIONS & DEPENDENCIES

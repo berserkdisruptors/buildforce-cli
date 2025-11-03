@@ -31,11 +31,11 @@ file_paths:
   secondary:
     - path: ".gitignore"
       relevance: "Line 21 excludes .current-spec from version control"
-    - path: ".buildforce/context/spec-command.yml"
+    - path: ".buildforce/context/spec-command.yaml"
       relevance: "Documents v2.0 design decision to use .current-spec for CREATE/UPDATE determination"
-    - path: ".buildforce/context/research-persistence.yml"
+    - path: ".buildforce/context/research-persistence.yaml"
       relevance: "Documents cache accumulation behavior based on .current-spec state"
-    - path: ".buildforce/context/complete-command.yml"
+    - path: ".buildforce/context/complete-command.yaml"
       relevance: "Documents state verification and cleanup workflow"
 
 mermaid_diagrams:

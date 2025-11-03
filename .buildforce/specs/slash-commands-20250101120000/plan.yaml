@@ -37,7 +37,7 @@ decisions:
     rationale: "Covers all critical aspects: project context search, recency awareness, structured output, file paths, diagrams, data models, next steps."
 
   - decision: "Structured YAML for context files"
-    rationale: "YAML is human-readable and searchable. Enables _index.yml to act as efficient discovery mechanism."
+    rationale: "YAML is human-readable and searchable. Enables _index.yaml to act as efficient discovery mechanism."
 
   - decision: "Deviation logging in BUILD command"
     rationale: "Tracks when implementation diverges from plan (e.g., library swaps). Provides transparency and audit trail."
@@ -56,15 +56,15 @@ files_to_create:
     - src/templates/commands/complete.md
 
   context_repository:
-    - .buildforce/context/_index.yml
-    - .buildforce/context/_schema.yml
+    - .buildforce/context/_index.yaml
+    - .buildforce/context/_schema.yaml
     - .buildforce/context/_graph.mmd
-    - .buildforce/context/slash-commands.yml
-    - .buildforce/context/research-slash-command.yml
+    - .buildforce/context/slash-commands.yaml
+    - .buildforce/context/research-slash-command.yaml
 
   specs:
-    - .buildforce/specs/001-slash-commands/spec.yml
-    - .buildforce/specs/001-slash-commands/plan.yml
+    - .buildforce/specs/001-slash-commands/spec.yaml
+    - .buildforce/specs/001-slash-commands/plan.yaml
 
 # IMPLEMENTATION PLAN
 
@@ -119,7 +119,7 @@ phase_2:
 
         - iteration: 3
           changes: "Added Project Context Search as guideline #1 (ALWAYS start here)"
-          rationale: "Positions .buildforce/context/_index.yml as primary knowledge sourcethe masterpiece innovation"
+          rationale: "Positions .buildforce/context/_index.yaml as primary knowledge sourcethe masterpiece innovation"
 
       final_line_count: 28
       completion_date: "2025-01-15"
@@ -158,7 +158,7 @@ phase_3:
         - "Recency query: 'Current best practices for OAuth 2.0 with Cognito'"
         - "Mixed query: 'Compare our auth implementation with latest OAuth standards'"
       validation:
-        - "Searches _index.yml first"
+        - "Searches _index.yaml first"
         - "Produces file path list"
         - "Generates Mermaid diagram"
         - "Documents data models"
@@ -215,25 +215,25 @@ context_setup:
     - task: "Create .buildforce/context/ directory structure"
       status: " complete"
 
-    - task: "Create _index.yml with initial entries"
+    - task: "Create _index.yaml with initial entries"
       status: " complete"
       entries:
         - "slash-commands (type: module)"
         - "research-slash-command (type: feature)"
 
-    - task: "Create _schema.yml with guidelines"
+    - task: "Create _schema.yaml with guidelines"
       status: " complete"
-      notes: "Extracted from authentication.yml example"
+      notes: "Extracted from authentication.yaml example"
 
     - task: "Create _graph.mmd with architecture diagram"
       status: " complete"
       notes: "Shows CLI, Core Modules, Template System, Context Repository, Slash Commands, AI Integration"
 
-    - task: "Create slash-commands.yml (module-level context)"
+    - task: "Create slash-commands.yaml (module-level context)"
       status: " complete"
       notes: "Overview of 5-command workflow system"
 
-    - task: "Create research-slash-command.yml (feature-level context)"
+    - task: "Create research-slash-command.yaml (feature-level context)"
       status: " complete"
       notes: "Detailed documentation of RESEARCH command"
 

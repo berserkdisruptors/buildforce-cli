@@ -188,13 +188,13 @@ architecture_patterns:
   context_management: |
     Directory Structure:
     .buildforce/context/
-      ├── _index.yml - Central registry
-      ├── _schema.yml - Field definitions
-      └── *.yml - Context files
+      ├── _index.yaml - Central registry
+      ├── _schema.yaml - Field definitions
+      └── *.yaml - Context files
 
-    Index Structure (_index.yml):
+    Index Structure (_index.yaml):
     - id: kebab-case unique identifier
-    - file: filename (matches id + .yml)
+    - file: filename (matches id + .yaml)
     - type: module | feature | component | pattern
     - description: one-liner (max 100 chars)
     - tags: searchable keywords
@@ -291,7 +291,7 @@ workflow_integration: |
   The CLI initializes projects with templates containing:
 
   1. Slash Command Prompts:
-     - /research - Context gathering from .buildforce/context/_index.yml
+     - /research - Context gathering from .buildforce/context/_index.yaml
      - /spec - Requirements specification with spec-template.yaml
      - /plan - Implementation planning with plan-template.yaml
      - /build - Execution with progress tracking
@@ -303,9 +303,9 @@ workflow_integration: |
      - plan-template.yaml - Phase-based implementation plan
 
   3. Context System:
-     - _index.yml - Context registry
-     - _schema.yml - Schema validation
-     - *.yml - Individual context files
+     - _index.yaml - Context registry
+     - _schema.yaml - Schema validation
+     - *.yaml - Individual context files
 
   4. Shell Scripts:
      - Automation scripts in .buildforce/scripts/

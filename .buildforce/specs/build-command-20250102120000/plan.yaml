@@ -39,13 +39,13 @@ decisions:
     rationale: "BUILD is more complex than RESEARCH (script execution, tracking, logging, validation, iteration). Slightly longer is acceptable while maintaining compactness."
 
   - decision: "Script-based FEATURE_DIR discovery"
-    rationale: "Following implement.md pattern: execute `.buildforce/scripts/bash/get-spec-paths.sh --json`, parse FEATURE_DIR, load spec.yml and plan.yml. Provides reliable absolute paths."
+    rationale: "Following implement.md pattern: execute `.buildforce/scripts/bash/get-spec-paths.sh --json`, parse FEATURE_DIR, load spec.yaml and plan.yaml. Provides reliable absolute paths."
 
   - decision: "Bold emphasis on ALWAYS/NEVER instructions"
     rationale: "Matches RESEARCH pattern. Draws agent attention to non-negotiable requirements (prerequisite checks, stop on errors, never auto-complete)."
 
   - decision: "Script execution + Context loading as guideline #1"
-    rationale: "Must execute script (which verifies files exist), discover FEATURE_DIR, and load spec.yml/plan.yml before any work. Critical first step prevents wasted execution."
+    rationale: "Must execute script (which verifies files exist), discover FEATURE_DIR, and load spec.yaml/plan.yaml before any work. Critical first step prevents wasted execution."
 
   - decision: "Testing guidance instead of user confirmation"
     rationale: "Agents should verify code quality and provide testing guidance (like submitting a PR) rather than asking for confirmation. User tests the code themselves after agent ensures it's ready."
@@ -62,7 +62,7 @@ step_1:
 
     Guideline 1: Script Execution & Context Loading
       - From: implement.md pattern + Current "Prerequisites" section + Step 1 + Behavior rule "NEVER proceed without spec/plan"
-      - Content: Execute `.buildforce/scripts/bash/get-spec-paths.sh --json` (script verifies files exist), parse FEATURE_DIR, load {FEATURE_DIR}/spec.yml and {FEATURE_DIR}/plan.yml into context
+      - Content: Execute `.buildforce/scripts/bash/get-spec-paths.sh --json` (script verifies files exist), parse FEATURE_DIR, load {FEATURE_DIR}/spec.yaml and {FEATURE_DIR}/plan.yaml into context
 
     Guideline 2: Progress Tracking
       - From: Step 3 (Initialize Progress Tracking) + Behavior rule "ALWAYS track progress visibly"
@@ -113,7 +113,7 @@ step_3:
   details: |
     **Key guidelines**:
 
-    1. **Script Execution & Context Loading**: Run `.buildforce/scripts/bash/get-spec-paths.sh --json` from repo root (script verifies files exist and will fail if missing). Parse the JSON response to extract **FEATURE_DIR** (absolute path). Load {FEATURE_DIR}/spec.yml and {FEATURE_DIR}/plan.yml into context. **NEVER proceed** without both files loaded.
+    1. **Script Execution & Context Loading**: Run `.buildforce/scripts/bash/get-spec-paths.sh --json` from repo root (script verifies files exist and will fail if missing). Parse the JSON response to extract **FEATURE_DIR** (absolute path). Load {FEATURE_DIR}/spec.yaml and {FEATURE_DIR}/plan.yaml into context. **NEVER proceed** without both files loaded.
 
   output: "3-4 lines with script execution, JSON parsing, file loading, and NEVER emphasis"
 
@@ -283,11 +283,11 @@ script_info:
 
   usage_in_guideline_1: |
     1. Execute: `.buildforce/scripts/bash/get-spec-paths.sh --json` from repo root
-    2. Script validates that spec.yml and plan.yml exist (exits with error if not)
+    2. Script validates that spec.yaml and plan.yaml exist (exits with error if not)
     3. Parse JSON response to extract FEATURE_DIR value
     4. Use FEATURE_DIR to construct absolute paths:
-       - {FEATURE_DIR}/spec.yml
-       - {FEATURE_DIR}/plan.yml
+       - {FEATURE_DIR}/spec.yaml
+       - {FEATURE_DIR}/plan.yaml
     5. Load both files into context using Read tool
 
   rationale: |

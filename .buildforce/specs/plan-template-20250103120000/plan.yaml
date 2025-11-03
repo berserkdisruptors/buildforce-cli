@@ -197,7 +197,7 @@ testing:
     - scenario: "Generate new plan with enhanced template"
       steps: |
         1. Run /plan command with a test spec
-        2. Verify generated plan.yml uses checkbox syntax
+        2. Verify generated plan.yaml uses checkbox syntax
         3. Verify all new fields are present and correctly formatted
         4. Verify YAML is valid and parseable
 

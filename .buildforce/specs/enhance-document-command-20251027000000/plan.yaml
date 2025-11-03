@@ -23,8 +23,8 @@ approach: |
 
 technology_stack:
   - Markdown template: Command template format with YAML frontmatter
-  - context/_schema.yml: Schema reference for generating context files (unchanged)
-  - context/_index.yml: Index for conflict checking and entry management
+  - context/_schema.yaml: Schema reference for generating context files (unchanged)
+  - context/_index.yaml: Index for conflict checking and entry management
 
 decisions:
   - decision: "Adopt /complete steps 3-6 structure for guidelines 1-6"
@@ -42,7 +42,7 @@ decisions:
   - decision: "Preserve automatic related context updates (no per-file confirmation)"
     rationale: "This is a unique strength of /document vs /complete. Maintains existing behavior where agent automatically cross-references related contexts without asking permission for each file. User confirms all changes together in final summary."
 
-  - decision: "Add description field to _index.yml entries (matching /complete v2.0)"
+  - decision: "Add description field to _index.yaml entries (matching /complete v2.0)"
     rationale: "Improves searchability without opening files. Short one-liner (max 100 chars) describes what context represents. Brings /document up to same standard as /complete v2.0."
 
 # FILE STRUCTURE
@@ -88,7 +88,7 @@ phase_2:
   name: "Restructure Guidelines 1-2: Analyze Context Requirements"
   description: |
     Rewrite current guideline 1 (Determine Mode) and merge with enhanced context analysis
-    to mirror /complete step 3. This includes proactive _index.yml search, conversation
+    to mirror /complete step 3. This includes proactive _index.yaml search, conversation
     history analysis to identify components, UPDATE vs CREATE determination, multiple
     component detection, and file size threshold checking.
 
@@ -96,7 +96,7 @@ phase_2:
     - [ ] Rewrite guideline 1 to mirror /complete step 3 "Analyze Context Requirements"
       spec_refs: [FR2, FR3, AC2, AC5]
       files: [src/templates/commands/document.md]
-      notes: "Include: Read _index.yml to discover existing contexts, analyze conversation history (emphasize this since no spec.yaml/plan.yaml), identify components/features/modules to document, determine UPDATE vs CREATE for each, check existing file size (>500 lines)"
+      notes: "Include: Read _index.yaml to discover existing contexts, analyze conversation history (emphasize this since no spec.yaml/plan.yaml), identify components/features/modules to document, determine UPDATE vs CREATE for each, check existing file size (>500 lines)"
 
     - [ ] Add emphasis on conversation history analysis (compensate for lack of spec artifacts)
       spec_refs: [FR3, AC5]
@@ -121,19 +121,19 @@ phase_3:
   description: |
     Enhance current guideline 3 to mirror /complete step 4 with detailed filename generation
     rules. Add all validation rules (kebab-case, max 50 chars, no prefixes, component identity,
-    alphanumeric+hyphens), ID conflict checking strategy (search _index.yml proactively,
+    alphanumeric+hyphens), ID conflict checking strategy (search _index.yaml proactively,
     choose alternative if exists), and examples.
 
   tasks:
     - [ ] Rewrite guideline 3 to mirror /complete step 4 "Generate Context Filenames"
       spec_refs: [FR2, FR4, FR5, AC2, AC3, AC4]
       files: [src/templates/commands/document.md]
-      notes: "Include: Component/feature/module identity (NOT spec intent), format rules (kebab-case, max 50 chars, no numeric/timestamp prefixes), validation (lowercase alphanumeric + hyphens only), examples (authentication.yml, build-command.yml, error-handling.yml)"
+      notes: "Include: Component/feature/module identity (NOT spec intent), format rules (kebab-case, max 50 chars, no numeric/timestamp prefixes), validation (lowercase alphanumeric + hyphens only), examples (authentication.yaml, build-command.yaml, error-handling.yaml)"
 
     - [ ] Add detailed ID conflict checking strategy
       spec_refs: [FR5, AC4]
       files: [src/templates/commands/document.md]
-      notes: "Check for ID conflicts in _index.yml, choose alternative if exists (append descriptor, use synonym, e.g., 'auth' → 'auth-module' or 'authentication')"
+      notes: "Check for ID conflicts in _index.yaml, choose alternative if exists (append descriptor, use synonym, e.g., 'auth' → 'auth-module' or 'authentication')"
 
     - [ ] Add CRITICAL callout for semantic naming principles
       spec_refs: [FR4, AC3]
@@ -153,7 +153,7 @@ phase_4:
   name: "Restructure Guideline 4: Create/Update Context Files"
   description: |
     Enhance current guideline 4 to mirror /complete step 5 with clear distinction between
-    CREATE mode (load _schema.yml, populate all fields, never leave placeholders) and UPDATE
+    CREATE mode (load _schema.yaml, populate all fields, never leave placeholders) and UPDATE
     mode (intelligent merge with preservation). Add file size threshold advisory and maintain
     existing intelligent merge strategy.
 
@@ -161,7 +161,7 @@ phase_4:
     - [ ] Rewrite guideline 4 to mirror /complete step 5 "Create/Update Context Files"
       spec_refs: [FR2, FR6, FR11, AC2, AC6, AC11]
       files: [src/templates/commands/document.md]
-      notes: "Split into two sub-sections: For NEW context files (load _schema.yml, populate ALL fields, NEVER leave placeholders), For EXISTING context files (read current content, preserve values, update last_updated, intelligently merge)"
+      notes: "Split into two sub-sections: For NEW context files (load _schema.yaml, populate ALL fields, NEVER leave placeholders), For EXISTING context files (read current content, preserve values, update last_updated, intelligently merge)"
 
     - [ ] Detail intelligent merge strategy for UPDATE mode
       spec_refs: [FR11, AC11]
@@ -260,7 +260,7 @@ phase_7:
     - [ ] Add example summary format for clarity
       spec_refs: [FR8, AC8]
       files: [src/templates/commands/document.md]
-      notes: "Example: 'Created authentication-module.yml context file documenting JWT-based authentication with OAuth2 integration. Updated error-handling.yml to include auth error patterns.'"
+      notes: "Example: 'Created authentication-module.yaml context file documenting JWT-based authentication with OAuth2 integration. Updated error-handling.yaml to include auth error patterns.'"
 
   validation:
     - [ ] All phase_7 tasks completed
@@ -334,7 +334,7 @@ testing:
         3. Verify agent analyzes conversation history carefully
         4. Verify agent follows restructured guidelines 1-6 (mirrors /complete 3-6)
         5. Verify filename generation follows detailed rules (kebab-case, max 50 chars, no prefixes)
-        6. Verify ID conflict checking occurs (searches _index.yml)
+        6. Verify ID conflict checking occurs (searches _index.yaml)
         7. Verify CREATE/UPDATE mode determined correctly
         8. Verify intelligent merge for UPDATE mode (preserve + append)
         9. Verify index entry includes description field (max 100 chars)
@@ -344,10 +344,10 @@ testing:
 
     - scenario: "Test filename conflict resolution"
       steps: |
-        1. Create context file with common name (e.g., 'auth.yml')
+        1. Create context file with common name (e.g., 'auth.yaml')
         2. Load context about authentication module
         3. Run /document authentication
-        4. Verify agent searches _index.yml for conflicts
+        4. Verify agent searches _index.yaml for conflicts
         5. Verify agent detects 'auth' ID conflict
         6. Verify agent chooses alternative (e.g., 'auth-module' or 'authentication')
         7. Verify new file created with alternative name
@@ -375,7 +375,7 @@ success_metrics:
   - "Empty context detection working - suggests /research when context insufficient"
   - "Guidelines restructured to mirror /complete steps 3-6 with similar section names"
   - "Filename generation includes all validation rules (kebab-case, max 50 chars, no prefixes, alphanumeric+hyphens)"
-  - "ID conflict resolution strategy detailed (search _index.yml, choose alternative)"
+  - "ID conflict resolution strategy detailed (search _index.yaml, choose alternative)"
   - "CREATE/UPDATE modes clearly distinguished with detailed instructions"
   - "Index entry structure includes description field (max 100 chars)"
   - "Completion summary replaces confirmation prompt (execute then report)"

@@ -7,7 +7,7 @@ last_updated: "2025-11-03"
 
 summary: |
   Codebase-wide standard requiring all YAML files to use .yaml extension exclusively,
-  eliminating .yml/.yaml inconsistency that caused file-not-found errors for AI agents.
+  eliminating .yaml/.yaml inconsistency that caused file-not-found errors for AI agents.
   This pattern affects templates, command references, documentation, and context system files.
 
 responsibilities:
@@ -15,7 +15,7 @@ responsibilities:
   - Ensure command templates reference .yaml files consistently
   - Maintain git history through git mv operations during file renames
   - Document .yaml requirement in context index and schema files
-  - Prevent future .yml file introduction through documentation and conventions
+  - Prevent future .yaml file introduction through documentation and conventions
 
 dependencies:
   internal:
@@ -44,10 +44,10 @@ files:
 design_decisions:
   - decision: "Use .yaml as the single standard extension"
     rationale: |
-      More explicit than .yml, matches existing spec/plan templates, aligns with modern
+      More explicit than .yaml, matches existing spec/plan templates, aligns with modern
       industry trend toward official .yaml extension, eliminates all ambiguity.
 
-  - decision: "No backward compatibility for .yml"
+  - decision: "No backward compatibility for .yaml"
     rationale: |
       Clean break eliminates ongoing maintenance burden, forces complete migration,
       prevents future confusion. Since no external users exist yet, breaking change
@@ -68,16 +68,16 @@ evolution:
     date: "2025-11-03"
     changes: |
       Initial standardization completed. Renamed 4 source template files (research-template,
-      _index, _schema, _graph) from .yml to .yaml. Updated 40+ references across 7 files
+      _index, _schema, _graph) from .yaml to .yaml. Updated 40+ references across 7 files
       (5 command templates + README + research-template). Migrated 15 .buildforce instance
-      files (3 system files + 12 context files). All grep validations passing - zero .yml
+      files (3 system files + 12 context files). All grep validations passing - zero .yaml
       extensions remain in src/ or .buildforce/ directories.
 
 related_specs:
   - standardize-yaml-extensions-20251103000000
 
 notes: |
-  This standardization was necessary because mixed .yml/.yaml usage caused file-not-found
+  This standardization was necessary because mixed .yaml/.yaml usage caused file-not-found
   errors when AI agents attempted to read workflow files. The inconsistency was introduced
   gradually rather than systematically - bash/PowerShell scripts already used .yaml correctly.
 
@@ -87,10 +87,10 @@ notes: |
   - Phase 3: Updated documentation (README, template self-refs, index docs)
   - Phase 4: Build validation and grep tests
   - Phase 5: Migrated 15 .buildforce instance files
-  - Phase 6: Final validation - zero .yml extensions remain
+  - Phase 6: Final validation - zero .yaml extensions remain
 
-  Future consideration: Add pre-commit hook or linter rule to prevent .yml files from
+  Future consideration: Add pre-commit hook or linter rule to prevent .yaml files from
   being committed to src/ directory.
 
-  Breaking change: Affects any existing .buildforce directories using old .yml extensions,
+  Breaking change: Affects any existing .buildforce directories using old .yaml extensions,
   but since no external users exist yet, impact limited to local development.

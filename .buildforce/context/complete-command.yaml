@@ -8,16 +8,16 @@ last_updated: 2025-10-29
 summary: |
   Template-only slash command that guides AI agents through finalizing specs by creating
   or updating context files. Completely agent-driven with no script dependencies. Uses
-  _schema.yml template for structure and performs intelligent merging of existing files.
+  _schema.yaml template for structure and performs intelligent merging of existing files.
 
 responsibilities:
   - Verify active spec exists via buildforce.json currentSpec field
   - Load spec.yaml and plan.yaml artifacts for analysis
-  - Proactively search _index.yml to determine context file updates vs creation
+  - Proactively search _index.yaml to determine context file updates vs creation
   - Generate semantic filenames for new context files (kebab-case, no prefixes)
-  - Create new context files using _schema.yml template structure
+  - Create new context files using _schema.yaml template structure
   - Intelligently merge updates into existing context files (preserve history)
-  - Update _index.yml with new entries including description field
+  - Update _index.yaml with new entries including description field
   - Validate all spec requirements were met
   - Clear currentSpec in buildforce.json to mark spec as complete
   - Present concise completion summary to user
@@ -25,11 +25,11 @@ responsibilities:
 dependencies:
   internal:
     - state-tracking: "Reads buildforce.json currentSpec field to verify active spec, clears it on completion"
-    - context/_index.yml: "Index of all context files for discovery"
-    - context/_schema.yml: "Template structure for new context files"
+    - context/_index.yaml: "Index of all context files for discovery"
+    - context/_schema.yaml: "Template structure for new context files"
     - spec.yaml: "Specification file containing requirements"
     - plan.yaml: "Implementation plan with design decisions"
-    - research-persistence: "Reads research.yml for context enrichment, cleans up .research-cache.md"
+    - research-persistence: "Reads research.yaml for context enrichment, cleans up .research-cache.md"
   external:
     - None (template-only command, no script execution)
 
@@ -37,8 +37,8 @@ files:
   primary:
     - src/templates/commands/complete.md
   secondary:
-    - .buildforce/context/_schema.yml
-    - .buildforce/context/_index.yml
+    - .buildforce/context/_schema.yaml
+    - .buildforce/context/_index.yaml
 
 command_signature:
   syntax: "/complete [notes]"
@@ -61,19 +61,19 @@ design_decisions:
   - decision: "Intelligent merging over overwriting"
     rationale: "Preserves context history and prevents data loss. Agents append to evolution section, update file lists, add to related_specs array rather than replacing entire files."
 
-  - decision: "Use _schema.yml as template"
+  - decision: "Use _schema.yaml as template"
     rationale: "Provides consistent structure across all context files. Agents load schema, understand fields, and populate with actual project information rather than placeholder text."
 
   - decision: "Add description field to index entries"
-    rationale: "Short one-liner descriptions (max 100 chars) improve searchability without opening files. Users can quickly scan _index.yml to find relevant contexts."
+    rationale: "Short one-liner descriptions (max 100 chars) improve searchability without opening files. Users can quickly scan _index.yaml to find relevant contexts."
 
-  - decision: "Proactive _index.yml search"
+  - decision: "Proactive _index.yaml search"
     rationale: "Agent reads existing index to determine update vs create decision. Prevents duplicate context files for same component."
 
 evolution:
   - version: "1.0"
     date: "2025-01-07"
-    changes: "Initial template with _index.yml reading and context naming instructions"
+    changes: "Initial template with _index.yaml reading and context naming instructions"
 
   - version: "2.0"
     date: "2025-01-23"
@@ -81,7 +81,7 @@ evolution:
 
   - version: "3.0"
     date: "2025-10-28"
-    changes: "Added research persistence integration. Updated Step 2 (Load Spec Artifacts) to read research.yml for context enrichment. Added Step 8 (Clean Research Cache) to delete .research-cache.md after context files created. Template increased from 185 to 198 lines. research.yml provides file paths, architectural decisions, key findings for richer context documentation."
+    changes: "Added research persistence integration. Updated Step 2 (Load Spec Artifacts) to read research.yaml for context enrichment. Added Step 8 (Clean Research Cache) to delete .research-cache.md after context files created. Template increased from 185 to 198 lines. research.yaml provides file paths, architectural decisions, key findings for richer context documentation."
 
   - version: "4.0"
     date: "2025-10-29"
@@ -96,10 +96,10 @@ notes: |
   The /complete command follows a 9-step workflow:
   1. Verify active spec (read buildforce.json currentSpec or error)
   2. Load spec artifacts (spec.yaml and plan.yaml)
-  3. Analyze context requirements (read _index.yml, identify components)
+  3. Analyze context requirements (read _index.yaml, identify components)
   4. Generate context filenames (semantic, kebab-case, max 50 chars)
-  5. Create/update context files (use _schema.yml, intelligent merge)
-  6. Update context index (_index.yml with new entries + description)
+  5. Create/update context files (use _schema.yaml, intelligent merge)
+  6. Update context index (_index.yaml with new entries + description)
   7. Validate implementation (cross-check spec requirements)
   8. Clear spec state (run clear-spec-state.sh to set currentSpec to null)
   9. Present completion summary (files created/updated, achievements)
@@ -109,11 +109,11 @@ notes: |
   - Format: kebab-case, max 50 characters
   - No numeric or timestamp prefixes
   - Lowercase alphanumeric and hyphens only
-  - Check _index.yml for ID conflicts before creating
+  - Check _index.yaml for ID conflicts before creating
 
   Index entry structure:
-  - id: semantic-id (matches filename without .yml)
-  - file: filename.yml
+  - id: semantic-id (matches filename without .yaml)
+  - file: filename.yaml
   - type: module/feature/component/pattern
   - description: short one-liner (max 100 chars)
   - tags: [auto-generated-tags]

@@ -24,8 +24,8 @@ responsibilities:
 
 dependencies:
   internal:
-    - /plan command: "Generates plan.yml from this template"
-    - /build command: "Consumes plan.yml for implementation execution"
+    - /plan command: "Generates plan.yaml from this template"
+    - /build command: "Consumes plan.yaml for implementation execution"
     - spec-template.yaml: "Source of spec requirement IDs (FR*, NFR*, AC*)"
   external: {}
 
@@ -33,8 +33,8 @@ files:
   primary:
     - src/templates/plan-template.yaml
   secondary:
-    - .buildforce/specs/plan-template-20250103120000/spec.yml
-    - .buildforce/specs/plan-template-20250103120000/plan.yml
+    - .buildforce/specs/plan-template-20250103120000/spec.yaml
+    - .buildforce/specs/plan-template-20250103120000/plan.yaml
 
 design_decisions:
   - decision: "Use markdown checkbox syntax [ ] / [x] instead of status fields"
@@ -122,8 +122,8 @@ evolution:
       - Removed estimated_completion fields
 
 related_specs:
-  - .buildforce/specs/plan-template-20250103120000/spec.yml
-  - .buildforce/specs/plan-template-20250103120000/plan.yml
+  - .buildforce/specs/plan-template-20250103120000/spec.yaml
+  - .buildforce/specs/plan-template-20250103120000/plan.yaml
 
 key_features:
   progress_tracking:
@@ -147,7 +147,7 @@ key_features:
     - Success metrics for validation
 
 implementation_highlights:
-  - Meta-implementation: The plan.yml for this spec uses the enhanced template it defines
+  - Meta-implementation: The plan.yaml for this spec uses the enhanced template it defines
   - All 9 functional requirements (FR1-FR9) implemented
   - All 4 non-functional requirements (NFR1-NFR4) satisfied
   - All 8 acceptance criteria (AC1-AC8) verified

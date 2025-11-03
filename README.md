@@ -148,7 +148,7 @@ The key insight: Buildforce isn't just about individual commands. It's about how
 
 **What it does:**
 
-1. Reads `.buildforce/context/_index.yml` and searches accumulated project knowledge first
+1. Reads `.buildforce/context/_index.yaml` and searches accumulated project knowledge first
 2. Explores codebase using glob/grep when codebase patterns are relevant
 3. Fetches current information via web search if query contains recency indicators ("current", "latest", "2025", "best practices")
 4. Produces structured report with file paths, architecture diagrams (Mermaid), data models, and recommendations
@@ -336,8 +336,8 @@ phase_1:
 2. Validates all spec requirements implemented (FR1, FR2, NFR1, AC1, AC2 all met?)
 3. Reviews deviation log across all `/build` iterations
 4. Generates completion report: requirement validation, implementation summary, deviations, files modified, testing status
-5. Creates context file(s) in `.buildforce/context/` with semantic kebab-case naming (e.g., `jwt-authentication.yml`)
-6. Updates `.buildforce/context/_index.yml` with references, tags, and relationships
+5. Creates context file(s) in `.buildforce/context/` with semantic kebab-case naming (e.g., `jwt-authentication.yaml`)
+6. Updates `.buildforce/context/_index.yaml` with references, tags, and relationships
 7. Intelligently updates related context files with cross-references
 8. Clears `.buildforce/.current-spec` to reset spec state
 9. Optionally archives or deletes research cache
@@ -384,7 +384,7 @@ tags:
 - Requirement validation: Explicit check that all FR, NFR, AC from spec are satisfied
 - Context file generation: Converts spec+plan+implementation into reusable knowledge
 - Automatic cross-referencing: Updates related context files to link to new context
-- Index maintenance: Keeps `.buildforce/context/_index.yml` current with all contexts
+- Index maintenance: Keeps `.buildforce/context/_index.yaml` current with all contexts
 - State clearing: Resets spec state so next `/spec` starts fresh
 - Confirmation required: User must approve before finalization (prevents accidental completion)
 
@@ -415,13 +415,13 @@ tags:
 **What it does:**
 
 1. Checks conversation history for sufficient context (file reads, technical discussion)
-2. Reads `.buildforce/context/_index.yml` to identify existing contexts
+2. Reads `.buildforce/context/_index.yaml` to identify existing contexts
 3. Determines UPDATE vs CREATE: updates existing file if component already documented, creates new file otherwise
 4. Auto-detects context type (module, feature, component, pattern, architecture)
-5. Generates semantic kebab-case filename without numeric prefixes (e.g., `authentication.yml`, `error-handling.yml`)
-6. Checks for ID conflicts in `_index.yml` and resolves duplicates
+5. Generates semantic kebab-case filename without numeric prefixes (e.g., `authentication.yaml`, `error-handling.yaml`)
+6. Checks for ID conflicts in `_index.yaml` and resolves duplicates
 7. Populates context file from conversation history: design decisions, implementation details, patterns, responsibilities, dependencies
-8. Updates `.buildforce/context/_index.yml` with tags for discoverability
+8. Updates `.buildforce/context/_index.yaml` with tags for discoverability
 9. Automatically updates related context files with cross-references
 
 **Generated context file example:**

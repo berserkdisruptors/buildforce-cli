@@ -7,14 +7,14 @@ last_updated: "2025-11-03"
 
 summary: |
   Standardize all YAML file extensions across the buildforce-cli codebase to use .yaml exclusively,
-  eliminating the current .yml/.yaml inconsistency that causes file-not-found errors for AI agents.
+  eliminating the current .yaml/.yaml inconsistency that causes file-not-found errors for AI agents.
 
 # INTENT / PROBLEM STATEMENT
 
 problem: |
-  The codebase currently has mixed usage of .yaml and .yml file extensions, creating inconsistencies that lead to
+  The codebase currently has mixed usage of .yaml and .yaml file extensions, creating inconsistencies that lead to
   file-not-found errors when AI agents attempt to read spec, plan, research, or context files. Command templates
-  reference .yml in some places and .yaml in others, while actual template files use both extensions. This
+  reference .yaml in some places and .yaml in others, while actual template files use both extensions. This
   ambiguity causes workflow failures and confusion for developers and AI agents alike.
 
 motivation: |
@@ -26,7 +26,7 @@ motivation: |
 # GOALS
 
 primary_goals:
-  - Eliminate all .yml file extensions in favor of .yaml across the entire codebase
+  - Eliminate all .yaml file extensions in favor of .yaml across the entire codebase
   - Update all references in command templates, documentation, and source files to use .yaml consistently
   - Ensure AI agents can reliably locate and read all YAML files without extension ambiguity
   - Establish .yaml as the single, documented standard for all future YAML files
@@ -40,25 +40,25 @@ secondary_goals:
 # REQUIREMENTS
 
 functional_requirements:
-  - FR1: Rename src/templates/research-template.yml to research-template.yaml
-  - FR2: Rename src/context/_index.yml to _index.yaml
-  - FR3: Rename src/context/_schema.yml to _schema.yaml
-  - FR4: Rename src/context/_graph.yml to _graph.yaml
-  - FR5: Update all .yml references to .yaml in src/templates/commands/build.md (10+ references)
-  - FR6: Update all .yml references to .yaml in src/templates/commands/complete.md (8+ references)
-  - FR7: Update all .yml references to .yaml in src/templates/commands/spec.md (12+ references)
-  - FR8: Update all .yml references to .yaml in src/templates/commands/research.md (3+ references)
-  - FR9: Update all .yml references to .yaml in src/templates/commands/document.md (3+ references)
-  - FR10: Update all research.yml references to research.yaml in README.md (5+ references)
+  - FR1: Rename src/templates/research-template.yaml to research-template.yaml
+  - FR2: Rename src/context/_index.yaml to _index.yaml
+  - FR3: Rename src/context/_schema.yaml to _schema.yaml
+  - FR4: Rename src/context/_graph.yaml to _graph.yaml
+  - FR5: Update all .yaml references to .yaml in src/templates/commands/build.md (10+ references)
+  - FR6: Update all .yaml references to .yaml in src/templates/commands/complete.md (8+ references)
+  - FR7: Update all .yaml references to .yaml in src/templates/commands/spec.md (12+ references)
+  - FR8: Update all .yaml references to .yaml in src/templates/commands/research.md (3+ references)
+  - FR9: Update all .yaml references to .yaml in src/templates/commands/document.md (3+ references)
+  - FR10: Update all research.yaml references to research.yaml in README.md (5+ references)
   - FR11: Update self-references within research-template.yaml after rename
-  - FR12: Update context index documentation to reference .yaml extension instead of .yml
-  - FR13: Migrate existing .buildforce/context/_index.yml to _index.yaml (Phase 2)
-  - FR14: Migrate existing .buildforce/context/_schema.yml to _schema.yaml (Phase 2)
-  - FR15: Migrate existing .buildforce/context/_graph.yml to _graph.yaml (Phase 2)
+  - FR12: Update context index documentation to reference .yaml extension instead of .yaml
+  - FR13: Migrate existing .buildforce/context/_index.yaml to _index.yaml (Phase 2)
+  - FR14: Migrate existing .buildforce/context/_schema.yaml to _schema.yaml (Phase 2)
+  - FR15: Migrate existing .buildforce/context/_graph.yaml to _graph.yaml (Phase 2)
 
 non_functional_requirements:
   - NFR1: All file renames must use git mv to preserve file history
-  - NFR2: Changes must be validated with grep to ensure no .yml references remain in updated files
+  - NFR2: Changes must be validated with grep to ensure no .yaml references remain in updated files
   - NFR3: Implementation must be atomic within each phase to allow rollback if needed
   - NFR4: Documentation must be updated concurrently with code changes
   - NFR5: Zero tolerance for mixed extensions - all YAML files must use .yaml after migration
@@ -66,7 +66,7 @@ non_functional_requirements:
 # SCOPE
 
 in_scope:
-  - Renaming 4 source template/context files from .yml to .yaml
+  - Renaming 4 source template/context files from .yaml to .yaml
   - Updating 40+ references across 7 files (5 command templates + README + research-template itself)
   - Updating context index documentation to specify .yaml extension requirement
   - Migrating 3 existing .buildforce context files to .yaml (Phase 2)
@@ -76,7 +76,7 @@ in_scope:
 out_of_scope:
   - Changes to shell scripts (already use .yaml correctly)
   - Changes to CHANGELOG.md (already uses .yaml correctly)
-  - Backward compatibility support for .yml extensions (clean break)
+  - Backward compatibility support for .yaml extensions (clean break)
   - Migration of user's existing spec folders (users handle their own specs)
   - Changes to external dependencies or third-party tools
 
@@ -84,7 +84,7 @@ out_of_scope:
 
 design_principles:
   - "Single source of truth: .yaml is the only valid YAML extension"
-  - "Explicit over implicit: .yaml is more recognizable than .yml"
+  - "Explicit over implicit: .yaml is more recognizable than .yaml"
   - "Consistency over convenience: No exceptions to the .yaml rule"
   - "History preservation: Use git mv for all renames"
   - "Phased approach: Separate source fixes from instance migrations"
@@ -92,10 +92,10 @@ design_principles:
 # ACCEPTANCE CRITERIA
 
 acceptance_criteria:
-  - AC1: All 4 source files renamed from .yml to .yaml with git history preserved
-  - AC2: grep '.yml' src/templates/commands/ returns zero matches
-  - AC3: grep 'research\.yml' README.md returns zero matches
-  - AC4: grep '\.yml' src/context/_index.yaml returns zero matches in documentation
+  - AC1: All 4 source files renamed from .yaml to .yaml with git history preserved
+  - AC2: grep '.yaml' src/templates/commands/ returns zero matches
+  - AC3: grep 'research\.yaml' README.md returns zero matches
+  - AC4: grep '\.yaml' src/context/_index.yaml returns zero matches in documentation
   - AC5: All command templates successfully reference research-template.yaml
   - AC6: buildforce init creates .buildforce/templates/ with all .yaml files
   - AC7: Context system documentation explicitly states ".yaml extension" requirement
@@ -108,7 +108,7 @@ acceptance_criteria:
 assumptions:
   - Existing in-progress specs may break and require manual migration by users
   - .buildforce/templates/ will be regenerated during initialization
-  - No external tools depend on the .yml extension specifically
+  - No external tools depend on the .yaml extension specifically
   - Git is available for file renames
   - TypeScript compilation works identically with either extension
 
@@ -132,11 +132,11 @@ open_questions:
 notes: |
   Phase 2 migration applies only to the buildforce-cli repository's own .buildforce/ directory, not external users
   (since no one is using the tool yet). This is a local-only migration for the project's own context files.
-  
+
   No migration script or automated tooling needed - this is a one-time manual fix for the current repo.
   Phase 1 establishes the .yaml standard in source templates for future distribution.
-  
+
   The research revealed that bash and PowerShell scripts already use .yaml correctly, so no script changes are
   needed. This suggests the inconsistency was introduced gradually rather than being a systematic decision.
-  
-  Future consideration: Add linter rule to prevent .yml files from being committed to src/ directory.
+
+  Future consideration: Add linter rule to prevent .yaml files from being committed to src/ directory.

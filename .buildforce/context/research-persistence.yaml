@@ -7,12 +7,12 @@ last_updated: 2025-10-29
 
 summary: |
   Three-stage research persistence pipeline that accumulates /research output in temporary cache,
-  intelligently materializes it into structured research.yml artifacts, and enables consumption
+  intelligently materializes it into structured research.yaml artifacts, and enables consumption
   by /spec, /build, and /complete commands for context-aware operation.
 
 responsibilities:
   - Accumulate /research output in .research-cache.md with session metadata
-  - Materialize cache into structured research.yml preserving diagrams, models, code snippets
+  - Materialize cache into structured research.yaml preserving diagrams, models, code snippets
   - Support intelligent merging when additional research occurs after spec creation
   - Enable /spec, /build, /complete commands to consume research context
   - Clean up temporary cache on spec completion
@@ -21,16 +21,16 @@ responsibilities:
 dependencies:
   internal:
     - research-slash-command: "Appends complete output to research cache"
-    - spec-command: "Materializes cache to research.yml, reads it for context-aware spec population"
-    - build-command: "Loads research.yml for implementation context"
-    - complete-command: "Reads research.yml for context enrichment, cleans up cache"
+    - spec-command: "Materializes cache to research.yaml, reads it for context-aware spec population"
+    - build-command: "Loads research.yaml for implementation context"
+    - complete-command: "Reads research.yaml for context enrichment, cleans up cache"
     - state-tracking: "Checks buildforce.json currentSpec to control cache accumulation"
     - cli-architecture: "Template distribution via GitHub Release packaging"
   external: []
 
 files:
   primary:
-    - src/templates/research-template.yml
+    - src/templates/research-template.yaml
     - src/templates/commands/research.md
     - src/templates/commands/spec.md
   secondary:
@@ -49,16 +49,16 @@ design_decisions:
     rationale: "Balances condensation with information richness. Mermaid diagrams, data models, code snippets are essential for /build context - preserve verbatim. Condense prose, merge TLDR bullets."
 
   - decision: "Cache only accumulates pre-spec (based on buildforce.json currentSpec state)"
-    rationale: "Enforces 1:1 research-spec relationship. When spec is active, research should merge with existing research.yml in UPDATE mode rather than accumulate in cache."
+    rationale: "Enforces 1:1 research-spec relationship. When spec is active, research should merge with existing research.yaml in UPDATE mode rather than accumulate in cache."
 
-  - decision: "Gitignore cache, commit research.yml"
-    rationale: "Cache is temporary working file (like build artifacts). research.yml is permanent spec artifact versioned alongside spec.yaml and plan.yaml."
+  - decision: "Gitignore cache, commit research.yaml"
+    rationale: "Cache is temporary working file (like build artifacts). research.yaml is permanent spec artifact versioned alongside spec.yaml and plan.yaml."
 
   - decision: "Flexible template structure with optional sections"
     rationale: "Not all research produces diagrams/models/code. Template adapts to content type - omit empty sections. Prevents rigid enforcement that loses information."
 
   - decision: "Automatic distribution via existing release packaging"
-    rationale: "No code changes needed. create-release-packages.sh (lines 115-127) already copies all files from src/templates/ to .buildforce/templates/. research-template.yml distributed automatically."
+    rationale: "No code changes needed. create-release-packages.sh (lines 115-127) already copies all files from src/templates/ to .buildforce/templates/. research-template.yaml distributed automatically."
 
 architecture_patterns:
   accumulation_stage: |
@@ -78,20 +78,20 @@ architecture_patterns:
     1. Check if .research-cache.md exists:
        - If not exists: Log info, proceed without research
        - If exists: Read and parse all sessions
-    2. Read .buildforce/templates/research-template.yml for structure
+    2. Read .buildforce/templates/research-template.yaml for structure
     3. Intelligent materialization:
        - PRESERVE VERBATIM: Mermaid diagrams, data models, code snippets
        - PRESERVE WITH CONTEXT: File paths (with relevance), architectural decisions (with rationale)
        - CONDENSE: Research summary prose, project context
        - MERGE: TLDR bullets from all sessions
-    4. Write specs/{folder}/research.yml with flexible structure
-    5. Read research.yml to inform spec.yaml population:
+    4. Write specs/{folder}/research.yaml with flexible structure
+    5. Read research.yaml to inform spec.yaml population:
        - Extract requirements from key_findings
        - Populate open_questions with research ambiguities
        - Reference architectural_decisions in design principles
 
     /spec UPDATE mode workflow:
-    1. Load existing research.yml
+    1. Load existing research.yaml
     2. Check if new cache exists (.research-cache.md):
        - If not exists: No new research
        - If exists: Parse new sessions
@@ -103,15 +103,15 @@ architecture_patterns:
 
   consumption_stage: |
     /spec command:
-    - CREATE: Reads research.yml after materialization to inform requirement identification
-    - UPDATE: Reads existing research.yml to maintain context consistency
+    - CREATE: Reads research.yaml after materialization to inform requirement identification
+    - UPDATE: Reads existing research.yaml to maintain context consistency
 
     /build command:
-    - Loads research.yml alongside spec.yaml and plan.yaml
+    - Loads research.yaml alongside spec.yaml and plan.yaml
     - Accesses: file_paths, mermaid_diagrams, data_models, code_snippets, architectural_decisions, TLDR
 
     /complete command:
-    - Reads research.yml to enrich context file documentation
+    - Reads research.yaml to enrich context file documentation
     - Extracts: file_paths, architectural_decisions, key_findings
 
   cleanup_stage: |
@@ -119,7 +119,7 @@ architecture_patterns:
     1. After context files created and index updated
     2. Check if .research-cache.md exists
     3. If exists: Delete using Bash tool
-    4. research.yml preserved in specs/{folder}/ as permanent artifact
+    4. research.yaml preserved in specs/{folder}/ as permanent artifact
 
 cache_format: |
   ================================================================================
@@ -191,7 +191,7 @@ materialized_format: |
 evolution:
   - version: "1.0"
     date: "2025-10-28"
-    changes: "Initial implementation of research persistence with three-stage pipeline (accumulation, materialization, cleanup). Added cache format with session metadata, flexible research.yml template, and consumption logic in /spec, /build, /complete commands."
+    changes: "Initial implementation of research persistence with three-stage pipeline (accumulation, materialization, cleanup). Added cache format with session metadata, flexible research.yaml template, and consumption logic in /spec, /build, /complete commands."
 
 related_specs:
   - research-persistence-intelligent-20251027213207
@@ -202,11 +202,11 @@ notes: |
   - "Keep spec.yaml clean - research context belongs in separate artifact"
   - "Intelligent materialization - condense, don't copy-paste"
   - "Graceful degradation - spec can proceed without research context"
-  - "Single source of truth - one research.yml per spec"
+  - "Single source of truth - one research.yaml per spec"
 
   Template-only implementation:
   - No TypeScript/JavaScript code changes
-  - Modified 4 command templates + created research-template.yml
+  - Modified 4 command templates + created research-template.yaml
   - Updated .gitignore to exclude cache
   - Automatic distribution via existing release packaging script
 
@@ -218,5 +218,5 @@ notes: |
 
   Future enhancements:
   - /research-note command for explicit free-form context appending
-  - Validation for research.yml structure (schema checking)
+  - Validation for research.yaml structure (schema checking)
   - TTL-based cache cleanup for abandoned research sessions

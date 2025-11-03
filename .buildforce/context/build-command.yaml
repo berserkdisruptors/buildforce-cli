@@ -31,7 +31,7 @@ dependencies:
     - slash-commands: "Part of 5-command spec-driven workflow (SPEC, RESEARCH, PLAN, BUILD, COMPLETE)"
     - research-slash-command: "Used as structural template for compact guideline format (28 lines)"
     - get-spec-paths.sh: "Script for reliable FEATURE_DIR discovery and file verification"
-    - research-persistence: "Loads research.yml alongside spec.yaml and plan.yaml for implementation context"
+    - research-persistence: "Loads research.yaml alongside spec.yaml and plan.yaml for implementation context"
   external:
     - None (instruction template for Claude Code agents)
 
@@ -39,8 +39,8 @@ files:
   primary:
     - src/templates/commands/build.md (rewritten from 116 to 29 lines)
   secondary:
-    - .buildforce/specs/002-build-command/spec.yml (spec defining requirements)
-    - .buildforce/specs/002-build-command/plan.yml (plan detailing implementation steps)
+    - .buildforce/specs/002-build-command/spec.yaml (spec defining requirements)
+    - .buildforce/specs/002-build-command/plan.yaml (plan detailing implementation steps)
     - src/scripts/bash/get-spec-paths.sh (executed for FEATURE_DIR discovery)
 
 command_signature:
@@ -58,7 +58,7 @@ command_signature:
 key_guidelines:
   - name: "Script Execution & Context Loading"
     priority: 1
-    description: "Run get-spec-paths.sh --json, parse SPEC_DIR, load spec.yml and plan.yml. NEVER proceed without both files loaded."
+    description: "Run get-spec-paths.sh --json, parse SPEC_DIR, load spec.yaml and plan.yaml. NEVER proceed without both files loaded."
 
   - name: "Progress Tracking"
     priority: 2
@@ -70,7 +70,7 @@ key_guidelines:
 
   - name: "Deviation Logging"
     priority: 4
-    description: "Log in plan.yml: Original → Actual → Reason format. Maintain across iterations. NEVER hide deviations."
+    description: "Log in plan.yaml: Original → Actual → Reason format. Maintain across iterations. NEVER hide deviations."
 
   - name: "Validate Against Spec & Plan"
     priority: 5
@@ -135,8 +135,8 @@ script_execution_details:
     {
       "SPEC_DIR": "/absolute/path/to/.buildforce/specs/002-build-command"
     }
-  usage: "Execute script, parse JSON, extract SPEC_DIR, load spec.yml and plan.yml from SPEC_DIR"
-  verification: "Script verifies spec.yml and plan.yml exist before returning (exits with error if missing)"
+  usage: "Execute script, parse JSON, extract SPEC_DIR, load spec.yaml and plan.yaml from SPEC_DIR"
+  verification: "Script verifies spec.yaml and plan.yaml exist before returning (exits with error if missing)"
 
 evolution:
   - version: "1.0"
@@ -147,7 +147,7 @@ evolution:
     changes: "Compressed to 29 lines with 7 guidelines, script-based discovery, dual validation, testing guidance. 75% reduction achieved."
   - version: "3.0"
     date: "2025-10-28"
-    changes: "Added research persistence integration. Updated guideline 1 (Script Execution & Context Loading) to load research.yml alongside spec.yml and plan.yml. Template increased from 29 to 41 lines. research.yml provides implementation context: file paths, mermaid diagrams, data models, code snippets, architectural decisions, TLDR."
+    changes: "Added research persistence integration. Updated guideline 1 (Script Execution & Context Loading) to load research.yaml alongside spec.yaml and plan.yaml. Template increased from 29 to 41 lines. research.yaml provides implementation context: file paths, mermaid diagrams, data models, code snippets, architectural decisions, TLDR."
 
 related_specs:
   - "build-command-20250102120000"
@@ -169,7 +169,7 @@ notes: |
 
   Files modified during implementation:
   - src/templates/commands/build.md (rewritten)
-  - .buildforce/context/build-slash-command.yml (deleted, replaced with 002-build-command.yml)
-  - .buildforce/context/_index.yml (updated entry)
+  - .buildforce/context/build-slash-command.yaml (deleted, replaced with 002-build-command.yaml)
+  - .buildforce/context/_index.yaml (updated entry)
 
   Design principle: "Trust the agent—they know HOW to implement, guide WHAT workflow"

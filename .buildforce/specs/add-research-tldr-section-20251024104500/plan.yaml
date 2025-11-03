@@ -53,7 +53,7 @@ files_to_modify:
     change_type: "edit"
     description: "Add guideline #8 for TLDR section and update guideline #3 to include TLDR in output structure"
 
-  - path: ".buildforce/context/research-slash-command.yml"
+  - path: ".buildforce/context/research-slash-command.yaml"
     change_type: "edit"
     description: "Update context file to document TLDR guideline (optional, for consistency)"
 
@@ -113,14 +113,14 @@ phase_2:
       files: [src/templates/commands/research.md, .claude/commands/research.md]
       notes: "Deployed version matches source template with guideline #8 and updated guideline #3"
 
-    - [ ] Update research-slash-command.yml context file with TLDR guideline
+    - [ ] Update research-slash-command.yaml context file with TLDR guideline
       spec_refs: []
-      files: [.buildforce/context/research-slash-command.yml]
+      files: [.buildforce/context/research-slash-command.yaml]
       notes: "Optional: Add guideline #8 to key_guidelines list for documentation consistency"
 
-    - [ ] Update slash-commands.yml with evolution entry for TLDR feature
+    - [ ] Update slash-commands.yaml with evolution entry for TLDR feature
       spec_refs: []
-      files: [.buildforce/context/slash-commands.yml]
+      files: [.buildforce/context/slash-commands.yaml]
       notes: "Optional: Document version 1.1 with TLDR enhancement"
 
   validation:

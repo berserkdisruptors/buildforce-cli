@@ -24,7 +24,7 @@ optional_fields:
 # Field descriptions and examples
 
 id:
-  description: "Unique identifier for this context (used in _index.yml)"
+  description: "Unique identifier for this context (used in _index.yaml)"
   format: "kebab-case"
   example: "authentication"
 

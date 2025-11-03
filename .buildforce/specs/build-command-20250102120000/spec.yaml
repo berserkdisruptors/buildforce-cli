@@ -44,7 +44,7 @@ secondary_goals:
 functional_requirements:
   - FR1: Command MUST execute `.buildforce/scripts/bash/get-spec-paths.sh --json` to discover FEATURE_DIR (script verifies files exist)
   - FR2: Command MUST parse JSON response to extract FEATURE_DIR (absolute path to current feature directory)
-  - FR3: Command MUST explicitly require loading {FEATURE_DIR}/spec.yml and {FEATURE_DIR}/plan.yml into context
+  - FR3: Command MUST explicitly require loading {FEATURE_DIR}/spec.yaml and {FEATURE_DIR}/plan.yaml into context
   - FR4: Command MUST support progress tracking via visible checklist
   - FR5: Command MUST log deviations from plan with Original → Actual → Reason format
   - FR6: Command MUST support multiple /build iterations with $ARGUMENTS
@@ -84,7 +84,7 @@ out_of_scope:
 critical_features:
   - Script execution: Run `.buildforce/scripts/bash/get-spec-paths.sh --json` first (script verifies files exist)
   - Feature directory discovery: Parse FEATURE_DIR from JSON response (absolute path)
-  - Context loading: Explicitly load {FEATURE_DIR}/spec.yml and {FEATURE_DIR}/plan.yml into context
+  - Context loading: Explicitly load {FEATURE_DIR}/spec.yaml and {FEATURE_DIR}/plan.yaml into context
   - Progress tracking: Visible checklist of plan steps with completion marking
   - Deviation logging: Record changes from original plan across iterations
   - Sequential execution: Follow plan steps in order
@@ -164,4 +164,4 @@ script_details:
     {
       "FEATURE_DIR": "/absolute/path/to/.buildforce/specs/002-build-command"
     }
-  usage: "Execute script, parse JSON, extract FEATURE_DIR, load spec.yml and plan.yml"
+  usage: "Execute script, parse JSON, extract FEATURE_DIR, load spec.yaml and plan.yaml"

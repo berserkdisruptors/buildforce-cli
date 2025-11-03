@@ -25,7 +25,7 @@ dependencies:
     - create-spec-files.ps1: "PowerShell equivalent for cross-platform support"
     - spec-template.yaml: "Template structure for new spec files"
     - state-tracking: "Reads buildforce.json currentSpec field to determine CREATE vs UPDATE mode"
-    - research-persistence: "Materializes .research-cache.md into research.yml, reads it for context-aware spec population"
+    - research-persistence: "Materializes .research-cache.md into research.yaml, reads it for context-aware spec population"
   external:
     - None (template-only command)
 
@@ -103,7 +103,7 @@ evolution:
 
   - version: "7.0"
     date: "2025-10-28"
-    changes: "Added research persistence integration. CREATE mode: Added Step 2c to materialize .research-cache.md into research.yml before populating spec.yaml, then reads research.yml to inform requirement identification (Step 2d). UPDATE mode: Added Step 3a to load existing research.yml for context consistency, Step 3b to merge new cache if exists. Template increased from 239 to 319 lines. Enables context-aware spec population with research findings."
+    changes: "Added research persistence integration. CREATE mode: Added Step 2c to materialize .research-cache.md into research.yaml before populating spec.yaml, then reads research.yaml to inform requirement identification (Step 2d). UPDATE mode: Added Step 3a to load existing research.yaml for context consistency, Step 3b to merge new cache if exists. Template increased from 239 to 319 lines. Enables context-aware spec population with research findings."
 
   - version: "8.0"
     date: "2025-10-29"

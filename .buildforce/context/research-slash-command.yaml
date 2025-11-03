@@ -11,14 +11,14 @@ summary: |
   exploring codebase, fetching current web information, or leveraging general knowledge.
 
 responsibilities:
-  - Search .buildforce/context/_index.yml for accumulated project knowledge
+  - Search .buildforce/context/_index.yaml for accumulated project knowledge
   - Determine appropriate research strategy based on query analysis
   - Produce structured reports with file paths, diagrams, and data models
   - Guide users toward next workflow step (/spec)
 
 dependencies:
   internal:
-    - context-repository: "Primary knowledge source via _index.yml"
+    - context-repository: "Primary knowledge source via _index.yaml"
     - slash-commands: "Part of 5-command workflow system"
     - cli-architecture: "Command template distributed via CLI project initialization"
     - research-persistence: "Appends complete output to .research-cache.md for materialization"
@@ -29,7 +29,7 @@ files:
   primary:
     - src/templates/commands/research.md
   secondary:
-    - .buildforce/context/_index.yml (searched first)
+    - .buildforce/context/_index.yaml (searched first)
     - .claude/commands/research.md (deployed template)
 
 command_signature:
@@ -47,7 +47,7 @@ command_signature:
 key_guidelines:
   - name: "Project Context Search"
     priority: 1
-    description: "ALWAYS start by searching .buildforce/context/_index.yml for relevant accumulated knowledge from past spec-driven sessions"
+    description: "ALWAYS start by searching .buildforce/context/_index.yaml for relevant accumulated knowledge from past spec-driven sessions"
 
   - name: "Recency Awareness"
     priority: 2
@@ -80,7 +80,7 @@ key_guidelines:
 research_strategies:
   project_context:
     trigger: "Always first step"
-    action: "Search _index.yml → Read matching context files"
+    action: "Search _index.yaml → Read matching context files"
     output: "Accumulated project knowledge"
 
   codebase_exploration:
@@ -162,7 +162,7 @@ notes: |
   Most important command in the workflow—sets foundation for /spec, /plan, /build.
   Compact instruction template (29 lines as of v1.1) that enhances user queries without teaching HOW to research.
   Build agents already know how to research; this command adds workflow-specific context.
-  Masterpiece feature: .buildforce/context/_index.yml as primary knowledge source.
+  Masterpiece feature: .buildforce/context/_index.yaml as primary knowledge source.
 
   v1.1 enhancement: TLDR section addresses dual-audience design pattern—comprehensive details for build agents,
   scannable summary for users. Could be applied to other verbose command outputs.
