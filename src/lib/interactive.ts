@@ -33,7 +33,7 @@ export async function selectWithArrows(
 }
 
 /**
- * Generate 3-line banner string with figlet title, tagline, and instruction
+ * Generate 2-line banner string with figlet title and tagline
  * Returns the banner as a string for use in both console output and help text
  */
 export function generateBanner(): string {
@@ -69,17 +69,12 @@ export function generateBanner(): string {
   const taglinePad = Math.max(0, Math.floor((terminalWidth - TAGLINE.length) / 2));
   const centeredTagline = " ".repeat(taglinePad) + MINT_COLOR(TAGLINE);
   
-  // Center instruction message
-  const examplesMessage = "Check our example workflows by typing `buildforce examples`";
-  const examplesPad = Math.max(0, Math.floor((terminalWidth - examplesMessage.length) / 2));
-  const centeredExamplesMessage = " ".repeat(examplesPad) + chalk.dim(examplesMessage);
-  
-  return `\n${centered}\n${centeredTagline}\n${centeredExamplesMessage}\n\n`;
+  return `\n${centered}\n${centeredTagline}\n\n`;
 }
 
 /**
- * Show banner with 3-line format (figlet title, tagline, instruction)
- * Uses white color for title, green for tagline, and dim gray for instruction
+ * Show banner with 2-line format (figlet title, tagline)
+ * Uses white color for title and green for tagline
  * Maintains backward compatibility with existing function signature (banner parameter is ignored)
  */
 export function showBanner(banner: string, tagline: string): void {
