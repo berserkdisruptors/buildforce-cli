@@ -152,7 +152,7 @@ The key insight: Buildforce isn't just about individual commands. It's about how
 2. Explores codebase using glob/grep when codebase patterns are relevant
 3. Fetches current information via web search if query contains recency indicators ("current", "latest", "2025", "best practices")
 4. Produces structured report with file paths, architecture diagrams (Mermaid), data models, and recommendations
-5. Caches research output to `.buildforce/.research-cache.md` for materialization into `research.yml` during `/spec`
+5. Caches research output to `.buildforce/.research-cache.md` for materialization into `research.yaml` during `/spec`
 
 **Output sections:**
 
@@ -168,7 +168,7 @@ The key insight: Buildforce isn't just about individual commands. It's about how
 - Context-first: Always searches your accumulated knowledge before external sources
 - Recency detection: Automatically triggers web search when query implies current information needed
 - Structured output: Explicitly documents file paths, architecture, and data models for easy reference
-- Research persistence: Caches output for intelligent materialization into spec's `research.yml`
+- Research persistence: Caches output for intelligent materialization into spec's `research.yaml`
 
 **Pro tip**: Run `/research` before `/spec` to ensure specifications are informed by existing patterns and current best practices. Research output stays in context window to guide requirement identification.
 
@@ -199,7 +199,7 @@ The key insight: Buildforce isn't just about individual commands. It's about how
 1. Determines CREATE vs UPDATE mode by checking `.buildforce/.current-spec` file
 2. Generates semantic folder name with timestamp (e.g., `add-jwt-auth-20250130143052`)
 3. Runs `.buildforce/scripts/bash/create-spec-files.sh` to create folder and template files
-4. Materializes research cache from `.buildforce/.research-cache.md` into `research.yml` (if exists)
+4. Materializes research cache from `.buildforce/.research-cache.md` into `research.yaml` (if exists)
 5. Populates `spec.yaml` with problem statement, functional requirements (FR1, FR2...), non-functional requirements (NFR1, NFR2...), acceptance criteria (AC1, AC2...), scope (in/out), design principles, open questions
 6. Asks clarifying questions if intent is vague or context insufficient
 
@@ -240,7 +240,7 @@ open_questions:
 
 - Semantic folder naming: Feature identity preserved in folder name (not just timestamp)
 - CREATE/UPDATE modes: Intelligently detects if updating existing spec or creating new
-- Research materialization: Automatically converts research cache into structured `research.yml`
+- Research materialization: Automatically converts research cache into structured `research.yaml`
 - Requirement traceability: Every requirement gets unique ID (FR1, NFR1, AC1) for tracking through plan and build
 - Clarifying questions: Asks user to resolve ambiguities before proceeding
 
@@ -271,7 +271,7 @@ open_questions:
 **What it does:**
 
 1. Loads `spec.yaml` and `plan.yaml` from current feature directory
-2. Loads `research.yml` if it exists for implementation context (file paths, patterns, data models, code snippets)
+2. Loads `research.yaml` if it exists for implementation context (file paths, patterns, data models, code snippets)
 3. Executes tasks sequentially from plan phases
 4. Updates task checkboxes in `plan.yaml` as work completes: `- [ ]` becomes `- [x]`
 5. Logs deviations when implementation differs from plan (phase, task, original, actual, reason)

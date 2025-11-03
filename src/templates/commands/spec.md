@@ -41,7 +41,7 @@ The text the user typed after `/spec` in the triggering message **is** the featu
    - Run `{SCRIPT}` from current working directory with generated FOLDER_NAME and parse JSON output for FOLDER_NAME, SPEC_FILE, PLAN_FILE, SPEC_DIR
    - The script creates both spec.yaml and plan.yaml files from templates
 
-   **Step 2c: Materialize research cache into research.yml** (if cache exists):
+   **Step 2c: Materialize research cache into research.yaml** (if cache exists):
 
    Before populating spec.yaml and plan.yaml, materialize accumulated research to inform requirement identification:
 
@@ -53,7 +53,7 @@ The text the user typed after `/spec` in the triggering message **is** the featu
 
    2. **Read template structure**:
 
-      - Read `.buildforce/templates/research-template.yml` for structure guidance
+      - Read `.buildforce/templates/research-template.yaml` for structure guidance
       - Understand flexible sections: summary, key_findings, file_paths, mermaid_diagrams, data_models, code_snippets, architectural_decisions, external_references, tldr
       - Remember: sections are OPTIONAL - adapt to research content type
 
@@ -72,8 +72,8 @@ The text the user typed after `/spec` in the triggering message **is** the featu
       - **DO NOT TRUNCATE**: Diagrams, models, code snippets must be complete
       - **DO NOT OVER-CONDENSE**: Preserve information-rich elements - /build needs comprehensive context
 
-   5. **Create research.yml**:
-      - Write to `.buildforce/specs/{FOLDER_NAME}/research.yml`
+   5. **Create research.yaml**:
+      - Write to `.buildforce/specs/{FOLDER_NAME}/research.yaml`
       - Set id = "{FOLDER_NAME}-research"
       - Follow template structure but omit sections with no content (e.g., no diagrams if research was conceptual)
       - Ensure materialized research is condensed but information-rich
@@ -83,8 +83,8 @@ The text the user typed after `/spec` in the triggering message **is** the featu
    **For spec.yaml (WHAT to build)**:
 
    - Load `.buildforce/templates/spec-template.yaml` from the current working directory to understand structure and fields
-   - **Read research.yml if it exists** (from Step 2c):
-     - Path: `.buildforce/specs/{FOLDER_NAME}/research.yml`
+   - **Read research.yaml if it exists** (from Step 2c):
+     - Path: `.buildforce/specs/{FOLDER_NAME}/research.yaml`
      - If exists, use research findings to inform spec.yaml population:
        - Extract key requirements from research key_findings
        - Reference architectural_decisions when defining scope and design principles
@@ -114,8 +114,8 @@ The text the user typed after `/spec` in the triggering message **is** the featu
 
    - Read folder name from `.buildforce/.current-spec`
    - Load both existing spec.yaml and plan.yaml from `.buildforce/specs/{folder-name}/`
-   - **Read research.yml if it exists**:
-     - Path: `.buildforce/specs/{folder-name}/research.yml`
+   - **Read research.yaml if it exists**:
+     - Path: `.buildforce/specs/{folder-name}/research.yaml`
      - If exists, load research findings to maintain context consistency
      - Use research context when analyzing update requirements
      - This ensures updates align with prior research findings
@@ -132,15 +132,15 @@ The text the user typed after `/spec` in the triggering message **is** the featu
 
    2. **Read template structure**:
 
-      - Read `.buildforce/templates/research-template.yml` for structure guidance
+      - Read `.buildforce/templates/research-template.yaml` for structure guidance
 
    3. **Parse new research cache**:
 
       - Read `.buildforce/.research-cache.md` completely
       - Extract new research sessions
 
-   4. **Intelligent merge with existing research.yml**:
-      - Read existing `.buildforce/specs/{folder-name}/research.yml`
+   4. **Intelligent merge with existing research.yaml**:
+      - Read existing `.buildforce/specs/{folder-name}/research.yaml`
       - Compare new cache content with existing research
       - **Append new findings** with update separator:
         ```yaml
@@ -152,7 +152,7 @@ The text the user typed after `/spec` in the triggering message **is** the featu
       - **Preserve new artifacts**: Append new diagrams, models, snippets to respective sections
       - **Merge TLDR**: Combine new TLDR bullets with existing without duplication
       - **DO NOT duplicate**: Check for similar findings before appending
-      - Write updated research.yml back to spec folder
+      - Write updated research.yaml back to spec folder
 
    **Step 3c: Intelligent routing** - Determine which file(s) to update based on user input:
 

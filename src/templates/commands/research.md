@@ -12,7 +12,7 @@ $ARGUMENTS
 
 **Key guidelines**:
 
-1. **Project Context Search**: **ALWAYS start here.** Read `.buildforce/context/_index.yml` FROM CURRENT WORKING DIRECTORY AND NEVER FROM SOMEWHERE ELSE! Search for relevant project-specific context there before any other research. This index contains references to accumulated knowledge from all completed spec-driven development sessions, organized by modules/components/features. Search the index to find relevant context file paths, then read those specific context files and load them into the context window. This is your primary source of truth about the project's architecture, patterns, and decisions.
+1. **Project Context Search**: **ALWAYS start here.** Read `.buildforce/context/_index.yaml` FROM CURRENT WORKING DIRECTORY AND NEVER FROM SOMEWHERE ELSE! Search for relevant project-specific context there before any other research. This index contains references to accumulated knowledge from all completed spec-driven development sessions, organized by modules/components/features. Search the index to find relevant context file paths, then read those specific context files and load them into the context window. This is your primary source of truth about the project's architecture, patterns, and decisions.
 
 2. **Recency awareness**: If the query contains words like "current", "latest", "recent", "modern", "best practices", "2024", "2025", or "up-to-date", use web search to fetch current information—do not rely solely on training data.
 
@@ -35,7 +35,7 @@ After presenting your research findings to the user, persist the COMPLETE resear
 1. **Check if cache should accumulate**:
 
    - Read `.buildforce/.current-spec` from current working directory
-   - If file exists and has content: **SKIP cache append** (research will be merged with existing research.yml during spec update)
+   - If file exists and has content: **SKIP cache append** (research will be merged with existing research.yaml during spec update)
    - If file doesn't exist or is empty: **PROCEED with cache append** (pre-spec research phase)
 
 2. **Append to research cache** (only if no active spec exists):

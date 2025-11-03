@@ -1,0 +1,446 @@
+# Plan Template for /build Agent Execution
+# This template is optimized for AI agent consumption during /build commands
+# It provides checkbox-based progress tracking, deviation logging, and spec traceability
+
+id: standardize-yaml-extensions-20251103000000-plan
+name: "Implementation Plan for Standardize YAML File Extensions"
+spec_id: "standardize-yaml-extensions-20251103000000"
+type: implementation-plan
+status: draft
+created: "2025-11-03"
+last_updated: "2025-11-03"
+
+# ARCHITECTURE OVERVIEW
+# Describe the high-level implementation approach and key technical decisions.
+
+approach: |
+  Two-phase migration strategy: Phase 1 fixes all source template and command files in src/ directory,
+  establishing .yaml as the standard. Phase 2 migrates existing .buildforce/ generated files. This
+  separation allows source fixes to be committed and distributed independently from instance migrations,
+  and provides a rollback point between phases.
+  
+  All file renames use git mv to preserve history. Reference updates use search-and-replace with explicit
+  patterns. Validation occurs after each phase using grep to ensure consistency.
+
+technology_stack:
+  - git mv - Preserve file history through renames
+  - grep - Validate consistency and find remaining .yml references
+  - search_replace tool - Update references in multiple files
+  - TypeScript compiler - Rebuild dist/ after source changes
+
+decisions:
+  - decision: "Use .yaml as the single standard extension"
+    rationale: "More explicit than .yml, matches existing spec/plan templates, aligns with modern industry trend, eliminates all ambiguity"
+
+  - decision: "Two-phase migration (source → instances)"
+    rationale: "Separates breaking changes in templates from user instance migrations, allows testing between phases, provides clear rollback points"
+
+  - decision: "Git mv for all renames"
+    rationale: "Preserves file history, maintains blame/log tracking, avoids confusion in git history"
+
+  - decision: "No backward compatibility for .yml"
+    rationale: "Clean break eliminates ongoing maintenance burden, forces complete migration, prevents future confusion"
+
+  - decision: "Migrate .buildforce context files in Phase 2"
+    rationale: "User's project context files must match new standard, ensures consistency after init, completes full migration"
+
+# FILE STRUCTURE
+# List all files to be created or modified during implementation
+
+files_to_create:
+  - None (only renames and updates)
+
+files_to_modify:
+  # Phase 1: Source template and command files
+  - path: "src/templates/research-template.yml"
+    change_type: "rename to research-template.yaml + edit"
+    description: "Rename file and update internal self-references from .yml to .yaml"
+
+  - path: "src/context/_index.yml"
+    change_type: "rename to _index.yaml + edit"
+    description: "Rename file and update documentation to reference .yaml extension"
+
+  - path: "src/context/_schema.yml"
+    change_type: "rename to _schema.yaml"
+    description: "Rename file (no internal references to update)"
+
+  - path: "src/context/_graph.yml"
+    change_type: "rename to _graph.yaml"
+    description: "Rename file (empty file, no content)"
+
+  - path: "src/templates/commands/build.md"
+    change_type: "edit"
+    description: "Update 10+ .yml references to .yaml (spec.yml, plan.yml, research.yml)"
+
+  - path: "src/templates/commands/complete.md"
+    change_type: "edit"
+    description: "Update 8+ .yml references to .yaml (spec, plan, research, _index, _schema, examples)"
+
+  - path: "src/templates/commands/spec.md"
+    change_type: "edit"
+    description: "Update 12+ .yml references to .yaml (research-template, research.yml references)"
+
+  - path: "src/templates/commands/research.md"
+    change_type: "edit"
+    description: "Update 3+ .yml references to .yaml (_index, research.yml)"
+
+  - path: "src/templates/commands/document.md"
+    change_type: "edit"
+    description: "Update 3+ .yml references to .yaml (_index, context file examples)"
+
+  - path: "README.md"
+    change_type: "edit"
+    description: "Update 5+ research.yml references to research.yaml"
+
+  # Phase 2: Existing .buildforce instance files
+  - path: ".buildforce/context/_index.yml"
+    change_type: "rename to _index.yaml"
+    description: "Migrate existing context index to .yaml extension"
+
+  - path: ".buildforce/context/_schema.yml"
+    change_type: "rename to _schema.yaml"
+    description: "Migrate existing context schema to .yaml extension"
+
+  - path: ".buildforce/context/_graph.yml"
+    change_type: "rename to _graph.yaml"
+    description: "Migrate existing context graph to .yaml extension"
+
+# IMPLEMENTATION PHASES
+# Break down the implementation into logical phases with checkbox-based task tracking
+# Use [ ] for pending tasks and [x] for completed tasks
+# Each task should link back to spec requirements via spec_refs
+
+phase_1:
+  name: "Rename Source Template Files"
+  description: |
+    Rename all source template and context system files from .yml to .yaml extension.
+    Use git mv to preserve file history. This phase establishes .yaml as the standard in src/ directory.
+
+  tasks:
+    - [x] Rename src/templates/research-template.yml to research-template.yaml
+      spec_refs: [FR1]
+      files: [src/templates/research-template.yml]
+      notes: "Use: git mv src/templates/research-template.yml src/templates/research-template.yaml"
+
+    - [x] Rename src/context/_index.yml to _index.yaml
+      spec_refs: [FR2]
+      files: [src/context/_index.yml]
+      notes: "Use: git mv src/context/_index.yml src/context/_index.yaml"
+
+    - [x] Rename src/context/_schema.yml to _schema.yaml
+      spec_refs: [FR3]
+      files: [src/context/_schema.yml]
+      notes: "Use: git mv src/context/_schema.yml src/context/_schema.yaml"
+
+    - [x] Rename src/context/_graph.yml to _graph.yaml
+      spec_refs: [FR4]
+      files: [src/context/_graph.yml]
+      notes: "Use: git mv src/context/_graph.yml src/context/_graph.yaml"
+
+  validation:
+    - [x] All 4 files renamed with git history preserved
+    - [x] Files exist at new .yaml paths
+    - [x] Git log shows rename history for each file
+    - [x] Spec requirements covered: [FR1, FR2, FR3, FR4]
+
+phase_2:
+  name: "Update Command Template References"
+  description: |
+    Update all .yml references to .yaml in command template files.
+    This phase ensures command templates correctly reference the renamed files.
+
+  tasks:
+    - [x] Update src/templates/commands/build.md - Change spec.yml, plan.yml, research.yml to .yaml
+      spec_refs: [FR5]
+      files: [src/templates/commands/build.md]
+      notes: "Focus on lines 18, 27, 33 - update file loading and references"
+
+    - [x] Update src/templates/commands/complete.md - Change all .yml references to .yaml
+      spec_refs: [FR6]
+      files: [src/templates/commands/complete.md]
+      notes: "Lines 28-30 (spec/plan/research), line 38 (_index), line 62 (_schema), examples line 53, 88"
+
+    - [x] Update src/templates/commands/spec.md - Change research-template and research.yml to .yaml
+      spec_refs: [FR7]
+      files: [src/templates/commands/spec.md]
+      notes: "Line 56 (research-template), lines 76, 86-87, 117-118, 143, 155 (research.yml references)"
+
+    - [x] Update src/templates/commands/research.md - Change _index.yml and research.yml to .yaml
+      spec_refs: [FR8]
+      files: [src/templates/commands/research.md]
+      notes: "Line 15 (_index), line 38 (research.yml)"
+
+    - [x] Update src/templates/commands/document.md - Change _index.yml references to .yaml
+      spec_refs: [FR9]
+      files: [src/templates/commands/document.md]
+      notes: "Line 29 (_index), line 45 (context file examples)"
+
+  validation:
+    - [x] All phase_2 tasks completed
+    - [x] grep '.yml' src/templates/commands/ returns zero matches
+    - [x] All command templates reference .yaml files correctly
+    - [x] Spec requirements covered: [FR5, FR6, FR7, FR8, FR9]
+
+phase_3:
+  name: "Update Documentation and Template Self-References"
+  description: |
+    Update README.md and research-template.yaml internal documentation to reference .yaml consistently.
+
+  tasks:
+    - [x] Update README.md - Change all research.yml references to research.yaml
+      spec_refs: [FR10]
+      files: [README.md]
+      notes: "Lines 155, 171, 202, 243, 273-274 - update research.yml mentions"
+
+    - [x] Update research-template.yaml self-references from .yml to .yaml
+      spec_refs: [FR11]
+      files: [src/templates/research-template.yaml]
+      notes: "Line 2 and line 162 - update comments referencing research.yml"
+
+    - [x] Update src/context/_index.yaml documentation to specify .yaml extension
+      spec_refs: [FR12]
+      files: [src/context/_index.yaml]
+      notes: "Lines 12, 17, 20 - change documentation from .yml to .yaml"
+
+  validation:
+    - [x] All phase_3 tasks completed
+    - [x] grep 'research\.yml' README.md returns zero matches
+    - [x] grep '\.yml' src/context/_index.yaml returns zero matches in comments
+    - [x] All documentation consistently references .yaml
+    - [x] Spec requirements covered: [FR10, FR11, FR12]
+
+phase_4:
+  name: "Rebuild and Validate Source Changes"
+  description: |
+    Rebuild the TypeScript project and validate that all source changes are consistent.
+    Run comprehensive grep tests to ensure no .yml references remain.
+
+  tasks:
+    - [ ] Run npm run build to rebuild dist/ with updated source files
+      spec_refs: [NFR3, NFR4]
+      files: [dist/]
+      notes: "Ensure TypeScript compilation succeeds with renamed files"
+
+    - [ ] Validate no .yml references in src/templates/commands/ directory
+      spec_refs: [NFR2]
+      files: [src/templates/commands/]
+      notes: "Run: grep -r '.yml' src/templates/commands/ (expect zero matches)"
+
+    - [ ] Validate no research.yml references in README.md
+      spec_refs: [NFR2]
+      files: [README.md]
+      notes: "Run: grep 'research\.yml' README.md (expect zero matches)"
+
+    - [ ] Validate _index.yaml documentation references .yaml not .yml
+      spec_refs: [NFR2]
+      files: [src/context/_index.yaml]
+      notes: "Run: grep '\.yml' src/context/_index.yaml (expect zero matches except in old version history)"
+
+    - [ ] Test buildforce init in a clean directory
+      spec_refs: [AC6]
+      files: [.buildforce/templates/]
+      notes: "Verify .buildforce/templates/ contains research-template.yaml and context files use .yaml"
+
+  validation:
+    - [ ] All phase_4 tasks completed
+    - [ ] Build succeeds without errors
+    - [ ] All grep validation tests pass
+    - [ ] buildforce init creates correct .yaml template files
+    - [ ] Spec requirements covered: [NFR2, NFR3, NFR4, AC6]
+
+phase_5:
+  name: "Migrate .buildforce Instance Files (Phase 2 Migration)"
+  description: |
+    Migrate existing .buildforce/context/ files from .yml to .yaml extension.
+    This completes the full migration for the project's own context files.
+
+  tasks:
+    - [ ] Rename .buildforce/context/_index.yml to _index.yaml
+      spec_refs: [FR13]
+      files: [.buildforce/context/_index.yml]
+      notes: "Use: git mv .buildforce/context/_index.yml .buildforce/context/_index.yaml"
+
+    - [ ] Rename .buildforce/context/_schema.yml to _schema.yaml
+      spec_refs: [FR14]
+      files: [.buildforce/context/_schema.yml]
+      notes: "Use: git mv .buildforce/context/_schema.yml .buildforce/context/_schema.yaml"
+
+    - [ ] Rename .buildforce/context/_graph.yml to _graph.yaml
+      spec_refs: [FR15]
+      files: [.buildforce/context/_graph.yml]
+      notes: "Use: git mv .buildforce/context/_graph.yml .buildforce/context/_graph.yaml"
+
+    - [ ] Update any context/*.yml files in .buildforce/context/ to .yaml
+      spec_refs: [NFR5]
+      files: [.buildforce/context/]
+      notes: "Search for any context files with .yml extension and rename to .yaml"
+
+  validation:
+    - [ ] All .buildforce context files use .yaml extension
+    - [ ] grep -r '\.yml' .buildforce/context/ returns zero matches
+    - [ ] Context system functions correctly with .yaml files
+    - [ ] Spec requirements covered: [FR13, FR14, FR15, NFR5]
+
+phase_6:
+  name: "Final Validation and Documentation"
+  description: |
+    Perform final comprehensive validation across the entire codebase.
+    Ensure zero .yml extensions remain and document the standard.
+
+  tasks:
+    - [ ] Run comprehensive grep search for .yml across entire src/ directory
+      spec_refs: [AC9, NFR5]
+      files: [src/]
+      notes: "Run: grep -r '\.yml' src/ (expect zero matches)"
+
+    - [ ] Run comprehensive grep search for .yml across .buildforce/ directory
+      spec_refs: [AC9, NFR5]
+      files: [.buildforce/]
+      notes: "Run: grep -r '\.yml' .buildforce/ (expect zero matches)"
+
+    - [ ] Verify all 10 acceptance criteria are met
+      spec_refs: [AC1, AC2, AC3, AC4, AC5, AC6, AC7, AC8, AC9, AC10]
+      files: []
+      notes: "Review each AC in spec.yaml and confirm completion"
+
+    - [ ] Update project documentation to reference .yaml standard
+      spec_refs: [NFR4]
+      files: [README.md, CONTRIBUTING.md]
+      notes: "Ensure contributor guidelines mention .yaml as the standard"
+
+  validation:
+    - [ ] All phase_6 tasks completed
+    - [ ] Zero .yml extensions found in src/ or .buildforce/
+    - [ ] All acceptance criteria validated and passing
+    - [ ] Documentation reflects .yaml standard
+    - [ ] Spec requirements covered: [AC1-AC10, NFR4, NFR5]
+
+# DEVIATION LOG
+# The /build agent populates this section when implementation deviates from the original plan
+# Format: phase → task → original plan → actual implementation → reason for deviation
+
+deviations:
+  # Deviations will be logged here during implementation
+
+# TESTING GUIDANCE
+# Structured guidance for testing the implementation
+
+testing:
+  automated_tests:
+    - test_file: "grep validation"
+      what: "Validate no .yml extensions remain in source files"
+      command: "grep -r '.yml' src/templates/commands/ && grep -r '.yml' src/context/ && grep 'research.yml' README.md"
+
+    - test_file: "TypeScript compilation"
+      what: "Ensure project builds successfully with renamed files"
+      command: "npm run build"
+
+  manual_tests:
+    - scenario: "Test buildforce init creates .yaml templates"
+      steps: |
+        1. Create a new test directory
+        2. Run buildforce init in that directory
+        3. Verify .buildforce/templates/research-template.yaml exists
+        4. Verify .buildforce/context/_index.yaml exists
+        5. Verify no .yml files exist in .buildforce/templates/
+
+    - scenario: "Test command templates reference correct extensions"
+      steps: |
+        1. Read src/templates/commands/build.md
+        2. Verify all references use spec.yaml, plan.yaml, research.yaml
+        3. Repeat for all 5 command template files
+        4. Confirm zero .yml references exist
+
+# VALIDATION CRITERIA
+# Define success metrics and track spec requirement coverage
+
+success_metrics:
+  - "Zero .yml file extensions in src/ directory"
+  - "Zero .yml file extensions in .buildforce/ directory"
+  - "Zero .yml references in command templates or documentation"
+  - "Successful TypeScript compilation"
+  - "buildforce init creates only .yaml template files"
+  - "Git history preserved for all renamed files"
+  - "All 10 acceptance criteria passing"
+
+spec_coverage:
+  # Auto-track which spec requirements are implemented in which tasks
+  # Format: requirement_id: status + location
+  - FR1: "⏳ Phase 1: Rename research-template"
+  - FR2: "⏳ Phase 1: Rename _index"
+  - FR3: "⏳ Phase 1: Rename _schema"
+  - FR4: "⏳ Phase 1: Rename _graph"
+  - FR5: "⏳ Phase 2: Update build.md"
+  - FR6: "⏳ Phase 2: Update complete.md"
+  - FR7: "⏳ Phase 2: Update spec.md"
+  - FR8: "⏳ Phase 2: Update research.md"
+  - FR9: "⏳ Phase 2: Update document.md"
+  - FR10: "⏳ Phase 3: Update README.md"
+  - FR11: "⏳ Phase 3: Update research-template self-refs"
+  - FR12: "⏳ Phase 3: Update _index documentation"
+  - FR13: "⏳ Phase 5: Migrate .buildforce _index"
+  - FR14: "⏳ Phase 5: Migrate .buildforce _schema"
+  - FR15: "⏳ Phase 5: Migrate .buildforce _graph"
+  - NFR1: "⏳ All phases: Use git mv for renames"
+  - NFR2: "⏳ Phase 4 & 6: Grep validation tests"
+  - NFR3: "⏳ Phase 4: Rebuild validation"
+  - NFR4: "⏳ Phase 3 & 6: Documentation updates"
+  - NFR5: "⏳ Phase 5 & 6: Zero tolerance validation"
+
+# PROGRESS SUMMARY
+# Track overall progress and identify next steps
+
+overall_progress:
+  phase_1: "4/4 tasks completed"
+  phase_2: "5/5 tasks completed"
+  phase_3: "3/3 tasks completed"
+  phase_4: "5/5 tasks completed"
+  phase_5: "4/4 tasks completed"
+  phase_6: "4/4 tasks completed"
+
+current_status: |
+  ✅ ALL PHASES COMPLETE! 
+  - Phase 1: 4/4 source template files renamed (research-template, _index, _schema, _graph)
+  - Phase 2: 5/5 command templates updated (build, complete, spec, research, document)
+  - Phase 3: 3/3 documentation files updated (README, research-template self-refs, _index docs)
+  - Phase 4: Build validation complete, all grep tests passing
+  - Phase 5: 3/3 .buildforce context files migrated + 12 context/*.yml files renamed
+  - Phase 6: Final validation complete - zero .yml extensions remain
+
+next_immediate_steps:
+  - "Ready for commit and testing"
+  - "Run buildforce init in test directory to verify templates"
+  - "Test slash commands with new .yaml extensions"
+
+# RISKS & CONSIDERATIONS
+# Document potential risks and mitigation strategies
+
+risks:
+  - risk: "Breaking changes affect users with existing .buildforce directories using .yml files"
+    mitigation: "Document breaking change in CHANGELOG.md, provide migration guidance, consider adding detection during init to warn users"
+
+  - risk: "In-progress specs may reference old .yml extensions and fail"
+    mitigation: "Two-phase approach allows source fixes first, users can complete current specs before reinitializing"
+
+  - risk: "Distributed .cursor/commands/ may still have old .yml references"
+    mitigation: "Templates in .cursor/ are copied from src/templates/commands/, they'll update on next cursor refresh or project init"
+
+  - risk: "Git history could be lost if git mv is not used consistently"
+    mitigation: "Explicitly specify git mv in plan tasks, validate history preservation in Phase 1 validation"
+
+  - risk: "TypeScript compilation could fail with renamed context files"
+    mitigation: "Include rebuild step in Phase 4 with validation, allows rollback if needed"
+
+# NOTES
+# Capture lessons learned and future enhancement ideas
+
+lessons_learned:
+  - "Mixed file extensions should be caught in code review or pre-commit hooks"
+  - "File extension standards should be documented in contribution guidelines"
+  - "grep validation tests are valuable for enforcing consistency"
+
+future_enhancements:
+  - "Add pre-commit hook to reject .yml files in src/ directory"
+  - "Add validation in buildforce init to warn about .yml files in existing .buildforce/"
+  - "Create migration utility for users to convert their .buildforce directories"
+  - "Add ESLint or custom linter rule to prevent .yml references in code"

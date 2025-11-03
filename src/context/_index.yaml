@@ -12,13 +12,13 @@ version: 1.0
 # REQUIRED FIELDS:
 # ----------------
 # - id (string, kebab-case):
-#     Unique identifier matching the context filename (without .yml extension)
+#     Unique identifier matching the context filename (without .yaml extension)
 #     Must be unique across all entries in this index
 #     Example: "authentication", "build-command", "error-handling"
 #
 # - file (string):
-#     Context filename (must match id field with .yml extension)
-#     Example: "authentication.yml", "build-command.yml"
+#     Context filename (must match id field with .yaml extension)
+#     Example: "authentication.yaml", "build-command.yaml"
 #
 # - type (enum):
 #     Category of the context for organization
@@ -54,7 +54,7 @@ version: 1.0
 #     **Usage guidelines:**
 #       - Only include contexts that are closely related or have direct dependencies
 #       - Avoid over-populating—focus on significant relationships
-#       - IDs must exist in this _index.yml file (no validation enforced)
+#       - IDs must exist in this _index.yaml file (no validation enforced)
 #       - Bidirectional relationships recommended for discoverability
 #         (if A references B, B should reference A)
 #

@@ -9,13 +9,13 @@ version: "1.0"
 # REQUIRED FIELDS:
 # ----------------
 # - id (string, kebab-case):
-#     Unique identifier matching the context filename (without .yml extension)
+#     Unique identifier matching the context filename (without .yaml extension)
 #     Must be unique across all entries in this index
 #     Example: "authentication", "build-command", "error-handling"
 #
 # - file (string):
-#     Context filename (must match id field with .yml extension)
-#     Example: "authentication.yml", "build-command.yml"
+#     Context filename (must match id field with .yaml extension)
+#     Example: "authentication.yaml", "build-command.yaml"
 #
 # - type (enum):
 #     Category of the context for organization
@@ -51,7 +51,7 @@ version: "1.0"
 #     **Usage guidelines:**
 #       - Only include contexts that are closely related or have direct dependencies
 #       - Avoid over-populating—focus on significant relationships
-#       - IDs must exist in this _index.yml file (no validation enforced)
+#       - IDs must exist in this _index.yaml file (no validation enforced)
 #       - Bidirectional relationships recommended for discoverability
 #         (if A references B, B should reference A)
 #
@@ -61,7 +61,7 @@ version: "1.0"
 
 contexts:
   - id: slash-commands
-    file: slash-commands.yml
+    file: slash-commands.yaml
     type: module
     description: "Core slash command system enabling spec-driven development workflow for AI agents"
     tags: [core, workflow, agents]
@@ -77,14 +77,14 @@ contexts:
       ]
 
   - id: research-slash-command
-    file: research-slash-command.yml
+    file: research-slash-command.yaml
     type: feature
     description: "Slash command for gathering context from project knowledge, codebase, and external sources"
     tags: [core, workflow, research, context-gathering]
     related_context: [slash-commands, cli-architecture, document-command]
 
   - id: build-command
-    file: build-command.yml
+    file: build-command.yaml
     type: feature
     description: "Slash command for implementing features following spec and plan with progress tracking"
     tags:
@@ -100,7 +100,7 @@ contexts:
       [slash-commands, plan-template, spec-command]
 
   - id: plan-template
-    file: plan-template.yml
+    file: plan-template.yaml
     type: feature
     description: "YAML template structure for implementation plans with task tracking and validation"
     tags:
@@ -120,7 +120,7 @@ contexts:
   
 
   - id: document-command
-    file: document-command.yml
+    file: document-command.yaml
     type: feature
     description: "Enhanced /document command with /complete UX patterns, empty context detection, and completion summaries"
     tags:
@@ -144,7 +144,7 @@ contexts:
       ]
 
   - id: readme-documentation
-    file: readme-documentation.yml
+    file: readme-documentation.yaml
     type: feature
     description: "Primary documentation for Buildforce CLI covering installation, workflow, and contribution"
     tags:
@@ -166,7 +166,7 @@ contexts:
     related_context: [cli-architecture, slash-commands]
 
   - id: spec-command
-    file: spec-command.yml
+    file: spec-command.yaml
     type: feature
     description: "Template-based /spec command for creating/updating specifications with state-based CREATE vs UPDATE logic"
     tags:
@@ -183,7 +183,7 @@ contexts:
       [slash-commands, plan-template, complete-command]
 
   - id: complete-command
-    file: complete-command.yml
+    file: complete-command.yaml
     type: feature
     description: "Template-only /complete command for finalizing specs with agent-driven context file management"
     tags:
@@ -199,7 +199,7 @@ contexts:
     related_context: [slash-commands, spec-command, document-command]
 
   - id: upgrade-command
-    file: upgrade-command.yml
+    file: upgrade-command.yaml
     type: feature
     description: "Slash command for upgrading projects to latest templates while preserving user content"
     tags:
@@ -223,7 +223,7 @@ contexts:
       ]
 
   - id: cli-architecture
-    file: cli-architecture.yml
+    file: cli-architecture.yaml
     type: module
     description: "Comprehensive CLI architecture with template distribution, context management, and multi-agent support"
     tags:
@@ -250,7 +250,7 @@ contexts:
       ]
 
   - id: research-persistence
-    file: research-persistence.yml
+    file: research-persistence.yaml
     type: feature
     description: "Research persistence with three-stage pipeline: accumulation, intelligent materialization, and cleanup"
     tags:
@@ -266,7 +266,7 @@ contexts:
       [research-slash-command, spec-command, build-command, complete-command]
 
   - id: local-artifact-resolution
-    file: local-artifact-resolution.yml
+    file: local-artifact-resolution.yaml
     type: feature
     description: "Local artifact resolution system for offline workflows and faster testing iterations"
     tags:
@@ -279,3 +279,19 @@ contexts:
         workflow-utility,
       ]
     related_context: [cli-architecture, upgrade-command]
+
+  - id: yaml-extension-standard
+    file: yaml-extension-standard.yaml
+    type: pattern
+    description: "Codebase standard enforcing .yaml extension for all YAML files to eliminate inconsistency"
+    tags:
+      [
+        pattern,
+        standard,
+        yaml,
+        file-extensions,
+        consistency,
+        breaking-change,
+        codebase-wide,
+      ]
+    related_context: [cli-architecture, spec-command, build-command, complete-command, document-command, research-slash-command]

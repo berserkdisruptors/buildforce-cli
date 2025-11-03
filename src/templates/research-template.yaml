@@ -1,5 +1,5 @@
 # Research Template for Intelligent Materialization
-# This template guides agents in condensing .research-cache.md into structured research.yml
+# This template guides agents in condensing .research-cache.md into structured research.yaml
 #
 # IMPORTANT: This structure is FLEXIBLE - not all sections are required.
 # Adapt the structure based on the research content type:
@@ -159,7 +159,7 @@ tldr:
   - "Key architectural pattern"
 
 # OPTIONAL: Update history for merge scenarios
-# Include only if research.yml is being updated (not created)
+# Include only if research.yaml is being updated (not created)
 updates:
   - date: "<date>"
     summary: "Brief description of what new research added"
