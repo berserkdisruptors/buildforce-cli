@@ -46,18 +46,18 @@ design_decisions:
     rationale: |
       More explicit than .yml, matches existing spec/plan templates, aligns with modern
       industry trend toward official .yaml extension, eliminates all ambiguity.
-      
+
   - decision: "No backward compatibility for .yml"
     rationale: |
       Clean break eliminates ongoing maintenance burden, forces complete migration,
       prevents future confusion. Since no external users exist yet, breaking change
       impact is limited to buildforce-cli repo itself.
-      
+
   - decision: "Two-phase migration (source → instances)"
     rationale: |
       Separates breaking changes in source templates from instance migrations,
       allows testing between phases, provides clear rollback points.
-      
+
   - decision: "Git mv for all renames"
     rationale: |
       Preserves file history, maintains blame/log tracking, avoids confusion in
@@ -80,7 +80,7 @@ notes: |
   This standardization was necessary because mixed .yml/.yaml usage caused file-not-found
   errors when AI agents attempted to read workflow files. The inconsistency was introduced
   gradually rather than systematically - bash/PowerShell scripts already used .yaml correctly.
-  
+
   Migration completed in 6 phases:
   - Phase 1: Renamed 4 source template files
   - Phase 2: Updated 5 command template references (40+ refs)
@@ -88,10 +88,9 @@ notes: |
   - Phase 4: Build validation and grep tests
   - Phase 5: Migrated 15 .buildforce instance files
   - Phase 6: Final validation - zero .yml extensions remain
-  
+
   Future consideration: Add pre-commit hook or linter rule to prevent .yml files from
   being committed to src/ directory.
-  
+
   Breaking change: Affects any existing .buildforce directories using old .yml extensions,
   but since no external users exist yet, impact limited to local development.
-
