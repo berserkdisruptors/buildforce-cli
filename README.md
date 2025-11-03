@@ -152,7 +152,7 @@ The key insight: Buildforce isn't just about individual commands. It's about how
 2. Explores codebase using glob/grep when codebase patterns are relevant
 3. Fetches current information via web search if query contains recency indicators ("current", "latest", "2025", "best practices")
 4. Produces structured report with file paths, architecture diagrams (Mermaid), data models, and recommendations
-5. Caches research output to `.buildforce/.research-cache.md` for materialization into `research.yaml` during `/spec`
+5. Research findings remain in conversation history for materialization into `research.yaml` during `/spec` (when needed)
 
 **Output sections:**
 
@@ -199,8 +199,8 @@ The key insight: Buildforce isn't just about individual commands. It's about how
 1. Determines CREATE vs UPDATE mode by checking `.buildforce/.current-spec` file
 2. Generates semantic folder name with timestamp (e.g., `add-jwt-auth-20250130143052`)
 3. Runs `.buildforce/scripts/bash/create-spec-files.sh` to create folder and template files
-4. Materializes research cache from `.buildforce/.research-cache.md` into `research.yaml` (if exists)
-5. Populates `spec.yaml` with problem statement, functional requirements (FR1, FR2...), non-functional requirements (NFR1, NFR2...), acceptance criteria (AC1, AC2...), scope (in/out), design principles, open questions
+4. Populates `spec.yaml` with problem statement, functional requirements (FR1, FR2...), non-functional requirements (NFR1, NFR2...), acceptance criteria (AC1, AC2...), scope (in/out), design principles, open questions
+5. Can materialize `research.yaml` from conversation history (if research was conducted)
 6. Asks clarifying questions if intent is vague or context insufficient
 
 **Output file structure:**

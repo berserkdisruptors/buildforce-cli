@@ -1,0 +1,413 @@
+# Plan Template for /build Agent Execution
+# This template is optimized for AI agent consumption during /build commands
+# It provides checkbox-based progress tracking, deviation logging, and spec traceability
+
+id: remove-research-caching-20251103150000-plan
+name: "Implementation Plan for Remove Research Caching Mechanism"
+spec_id: "remove-research-caching-20251103150000"
+type: implementation-plan
+status: draft
+created: "2025-11-03"
+last_updated: "2025-11-03"
+
+# ARCHITECTURE OVERVIEW
+# Describe the high-level implementation approach and key technical decisions.
+
+approach: |
+  Template-only refactoring to remove .research-cache.md accumulation logic from slash command templates while preserving research.yaml materialization capability. The approach involves:
+  
+  1. Surgical removal of cache-related sections from command templates
+  2. Preservation of research.yaml creation logic in /spec (based on conversation history)
+  3. Documentation updates to reflect simplified workflow
+  4. Context file updates to document architectural change
+  
+  No TypeScript code changes, no script modifications, no migration scripts. Pure template cleanup that maintains backward compatibility with existing research.yaml artifacts.
+
+technology_stack:
+  - Markdown (command templates)
+  - YAML (research-template.yaml, context files, .gitignore)
+  - Documentation (README.md)
+
+decisions:
+  - decision: "Remove cache accumulation from /research, not just disable it"
+    rationale: "Complete removal eliminates confusion and prevents partial implementation. Conversation history serves as research source, making cache redundant."
+
+  - decision: "Preserve research.yaml creation capability in /spec"
+    rationale: "research.yaml provides valuable context for /build and /complete. Agents can materialize from conversation history without needing cache file."
+
+  - decision: "No migration scripts for existing .research-cache.md files"
+    rationale: "Cache files are temporary and gitignored. Users can manually delete if present. No data loss risk since cache was never committed."
+
+  - decision: "Maintain research-template.yaml structure"
+    rationale: "Template still guides research.yaml creation, just from conversation history instead of cache. Only comments about cache format need removal."
+
+  - decision: "Template-only changes with no TypeScript modifications"
+    rationale: "Maintains consistency with Buildforce CLI's template-based architecture. No code complexity added, no rebuild required."
+
+# FILE STRUCTURE
+# List all files to be created or modified during implementation
+
+files_to_create: []
+
+files_to_modify:
+  - path: "src/templates/commands/research.md"
+    change_type: "edit"
+    description: "Remove Step 7 'Research Persistence' section (lines 31-70 approximately). Remove all cache accumulation logic and buildforce.json state checking."
+
+  - path: "src/templates/commands/spec.md"
+    change_type: "edit"
+    description: "Remove Step 2c 'Materialize research cache' section from CREATE mode. Remove Step 3b 'Check for new research cache and merge' from UPDATE mode. Preserve research.yaml creation capability."
+
+  - path: "src/templates/commands/complete.md"
+    change_type: "edit"
+    description: "Remove cache cleanup logic section (Step 7 or 8). Remove references to .research-cache.md deletion."
+
+  - path: "src/templates/research-template.yaml"
+    change_type: "edit"
+    description: "Remove cache format documentation in comments (lines 27-39). Update header comments to reflect conversation-based materialization."
+
+  - path: "README.md"
+    change_type: "edit"
+    description: "Remove references to .research-cache.md. Update research persistence explanation to describe conversation-based materialization only."
+
+  - path: ".gitignore"
+    change_type: "edit"
+    description: "Remove .buildforce/.research-cache.md entry (line 22)."
+
+  - path: ".buildforce/context/research-persistence.yaml"
+    change_type: "edit"
+    description: "Update to reflect two-stage architecture (conversation history → materialization). Remove accumulation and cleanup stage documentation."
+
+# IMPLEMENTATION PHASES
+# Break down the implementation into logical phases with checkbox-based task tracking
+# Use [ ] for pending tasks and [x] for completed tasks
+# Each task should link back to spec requirements via spec_refs
+
+phase_1:
+  name: "Remove Cache Accumulation from /research Command"
+  description: |
+    Remove all logic related to .research-cache.md creation and accumulation from the /research command template. This eliminates the UX friction source.
+
+  tasks:
+    - [x] Locate and remove Step 7 "Research Persistence" section from src/templates/commands/research.md
+      spec_refs: [FR1, FR2]
+      files: [src/templates/commands/research.md]
+      notes: "Removed lines 27-63. Steps 8-9 renumbered to 7-8."
+
+    - [x] Verify research.md step numbering is correct after removal
+      spec_refs: [FR1, FR2]
+      files: [src/templates/commands/research.md]
+      notes: "Verified: TLDR is step 7, Next Steps is step 8. Logical flow maintained."
+
+    - [x] Remove any orphaned references to cache in research.md
+      spec_refs: [NFR4]
+      files: [src/templates/commands/research.md]
+      notes: "Confirmed: No '.research-cache' or 'buildforce.json' references remain"
+
+  validation:
+    - [x] All phase_1 tasks completed
+    - [x] research.md contains no .research-cache.md references
+    - [x] research.md contains no buildforce.json state checking for cache
+    - [x] Spec requirements covered: [FR1, FR2, NFR4]
+
+phase_2:
+  name: "Remove Cache Logic from /spec Command"
+  description: |
+    Remove cache checking, reading, and merging logic from both CREATE and UPDATE modes of /spec command while preserving research.yaml creation capability.
+
+  tasks:
+    - [x] Remove Step 2c "Materialize research cache" from CREATE mode section
+      spec_refs: [FR4, FR5]
+      files: [src/templates/commands/spec.md]
+      notes: "Removed Step 2c cache materialization (lines 46-80). Step 2d became Step 2c."
+
+    - [x] Remove Step 3b "Check for new research cache and merge" from UPDATE mode section
+      spec_refs: [FR4, FR5]
+      files: [src/templates/commands/spec.md]
+      notes: "Removed Step 3b cache merge logic (lines 123-156). Step 3c became Step 3b."
+
+    - [x] Update spec.md step numbering after removals
+      spec_refs: [FR4, FR5]
+      files: [src/templates/commands/spec.md]
+      notes: "Verified: CREATE mode 2d→2c, UPDATE mode 3c→3b. Orphaned '(from Step 2c)' reference removed."
+
+    - [x] Preserve research.yaml creation capability in Step 2d (now 2c)
+      spec_refs: [FR3, FR7]
+      files: [src/templates/commands/spec.md]
+      notes: "Confirmed: 'Read research.yaml if it exists' logic preserved in Step 2c for spec population."
+
+    - [x] Remove any orphaned cache references in spec.md
+      spec_refs: [NFR4]
+      files: [src/templates/commands/spec.md]
+      notes: "Confirmed: No '.research-cache' references remain in spec.md"
+
+  validation:
+    - [x] All phase_2 tasks completed
+    - [x] spec.md contains no .research-cache.md references
+    - [x] spec.md preserves research.yaml reading for spec population
+    - [x] Step numbering is logical and consistent
+    - [x] Spec requirements covered: [FR3, FR4, FR5, FR7, NFR4]
+
+phase_3:
+  name: "Remove Cache Cleanup from /complete Command"
+  description: |
+    Remove logic that attempts to delete .research-cache.md during spec completion, as cache is no longer generated.
+
+  tasks:
+    - [x] Locate cache cleanup section in src/templates/commands/complete.md
+      spec_refs: [FR6]
+      files: [src/templates/commands/complete.md]
+      notes: "Found Step 8 'Clean Research Cache' (lines 115-122)"
+
+    - [x] Remove cache cleanup instructions completely
+      spec_refs: [FR6]
+      files: [src/templates/commands/complete.md]
+      notes: "Removed entire Step 8 section. Steps 9-10 became 8-9."
+
+    - [x] Update complete.md step numbering if necessary
+      spec_refs: [FR6]
+      files: [src/templates/commands/complete.md]
+      notes: "Updated: Clear Spec State (9→8), Present Completion Summary (10→9)"
+
+    - [x] Verify research.yaml consumption logic remains intact
+      spec_refs: [FR7]
+      files: [src/templates/commands/complete.md]
+      notes: "Confirmed: Line 30 reads research.yaml for context enrichment"
+
+  validation:
+    - [x] All phase_3 tasks completed
+    - [x] complete.md contains no .research-cache.md references
+    - [x] complete.md preserves research.yaml consumption for context files
+    - [x] Spec requirements covered: [FR6, FR7]
+
+phase_4:
+  name: "Update Research Template and Documentation"
+  description: |
+    Clean up research-template.yaml comments and update README.md to reflect simplified workflow.
+
+  tasks:
+    - [x] Remove cache format documentation from src/templates/research-template.yaml
+      spec_refs: [FR8, NFR3]
+      files: [src/templates/research-template.yaml]
+      notes: "Removed cache format section (lines 27-39). Updated header to mention conversation-based materialization."
+
+    - [x] Update README.md to remove cache references
+      spec_refs: [NFR3]
+      files: [README.md]
+      notes: "Updated lines 155 and 202-203. Research findings remain in conversation, can materialize to research.yaml during /spec."
+
+    - [x] Remove .research-cache.md from .gitignore
+      spec_refs: [FR1]
+      files: [.gitignore]
+      notes: "Removed .buildforce/.research-cache.md from line 22. Also removed duplicate buildforce.json entry."
+
+    - [x] Verify /build and /document command templates don't reference cache
+      spec_refs: [FR7, NFR4]
+      files: [src/templates/commands/build.md, src/templates/commands/document.md]
+      notes: "Confirmed: build.md references research.yaml correctly (lines 18, 28). document.md has no research.yaml references (expected)."
+
+  validation:
+    - [x] All phase_4 tasks completed
+    - [x] research-template.yaml has no cache format documentation
+    - [x] README.md accurately describes simplified workflow
+    - [x] .gitignore has no .research-cache.md entry
+    - [x] /build and /document have no cache references
+    - [x] Spec requirements covered: [FR1, FR7, FR8, NFR3, NFR4]
+
+phase_5:
+  name: "Update Context Documentation"
+  description: |
+    Update research-persistence.yaml context file to reflect the new two-stage architecture (conversation → materialization).
+
+  tasks:
+    - [x] Update .buildforce/context/research-persistence.yaml summary
+      spec_refs: [NFR3]
+      files: [.buildforce/context/research-persistence.yaml]
+      notes: "Updated to 'conversation-based research materialization system'. Updated last_updated to 2025-11-03."
+
+    - [x] Remove accumulation stage documentation
+      spec_refs: [NFR3]
+      files: [.buildforce/context/research-persistence.yaml]
+      notes: "Removed accumulation_stage and cache_format sections from architecture_patterns"
+
+    - [x] Remove cleanup stage documentation
+      spec_refs: [NFR3]
+      files: [.buildforce/context/research-persistence.yaml]
+      notes: "Removed cleanup_stage section. Updated consumption_workflow to remove cleanup references."
+
+    - [x] Update materialization stage to reference conversation history
+      spec_refs: [NFR3]
+      files: [.buildforce/context/research-persistence.yaml]
+      notes: "Renamed to materialization_workflow. Added research_workflow. Updated to explain conversation-based materialization."
+
+    - [x] Update design decisions to reflect UX prioritization
+      spec_refs: [NFR3]
+      files: [.buildforce/context/research-persistence.yaml]
+      notes: "Added 'Conversation-based materialization' decision explaining UX prioritization. Removed cache-specific decisions."
+
+    - [x] Update evolution section with this change
+      spec_refs: [NFR3]
+      files: [.buildforce/context/research-persistence.yaml]
+      notes: "Added v2.0 entry documenting cache removal, rationale, and trade-offs. Added remove-research-caching spec to related_specs."
+
+  validation:
+    - [x] All phase_5 tasks completed
+    - [x] Context file accurately reflects new architecture
+    - [x] Design decisions explain UX prioritization
+    - [x] Evolution section documents this change
+    - [x] Spec requirements covered: [NFR3]
+
+# DEVIATION LOG
+# The /build agent populates this section when implementation deviates from the original plan
+# Format: phase → task → original plan → actual implementation → reason for deviation
+
+deviations:
+  - phase: "phase_2"
+    task: "Remove Step 2c 'Materialize research cache' from CREATE mode section"
+    original: "Remove entire Step 2c subsection. No research.yaml creation logic."
+    actual: "Removed cache-based Step 2c, but added NEW Step 2c for conversation-based research.yaml materialization. Also added Step 3b for UPDATE mode research.yaml updates from conversation."
+    reason: "User feedback identified critical oversight: removing cache materialization also removed ALL research.yaml creation capability. The goal was to remove cache dependency, not materialization itself. Added back intelligent materialization from conversation history instead of cache files. This preserves the core value (research.yaml as spec artifact) while maintaining frictionless UX."
+
+# TESTING GUIDANCE
+# Structured guidance for testing the implementation
+
+testing:
+  automated_tests: []
+
+  manual_tests:
+    - scenario: "Verify /research command no longer creates cache"
+      steps: |
+        1. Run /research command on any topic
+        2. Check that .buildforce/.research-cache.md is NOT created
+        3. Verify research output is presented to user normally
+        4. Confirm no file write permission prompts occur
+
+    - scenario: "Verify /spec CREATE mode works without cache"
+      steps: |
+        1. Run /research on a topic
+        2. Run /spec to create new spec
+        3. Verify spec.yaml and plan.yaml are created
+        4. Check that research.yaml is NOT automatically created (unless agent explicitly materializes from conversation)
+        5. Confirm no cache-related errors or warnings
+
+    - scenario: "Verify /spec UPDATE mode works without cache merge"
+      steps: |
+        1. Create a spec with /spec
+        2. Conduct additional research with /research
+        3. Run /spec again to update
+        4. Verify spec updates without attempting cache merge
+        5. Confirm no cache-related errors
+
+    - scenario: "Verify /complete works without cache cleanup"
+      steps: |
+        1. Complete a spec implementation
+        2. Run /complete command
+        3. Verify context files are created normally
+        4. Confirm no cache deletion attempts or errors
+        5. Check that existing research.yaml (if present) is consumed correctly
+
+    - scenario: "Verify existing specs with research.yaml still work"
+      steps: |
+        1. Open a spec folder that has research.yaml
+        2. Run /build or /complete
+        3. Verify commands can read and use research.yaml
+        4. Confirm backward compatibility
+
+# VALIDATION CRITERIA
+# Define success metrics and track spec requirement coverage
+
+success_metrics:
+  - "All command templates contain zero references to .research-cache.md"
+  - "/research command executes without file write operations"
+  - "/spec command creates specs without checking for cache files"
+  - "/complete command executes without cache cleanup attempts"
+  - "Documentation accurately describes simplified workflow"
+  - "All manual test scenarios pass without errors"
+
+spec_coverage:
+  # Auto-track which spec requirements are implemented in which tasks
+  # Format: requirement_id: status + location
+  - FR1: "✅ Phase 1: Task 1, Phase 4: Task 3"
+  - FR2: "✅ Phase 1: Task 1"
+  - FR3: "✅ Phase 2: Task 4"
+  - FR4: "✅ Phase 2: Tasks 1-2"
+  - FR5: "✅ Phase 2: Tasks 1-2"
+  - FR6: "✅ Phase 3: Tasks 2-3"
+  - FR7: "✅ Phase 2: Task 4, Phase 3: Task 4, Phase 4: Task 4"
+  - FR8: "✅ Phase 4: Task 1"
+  - NFR1: "✅ Confirmed (template-only changes)"
+  - NFR2: "✅ Verified (research.yaml consumption preserved)"
+  - NFR3: "✅ Phase 4: Tasks 1-2, Phase 5: All tasks"
+  - NFR4: "✅ Phase 1: Task 3, Phase 2: Task 5, Phase 4: Task 4"
+
+# PROGRESS SUMMARY
+# Track overall progress and identify next steps
+
+overall_progress:
+  phase_1: "3/3 tasks completed ✅"
+  phase_2: "5/5 tasks completed ✅"
+  phase_3: "4/4 tasks completed ✅"
+  phase_4: "4/4 tasks completed ✅"
+  phase_5: "6/6 tasks completed ✅"
+
+current_status: |
+  ✅ ALL PHASES COMPLETE (with critical correction applied)
+  
+  Successfully removed research caching mechanism while preserving materialization capability.
+  All template modifications complete, documentation updated, context files revised.
+  No TypeScript changes required - pure template-based implementation.
+  
+  **CRITICAL CORRECTION APPLIED** (post-implementation):
+  - Added back research.yaml materialization logic in spec.md
+  - NEW Step 2c (CREATE): Materialize research.yaml from conversation history
+  - NEW Step 3b (UPDATE): Update research.yaml from new conversation context
+  - Agent now determines if research exists in conversation and materializes accordingly
+  - If no research context (direct to /spec), no research.yaml created
+  
+  Modified files:
+  - src/templates/commands/research.md (removed Step 7 cache accumulation)
+  - src/templates/commands/spec.md (removed cache logic, added conversation-based materialization)
+  - src/templates/commands/complete.md (removed Step 8 cache cleanup)
+  - src/templates/research-template.yaml (updated to conversation-based)
+  - README.md (updated research persistence explanation)
+  - .gitignore (removed .research-cache.md entry)
+  - .buildforce/context/research-persistence.yaml (updated to v2.0 architecture)
+
+next_immediate_steps:
+  - "Ready for manual testing using test scenarios in plan"
+  - "Test: /research followed by /spec should create research.yaml from conversation"
+  - "Test: Direct /spec (no research) should NOT create research.yaml"
+  - "Prepare for /complete to finalize this spec"
+
+# RISKS & CONSIDERATIONS
+# Document potential risks and mitigation strategies
+
+risks:
+  - risk: "Accidentally removing research.yaml consumption logic in /spec, /build, or /complete"
+    mitigation: "Carefully review each template change. Only remove cache-related logic, preserve research.yaml reading. Test with existing specs that have research.yaml."
+
+  - risk: "Breaking step numbering in command templates causing confusion"
+    mitigation: "After each section removal, carefully renumber subsequent steps. Validate logical flow."
+
+  - risk: "Orphaned cache references in unexpected locations"
+    mitigation: "After main removals, grep entire codebase for '.research-cache' to find any missed references. Update comprehensively."
+
+  - risk: "Documentation becomes inconsistent with implementation"
+    mitigation: "Update README.md and context files as part of same spec. Cross-check documentation against template changes."
+
+  - risk: "Users with existing .research-cache.md files encounter confusion"
+    mitigation: "Document in CHANGELOG that cache files can be manually deleted. They're gitignored and temporary, so no data loss."
+
+# NOTES
+# Capture lessons learned and future enhancement ideas
+
+lessons_learned:
+  - "Template-only changes allow rapid iteration without rebuild cycles"
+  - "UX considerations can outweigh theoretical benefits of comprehensive features"
+  - "Simplification is a valid evolutionary step when real-world usage patterns diverge from design"
+
+future_enhancements:
+  - "Consider allowing agents to explicitly create research.yaml from conversation via /research flag"
+  - "Add validation to prevent accidental research.yaml overwrites in /spec UPDATE mode"
+  - "Create /research-summary command that explicitly materializes findings without caching"
+  - "Document best practices for research-heavy workflows (e.g., multiple /research calls before /spec)"

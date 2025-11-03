@@ -247,13 +247,13 @@ contexts:
   - id: research-persistence
     file: research-persistence.yaml
     type: feature
-    description: "Research persistence with three-stage pipeline: accumulation, intelligent materialization, and cleanup"
+    description: "Conversation-based research materialization system enabling structured research.yaml artifacts"
     tags:
       [
         research,
         persistence,
         materialization,
-        cache,
+        conversation-based,
         workflow-enhancement,
         template-only,
       ]

@@ -3,28 +3,25 @@ name: Research Persistence with Intelligent Materialization
 type: feature
 status: production
 created: 2025-10-28
-last_updated: 2025-10-29
+last_updated: 2025-11-03
 
 summary: |
-  Three-stage research persistence pipeline that accumulates /research output in temporary cache,
-  intelligently materializes it into structured research.yaml artifacts, and enables consumption
-  by /spec, /build, and /complete commands for context-aware operation.
+  Conversation-based research materialization system that enables agents to create structured
+  research.yaml artifacts from conversation history during /spec execution, supporting consumption
+  by /build and /complete commands for context-aware operation.
 
 responsibilities:
-  - Accumulate /research output in .research-cache.md with session metadata
-  - Materialize cache into structured research.yaml preserving diagrams, models, code snippets
-  - Support intelligent merging when additional research occurs after spec creation
+  - Enable agents to materialize conversation history into structured research.yaml artifacts
+  - Preserve diagrams, data models, and code snippets during materialization
   - Enable /spec, /build, /complete commands to consume research context
-  - Clean up temporary cache on spec completion
   - Maintain flexible YAML structure adapting to research content type
 
 dependencies:
   internal:
-    - research-slash-command: "Appends complete output to research cache"
-    - spec-command: "Materializes cache to research.yaml, reads it for context-aware spec population"
+    - research-slash-command: "Presents research findings in conversation"
+    - spec-command: "Can materialize research.yaml from conversation history for context-aware spec population"
     - build-command: "Loads research.yaml for implementation context"
-    - complete-command: "Reads research.yaml for context enrichment, cleans up cache"
-    - state-tracking: "Checks buildforce.json currentSpec to control cache accumulation"
+    - complete-command: "Reads research.yaml for context enrichment"
     - cli-architecture: "Template distribution via GitHub Release packaging"
   external: []
 
@@ -39,72 +36,46 @@ files:
     - .gitignore
 
 design_decisions:
-  - decision: "Three-stage pipeline (accumulation → materialization → cleanup)"
-    rationale: "Separates concerns: cache accumulates raw research, materialization condenses intelligently, cleanup prevents orphaned files. Clear lifecycle from ephemeral to permanent."
-
-  - decision: "Markdown for cache, YAML for materialized research"
-    rationale: "Markdown is append-friendly and preserves diagrams/code naturally. YAML maintains consistency with spec artifacts (spec.yaml, plan.yaml) while supporting flexible structure."
+  - decision: "Conversation-based materialization (removed cache accumulation)"
+    rationale: "Prioritizes user experience over theoretical edge cases. Cache accumulation required explicit file write permissions at each /research invocation, creating significant UX friction. Conversation history provides sufficient context for materialization during /spec."
 
   - decision: "Intelligent materialization preserving diagrams, models, snippets"
     rationale: "Balances condensation with information richness. Mermaid diagrams, data models, code snippets are essential for /build context - preserve verbatim. Condense prose, merge TLDR bullets."
 
-  - decision: "Cache only accumulates pre-spec (based on buildforce.json currentSpec state)"
-    rationale: "Enforces 1:1 research-spec relationship. When spec is active, research should merge with existing research.yaml in UPDATE mode rather than accumulate in cache."
-
-  - decision: "Gitignore cache, commit research.yaml"
-    rationale: "Cache is temporary working file (like build artifacts). research.yaml is permanent spec artifact versioned alongside spec.yaml and plan.yaml."
+  - decision: "research.yaml as permanent spec artifact"
+    rationale: "research.yaml is versioned alongside spec.yaml and plan.yaml as permanent artifact. Provides valuable context for /build and /complete without temporary cache files."
 
   - decision: "Flexible template structure with optional sections"
     rationale: "Not all research produces diagrams/models/code. Template adapts to content type - omit empty sections. Prevents rigid enforcement that loses information."
 
-  - decision: "Automatic distribution via existing release packaging"
-    rationale: "No code changes needed. create-release-packages.sh (lines 115-127) already copies all files from src/templates/ to .buildforce/templates/. research-template.yaml distributed automatically."
+  - decision: "Template-only implementation"
+    rationale: "No code changes needed. All modifications are in command templates and documentation. Maintains consistency with Buildforce CLI's architecture."
 
 architecture_patterns:
-  accumulation_stage: |
+  research_workflow: |
     /research command workflow:
-    1. Check .current-spec state:
-       - If exists: SKIP cache (UPDATE mode will merge)
-       - If empty: PROCEED with accumulation
-    2. Append COMPLETE output to .research-cache.md:
-       - Session separator (=== lines)
-       - Timestamp (YYYY-MM-DD HH:MM:SS)
-       - Type (research_command)
-       - Full content (all sections, diagrams, models, code)
-    3. User sees only research output + next steps
+    1. Gather context from project knowledge (_index.yaml), codebase, and external sources
+    2. Present structured report to user with diagrams, data models, file paths, TLDR
+    3. Research findings remain in conversation history (no file persistence)
 
-  materialization_stage: |
-    /spec CREATE mode workflow:
-    1. Check if .research-cache.md exists:
-       - If not exists: Log info, proceed without research
-       - If exists: Read and parse all sessions
-    2. Read .buildforce/templates/research-template.yaml for structure
-    3. Intelligent materialization:
+  materialization_workflow: |
+    /spec command workflow (when research context exists):
+    1. Agent materializes conversation history into research.yaml (optional, agent-driven)
+    2. Read .buildforce/templates/research-template.yaml for structure guidance
+    3. Intelligent materialization from conversation:
        - PRESERVE VERBATIM: Mermaid diagrams, data models, code snippets
        - PRESERVE WITH CONTEXT: File paths (with relevance), architectural decisions (with rationale)
        - CONDENSE: Research summary prose, project context
-       - MERGE: TLDR bullets from all sessions
+       - MERGE: TLDR bullets if multiple research sessions
     4. Write specs/{folder}/research.yaml with flexible structure
     5. Read research.yaml to inform spec.yaml population:
        - Extract requirements from key_findings
        - Populate open_questions with research ambiguities
        - Reference architectural_decisions in design principles
 
-    /spec UPDATE mode workflow:
-    1. Load existing research.yaml
-    2. Check if new cache exists (.research-cache.md):
-       - If not exists: No new research
-       - If exists: Parse new sessions
-    3. Intelligent merge:
-       - Append new findings with update separator
-       - Preserve new diagrams/models/snippets
-       - Merge TLDR without duplication
-       - Compare content to avoid duplicates
-
-  consumption_stage: |
+  consumption_workflow: |
     /spec command:
-    - CREATE: Reads research.yaml after materialization to inform requirement identification
-    - UPDATE: Reads existing research.yaml to maintain context consistency
+    - Can read existing research.yaml to maintain context consistency during updates
 
     /build command:
     - Loads research.yaml alongside spec.yaml and plan.yaml
@@ -113,37 +84,6 @@ architecture_patterns:
     /complete command:
     - Reads research.yaml to enrich context file documentation
     - Extracts: file_paths, architectural_decisions, key_findings
-
-  cleanup_stage: |
-    /complete command workflow:
-    1. After context files created and index updated
-    2. Check if .research-cache.md exists
-    3. If exists: Delete using Bash tool
-    4. research.yaml preserved in specs/{folder}/ as permanent artifact
-
-cache_format: |
-  ================================================================================
-  Research Session: 2025-10-28 14:35:22
-  Type: research_command
-  ================================================================================
-
-  ## Research Summary
-  [Full research output from agent]
-
-  ## Project Context
-  [Context findings]
-
-  ## Codebase Findings
-  [File paths, code analysis]
-
-  ## External Knowledge
-  [Web search results, best practices]
-
-  ## TLDR
-  - Key finding 1
-  - Key finding 2
-
-  ================================================================================
 
 materialized_format: |
   Flexible YAML structure with optional sections:
@@ -193,8 +133,13 @@ evolution:
     date: "2025-10-28"
     changes: "Initial implementation of research persistence with three-stage pipeline (accumulation, materialization, cleanup). Added cache format with session metadata, flexible research.yaml template, and consumption logic in /spec, /build, /complete commands."
 
+  - version: "2.0"
+    date: "2025-11-03"
+    changes: "Removed cache accumulation mechanism to prioritize user experience. Eliminated .research-cache.md file operations that required explicit permissions at each /research invocation. Simplified to conversation-based materialization where agents create research.yaml from conversation history during /spec. Removed cache cleanup from /complete. Template-only changes with no TypeScript modifications."
+
 related_specs:
   - research-persistence-intelligent-20251027213207
+  - remove-research-caching-20251103150000
 
 notes: |
   Key design principles:
@@ -203,20 +148,20 @@ notes: |
   - "Intelligent materialization - condense, don't copy-paste"
   - "Graceful degradation - spec can proceed without research context"
   - "Single source of truth - one research.yaml per spec"
+  - "Prioritize UX over theoretical edge case coverage"
 
   Template-only implementation:
   - No TypeScript/JavaScript code changes
-  - Modified 4 command templates + created research-template.yaml
-  - Updated .gitignore to exclude cache
+  - Modified 4 command templates + research-template.yaml
+  - Updated README.md and .gitignore
   - Automatic distribution via existing release packaging script
 
-  Edge cases handled:
-  - Missing cache: Info message, proceed gracefully
-  - Empty cache: No materialization
-  - Malformed cache: Parse what's possible
-  - Cache during active spec: Skip accumulation (UPDATE mode merges)
+  Architecture evolution (v2.0):
+  - Removed: .research-cache.md accumulation, buildforce.json state checking, cache cleanup
+  - Preserved: research.yaml materialization capability, consumption by /build and /complete
+  - Trade-off: Lost interrupted session recovery, gained frictionless UX
 
   Future enhancements:
-  - /research-note command for explicit free-form context appending
   - Validation for research.yaml structure (schema checking)
-  - TTL-based cache cleanup for abandoned research sessions
+  - Explicit /research --materialize flag for immediate research.yaml creation
+  - Document best practices for research-heavy workflows

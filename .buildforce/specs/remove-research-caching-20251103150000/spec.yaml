@@ -1,0 +1,138 @@
+id: remove-research-caching-20251103150000
+name: "Remove Research Caching Mechanism While Preserving Materialization"
+type: feature
+status: draft
+created: "2025-11-03"
+last_updated: "2025-11-03"
+
+summary: |
+  Simplify the research persistence system by removing the .research-cache.md accumulation mechanism while preserving the ability to materialize research.yaml artifacts from conversation history during /spec execution.
+
+# INTENT / PROBLEM STATEMENT
+
+problem: |
+  The current research persistence implementation uses a three-stage pipeline with .research-cache.md accumulation that requires explicit agent permissions to read/write files at each /research invocation. This creates significant user experience friction:
+  
+  1. Users must approve file write operations for every research session
+  2. The caching mechanism cannot be silent or frictionless due to slash command permission model
+  3. The cost of frequent permission prompts outweighs the benefits of iterative research caching
+  4. Interrupted research sessions are rare edge cases that don't justify the UX penalty
+  
+  While the cache solves theoretical problems (long conversations, resumability, iteration tracking), the practical implementation cost is too high for current user workflows.
+
+motivation: |
+  By removing the research caching mechanism, we:
+  
+  1. Eliminate user friction by removing repeated file write permission requests
+  2. Preserve the valuable research.yaml materialization capability for spec-driven workflows
+  3. Simplify the mental model: research context comes from conversation history, not accumulated cache
+  4. Maintain template-only architecture without TypeScript changes
+  5. Keep research.yaml as a permanent artifact for /build, /complete, and documentation
+  
+  Users can still conduct thorough research—the conversation history serves as the research source for materialization during /spec. This balances functionality with user experience.
+
+# GOALS
+
+primary_goals:
+  - Remove .research-cache.md accumulation logic from /research command template
+  - Remove cache checking and merging logic from /spec command template
+  - Remove cache cleanup logic from /complete command template
+  - Preserve research.yaml creation during /spec based on conversation history
+
+secondary_goals:
+  - Update documentation to reflect simplified research workflow
+  - Remove .research-cache.md from .gitignore (no longer generated)
+  - Clean up research-template.yaml comments referencing cache format
+  - Update context documentation to reflect new architecture
+
+# REQUIREMENTS
+
+functional_requirements:
+  - FR1: /research command must NOT create or append to .research-cache.md file
+  - FR2: /research command must present research findings directly to user without persistence side effects
+  - FR3: /spec command must create research.yaml from conversation history when explicitly requested by agent
+  - FR4: /spec command must NOT check for .research-cache.md existence or read its contents
+  - FR5: /spec command in UPDATE mode must NOT merge cache content with existing research.yaml
+  - FR6: /complete command must NOT attempt to delete .research-cache.md
+  - FR7: /build and /document commands must continue to reference research.yaml if it exists
+  - FR8: research-template.yaml must remain as guidance for research.yaml structure
+
+non_functional_requirements:
+  - NFR1: Changes must be template-only (no TypeScript/JavaScript code modifications)
+  - NFR2: Existing research.yaml files in spec folders must remain valid and consumable
+  - NFR3: Documentation updates must clearly explain the simplified research workflow
+  - NFR4: All slash command templates must be internally consistent (no orphaned cache references)
+
+# SCOPE
+
+in_scope:
+  - Remove "Research Persistence" section (Step 7) from src/templates/commands/research.md
+  - Remove cache accumulation logic and state checking from research command
+  - Remove "Materialize research cache" section from src/templates/commands/spec.md (Step 2c in CREATE mode)
+  - Remove "Check for new research cache and merge" section from spec.md (Step 3b in UPDATE mode)
+  - Remove cache cleanup logic from src/templates/commands/complete.md
+  - Update research-template.yaml to remove cache format comments (lines 27-39)
+  - Update README.md to remove cache references and explain simplified workflow
+  - Remove .research-cache.md entry from .gitignore
+  - Update .buildforce/context/research-persistence.yaml to reflect new architecture
+  - Preserve research.yaml creation capability in /spec command based on conversation history
+
+out_of_scope:
+  - No changes to TypeScript source code (src/**/*.ts)
+  - No changes to bash/powershell scripts (cache was never used in scripts)
+  - No changes to /build or /document command logic for consuming research.yaml
+  - No migration of existing .research-cache.md files (users can manually delete if present)
+  - No changes to state-tracking.yaml context file (buildforce.json state tracking remains unchanged)
+
+# DESIGN PRINCIPLES
+
+design_principles:
+  - "Prioritize user experience over theoretical edge case coverage"
+  - "Conversation history is the source of truth for research context"
+  - "research.yaml remains a valuable permanent artifact for spec folders"
+  - "Template-only changes maintain simplicity and avoid code complexity"
+  - "Simplification should not break existing specs with research.yaml files"
+
+# ACCEPTANCE CRITERIA
+
+acceptance_criteria:
+  - AC1: /research command executes without creating or modifying .research-cache.md
+  - AC2: /spec command can create research.yaml from conversation history without checking for cache
+  - AC3: /spec command in UPDATE mode does not attempt cache merge operations
+  - AC4: /complete command executes without attempting to delete .research-cache.md
+  - AC5: All command templates are internally consistent with no cache references
+  - AC6: Documentation accurately describes the simplified research workflow
+  - AC7: Existing specs with research.yaml files continue to work correctly
+
+# ASSUMPTIONS & DEPENDENCIES
+
+assumptions:
+  - Conversation history provides sufficient context for research.yaml materialization during /spec
+  - Users will conduct research and immediately proceed to /spec within the same conversation
+  - The benefits of removing UX friction outweigh loss of interrupted session recovery
+  - Agents can intelligently materialize research.yaml from conversation without cache format
+
+dependencies:
+  internal:
+    - research-slash-command: "Template modification to remove accumulation logic"
+    - spec-command: "Template modification to remove cache checks and merges"
+    - complete-command: "Template modification to remove cleanup logic"
+    - research-persistence: "Context file update to reflect new two-stage architecture"
+  external: []
+
+# OPEN QUESTIONS
+
+open_questions: []
+
+# NOTES
+
+notes: |
+  This change simplifies the research persistence architecture from three stages (accumulation → materialization → cleanup) to effectively two stages (conversation history → materialization).
+  
+  Key trade-offs:
+  - LOST: Interrupted research session recovery, explicit research iteration tracking
+  - GAINED: Frictionless research UX, reduced permission prompts, simpler mental model
+  
+  The materialization capability remains—agents can still create research.yaml from conversation history during /spec. This preserves the core value (research.yaml as spec artifact) while removing the friction source (.research-cache.md accumulation).
+  
+  Implementation is entirely template-based, maintaining consistency with Buildforce CLI's architectural approach. No TypeScript changes needed, no migration scripts required.

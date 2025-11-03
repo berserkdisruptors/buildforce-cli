@@ -1,5 +1,5 @@
 # Research Template for Intelligent Materialization
-# This template guides agents in condensing .research-cache.md into structured research.yaml
+# This template guides agents in materializing conversation history into structured research.yaml
 #
 # IMPORTANT: This structure is FLEXIBLE - not all sections are required.
 # Adapt the structure based on the research content type:
@@ -23,22 +23,9 @@
 #   - Project context descriptions → Extract key points only
 #   - External references → Keep URLs/titles, condense explanations
 #   - Codebase findings → Keep discoveries, remove verbose explanations
-#
-# CACHE LOG FORMAT (.research-cache.md):
-# Each research session in the cache should follow this format:
-#
-# ================================================================================
-# Research Session: <timestamp>
-# Type: research_command | freeform_context
-# ================================================================================
-#
-# <Full research output including all sections, diagrams, models, code snippets>
-#
-# ================================================================================
-#
-# Multiple sessions accumulate with clear separators. Preserve ALL content types.
 
 # MATERIALIZED RESEARCH.yaml STRUCTURE (Flexible):
+# Agents should materialize research.yaml from conversation history during /spec execution
 
 id: "<spec-id>-research" # Must match parent spec ID
 created: "<date>"

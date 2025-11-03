@@ -112,16 +112,7 @@ $ARGUMENTS
    - Check that plan was followed or deviations were logged
    - If requirements are missing or incomplete: **ALERT USER** before finalizing
 
-8. **Clean Research Cache**:
-
-   Remove temporary research cache file:
-
-   - Check if `.buildforce/.research-cache.md` exists in current working directory
-   - If exists: Delete the file using Bash tool (e.g., `rm .buildforce/.research-cache.md`)
-   - If not exists: Skip cleanup (no cache to clean)
-   - **NOTE**: The materialized research.yaml in specs/{folder-name}/ is preserved as a permanent artifact
-
-9. **Clear Spec State**:
+8. **Clear Spec State**:
 
    Mark the spec as complete:
 
@@ -129,7 +120,7 @@ $ARGUMENTS
    - This signals that no active spec is in progress
    - The `buildforce.json` file is preserved for future specs
 
-10. **Present Completion Summary**:
+9. **Present Completion Summary**:
 
 Provide a concise report to the user:
 
