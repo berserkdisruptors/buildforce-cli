@@ -16,7 +16,7 @@ $ARGUMENTS
 
 2. **Recency awareness**: If the query contains words like "current", "latest", "recent", "modern", "best practices", "2024", "2025", or "up-to-date", use web search to fetch current information—do not rely solely on training data.
 
-3. **Structured output**: Present findings as a report with clear sections (e.g., Research Summary, Project Context, Codebase Findings, External Knowledge, TLDR, Next Steps) that can be easily referenced in subsequent `/spec` or `/build` steps.
+3. **Structured output**: Present findings as a report with clear sections (e.g., Research Summary, Project Context, Codebase Findings, External Knowledge, TLDR, Next Steps) that can be easily referenced in subsequent `/buildforce:spec`, `/buildforce:plan`, or `/buildforce:build` steps.
 
 4. **Relevant file paths**: For codebase queries, provide an explicit table or list of all relevant file paths discovered. This saves time—users won't need to manually reference each file with @ in follow-up commands.
 
@@ -34,9 +34,9 @@ After presenting your research findings to the user, persist the COMPLETE resear
 
 1. **Check if cache should accumulate**:
 
-   - Read `.buildforce/.current-spec` from current working directory
-   - If file exists and has content: **SKIP cache append** (research will be merged with existing research.yaml during spec update)
-   - If file doesn't exist or is empty: **PROCEED with cache append** (pre-spec research phase)
+   - Read `.buildforce/buildforce.json` from current working directory and parse the `currentSpec` field
+   - If file exists and `currentSpec` field has a value (non-empty): **SKIP cache append** (research will be merged with existing research.yaml during spec update)
+   - If file doesn't exist or `currentSpec` is null/empty: **PROCEED with cache append** (pre-spec research phase)
 
 2. **Append to research cache** (only if no active spec exists):
 

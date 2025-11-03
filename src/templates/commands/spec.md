@@ -11,15 +11,15 @@ User input:
 
 $ARGUMENTS
 
-The text the user typed after `/spec` in the triggering message **is** the feature description. Assume you always have it available in this conversation even if `{ARGS}` appears literally below. Do not ask the user to repeat it unless they provided an empty command.
+The text the user typed after `/buildforce:spec` in the triggering message **is** the feature description. Assume you always have it available in this conversation even if `{ARGS}` appears literally below. Do not ask the user to repeat it unless they provided an empty command.
 
 ## Workflow Steps
 
 1. **Determine CREATE vs UPDATE mode**:
 
-   - Read `.buildforce/.current-spec` file from current working directory
-   - If file exists and has content (non-empty folder name): **UPDATE mode** - Load existing spec and plan from that folder
-   - If file doesn't exist or is empty: **CREATE mode** - Generate new folder name and create new spec and plan
+   - Read `.buildforce/buildforce.json` file from current working directory and parse the `currentSpec` field
+   - If file exists and `currentSpec` field has a value (non-empty folder name): **UPDATE mode** - Load existing spec and plan from that folder
+   - If file doesn't exist or `currentSpec` is null/empty: **CREATE mode** - Generate new folder name and create new spec and plan
 
 2. **For CREATE mode (new spec)**:
 
@@ -65,12 +65,12 @@ The text the user typed after `/spec` in the triggering message **is** the featu
 
    4. **Intelligent materialization** (CRITICAL - preserve information richness):
 
-      - **PRESERVE VERBATIM**: Mermaid diagrams, data models, code snippets - these are essential for /build
+      - **PRESERVE VERBATIM**: Mermaid diagrams, data models, code snippets - these are essential for /buildforce:build
       - **PRESERVE WITH CONTEXT**: File paths (with relevance notes), architectural decisions (with rationale)
       - **CONDENSE INTELLIGENTLY**: Research summary prose (2-4 sentences), project context (key points only)
       - **MERGE**: TLDR bullets from all sessions into unified tldr section
       - **DO NOT TRUNCATE**: Diagrams, models, code snippets must be complete
-      - **DO NOT OVER-CONDENSE**: Preserve information-rich elements - /build needs comprehensive context
+      - **DO NOT OVER-CONDENSE**: Preserve information-rich elements - /buildforce:build needs comprehensive context
 
    5. **Create research.yaml**:
       - Write to `.buildforce/specs/{FOLDER_NAME}/research.yaml`
@@ -112,7 +112,7 @@ The text the user typed after `/spec` in the triggering message **is** the featu
 
    **Step 3a: Load existing artifacts and research context**:
 
-   - Read folder name from `.buildforce/.current-spec`
+   - Read folder name from `.buildforce/buildforce.json` (`currentSpec` field)
    - Load both existing spec.yaml and plan.yaml from `.buildforce/specs/{folder-name}/`
    - **Read research.yaml if it exists**:
      - Path: `.buildforce/specs/{folder-name}/research.yaml`
@@ -316,8 +316,8 @@ The text the user typed after `/spec` in the triggering message **is** the featu
    **Risks:** [One sentence summary of main risks]
    ```
 
-   Then suggest: **"Ready to code? Run `/build` to start implementation."**
+   Then suggest: **"Ready to code? Run `/buildforce:build` to start implementation."**
 
-   **For UPDATE mode**: Summarize changes made to spec.yaml and/or plan.yaml, present updated condensed plan summary if plan changed, and suggest: "Ready to code? Run `/build` to start implementation."
+   **For UPDATE mode**: Summarize changes made to spec.yaml and/or plan.yaml, present updated condensed plan summary if plan changed, and suggest: "Ready to code? Run `/buildforce:build` to start implementation."
 
-   **IMPORTANT**: Every subsequent `/spec` invocation updates BOTH files based on intelligent routing of the user's input content. Raw user input with explicit `/spec` invocation might also intent to update BOTH so decide accordingly.
+   **IMPORTANT**: Every subsequent `/buildforce:spec` invocation updates BOTH files based on intelligent routing of the user's input content. Raw user input with explicit `/buildforce:spec` invocation might also intent to update BOTH so decide accordingly.

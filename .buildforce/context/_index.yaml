@@ -96,8 +96,7 @@ contexts:
         workflow-enhancement,
         script-execution,
       ]
-    related_context:
-      [slash-commands, plan-template, spec-command]
+    related_context: [slash-commands, plan-template, spec-command]
 
   - id: plan-template
     file: plan-template.yaml
@@ -114,10 +113,7 @@ contexts:
         spec-traceability,
         workflow-enhancement,
       ]
-    related_context:
-      [build-command, spec-command, slash-commands]
-
-  
+    related_context: [build-command, spec-command, slash-commands]
 
   - id: document-command
     file: document-command.yaml
@@ -179,8 +175,7 @@ contexts:
         agent-driven,
         workflow-core,
       ]
-    related_context:
-      [slash-commands, plan-template, complete-command]
+    related_context: [slash-commands, plan-template, complete-command]
 
   - id: complete-command
     file: complete-command.yaml
@@ -294,4 +289,27 @@ contexts:
         breaking-change,
         codebase-wide,
       ]
-    related_context: [cli-architecture, spec-command, build-command, complete-command, document-command, research-slash-command]
+    related_context:
+      [
+        cli-architecture,
+        spec-command,
+        build-command,
+        complete-command,
+        document-command,
+        research-slash-command,
+      ]
+
+  - id: state-tracking
+    file: state-tracking.yaml
+    type: feature
+    description: "JSON-based state tracking using buildforce.json to manage active spec sessions"
+    tags:
+      [
+        core,
+        state-management,
+        buildforce-json,
+        configuration,
+        workflow-foundation,
+      ]
+    related_context:
+      [spec-command, research-persistence, complete-command, cli-architecture]

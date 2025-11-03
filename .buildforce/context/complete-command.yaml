@@ -3,7 +3,7 @@ name: "Complete Command Template"
 type: feature
 status: production
 created: 2025-01-23
-last_updated: 2025-10-28
+last_updated: 2025-10-29
 
 summary: |
   Template-only slash command that guides AI agents through finalizing specs by creating
@@ -11,7 +11,7 @@ summary: |
   _schema.yml template for structure and performs intelligent merging of existing files.
 
 responsibilities:
-  - Verify active spec exists via .current-spec state file
+  - Verify active spec exists via buildforce.json currentSpec field
   - Load spec.yaml and plan.yaml artifacts for analysis
   - Proactively search _index.yml to determine context file updates vs creation
   - Generate semantic filenames for new context files (kebab-case, no prefixes)
@@ -19,12 +19,12 @@ responsibilities:
   - Intelligently merge updates into existing context files (preserve history)
   - Update _index.yml with new entries including description field
   - Validate all spec requirements were met
-  - Clear .current-spec state to mark spec as complete
+  - Clear currentSpec in buildforce.json to mark spec as complete
   - Present concise completion summary to user
 
 dependencies:
   internal:
-    - .current-spec: "State file tracking active spec folder name"
+    - state-tracking: "Reads buildforce.json currentSpec field to verify active spec, clears it on completion"
     - context/_index.yml: "Index of all context files for discovery"
     - context/_schema.yml: "Template structure for new context files"
     - spec.yaml: "Specification file containing requirements"
@@ -83,20 +83,25 @@ evolution:
     date: "2025-10-28"
     changes: "Added research persistence integration. Updated Step 2 (Load Spec Artifacts) to read research.yml for context enrichment. Added Step 8 (Clean Research Cache) to delete .research-cache.md after context files created. Template increased from 185 to 198 lines. research.yml provides file paths, architectural decisions, key findings for richer context documentation."
 
+  - version: "4.0"
+    date: "2025-10-29"
+    changes: "Migrated state tracking from .current-spec to buildforce.json. Updated Step 1 (Verify Active Spec) to read currentSpec field from buildforce.json. Updated Step 8 (Clear Spec State) to call clear-spec-state.sh script which sets currentSpec to null. Examples updated to reference buildforce.json throughout."
+
 related_specs:
   - redesign-spec-context-20250107120000
   - research-persistence-intelligent-20251027213207
+  - migrate-currentspec-to-json-20251029000000
 
 notes: |
   The /complete command follows a 9-step workflow:
-  1. Verify active spec (read .current-spec or error)
+  1. Verify active spec (read buildforce.json currentSpec or error)
   2. Load spec artifacts (spec.yaml and plan.yaml)
   3. Analyze context requirements (read _index.yml, identify components)
   4. Generate context filenames (semantic, kebab-case, max 50 chars)
   5. Create/update context files (use _schema.yml, intelligent merge)
   6. Update context index (_index.yml with new entries + description)
   7. Validate implementation (cross-check spec requirements)
-  8. Clear spec state (delete .current-spec)
+  8. Clear spec state (run clear-spec-state.sh to set currentSpec to null)
   9. Present completion summary (files created/updated, achievements)
 
   Context filename rules:

@@ -3,7 +3,7 @@ name: Research Persistence with Intelligent Materialization
 type: feature
 status: production
 created: 2025-10-28
-last_updated: 2025-10-28
+last_updated: 2025-10-29
 
 summary: |
   Three-stage research persistence pipeline that accumulates /research output in temporary cache,
@@ -24,6 +24,7 @@ dependencies:
     - spec-command: "Materializes cache to research.yml, reads it for context-aware spec population"
     - build-command: "Loads research.yml for implementation context"
     - complete-command: "Reads research.yml for context enrichment, cleans up cache"
+    - state-tracking: "Checks buildforce.json currentSpec to control cache accumulation"
     - cli-architecture: "Template distribution via GitHub Release packaging"
   external: []
 
@@ -47,7 +48,7 @@ design_decisions:
   - decision: "Intelligent materialization preserving diagrams, models, snippets"
     rationale: "Balances condensation with information richness. Mermaid diagrams, data models, code snippets are essential for /build context - preserve verbatim. Condense prose, merge TLDR bullets."
 
-  - decision: "Cache only accumulates pre-spec (based on .current-spec state)"
+  - decision: "Cache only accumulates pre-spec (based on buildforce.json currentSpec state)"
     rationale: "Enforces 1:1 research-spec relationship. When spec is active, research should merge with existing research.yml in UPDATE mode rather than accumulate in cache."
 
   - decision: "Gitignore cache, commit research.yml"

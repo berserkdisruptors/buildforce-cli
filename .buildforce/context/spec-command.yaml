@@ -3,16 +3,16 @@ name: "Spec Command Template"
 type: feature
 status: production
 created: 2025-01-23
-last_updated: 2025-10-28
+last_updated: 2025-10-29
 
 summary: |
   Template-based slash command that guides AI agents through creating or updating structured
-  specification files. Uses .current-spec state tracking to determine CREATE vs UPDATE mode.
+  specification files. Uses buildforce.json state tracking to determine CREATE vs UPDATE mode.
   Delegates semantic-slug-first folder naming to agents in CREATE flow only.
 
 responsibilities:
   - Guide agents through spec creation workflow with 7 structured steps
-  - Determine CREATE vs UPDATE mode using .current-spec state file
+  - Determine CREATE vs UPDATE mode using buildforce.json currentSpec field
   - Instruct agents to generate semantic-slug-first folder names (CREATE mode only)
   - Execute create-spec-files script with agent-generated folder name
   - Capture WHAT needs to be built (not HOW) in spec.yaml files
@@ -24,7 +24,7 @@ dependencies:
     - create-spec-files.sh: "Bash script for creating spec folder structure"
     - create-spec-files.ps1: "PowerShell equivalent for cross-platform support"
     - spec-template.yaml: "Template structure for new spec files"
-    - .current-spec: "State file tracking active spec folder name"
+    - state-tracking: "Reads buildforce.json currentSpec field to determine CREATE vs UPDATE mode"
     - research-persistence: "Materializes .research-cache.md into research.yml, reads it for context-aware spec population"
   external:
     - None (template-only command)
@@ -49,8 +49,8 @@ command_signature:
     - "/spec Refactor error handling middleware"
 
 design_decisions:
-  - decision: "Use .current-spec file for CREATE vs UPDATE determination"
-    rationale: "Simpler and more reliable than external pattern files. Single source of truth for active spec state."
+  - decision: "Use buildforce.json currentSpec field for CREATE vs UPDATE determination"
+    rationale: "Migrated from .current-spec to buildforce.json for structured configuration. Single source of truth for active spec state with extensibility for future metadata."
 
   - decision: "Move folder name generation to CREATE flow only"
     rationale: "UPDATE mode doesn't need new folder names - it modifies existing spec. Reduces complexity and avoids confusion."
@@ -105,6 +105,10 @@ evolution:
     date: "2025-10-28"
     changes: "Added research persistence integration. CREATE mode: Added Step 2c to materialize .research-cache.md into research.yml before populating spec.yaml, then reads research.yml to inform requirement identification (Step 2d). UPDATE mode: Added Step 3a to load existing research.yml for context consistency, Step 3b to merge new cache if exists. Template increased from 239 to 319 lines. Enables context-aware spec population with research findings."
 
+  - version: "8.0"
+    date: "2025-10-29"
+    changes: "Migrated state tracking from .current-spec to buildforce.json. Updated CREATE/UPDATE mode determination to read currentSpec field from buildforce.json instead of plain text file. Template references updated accordingly. Enables structured configuration with future extensibility."
+
 related_specs:
   - redesign-spec-context-20250107120000
   - swap-timestamp-slug-order-20251024093000
@@ -112,10 +116,11 @@ related_specs:
   - standardize-question-format-20251024000000
   - add-spec-summary-output-20251024000000
   - add-template-verification-20251024142000
+  - migrate-currentspec-to-json-20251029000000
 
 notes: |
   The /spec command follows a 7-step workflow:
-  1. Determine CREATE vs UPDATE mode (check .current-spec)
+  1. Determine CREATE vs UPDATE mode (check buildforce.json currentSpec field)
   2. For CREATE: Generate folder name, run script, populate spec
   3. For UPDATE: Load existing spec, merge new information
   4. Validate prerequisite context
