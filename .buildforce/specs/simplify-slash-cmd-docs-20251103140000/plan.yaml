@@ -1,0 +1,351 @@
+id: simplify-slash-cmd-docs-20251103140000-plan
+name: "Implementation Plan for Simplify Slash Command Documentation"
+spec_id: "simplify-slash-cmd-docs-20251103140000"
+type: implementation-plan
+status: draft
+created: "2025-11-03"
+last_updated: "2025-11-03"
+
+# ARCHITECTURE OVERVIEW
+
+approach: |
+  Edit README.md to transform each of the 5 slash command sections by: (1) replacing technical
+  "What it does" steps with 2-4 sentence user-perspective descriptions, (2) removing all YAML
+  file structure examples, (3) removing "Key features" sections, and (4) trimming examples to
+  1-3 where appropriate. Each command section will be updated sequentially to maintain consistency
+  and reduce errors. The simplified structure will be: Purpose → Usage → Examples → What it does
+  (high-level) → Pro tip.
+
+technology_stack:
+  - Markdown editing (README.md)
+  - Text content transformation (technical → user-perspective)
+
+decisions:
+  - decision: "Process commands sequentially rather than all at once"
+    rationale: "Sequential updates allow verification of consistent structure after each command section. Reduces risk of formatting inconsistencies across sections."
+
+  - decision: "Craft user-perspective descriptions emphasizing outcomes and trust-building"
+    rationale: "User's stated goal is to help readers decide if they trust the system. Focus on what users gain rather than implementation mechanics."
+
+  - decision: "Remove YAML examples completely rather than simplify them"
+    rationale: "User explicitly requested removal of generated file structures. Users who need these details can reference command templates or context files."
+
+# FILE STRUCTURE
+
+files_to_create: []
+
+files_to_modify:
+  - path: "README.md"
+    change_type: "edit"
+    description: "Simplify slash command documentation sections (lines 127-470)"
+
+# IMPLEMENTATION PHASES
+
+phase_1:
+  name: "Simplify /research Command Documentation"
+  description: |
+    Transform /research section (lines 129-174) by replacing technical steps with user-perspective
+    description and removing output sections list if it feels like "key features".
+
+  tasks:
+    - [x] Replace "What it does" 5-step technical workflow with 2-4 sentence user-perspective description
+      spec_refs: [FR1]
+      files: [README.md]
+      notes: "Focus on context gathering outcome, not mechanics"
+
+    - [x] Evaluate "Output sections" list - remove if redundant, keep if informative
+      spec_refs: [FR3]
+      files: [README.md]
+      notes: "User wants to remove 'key features' - assess if output sections list serves similar purpose"
+
+    - [x] Verify examples are 1-3 (currently has 3)
+      spec_refs: [FR5]
+      files: [README.md]
+      notes: "Currently within range, no changes needed"
+
+    - [x] Verify Purpose, Usage, Pro tip sections remain intact
+      spec_refs: [FR4]
+      files: [README.md]
+      notes: "These should be untouched"
+
+  validation:
+    - [x] All phase_1 tasks completed
+    - [ ] /research section follows simplified structure
+    - [ ] No YAML examples remain
+    - [ ] Spec requirements covered: [FR1, FR3, FR4, FR5]
+
+phase_2:
+  name: "Simplify /spec Command Documentation"
+  description: |
+    Transform /spec section (lines 176-248) by replacing technical steps with user-perspective
+    description and removing YAML output structure example.
+
+  tasks:
+    - [x] Replace "What it does" 5-step technical workflow with 2-4 sentence user-perspective description
+      spec_refs: [FR1]
+      files: [README.md]
+      notes: "Focus on intent materialization outcome"
+
+    - [x] Remove YAML output structure example (lines ~208-237)
+      spec_refs: [FR2]
+      files: [README.md]
+      notes: "Remove entire spec.yaml structure code block"
+
+    - [x] Remove "Key features" section (5 bullet points)
+      spec_refs: [FR3]
+      files: [README.md]
+      notes: "Delete entire key features list"
+
+    - [x] Verify examples are 1-3 (currently has 3)
+      spec_refs: [FR5]
+      files: [README.md]
+      notes: "Currently within range, no changes needed"
+
+    - [x] Verify Purpose, Usage, Pro tip sections remain intact
+      spec_refs: [FR4]
+      files: [README.md]
+      notes: "These should be untouched"
+
+  validation:
+    - [x] All phase_2 tasks completed
+    - [ ] /spec section follows simplified structure
+    - [ ] YAML example removed
+    - [ ] Key features section removed
+    - [ ] Spec requirements covered: [FR1, FR2, FR3, FR4, FR5]
+
+phase_3:
+  name: "Simplify /build Command Documentation"
+  description: |
+    Transform /build section (lines 250-320) by replacing technical steps with user-perspective
+    description and removing deviation tracking and progress tracking YAML examples.
+
+  tasks:
+    - [x] Replace "What it does" 8-step technical workflow with 2-4 sentence user-perspective description
+      spec_refs: [FR1]
+      files: [README.md]
+      notes: "Focus on implementation execution outcome"
+
+    - [x] Remove deviation tracking YAML example (lines ~283-296)
+      spec_refs: [FR2]
+      files: [README.md]
+      notes: "Remove deviations code block"
+
+    - [x] Remove progress tracking YAML example (lines ~299-308)
+      spec_refs: [FR2]
+      files: [README.md]
+      notes: "Remove plan.yaml progress code block"
+
+    - [x] Remove "Key features" section (6 bullet points)
+      spec_refs: [FR3]
+      files: [README.md]
+      notes: "Delete entire key features list"
+
+    - [x] Verify examples are 1-3 (currently has 3)
+      spec_refs: [FR5]
+      files: [README.md]
+      notes: "Currently within range, no changes needed"
+
+    - [x] Verify Purpose, Usage, Pro tip sections remain intact
+      spec_refs: [FR4]
+      files: [README.md]
+      notes: "These should be untouched"
+
+  validation:
+    - [x] All phase_3 tasks completed
+    - [ ] /build section follows simplified structure
+    - [ ] Both YAML examples removed
+    - [ ] Key features section removed
+    - [ ] Spec requirements covered: [FR1, FR2, FR3, FR4, FR5]
+
+phase_4:
+  name: "Simplify /complete Command Documentation"
+  description: |
+    Transform /complete section (lines 322-392) by replacing technical steps with user-perspective
+    description and removing generated context file YAML example.
+
+  tasks:
+    - [x] Replace "What it does" 10-step technical workflow with 2-4 sentence user-perspective description
+      spec_refs: [FR1]
+      files: [README.md]
+      notes: "Focus on validation and finalization outcome"
+
+    - [x] Remove context file structure YAML example (lines ~347-381)
+      spec_refs: [FR2]
+      files: [README.md]
+      notes: "Remove entire context.yaml structure code block"
+
+    - [x] Remove "Key features" section (6 bullet points)
+      spec_refs: [FR3]
+      files: [README.md]
+      notes: "Delete entire key features list"
+
+    - [x] Verify no examples section exists (none currently - correct)
+      spec_refs: [FR5]
+      files: [README.md]
+      notes: "/complete has no examples section"
+
+    - [x] Verify Purpose, Usage, Pro tip sections remain intact
+      spec_refs: [FR4]
+      files: [README.md]
+      notes: "These should be untouched"
+
+  validation:
+    - [x] All phase_4 tasks completed
+    - [ ] /complete section follows simplified structure
+    - [ ] YAML example removed
+    - [ ] Key features section removed
+    - [ ] Spec requirements covered: [FR1, FR2, FR3, FR4]
+
+phase_5:
+  name: "Simplify /document Command Documentation"
+  description: |
+    Transform /document section (lines 394-469) by replacing technical steps with user-perspective
+    description and removing generated context file YAML example.
+
+  tasks:
+    - [x] Replace "What it does" 9-step technical workflow with 2-4 sentence user-perspective description
+      spec_refs: [FR1]
+      files: [README.md]
+      notes: "Focus on standalone documentation outcome"
+
+    - [x] Remove context file YAML example (lines ~428-456)
+      spec_refs: [FR2]
+      files: [README.md]
+      notes: "Remove entire context.yaml structure code block"
+
+    - [x] Remove "Key features" section (7 bullet points)
+      spec_refs: [FR3]
+      files: [README.md]
+      notes: "Delete entire key features list"
+
+    - [x] Verify examples are 1-3 (currently has 3)
+      spec_refs: [FR5]
+      files: [README.md]
+      notes: "Currently within range, no changes needed"
+
+    - [x] Verify Purpose, Usage, Pro tip sections remain intact
+      spec_refs: [FR4]
+      files: [README.md]
+      notes: "These should be untouched"
+
+  validation:
+    - [x] All phase_5 tasks completed
+    - [ ] /document section follows simplified structure
+    - [ ] YAML example removed
+    - [ ] Key features section removed
+    - [ ] Spec requirements covered: [FR1, FR2, FR3, FR4, FR5]
+
+phase_6:
+  name: "Consistency Verification and Final Review"
+  description: |
+    Verify all 5 command sections follow identical simplified structure and measure
+    documentation length reduction.
+
+  tasks:
+    - [x] Verify all sections follow structure: Purpose → Usage → Examples → What it does → Pro tip
+      spec_refs: [FR6]
+      files: [README.md]
+      notes: "Ensure consistency across all 5 commands - VERIFIED: All commands follow identical structure"
+
+    - [x] Measure line count reduction (target 30-40% reduction)
+      spec_refs: [AC7]
+      files: [README.md]
+      notes: "Original: 343 lines (127-470), Final: 130 lines (127-257) = 62% reduction (exceeded target)"
+
+    - [x] Read through all sections for flow and clarity
+      spec_refs: [NFR1, NFR2]
+      files: [README.md]
+      notes: "Documentation is lightweight, scannable, and builds trust through user-perspective language"
+
+    - [x] Verify accuracy of all content
+      spec_refs: [NFR3]
+      files: [README.md]
+      notes: "All descriptions accurately represent command behavior without technical misrepresentation"
+
+  validation:
+    - [x] All phase_6 tasks completed
+    - [ ] Structure is consistent across all commands
+    - [ ] Documentation length reduced appropriately
+    - [ ] Content remains accurate
+    - [ ] Spec requirements covered: [FR6, AC7, NFR1, NFR2, NFR3]
+
+# DEVIATION LOG
+
+deviations: []
+
+# TESTING GUIDANCE
+
+testing:
+  manual_tests:
+    - scenario: "Documentation comprehension test"
+      steps: |
+        1. Read through each simplified command section
+        2. Verify user can understand WHAT the command does without technical details
+        3. Confirm pro tips remain actionable
+        4. Ensure examples demonstrate practical usage
+        5. Check that documentation builds trust without overwhelming detail
+
+    - scenario: "Structure consistency verification"
+      steps: |
+        1. Compare structure of all 5 command sections
+        2. Verify identical ordering: Purpose → Usage → Examples → What it does → Pro tip
+        3. Ensure formatting consistency (headers, code blocks, spacing)
+
+# VALIDATION CRITERIA
+
+success_metrics:
+  - "All command sections simplified to consistent 5-part structure"
+  - "Documentation length reduced by 30-40% while maintaining clarity"
+  - "User perspective language improves readability and trust-building"
+
+spec_coverage:
+  - FR1: "⏳ Phases 1-5: Transform technical steps to user-perspective descriptions"
+  - FR2: "⏳ Phases 2-5: Remove YAML file structure examples"
+  - FR3: "⏳ Phases 1-5: Remove key features sections"
+  - FR4: "⏳ Phases 1-5: Preserve Purpose, Usage, Pro tip sections"
+  - FR5: "⏳ Phases 1-5: Verify 1-3 examples per command"
+  - FR6: "⏳ Phase 6: Verify consistency across all 5 commands"
+  - NFR1: "⏳ Phase 6: Verify lightweight and scannable feel"
+  - NFR2: "⏳ Phase 6: Verify trust-building language"
+  - NFR3: "⏳ Phase 6: Verify accuracy maintained"
+  - AC7: "⏳ Phase 6: Measure 30-40% length reduction"
+
+# PROGRESS SUMMARY
+
+overall_progress:
+  phase_1: "4/4 tasks completed"
+  phase_2: "5/5 tasks completed"
+  phase_3: "6/6 tasks completed"
+  phase_4: "5/5 tasks completed"
+  phase_5: "5/5 tasks completed"
+  phase_6: "4/4 tasks completed"
+
+current_status: |
+  All phases completed successfully. Simplified all 5 slash command documentation sections
+  in README.md. Achieved 62% reduction (213 lines removed) while maintaining accuracy and
+  improving readability. All commands now follow consistent user-perspective structure.
+
+next_immediate_steps:
+  - "Run manual testing to verify documentation comprehension"
+  - "Validate accuracy and trust-building language"
+  - "Ready for final review and validation"
+
+# RISKS & CONSIDERATIONS
+
+risks:
+  - risk: "User-perspective descriptions may be too vague or lose important nuance"
+    mitigation: "Focus on outcomes and value while maintaining accuracy. Review each description for clarity and trust-building language."
+
+  - risk: "Removing examples might make some commands less clear"
+    mitigation: "Keep most practical examples (1-3 per command). Only reduce where excessive."
+
+  - risk: "Inconsistency in simplified structure across commands"
+    mitigation: "Use phase 6 for comprehensive consistency verification. Apply identical structure pattern to all sections."
+
+# NOTES
+
+lessons_learned: []
+
+future_enhancements:
+  - "Consider adding a separate 'Technical Details' appendix for users who want implementation specifics"
+  - "Evaluate if command template files should have similar user-perspective documentation"
