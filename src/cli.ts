@@ -5,7 +5,7 @@ import chalk from "chalk";
 import { initCommand } from "./commands/init/index.js";
 import { upgradeCommand } from "./commands/upgrade/index.js";
 import { checkCommand } from "./commands/check.js";
-import { examplesCommand } from "./commands/examples.js";
+import { examplesCommand, WORKFLOWS, DEFAULT_WORKFLOW_DESCRIPTIONS } from "./commands/examples.js";
 import { showBanner, generateBanner } from "./lib/interactive.js";
 import { MINT_COLOR } from "./constants.js";
 import { createBox } from "./utils/box.js";
@@ -23,10 +23,11 @@ program
 const mint = MINT_COLOR;
 
 // Put banner above Commander help (usage, options, commands)
+// Pass function reference so it's called when help is displayed (not at module load)
 const renderBannerForHelp = () => {
   return generateBanner();
 };
-program.addHelpText("beforeAll", renderBannerForHelp());
+program.addHelpText("beforeAll", renderBannerForHelp);
 
 function boxedHeader(title: string): string {
   const text = ` ${title} `;
@@ -54,6 +55,39 @@ function hardWrap(text: string, width: number): string[] {
   return lines;
 }
 
+
+/**
+ * Format workflow examples section for help text
+ */
+function formatExamplesSection(helpWidth: number): string[] {
+  const lines: string[] = [];
+  
+  for (const [id, workflow] of Object.entries(WORKFLOWS)) {
+    const desc = DEFAULT_WORKFLOW_DESCRIPTIONS[id] || { description: "", useCase: "" };
+    
+    // Workflow name
+    lines.push(MINT_COLOR(workflow.name));
+    
+    // Command sequence
+    const commandLines = workflow.commandSequence.map(cmd => `  ${MINT_COLOR("→")} ${chalk.bold(cmd)}`);
+    lines.push(...commandLines);
+    
+    // Description and use case on one line (more compact)
+    if (desc.description || desc.useCase) {
+      lines.push("");
+      const info = [desc.description, desc.useCase].filter(Boolean).join(" • ");
+      lines.push(chalk.hex("#B8B8B8")(info));
+    }
+    
+    // Add spacing between workflows (but not after the last one)
+    if (id !== Object.keys(WORKFLOWS)[Object.keys(WORKFLOWS).length - 1]) {
+      lines.push("");
+      lines.push("");
+    }
+  }
+  
+  return lines;
+}
 
 function formatKeyValueRows(
   rows: Array<{ term: string; desc: string }>,
@@ -167,6 +201,16 @@ program.configureHelp({
       lines.push("\n" + createBox(cmdLines, { title: "Commands", width: fixedInner }));
     }
 
+    // Examples section (only for root command)
+    // Check if this is the root command by checking if it has no parent or is the program itself
+    const isRootCommand = !cmd.parent || cmd === program;
+    if (isRootCommand) {
+      const examplesLines = formatExamplesSection(helpWidth);
+      const boxMaxWidth = 70;
+      const fixedInner = Math.min(boxMaxWidth, Math.max(20, helpWidth - 2));
+      lines.push("\n" + createBox(examplesLines, { title: "Examples", width: fixedInner }));
+    }
+
     return lines.join("\n") + "\n";
   },
 });
@@ -210,7 +254,7 @@ program
 
 program
   .command("examples")
-  .description("View workflow examples")
+  .description("View workflow examples interactively")
   .action(async () => {
     await examplesCommand();
   });

@@ -40,7 +40,7 @@ interface Workflow {
 /**
  * Hardcoded workflow definitions (Phase 2)
  */
-const WORKFLOWS: Record<string, Omit<Workflow, "description" | "useCase">> = {
+export const WORKFLOWS: Record<string, Omit<Workflow, "description" | "useCase">> = {
   basic: {
     id: "basic",
     name: "Basic Workflow",
@@ -55,21 +55,6 @@ const WORKFLOWS: Record<string, Omit<Workflow, "description" | "useCase">> = {
     id: "documentation",
     name: "Documentation Workflow",
     commandSequence: ["/research [topic]", "/document [module]"],
-  },
-  "context-centering": {
-    id: "context-centering",
-    name: "Context Centering Workflow",
-    commandSequence: ["/document [module]", "/research [topic]", "/spec", "/build"],
-  },
-  "contribute-existing": {
-    id: "contribute-existing",
-    name: "Contribute to Existing Spec",
-    commandSequence: ["/spec (with context)", "/build", "/spec (iteratively)", "/complete"],
-  },
-  "research-during-build": {
-    id: "research-during-build",
-    name: "Research During Build",
-    commandSequence: ["/build", "/research [topic]", "/build (continue)"],
   },
 };
 
@@ -163,26 +148,26 @@ function extractWorkflowDescriptions(readmeContent: string): Record<string, { de
     };
   }
 
-  // Context-centering workflow (new, not in README yet)
-  descriptions["context-centering"] = {
-    description: "Document a feature first, then research how to upgrade it",
-    useCase: "When you want to document a feature first, then research how to upgrade it",
-  };
-
-  // Contribute to existing spec workflow (new, not in README yet)
-  descriptions["contribute-existing"] = {
-    description: "Contribute to an existing spec by iteratively refining it through spec→build cycles",
-    useCase: "When contributing to an existing spec - iterate spec→build→spec until satisfied, then complete",
-  };
-
-  // Research during build workflow (new, not in README yet)
-  descriptions["research-during-build"] = {
-    description: "Run research while actively building to gather context without interrupting workflow",
-    useCase: "When you need additional research during implementation - research is available in conversation context but not persisted automatically",
-  };
-
   return descriptions;
 }
+
+/**
+ * Default workflow descriptions for use in help text (when README is not available)
+ */
+export const DEFAULT_WORKFLOW_DESCRIPTIONS: Record<string, { description: string; useCase: string }> = {
+  basic: {
+    description: "Simple workflow for quick updates",
+    useCase: "Recommended for simple updates",
+  },
+  full: {
+    description: "Complete workflow from research to completion",
+    useCase: "Recommended for new features and bug fixes",
+  },
+  documentation: {
+    description: "Document existing functionality",
+    useCase: "Manual context contribution",
+  },
+};
 
 /**
  * Display selected workflow example
@@ -222,7 +207,7 @@ export async function examplesCommand(): Promise<void> {
   if (!process.stdin.isTTY) {
     console.log(
       MINT_COLOR("Interactive workflow selection requires a terminal.\n") +
-      chalk.dim("Available workflows: basic, full, documentation, context-centering, contribute-existing, research-during-build")
+      chalk.dim("Available workflows: basic, full, documentation")
     );
     return;
   }
