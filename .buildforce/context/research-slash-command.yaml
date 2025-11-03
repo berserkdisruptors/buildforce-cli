@@ -3,7 +3,7 @@ name: "RESEARCH Slash Command"
 type: feature
 status: production
 created: "2025-01-15"
-last_updated: "2025-10-28"
+last_updated: "2025-11-03"
 
 summary: |
   First command in the spec-driven development workflow.
@@ -69,13 +69,17 @@ key_guidelines:
     priority: 6
     description: "Document data structures with properties, types, and relationships—not just summaries"
 
-  - name: "Next Steps"
+  - name: "Research Persistence"
     priority: 7
-    description: "Suggest next action after research (e.g., 'Ready to define the spec?')"
+    description: "After completing research, persist COMPLETE output to .research-cache.md with session metadata for intelligent materialization during /spec execution. Internal operation between content generation and summary presentation."
 
   - name: "TLDR Section"
     priority: 8
-    description: "ALWAYS add '## TLDR' section before 'Next Steps' with 3-7 bullet points (using '-') highlighting key discoveries. Exclude code/diagrams/file paths. Include section references and focus on what user needs to know to proceed."
+    description: "Condense findings into 3-7 bullet points highlighting key discoveries. Exclude code/diagrams/file paths. Include section references and focus on what user needs to know to proceed."
+
+  - name: "Next Steps"
+    priority: 9
+    description: "Suggest next action after research (e.g., 'Ready to define the spec?')"
 
 research_strategies:
   project_context:
@@ -154,15 +158,26 @@ evolution:
     date: "2025-10-28"
     changes: "Added research persistence section. Command now appends COMPLETE output to .research-cache.md with session metadata (timestamp, type=research_command) for intelligent materialization by /spec command. Template increased from 29 to 65 lines. Includes cache format specification and state checking (.current-spec) to determine if cache should accumulate."
 
+  - version: "2.1"
+    date: "2025-11-03"
+    changes: "Reordered workflow steps for better UX - research persistence moved to Step 7 (between Data Models and TLDR), TLDR became Step 8, Next Steps became Step 9. Removed redundant instruction 'ALWAYS add TLDR before Next Steps' as step numbering provides implicit ordering. Removed 'After presenting findings' language from Next Steps description. Template remains 68 lines. All persistence logic preserved intact - only presentation order changed. Users now see TLDR and Next Steps as final output without scrolling."
+
 related_specs:
   - add-research-tldr-section-20251024104500
   - research-persistence-intelligent-20251027213207
+  - reorder-research-workflow-20251103143500
 
 notes: |
   Most important command in the workflow—sets foundation for /spec, /plan, /build.
-  Compact instruction template (29 lines as of v1.1) that enhances user queries without teaching HOW to research.
+  Instruction template (68 lines as of v2.1) that enhances user queries without teaching HOW to research.
   Build agents already know how to research; this command adds workflow-specific context.
   Masterpiece feature: .buildforce/context/_index.yaml as primary knowledge source.
 
   v1.1 enhancement: TLDR section addresses dual-audience design pattern—comprehensive details for build agents,
   scannable summary for users. Could be applied to other verbose command outputs.
+  
+  v2.0 enhancement: Research persistence ensures findings are preserved for /spec materialization.
+  
+  v2.1 enhancement: Workflow reordering (Step 7: persistence, Step 8: TLDR, Step 9: Next Steps) ensures
+  user-facing summary remains visible without scrolling. Research persistence happens silently between
+  content generation and summary presentation.
