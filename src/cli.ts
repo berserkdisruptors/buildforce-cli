@@ -5,16 +5,17 @@ import chalk from "chalk";
 import { initCommand } from "./commands/init/index.js";
 import { upgradeCommand } from "./commands/upgrade/index.js";
 import { checkCommand } from "./commands/check.js";
-import { examplesCommand, WORKFLOWS, DEFAULT_WORKFLOW_DESCRIPTIONS } from "./commands/examples.js";
-import { showBanner, generateBanner } from "./lib/interactive.js";
+import { examplesCommand } from "./commands/examples.js";
+import { generateBanner } from "./lib/interactive.js";
 import { MINT_COLOR } from "./constants.js";
 import { createBox } from "./utils/box.js";
 
 const program = new Command();
 
 program
-  .alias("bf")
-  .description("Context-first Spec-Driven Development framework")
+  .name("buildforce")
+  .usage("[command] [options]")
+  .description("Context-First Spec-Driven Development framework")
   .version("1.0.0")
   .enablePositionalOptions();
 
@@ -28,15 +29,6 @@ const renderBannerForHelp = () => {
   return generateBanner();
 };
 program.addHelpText("beforeAll", renderBannerForHelp);
-
-function boxedHeader(title: string): string {
-  const text = ` ${title} `;
-  const width = text.length;
-  const top = `┌${"─".repeat(width)}┐`;
-  const mid = `│${text}│`;
-  const bot = `└${"─".repeat(width)}┘`;
-  return [chalk.gray(top), chalk.bold.white(mid), chalk.gray(bot)].join("\n");
-}
 
 function hardWrap(text: string, width: number): string[] {
   if (text.length <= width) return [text];
@@ -55,44 +47,10 @@ function hardWrap(text: string, width: number): string[] {
   return lines;
 }
 
-
-/**
- * Format workflow examples section for help text
- */
-function formatExamplesSection(helpWidth: number): string[] {
-  const lines: string[] = [];
-  
-  for (const [id, workflow] of Object.entries(WORKFLOWS)) {
-    const desc = DEFAULT_WORKFLOW_DESCRIPTIONS[id] || { description: "", useCase: "" };
-    
-    // Workflow name
-    lines.push(MINT_COLOR(workflow.name));
-    
-    // Command sequence
-    const commandLines = workflow.commandSequence.map(cmd => `  ${MINT_COLOR("→")} ${chalk.bold(cmd)}`);
-    lines.push(...commandLines);
-    
-    // Description and use case on one line (more compact)
-    if (desc.description || desc.useCase) {
-      lines.push("");
-      const info = [desc.description, desc.useCase].filter(Boolean).join(" • ");
-      lines.push(chalk.hex("#B8B8B8")(info));
-    }
-    
-    // Add spacing between workflows (but not after the last one)
-    if (id !== Object.keys(WORKFLOWS)[Object.keys(WORKFLOWS).length - 1]) {
-      lines.push("");
-      lines.push("");
-    }
-  }
-  
-  return lines;
-}
-
 function formatKeyValueRows(
   rows: Array<{ term: string; desc: string }>,
   termWidth: number,
-  helpWidth: number,
+  helpWidth: number
 ): string[] {
   const pad = 1;
   // Smaller box width - max 70 chars for content (excluding borders)
@@ -100,8 +58,14 @@ function formatKeyValueRows(
   const innerMax = Math.min(boxMaxWidth, Math.max(20, helpWidth - 2));
   const gutter = 2;
   // Allocate more width to descriptions - about 25% to terms, 75% to descriptions
-  const clampedTermWidth = Math.min(termWidth, Math.max(8, Math.floor(innerMax * 0.25)));
-  const firstLineDescWidth = Math.max(20, innerMax - pad * 2 - clampedTermWidth - gutter);
+  const clampedTermWidth = Math.min(
+    termWidth,
+    Math.max(8, Math.floor(innerMax * 0.25))
+  );
+  const firstLineDescWidth = Math.max(
+    20,
+    innerMax - pad * 2 - clampedTermWidth - gutter
+  );
   // Full width for continuation lines (minus padding)
   const fullDescWidth = innerMax - pad * 2;
 
@@ -110,14 +74,15 @@ function formatKeyValueRows(
     // First line: term + description start (respecting word boundaries)
     const firstLineWrapped = hardWrap(desc, firstLineDescWidth);
     const firstLineDesc = firstLineWrapped[0] || "";
-    const remainingDesc = firstLineWrapped.length > 1 
-      ? firstLineWrapped.slice(1).join(" ") 
-      : "";
-    
+    const remainingDesc =
+      firstLineWrapped.length > 1 ? firstLineWrapped.slice(1).join(" ") : "";
+
     // First line: term + description start
-    const firstLine = `${term.padEnd(clampedTermWidth)}${" ".repeat(gutter)}${chalk.hex("#B8B8B8")(firstLineDesc)}`;
+    const firstLine = `${term.padEnd(clampedTermWidth)}${" ".repeat(
+      gutter
+    )}${chalk.hex("#B8B8B8")(firstLineDesc)}`;
     lines.push(firstLine);
-    
+
     // Remaining description uses full width
     if (remainingDesc) {
       const wrapped = hardWrap(remainingDesc, fullDescWidth);
@@ -125,7 +90,7 @@ function formatKeyValueRows(
         lines.push(chalk.hex("#B8B8B8")(line));
       });
     }
-    
+
     // add spacing between entries (but not after the last one)
     if (index !== rows.length - 1) {
       lines.push("");
@@ -140,7 +105,8 @@ program.configureHelp({
   },
   argumentTerm(argument) {
     // argument.name() may be undefined in some commander versions; fallback to displayName
-    const name = (argument as any).name?.() ?? (argument as any).displayName ?? "<arg>";
+    const name =
+      (argument as any).name?.() ?? (argument as any).displayName ?? "<arg>";
     return mint(name);
   },
   subcommandTerm(cmd) {
@@ -149,7 +115,8 @@ program.configureHelp({
   formatHelp(cmd, helper) {
     const termWidth = helper.longestOptionTermLength(cmd, helper);
     const helpWidth = helper.helpWidth ?? (process.stdout.columns || 80);
-    const wrap = (str: string) => helper.wrap(str, helpWidth - termWidth - 4, termWidth + 4);
+    const wrap = (str: string) =>
+      helper.wrap(str, helpWidth - termWidth - 4, termWidth + 4);
 
     const lines: string[] = [];
 
@@ -157,20 +124,24 @@ program.configureHelp({
     const usageText = helper.commandUsage(cmd);
     const boxMaxWidth = 70;
     const fixedInner = Math.min(boxMaxWidth, Math.max(20, helpWidth - 2));
-    lines.push("\n" + createBox(usageText, { title: "Usage", width: fixedInner }));
+    lines.push(
+      "\n" + createBox(usageText, { title: "Usage", width: fixedInner })
+    );
 
-    // Arguments
-    const argumentsList = helper.visibleArguments(cmd);
-    if (argumentsList.length) {
-      const rows = argumentsList.map((arg) => ({
-        term: helper.argumentTerm(arg),
-        desc: helper.argumentDescription(arg),
+    // Commands
+    const subcommands = helper.visibleCommands(cmd);
+    if (subcommands.length) {
+      const rows = subcommands.map((c) => ({
+        term: helper.subcommandTerm(c),
+        desc: helper.subcommandDescription(c),
       }));
-      const argLines = formatKeyValueRows(rows, termWidth, helpWidth);
+      const cmdLines = formatKeyValueRows(rows, termWidth, helpWidth);
       // Smaller box width - max 70 chars for content
       const boxMaxWidth = 70;
       const fixedInner = Math.min(boxMaxWidth, Math.max(20, helpWidth - 2));
-      lines.push("\n" + createBox(argLines, { title: "Arguments", width: fixedInner }));
+      lines.push(
+        "\n" + createBox(cmdLines, { title: "Commands", width: fixedInner })
+      );
     }
 
     // Options
@@ -184,36 +155,94 @@ program.configureHelp({
       // Smaller box width - max 70 chars for content
       const boxMaxWidth = 70;
       const fixedInner = Math.min(boxMaxWidth, Math.max(20, helpWidth - 2));
-      lines.push("\n" + createBox(optLines, { title: "Options", width: fixedInner }));
+      lines.push(
+        "\n" + createBox(optLines, { title: "Options", width: fixedInner })
+      );
     }
 
-    // Commands
-    const subcommands = helper.visibleCommands(cmd);
-    if (subcommands.length) {
-      const rows = subcommands.map((c) => ({
-        term: helper.subcommandTerm(c),
-        desc: helper.subcommandDescription(c),
+    // Arguments
+    const argumentsList = helper.visibleArguments(cmd);
+    if (argumentsList.length) {
+      const rows = argumentsList.map((arg) => ({
+        term: helper.argumentTerm(arg),
+        desc: helper.argumentDescription(arg),
       }));
-      const cmdLines = formatKeyValueRows(rows, termWidth, helpWidth);
+      const argLines = formatKeyValueRows(rows, termWidth, helpWidth);
       // Smaller box width - max 70 chars for content
       const boxMaxWidth = 70;
       const fixedInner = Math.min(boxMaxWidth, Math.max(20, helpWidth - 2));
-      lines.push("\n" + createBox(cmdLines, { title: "Commands", width: fixedInner }));
-    }
-
-    // Examples section (only for root command)
-    // Check if this is the root command by checking if it has no parent or is the program itself
-    const isRootCommand = !cmd.parent || cmd === program;
-    if (isRootCommand) {
-      const examplesLines = formatExamplesSection(helpWidth);
-      const boxMaxWidth = 70;
-      const fixedInner = Math.min(boxMaxWidth, Math.max(20, helpWidth - 2));
-      lines.push("\n" + createBox(examplesLines, { title: "Examples", width: fixedInner }));
+      lines.push(
+        "\n" + createBox(argLines, { title: "Arguments", width: fixedInner })
+      );
     }
 
     return lines.join("\n") + "\n";
   },
 });
+
+// Init command
+program
+  .command("init", { isDefault: true })
+  .description("Initialize Buildforce and slash commands")
+  .argument(
+    "[project-name]",
+    'Name for your new project directory (optional if using --here, or use "." for current directory)'
+  )
+  .option(
+    "--ai <assistant>",
+    "AI assistant to use: claude, gemini, copilot, cursor, qwen, opencode, codex, windsurf, kilocode, auggie, or roo"
+  )
+  .option("--script <type>", "Script type to use: sh or ps")
+  .option(
+    "--ignore-agent-tools",
+    "Skip checks for AI agent tools like Claude Code"
+  )
+  .option("--no-git", "Skip git repository initialization")
+  .option(
+    "--here",
+    "Initialize project in the current directory instead of creating a new one"
+  )
+  .option(
+    "--force",
+    "Force merge/overwrite when using --here (skip confirmation)"
+  )
+  .option("--skip-tls", "Skip SSL/TLS verification (not recommended)")
+  .option(
+    "--debug",
+    "Show verbose diagnostic output for network and extraction failures"
+  )
+  .option(
+    "--github-token <token>",
+    "GitHub token to use for API requests (or set GH_TOKEN or GITHUB_TOKEN environment variable)"
+  )
+  .option(
+    "--local [path]",
+    "Use local artifacts from directory instead of GitHub (default: .genreleases)\n" +
+      "Example: buildforce init my-project --local --ai claude --script sh"
+  )
+  .action(async (projectName, options) => {
+    // If no project name and no flags, show help
+    if (!projectName && !options.here && Object.keys(options).length === 0) {
+      // Banner is already registered via program.addHelpText("beforeAll", renderBannerForHelp())
+      // so program.help() will display it automatically
+      program.help();
+      return;
+    }
+
+    await initCommand({
+      projectName,
+      aiAssistant: options.ai,
+      scriptType: options.script,
+      ignoreAgentTools: options.ignoreAgentTools,
+      noGit: !options.git,
+      here: options.here,
+      force: options.force,
+      skipTls: options.skipTls,
+      debug: options.debug,
+      githubToken: options.githubToken,
+      local: options.local,
+    });
+  });
 
 program
   .command("upgrade")
@@ -257,70 +286,6 @@ program
   .description("View workflow examples interactively")
   .action(async () => {
     await examplesCommand();
-  });
-
-// We no longer append banner after help; it's injected before via addHelpText
-
-// Default behavior (init) - defined AFTER subcommands
-program
-  .argument(
-    "[project-name]",
-    'Name for your new project directory (optional if using --here, or use "." for current directory)'
-  )
-  .option(
-    "--ai <assistant>",
-    "AI assistant to use: claude, gemini, copilot, cursor, qwen, opencode, codex, windsurf, kilocode, auggie, or roo"
-  )
-  .option("--script <type>", "Script type to use: sh or ps")
-  .option(
-    "--ignore-agent-tools",
-    "Skip checks for AI agent tools like Claude Code"
-  )
-  .option("--no-git", "Skip git repository initialization")
-  .option(
-    "--here",
-    "Initialize project in the current directory instead of creating a new one"
-  )
-  .option(
-    "--force",
-    "Force merge/overwrite when using --here (skip confirmation)"
-  )
-  .option("--skip-tls", "Skip SSL/TLS verification (not recommended)")
-  .option(
-    "--debug",
-    "Show verbose diagnostic output for network and extraction failures"
-  )
-  .option(
-    "--github-token <token>",
-    "GitHub token to use for API requests (or set GH_TOKEN or GITHUB_TOKEN environment variable)"
-  )
-  .option(
-    "--local [path]",
-    "Use local artifacts from directory instead of GitHub (default: .genreleases)\n" +
-    "Example: buildforce init my-project --local --ai claude --script sh"
-  )
-  .action(async (projectName, options) => {
-    // If no project name and no flags, show help
-    if (!projectName && !options.here && Object.keys(options).length === 0) {
-      // Banner is already registered via program.addHelpText("beforeAll", renderBannerForHelp())
-      // so program.help() will display it automatically
-      program.help();
-      return;
-    }
-
-    await initCommand({
-      projectName,
-      aiAssistant: options.ai,
-      scriptType: options.script,
-      ignoreAgentTools: options.ignoreAgentTools,
-      noGit: !options.git,
-      here: options.here,
-      force: options.force,
-      skipTls: options.skipTls,
-      debug: options.debug,
-      githubToken: options.githubToken,
-      local: options.local,
-    });
   });
 
 program.parse(process.argv);
