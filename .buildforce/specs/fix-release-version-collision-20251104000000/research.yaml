@@ -1,0 +1,81 @@
+id: "fix-release-version-collision-20251104000000-research"
+created: "2025-11-04"
+last_updated: "2025-11-04"
+
+summary: |
+  Investigation of release workflow bug where GitHub releases are being skipped after PR merges.
+  Root cause identified: workflow can run multiple times on same commit (manual re-runs, workflow_dispatch),
+  creating multiple sequential releases pointing to the same commit. When next PR merges, git describe
+  returns alphabetically first tag, causing version collision with already-existing release.
+
+key_findings:
+  - "Multiple tags can point to same commit when workflow runs multiple times (manual re-run or workflow_dispatch)"
+  - "Tags v0.0.23 and v0.0.24 both point to commit 781a15b, created on same day (2025-11-03)"
+  - "Tags v0.0.21 and v0.0.22 both point to commit 8c24924, created on same day (2025-10-31)"
+  - "git describe --tags --abbrev=0 returns alphabetically first tag when multiple tags exist on same commit"
+  - "check-release-exists.sh uses 'gh release view' to check if version exists, returns exists=true when tag found"
+  - "Workflow has NO PROTECTION against running multiple times on same commit, 'burning' version numbers"
+  - "When new PR merges, calculated version collides with already-created release, causing workflow to skip all release steps"
+  - "Current workflow includes template versioning feature (added 2025-11-03) that creates pre-release version bump commit with [skip ci]"
+
+file_paths:
+  primary:
+    - path: ".github/workflows/release.yml"
+      relevance: "Main release workflow orchestration - contains check-release-exists step that causes skip"
+    - path: ".github/workflows/scripts/get-next-version.sh"
+      relevance: "Calculates next version using git describe - doesn't validate if calculated version already exists"
+    - path: ".github/workflows/scripts/check-release-exists.sh"
+      relevance: "Checks if release exists using gh release view - causes skip when version collision detected"
+
+  secondary:
+    - path: ".github/workflows/scripts/update-template-versions.sh"
+      relevance: "Updates template files with version number (template versioning feature)"
+    - path: ".github/workflows/scripts/create-github-release.sh"
+      relevance: "Creates GitHub release with tag - only runs if check-release-exists returns false"
+    - path: ".buildforce/context/template-versioning.yml"
+      relevance: "Context documentation for recent template versioning feature"
+
+mermaid_diagrams:
+  - title: "Current Release Workflow with Bug"
+    description: "Shows workflow flow and where skip occurs due to version collision"
+    diagram: |
+      ```mermaid
+      graph TD
+          A[PR Merged to Main] --> B[Trigger: push to main]
+          B --> C[Build TypeScript CLI]
+          C --> D[Get Latest Tag]
+          D --> E[Calculate Next Version]
+          E --> F[Update Template Versions]
+          F --> G[Commit Version Bump with skip ci]
+          G --> H[Push to Main]
+          H --> I{Check if Release Exists?}
+          I -->|exists=true| J[SKIP - Bug Here!]
+          I -->|exists=false| K[Create Release Packages]
+          K --> L[Generate Release Notes]
+          L --> M[Create GitHub Release with Tag]
+
+          style J fill:#ff6b6b
+          style I fill:#ffd93d
+      ```
+
+architectural_decisions:
+  - pattern: "Pre-release version bump commit strategy"
+    description: "Workflow commits template version updates before creating release, with [skip ci] to prevent infinite loops"
+    rationale: "Ensures git tags point to commits containing versioned templates. Critical for distributed template packages being self-describing."
+
+  - pattern: "Semantic versioning with automatic patch increment"
+    description: "Every release increments patch version (0.0.21 → 0.0.22) based on latest git tag"
+    rationale: "Simplifies versioning but has no semantic analysis of commits. All changes treated as patches."
+
+  - pattern: "Release existence check as safeguard"
+    description: "Workflow checks if release already exists before creating to prevent duplicates"
+    rationale: "Originally intended to prevent accidental duplicate releases, but becomes problematic with version collisions."
+
+tldr:
+  - "Workflow skips creating releases when it detects existing release/tag for calculated version"
+  - "Root cause: workflow can run multiple times on same commit, creating sequential version tags pointing to same commit"
+  - "git describe returns alphabetically first tag when multiple exist, causing version calculation to produce already-used number"
+  - "Evidence: v0.0.23 and v0.0.24 both point to commit 781a15b; v0.0.21 and v0.0.22 both point to commit 8c24924"
+  - "check-release-exists.sh causes skip when calculated version already has a release"
+  - "Fix needed: increment version until finding unused number instead of skipping"
+  - "User requirement: ALWAYS create a release when workflow runs, never skip"
