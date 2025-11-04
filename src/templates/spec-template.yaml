@@ -1,4 +1,4 @@
-version: "0.0.24"
+version: "0.0.25"
 id: [FOLDER_NAME]
 name: "[Feature Name]"
 type: feature
