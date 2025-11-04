@@ -7,7 +7,7 @@ export {
   AGENT_FOLDER_MAP,
 } from "./config/agents.js";
 
-export const TAGLINE = "Context-first Spec-Driven Development framework";
+export const TAGLINE = "Context-First Spec-Driven Development framework";
 
 // Centralized green color for cohesive UI
 export const MINT_COLOR = chalk.hex("#D3FFCA");
@@ -20,13 +20,13 @@ export const GREEN_COLOR = chalk.hex("#D3FFCA");
  * Uses mint green (#D3FFCA) for active selections and answers
  */
 export const INQUIRER_THEME = {
-  prefix: MINT_COLOR('?'),
+  prefix: MINT_COLOR("?"),
   style: {
-    answer: chalk.hex('#D3FFCA'),     // Final answer color (mint green)
-    message: chalk.white,              // Question text (white)
-    highlight: chalk.hex('#D3FFCA'),   // Active selection (mint green)
-    help: chalk.dim,                   // Help text (dimmed)
-    error: chalk.red,                  // Error messages (red)
+    answer: chalk.hex("#D3FFCA"), // Final answer color (mint green)
+    message: chalk.white, // Question text (white)
+    highlight: chalk.hex("#D3FFCA"), // Active selection (mint green)
+    help: chalk.dim, // Help text (dimmed)
+    error: chalk.red, // Error messages (red)
   },
 };
 
