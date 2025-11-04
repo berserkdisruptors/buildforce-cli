@@ -131,20 +131,20 @@ function extractWorkflowDescriptions(readmeContent: string): Record<string, { de
   // Set defaults for workflows not found or new ones
   if (!descriptions.basic) {
     descriptions.basic = {
-      description: "Simple workflow for quick updates",
-      useCase: "Recommended for simple updates",
+      description: "Streamlined workflow that goes directly from specification to implementation, skipping research and completion steps",
+      useCase: "Recommended for simple updates and well-understood changes that don't require additional context gathering",
     };
   }
   if (!descriptions.full) {
     descriptions.full = {
-      description: "Complete workflow from research to completion",
-      useCase: "Recommended for new features and bug fixes",
+      description: "Context-aware workflow that accumulates research, materializes it into structured specs & warms up the context window, executes implementation with context consumption, and enriches the knowledge repository upon completion",
+      useCase: "Recommended for new features and bug fixes that benefit from context gathering, research materialization, and knowledge accumulation for future work",
     };
   }
   if (!descriptions.documentation) {
     descriptions.documentation = {
-      description: "Document existing functionality",
-      useCase: "Manual context contribution",
+      description: "Standalone utility workflow that gathers context via research and materializes it directly into searchable context files, bypassing the spec-driven development cycle",
+      useCase: "Recommended for documenting legacy code, discovered patterns, architectural decisions, and existing functionality that doesn't require full spec/plan/build/complete workflow",
     };
   }
 
@@ -156,16 +156,16 @@ function extractWorkflowDescriptions(readmeContent: string): Record<string, { de
  */
 export const DEFAULT_WORKFLOW_DESCRIPTIONS: Record<string, { description: string; useCase: string }> = {
   basic: {
-    description: "Simple workflow for quick updates",
-    useCase: "Recommended for simple updates",
+    description: "Streamlined workflow that goes directly from specification to implementation, skipping research and completion steps",
+    useCase: "Recommended for simple updates and well-understood changes that don't require additional context gathering",
   },
   full: {
-    description: "Complete workflow from research to completion",
-    useCase: "Recommended for new features and bug fixes",
+    description: "Context-aware workflow that accumulates research, materializes it into structured specs & warms up the context window, executes implementation with context consumption, and enriches the knowledge repository upon completion",
+    useCase: "Recommended for new features and bug fixes that benefit from context gathering, research materialization, and knowledge accumulation for future work",
   },
   documentation: {
-    description: "Document existing functionality",
-    useCase: "Manual context contribution",
+    description: "Standalone utility workflow that gathers context via research and materializes it directly into searchable context files, bypassing the spec-driven development cycle",
+    useCase: "Recommended for documenting legacy code, discovered patterns, architectural decisions, and existing functionality that doesn't require full spec/plan/build/complete workflow",
   },
 };
 
