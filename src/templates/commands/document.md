@@ -1,5 +1,5 @@
 ---
-version: "0.0.26"
+version: "0.0.27"
 description: Create or update context files for existing functionality without requiring a spec-driven development session.
 ---
 

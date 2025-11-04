@@ -1,5 +1,5 @@
 ---
-version: "0.0.26"
+version: "0.0.27"
 description: Gather context and information to prepare for a spec-driven development session.
 ---
 
