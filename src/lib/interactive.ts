@@ -1,11 +1,11 @@
-import inquirer from 'inquirer';
+import { select } from '@inquirer/prompts';
 import chalk from 'chalk';
 import figlet from 'figlet';
-import { TAGLINE, MINT_COLOR } from '../constants.js';
+import { TAGLINE, MINT_COLOR, INQUIRER_THEME } from '../constants.js';
 
 /**
  * Interactive selection using arrow keys
- * Uses inquirer for better cross-platform compatibility
+ * Uses @inquirer/prompts for better theming support
  */
 export async function selectWithArrows(
   options: Record<string, string>,
@@ -16,20 +16,16 @@ export async function selectWithArrows(
   const choices = Object.entries(options).map(([key, description]) => ({
     name: `${MINT_COLOR(key)} ${chalk.dim(`(${description})`)}`,
     value: key,
-    short: key,
   }));
 
-  const answer = await inquirer.prompt([
-    {
-      type: 'list',
-      name: 'selection',
-      message: promptText,
-      choices,
-      default: defaultKey,
-    },
-  ]);
+  const answer = await select({
+    message: promptText,
+    choices,
+    default: defaultKey,
+    theme: INQUIRER_THEME,
+  });
 
-  return answer.selection;
+  return answer;
 }
 
 /**

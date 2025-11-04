@@ -45,6 +45,7 @@
     "access": "public"
   },
   "dependencies": {
+    "@inquirer/prompts": "^7.9.0",
     "adm-zip": "^0.5.16",
     "axios": "^1.6.7",
     "boxen": "^7.1.1",
@@ -55,7 +56,6 @@
     "fs-extra": "^11.2.0",
     "glob": "^11.0.3",
     "gradient-string": "^2.0.2",
-    "inquirer": "^9.2.15",
     "log-symbols": "^6.0.0",
     "ora": "^8.0.1",
     "which": "^4.0.0"
@@ -64,7 +64,6 @@
     "@types/adm-zip": "^0.5.7",
     "@types/figlet": "^1.7.0",
     "@types/fs-extra": "^11.0.4",
-    "@types/inquirer": "^9.0.7",
     "@types/node": "^20.11.19",
     "@types/which": "^3.0.3",
     "tsx": "^4.7.1",

@@ -1,8 +1,8 @@
 import fs from "fs-extra";
 import path from "path";
 import chalk from "chalk";
-import inquirer from "inquirer";
-import { MINT_COLOR } from "../../constants.js";
+import { confirm } from "@inquirer/prompts";
+import { MINT_COLOR, INQUIRER_THEME } from "../../constants.js";
 import { createBox } from "../../utils/box.js";
 
 /**
@@ -70,14 +70,11 @@ export async function validateProjectSetup(
         );
       } else {
         // Ask for confirmation
-        const { confirmed } = await inquirer.prompt([
-          {
-            type: "confirm",
-            name: "confirmed",
-            message: "Do you want to continue?",
-            default: false,
-          },
-        ]);
+        const confirmed = await confirm({
+          message: "Do you want to continue?",
+          default: false,
+          theme: INQUIRER_THEME,
+        });
 
         if (!confirmed) {
           console.log(MINT_COLOR("Operation cancelled"));
@@ -94,7 +91,12 @@ export async function validateProjectSetup(
       const errorContent =
         `Directory '${MINT_COLOR(projectName)}' already exists\n` +
         "Please choose a different project name or remove the existing directory.";
-      console.log(createBox(errorContent, { title: "Directory Conflict", borderColor: "red" }));
+      console.log(
+        createBox(errorContent, {
+          title: "Directory Conflict",
+          borderColor: "red",
+        })
+      );
       console.log();
       process.exit(1);
     }
@@ -165,7 +167,12 @@ export function checkAgentTool(
         `Install with: ${MINT_COLOR(installUrl)}\n` +
         `${aiChoices[selectedAi]} is required to continue with this project type.\n\n` +
         `Tip: Use ${MINT_COLOR("--ignore-agent-tools")} to skip this check`;
-      console.log(createBox(errorContent, { title: "Agent Detection Error", borderColor: "red" }));
+      console.log(
+        createBox(errorContent, {
+          title: "Agent Detection Error",
+          borderColor: "red",
+        })
+      );
       console.log();
       process.exit(1);
     }
