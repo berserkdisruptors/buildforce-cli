@@ -32,7 +32,7 @@
     "ai-assisted-development"
   ],
   "author": "Berserk Disruptors",
-  "license": "MIT",
+  "license": "Apache License 2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/berserkdisruptors/buildforce-cli"

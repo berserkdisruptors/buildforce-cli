@@ -133,7 +133,6 @@ related_specs:
   - "new-document-slash-20250105120000 (DOCUMENT command implementation)"
 
 notes: |
-  Inspired by @spec-kit workflow but simplified to 5 core commands + 1 utility command.
   Key innovation: .buildforce/context repository as primary knowledge source.
   RESEARCH command is foundationprovides context for all subsequent commands.
   Each command expects $ARGUMENTS (Claude Code compatible).

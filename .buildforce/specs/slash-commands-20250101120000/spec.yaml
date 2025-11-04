@@ -37,7 +37,6 @@ primary_goals:
 
 secondary_goals:
   - Commands should be Claude Code compatible (use $ARGUMENTS)
-  - Follow principles from @spec-kit but simplified to 5 commands
   - Produce structured outputs (reports, diagrams, file lists) for workflow continuity
   - Eliminate manual context gathering burden (@ file references, architecture explanations)
 
@@ -209,6 +208,5 @@ None at this time. Intent is clear and workflow is well-defined.
 
 # NOTES
 
-inspired_by: "@spec-kit workflow (6+ commands) but simplified to 5 commands"
 key_differentiator: "Project context repository as primary knowledge source"
 first_implementation: "RESEARCH command completed and iterated to 100% flow capture"
