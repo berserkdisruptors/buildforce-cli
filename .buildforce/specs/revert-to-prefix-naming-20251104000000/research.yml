@@ -1,0 +1,175 @@
+id: "revert-to-prefix-naming-20251104000000-research"
+created: "2025-11-04"
+last_updated: "2025-11-04"
+
+summary: |
+  Research on slash command namespacing architecture in Buildforce CLI. Commit d34d931 (Oct 30, 2025)
+  introduced nested command structure (commands/buildforce/*.md) with colon-based invocation (/buildforce:spec).
+  Investigation identified the generate_commands() function in create-release-packages.sh as the key
+  implementation point, affecting all 11 agents across 22 release artifacts (agents × script types).
+
+key_findings:
+  - "Nested structure introduced in commit d34d931 on October 30, 2025 via spec nest-commands-buildforce-folder-20251030085832"
+  - "Commands currently deployed to {agent-folder}/commands/buildforce/ subdirectories across all 11 agents"
+  - "Invocation pattern uses colon separator (/buildforce:spec, /buildforce:research, etc.)"
+  - "5 core commands affected: research, spec, build, complete, document"
+  - "generate_commands() function (lines 40-84 in create-release-packages.sh) creates buildforce/ subdirectory and outputs to nested paths"
+  - "Command templates (src/templates/commands/*.md) reference /buildforce:* invocation pattern"
+  - "Before d34d931, commands used flat structure with no subdirectory nesting"
+
+file_paths:
+  primary:
+    - path: ".github/workflows/scripts/create-release-packages.sh"
+      relevance: "Core script implementing command generation with nested structure (lines 40-84)"
+    - path: "src/templates/commands/spec.md"
+      relevance: "Command template with /buildforce:spec invocation pattern"
+    - path: "src/templates/commands/research.md"
+      relevance: "Command template with /buildforce:research invocation pattern"
+    - path: "src/templates/commands/build.md"
+      relevance: "Command template with /buildforce:build invocation pattern"
+    - path: "src/templates/commands/complete.md"
+      relevance: "Command template with /buildforce:complete invocation pattern"
+    - path: "src/templates/commands/document.md"
+      relevance: "Command template with /buildforce:document invocation pattern"
+
+  secondary:
+    - path: ".buildforce/context/cli-architecture.yaml"
+      relevance: "Architecture documentation with nested structure decision (lines 121-123)"
+    - path: ".buildforce/context/slash-commands.yaml"
+      relevance: "Slash command system documentation"
+    - path: ".buildforce/specs/nest-commands-buildforce-folder-20251030085832/spec.yaml"
+      relevance: "Original spec documenting nested structure implementation"
+    - path: ".buildforce/specs/nest-commands-buildforce-folder-20251030085832/plan.yaml"
+      relevance: "Original implementation plan for nested structure"
+
+mermaid_diagrams:
+  - title: "Current Command Generation Flow (Nested Structure)"
+    description: "Shows how create-release-packages.sh generates nested command structure for different agents"
+    diagram: |
+      ```mermaid
+      graph TD
+          A[create-release-packages.sh] -->|generate_commands| B[Template Processing]
+          B --> C{Agent Type}
+
+          C -->|Claude| D[.claude/commands/buildforce/*.md]
+          C -->|Gemini| E[.gemini/commands/buildforce/*.toml]
+          C -->|Copilot| F[.github/prompts/buildforce/*.prompt.md]
+          C -->|Others| G[{agent}/commands/buildforce/*]
+
+          H[src/templates/commands/*.md] -->|Input| B
+          B -->|Replace Placeholders| I[${SCRIPT}, ${ARGUMENTS}, __AGENT__]
+
+          style D fill:#f9f,stroke:#333
+          style E fill:#f9f,stroke:#333
+          style F fill:#f9f,stroke:#333
+          style G fill:#f9f,stroke:#333
+      ```
+
+data_models:
+  - name: "Command"
+    description: "Data model representing a buildforce command in the generation system"
+    properties:
+      - name: "name"
+        type: "string"
+        required: true
+        description: "Command base name (e.g., 'spec', 'research', 'build')"
+
+      - name: "prefix"
+        type: "string"
+        required: true
+        description: "Namespace prefix ('buildforce')"
+
+      - name: "output_name"
+        type: "string"
+        required: true
+        description: "Final output filename (e.g., 'buildforce.spec.md' for prefix style or 'spec.md' for nested)"
+
+      - name: "agent"
+        type: "string"
+        required: true
+        description: "Target AI agent (claude, gemini, copilot, cursor, qwen, opencode, windsurf, codex, kilocode, auggie, roo)"
+
+      - name: "extension"
+        type: "enum"
+        required: true
+        description: "File extension: 'md' (Claude, Cursor, Windsurf, OpenCode, Kilocode, Auggie, Roo) | 'toml' (Gemini, Qwen) | 'prompt.md' (Copilot, Codex)"
+
+      - name: "output_dir"
+        type: "string"
+        required: true
+        description: "Output directory path (e.g., '.claude/commands' or '.github/prompts')"
+
+      - name: "arg_format"
+        type: "string"
+        required: true
+        description: "Argument placeholder format: '$ARGUMENTS' (md) or '{{args}}' (toml)"
+
+      - name: "script_variant"
+        type: "enum"
+        required: true
+        description: "'sh' (bash) or 'ps' (powershell)"
+
+    relationships:
+      - "Each Command maps to one agent and one script_variant combination"
+      - "Multiple Commands (11 agents × 2 scripts = 22 total) generated per release"
+      - "Commands reference template files in src/templates/commands/"
+
+code_snippets:
+  - title: "Current generate_commands() Function (Nested Structure)"
+    language: "bash"
+    description: "Shows current implementation that creates buildforce/ subdirectory"
+    code: |
+      generate_commands() {
+        local agent=$1 ext=$2 arg_format=$3 output_dir=$4 script_variant=$5
+        mkdir -p "$output_dir/buildforce"  # ← Creates nested subdirectory
+
+        # ... template processing ...
+
+        case $ext in
+          toml)
+            { echo "description = \"$description\""; echo; echo "prompt = \"\"\""; echo "$body"; echo "\"\"\""; } > "$output_dir/buildforce/$name.$ext" ;;  # ← Nested path
+          md)
+            echo "$body" > "$output_dir/buildforce/$name.$ext" ;;  # ← Nested path
+          prompt.md)
+            echo "$body" > "$output_dir/buildforce/$name.$ext" ;;  # ← Nested path
+        esac
+      }
+
+  - title: "Original generate_commands() Function (Flat Structure, Before d34d931)"
+    language: "bash"
+    description: "Shows pre-nested structure implementation with flat directory"
+    code: |
+      generate_commands() {
+        local agent=$1 ext=$2 arg_format=$3 output_dir=$4 script_variant=$5
+        mkdir -p "$output_dir"  # No subdirectory
+
+        # ... template processing ...
+
+        case $ext in
+          toml)
+            { echo "description = \"$description\""; echo; echo "prompt = \"\"\""; echo "$body"; echo "\"\"\""; } > "$output_dir/$name.$ext" ;;  # Flat structure
+          md)
+            echo "$body" > "$output_dir/$name.$ext" ;;  # Flat structure
+          prompt.md)
+            echo "$body" > "$output_dir/$name.$ext" ;;  # Flat structure
+        esac
+      }
+
+architectural_decisions:
+  - pattern: "Nested Command Structure (Current Implementation)"
+    description: "Commands deployed to {agent-folder}/commands/buildforce/ subdirectory with colon-based invocation"
+    rationale: "Provides namespace isolation to prevent collision with user-defined custom commands. Improves discoverability and follows common organizational patterns where tooling commands are grouped together."
+
+  - pattern: "Prefix-based Command Naming (Target Implementation)"
+    description: "Commands deployed to {agent-folder}/commands/ with buildforce. prefix (e.g., buildforce.spec.md) and dot-based invocation"
+    rationale: "Achieves namespace isolation without subdirectory nesting. Keeps flat directory structure while preventing naming collisions through file prefix. May be clearer for some agent systems that prefer flat command directories."
+
+external_references: []
+
+tldr:
+  - "Current state: Commands nested in buildforce/ subdirectory (e.g., .claude/commands/buildforce/spec.md), invoked as /buildforce:spec"
+  - "Desired state: Commands with buildforce. prefix in flat directory (e.g., .claude/commands/buildforce.spec.md), invoked as /buildforce.spec"
+  - "Key commit: d34d931 (Oct 30, 2025) introduced nested structure"
+  - "Files to modify: create-release-packages.sh (revert mkdir and output path), src/templates/commands/*.md (change invocation patterns from : to .)"
+  - "Scope: Affects all 11 agents × 2 script types = 22 release artifacts"
+  - "Related spec: nest-commands-buildforce-folder-20251030085832 documents the original nested structure implementation"

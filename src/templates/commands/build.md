@@ -1,5 +1,5 @@
 ---
-version: "0.0.25"
+version: "0.0.26"
 description: Build the code changes required for the current spec following the plan, with progress tracking, deviation logging, and iterative refinement.
 scripts:
   sh: src/scripts/bash/get-spec-paths.sh --json
@@ -38,6 +38,6 @@ $ARGUMENTS
 
 6. **Code Quality & Testing Guidance**: Before presenting work, verify: (1) code compiles with no errors, (2) run new or relevant automated tests and report results, (3) check for obvious missing pieces. Then provide testing guidance: **what to test** (specific features/scenarios), **how to test** (steps to verify), and **test results** (if automated tests ran). Think of this as submitting a PR—ensure nothing is obviously broken.
 
-7. **Iterative Refinement**: Expect multiple `/buildforce:build` iterations. Each time `/buildforce:build` is called, determine if this is the first implementation or a subsequent refinement based on $ARGUMENTS. Track deviations across all iterations. Ensure each iteration converges toward the user's desired outcome based on their feedback.
+7. **Iterative Refinement**: Expect multiple `/buildforce.build` iterations. Each time `/buildforce.build` is called, determine if this is the first implementation or a subsequent refinement based on $ARGUMENTS. Track deviations across all iterations. Ensure each iteration converges toward the user's desired outcome based on their feedback.
 
 Context: {$ARGUMENTS}
