@@ -58,6 +58,37 @@ export function displayNextSteps(
   selectedAi: string,
   isHere: boolean
 ): void {
+  // Project Ready details
+  const projectReadyLines = [
+    `The ${MINT_COLOR(
+      ".buildforce"
+    )} directory is created and will store your spec-driven development artifacts and context repository:`,
+    "",
+    `  ${MINT_COLOR(
+      ".buildforce/context/"
+    )} - Accumulated project context from completed specs`,
+    `  ${MINT_COLOR(
+      ".buildforce/specs/"
+    )}   - Active and historical spec directories`,
+    "",
+    `Each workflow iteration creates a spec folder:`,
+    `  ${chalk.gray(
+      "feature-name-20251028143052/"
+    )}             - First feature`,
+    `  ${chalk.gray(
+      "another-feature-name-20251029143052-/"
+    )}    - Second feature`,
+    "",
+    `${MINT_COLOR(
+      "IMPORTANT:"
+    )} The .buildforce directory is version-controlled and will be used to track your spec-driven development artifacts and context repository.`,
+  ];
+
+  console.log();
+  console.log(
+    createBox(projectReadyLines.join("\n"), { title: "Project Ready" })
+  );
+
   const stepsLines: string[] = [];
   if (!isHere) {
     stepsLines.push(
@@ -86,62 +117,38 @@ export function displayNextSteps(
   }
 
   stepsLines.push(
-    `${stepNum}. Start using the spec-driven workflow with your AI agent:`
+    `${stepNum}. Start using the spec-driven workflow with ${MINT_COLOR(
+      "slash commands"
+    )} to interact with your AI agent:`
   );
   stepsLines.push(
     "   " +
-      MINT_COLOR("/research") +
-      " - Gather context and prepare for development"
+      MINT_COLOR("/buildfroce.research") +
+      " - Search accumulated project context and explore codebase patterns"
   );
   stepsLines.push(
     "   " +
-      MINT_COLOR("/spec") +
-      "     - Define what to build (requirements & scope)"
+      MINT_COLOR("/buildfroce.spec") +
+      "     - Materialize your intent into a structured specification and plan"
   );
   stepsLines.push(
     "   " +
-      MINT_COLOR("/plan") +
-      "     - Design how to build (architecture & steps)"
+      MINT_COLOR("/buildfroce.build") +
+      "    - Let the agent follow the plan"
   );
   stepsLines.push(
     "   " +
-      MINT_COLOR("/build") +
-      "    - Execute implementation with validation"
+      MINT_COLOR("/buildfroce.complete") +
+      " - Validate requirements and store the knowledge in the context repository"
   );
   stepsLines.push(
     "   " +
-      MINT_COLOR("/complete") +
-      " - Finalize spec and update knowledge base"
+      MINT_COLOR("/buildfroce.document") +
+      " - Create context files for existing functionality without creating a spec"
   );
 
   console.log();
   console.log(createBox(stepsLines.join("\n"), { title: "Next Steps" }));
-
-  // Workflow details
-  const workflowLines = [
-    chalk.bold("Understanding the Workflow"),
-    "",
-    `The .buildforce directory stores project knowledge:`,
-    `  ${MINT_COLOR(
-      ".buildforce/context/"
-    )} - Accumulated project context from completed specs`,
-    `  ${MINT_COLOR(
-      ".buildforce/specs/"
-    )}   - Active and historical spec directories`,
-    "",
-    `Each workflow iteration creates a spec folder:`,
-    `  ${chalk.gray("001-feature-name/")}  - First feature`,
-    `  ${chalk.gray("002-another/")}       - Second feature`,
-    `  ${chalk.gray("...")}`,
-    "",
-    `Start your first feature with ${MINT_COLOR(
-      "/research"
-    )} to gather context,`,
-    `then ${MINT_COLOR("/spec")} to define what you're building.`,
-  ];
-
-  console.log();
-  console.log(createBox(workflowLines.join("\n"), { title: "Workflow Guide" }));
 
   // Codex warning
   if (selectedAi === "codex") {
@@ -158,4 +165,15 @@ export function displayNextSteps(
     console.log();
     console.log(createBox(warningText, { title: "Slash Commands in Codex" }));
   }
+
+  const proTipsLines = [
+    `1. Use ${MINT_COLOR("/buildforce.research")} and then ${MINT_COLOR(
+      "/buildforce.document"
+    )} to create context files for existing functionality without creating a spec`,
+    "",
+    `2. Iterate as much as you want on each phase (research, spec or build) until you are confident that the agent has all the needed context, your intent is captured properly, you agree with the plan and the implementation is complete`,
+  ];
+
+  console.log();
+  console.log(createBox(proTipsLines.join("\n"), { title: "Pro Tips" }));
 }

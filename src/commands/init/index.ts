@@ -121,10 +121,10 @@ export async function initCommand(options: InitOptions): Promise<void> {
     });
 
     console.log();
-    console.log(GREEN_COLOR.bold("Project ready."));
+    console.log(GREEN_COLOR.bold("Buildforce is initialized."));
 
     // Display post-setup information
-    displayAgentSecurityNotice(selectedAi, AGENT_FOLDER_MAP);
+    // displayAgentSecurityNotice(selectedAi, AGENT_FOLDER_MAP);
     displayNextSteps(projectName, projectPath, selectedAi, isHere);
   } catch (e: any) {
     await handleSetupError(e, projectPath, isHere, debug);
