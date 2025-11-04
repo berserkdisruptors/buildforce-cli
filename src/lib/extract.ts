@@ -5,6 +5,7 @@ import chalk from "chalk";
 import os from "os";
 import { downloadTemplateFromGithub } from "./github.js";
 import { StepTracker } from "./step-tracker.js";
+import { MINT_COLOR } from "../constants.js";
 
 /**
  * Download and extract template to create a new project
@@ -98,7 +99,7 @@ export async function downloadAndExtractTemplate(
       tracker.add("zip-list", "Archive contents");
       tracker.complete("zip-list", `${extractedItems.length} entries`);
     } else if (verbose) {
-      console.log(chalk.cyan(`ZIP contains ${extractedItems.length} items`));
+      console.log(MINT_COLOR(`ZIP contains ${extractedItems.length} items`));
     }
 
     // Determine source directory (handle GitHub-style nested ZIP)
@@ -116,7 +117,7 @@ export async function downloadAndExtractTemplate(
         tracker.add("flatten", "Flatten nested directory");
         tracker.complete("flatten");
       } else if (verbose) {
-        console.log(chalk.cyan("Found nested directory structure"));
+        console.log(MINT_COLOR("Found nested directory structure"));
       }
     }
 
@@ -136,7 +137,7 @@ export async function downloadAndExtractTemplate(
       if (itemStat.isDirectory()) {
         if (await fs.pathExists(destPath)) {
           if (verbose && !tracker) {
-            console.log(chalk.yellow(`Merging directory: ${item}`));
+            console.log(MINT_COLOR(`Merging directory: ${item}`));
           }
           // Recursively copy directory contents
           await fs.copy(sourcePath, destPath, { overwrite: true });
@@ -145,7 +146,7 @@ export async function downloadAndExtractTemplate(
         }
       } else {
         if ((await fs.pathExists(destPath)) && verbose && !tracker) {
-          console.log(chalk.yellow(`Overwriting file: ${item}`));
+          console.log(MINT_COLOR(`Overwriting file: ${item}`));
         }
         await fs.copy(sourcePath, destPath);
       }
@@ -154,7 +155,7 @@ export async function downloadAndExtractTemplate(
     if (tracker) {
       tracker.complete("extracted-summary", `${sourceItems.length} items`);
     } else if (verbose) {
-      console.log(chalk.cyan("Template files extracted"));
+      console.log(MINT_COLOR("Template files extracted"));
     }
 
     // Clean up temp directory

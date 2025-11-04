@@ -3,7 +3,7 @@ import fs from "fs-extra";
 import path from "path";
 import chalk from "chalk";
 import ora from "ora";
-import { REPO_OWNER, REPO_NAME } from "../constants.js";
+import { REPO_OWNER, REPO_NAME, MINT_COLOR } from "../constants.js";
 import { ReleaseData, ReleaseMetadata } from "../types.js";
 import { getGithubAuthHeaders } from "../utils/index.js";
 
@@ -43,9 +43,9 @@ export async function downloadTemplateFromGithub(
     const filename = path.basename(localZipPath);
 
     if (verbose) {
-      console.log(chalk.cyan("Using local artifact:"), filename);
-      console.log(chalk.cyan("Size:"), stats.size.toLocaleString(), "bytes");
-      console.log(chalk.cyan("Source:"), "local");
+      console.log(MINT_COLOR("Using local artifact:"), filename);
+      console.log(MINT_COLOR("Size:"), stats.size.toLocaleString(), "bytes");
+      console.log(MINT_COLOR("Source:"), "local");
     }
 
     const metadata: ReleaseMetadata = {
@@ -69,7 +69,7 @@ export async function downloadTemplateFromGithub(
   });
 
   if (verbose) {
-    console.log(chalk.cyan("Fetching latest release information..."));
+    console.log(MINT_COLOR("Fetching latest release information..."));
   }
 
   // For private repos, /releases/latest may not work reliably
@@ -127,7 +127,7 @@ export async function downloadTemplateFromGithub(
         )})`
     );
     const assetNames = assets.map((a) => a.name).join("\n");
-    console.error(chalk.yellow("Available Assets:"));
+    console.error(MINT_COLOR("Available Assets:"));
     console.error(assetNames || "(no assets)");
     throw new Error("No matching release asset found");
   }
@@ -138,15 +138,15 @@ export async function downloadTemplateFromGithub(
   const fileSize = asset.size;
 
   if (verbose) {
-    console.log(chalk.cyan("Found template:"), filename);
-    console.log(chalk.cyan("Size:"), fileSize.toLocaleString(), "bytes");
-    console.log(chalk.cyan("Release:"), releaseData.tag_name);
+    console.log(MINT_COLOR("Found template:"), filename);
+    console.log(MINT_COLOR("Size:"), fileSize.toLocaleString(), "bytes");
+    console.log(MINT_COLOR("Release:"), releaseData.tag_name);
   }
 
   const zipPath = path.join(downloadDir, filename);
 
   if (verbose) {
-    console.log(chalk.cyan("Downloading template..."));
+    console.log(MINT_COLOR("Downloading template..."));
   }
 
   const spinner = showProgress ? ora("Downloading...").start() : null;

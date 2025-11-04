@@ -6,7 +6,7 @@
   <img src=".github/assets/logo.png" alt="BuildForce CLI Logo" width="250"/>
 </picture>
 
-**Context-first Spec-Driven Development framework**
+**Context-First Spec-Driven Development framework**
 
 [![npm version](https://img.shields.io/npm/v/@buildforce/cli)](https://www.npmjs.com/package/@buildforce/cli)
 [![npm downloads](https://img.shields.io/npm/dm/@buildforce/cli)](https://www.npmjs.com/package/@buildforce/cli)

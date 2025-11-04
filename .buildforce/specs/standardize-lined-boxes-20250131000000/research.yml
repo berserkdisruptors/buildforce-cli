@@ -1,0 +1,168 @@
+id: standardize-lined-boxes-20250131000000-research
+created: "2025-01-31"
+last_updated: "2025-01-31"
+
+summary: |
+  Research identified two different box implementations across the CLI: `boxen` library (init command, mint borders) and custom `boxSection` function (help/examples, gray borders). This inconsistency violates the established mint color standard and creates visual fragmentation. Standardizing on `boxen` with mint borders and extracting to a shared utility will unify the visual experience.
+
+key_findings:
+  - Two box implementations exist: `boxen` library uses mint (#3EB489) borders, custom `boxSection` uses gray borders
+  - Code duplication: `boxSection` function duplicated in `cli.ts` and `examples.ts`
+  - Border color inconsistency violates established mint color standard (#3EB489)
+  - Different visual styles: rounded (boxen) vs sharp corners (custom boxSection)
+  - Missing usage: `check` and `upgrade` commands don't use boxes but could benefit
+
+file_paths:
+  primary:
+    - path: "src/commands/init/output.ts"
+      relevance: "Uses boxen library for setup info, security notices, next steps (4 instances)"
+    - path: "src/commands/init/validation.ts"
+      relevance: "Uses boxen for error boxes with red borders (2 instances)"
+    - path: "src/commands/init/setup.ts"
+      relevance: "Uses boxen for error/debug boxes (2 instances)"
+    - path: "src/cli.ts"
+      relevance: "Custom boxSection function for CLI help sections (4 instances, duplicated implementation)"
+    - path: "src/commands/examples.ts"
+      relevance: "Custom boxSection function for workflow display (1 instance, duplicated from cli.ts)"
+
+  secondary:
+    - path: "src/constants.ts"
+      relevance: "MINT_COLOR and GREEN_COLOR definitions - used for consistent styling"
+    - path: "src/lib/step-tracker.ts"
+      relevance: "Step tracking component (no boxes currently)"
+    - path: "src/commands/check.ts"
+      relevance: "No boxes currently used"
+    - path: "src/commands/upgrade/index.ts"
+      relevance: "No boxes currently used"
+    - path: "package.json"
+      relevance: "boxen dependency (v7.1.1) already included"
+
+code_snippets:
+  - title: "Current boxen usage (init command)"
+    language: "typescript"
+    description: "How boxen is currently used with mint borders in init command"
+    code: |
+      import boxen from "boxen";
+      import { MINT_COLOR, GREEN_COLOR } from "../../constants.js";
+
+      // Usage examples:
+      boxen(setupLines.join("\n"), {
+        padding: 1,
+        borderColor: "#3EB489", // Mint green
+      });
+
+      boxen(content, {
+        title: MINT_COLOR("Agent Folder Security"),
+        padding: 1,
+        borderColor: "#3EB489",
+      });
+
+  - title: "Current custom boxSection implementation"
+    language: "typescript"
+    description: "Custom boxSection function with gray borders used in help/examples"
+    code: |
+      function boxSection(
+        title: string,
+        contentLines: string[],
+        helpWidth?: number,
+        fixedInnerWidth?: number,
+      ): string {
+        // Uses box-drawing characters: ┌─┐, ├─┤, └─┘, │
+        const top = `┌${"─".repeat(maxLine)}┐`;
+        const sep = `├${"─".repeat(maxLine)}┤`;
+        const bot = `└${"─".repeat(maxLine)}┘`;
+
+        // Gray borders, white bold titles
+        return [
+          chalk.gray(top),
+          titleLine, // chalk.bold.white(title)
+          chalk.gray(sep),
+          ...body,
+          chalk.gray(bot),
+        ].join("\n");
+      }
+
+  - title: "Recommended shared box utility"
+    language: "typescript"
+    description: "Proposed shared utility function using boxen with standardized mint borders"
+    code: |
+      // src/utils/box.ts (or src/lib/box.ts)
+      import boxen from "boxen";
+      import { MINT_COLOR } from "../constants.js";
+
+      export interface BoxOptions {
+        title?: string;
+        padding?: number;
+        borderColor?: string;
+        width?: number;
+      }
+
+      export function createBox(
+        content: string | string[],
+        options: BoxOptions = {}
+      ): string {
+        const lines = Array.isArray(content) ? content.join("\n") : content;
+        return boxen(lines, {
+          padding: options.padding ?? 1,
+          borderColor: options.borderColor ?? "#3EB489", // Default mint
+          title: options.title ? MINT_COLOR(options.title) : undefined,
+          width: options.width,
+        });
+      }
+
+data_models:
+  - name: "BoxConfig"
+    description: "Configuration interface for creating standardized boxes"
+    properties:
+      - name: "content"
+        type: "string | string[]"
+        required: true
+        description: "Single string or array of lines to display in box"
+
+      - name: "title"
+        type: "string"
+        required: false
+        description: "Optional title (colored mint) displayed at top of box"
+
+      - name: "padding"
+        type: "number"
+        required: false
+        description: "Padding inside box (default: 1)"
+
+      - name: "borderColor"
+        type: "string"
+        required: false
+        description: "Hex color for border (default: '#3EB489' mint)"
+
+      - name: "width"
+        type: "number"
+        required: false
+        description: "Fixed width constraint (optional)"
+
+architectural_decisions:
+  - pattern: "Standardize on boxen library"
+    description: "Use boxen library for all box components across CLI instead of custom implementation"
+    rationale: "More flexible styling, consistent with init command, better cross-platform support, rounded borders more modern, supports mint color consistently"
+
+  - pattern: "Extract to shared utility"
+    description: "Create centralized box creation function in utils/lib directory"
+    rationale: "Eliminates code duplication, ensures consistent styling, single source of truth for box configuration"
+
+  - pattern: "Mint color standard"
+    description: "All non-error boxes use mint (#3EB489) border color, error boxes use red"
+    rationale: "Aligns with established CLI color standard, provides cohesive visual identity"
+
+external_references:
+  - title: "boxen Library Documentation"
+    url: "https://github.com/sindresorhus/boxen"
+    relevance: "Library supports various border styles, colors (hex/name), padding, width, title. Verified working with #3EB489 hex code."
+
+tldr:
+  - Two box implementations exist: `boxen` (init, mint) vs custom `boxSection` (help/examples, gray)
+  - Border color mismatch violates mint (#3EB489) standard - init uses mint, help/examples use gray
+  - Code duplication: `boxSection` duplicated in `cli.ts` and `examples.ts`
+  - Standardize on `boxen` library with mint borders, extract to shared utility
+  - Migration scope: 7 files need updates (init/output.ts, init/validation.ts, init/setup.ts, cli.ts, examples.ts, plus new utility)
+  - Previous color standardization spec exists, suggesting ongoing UI consistency work
+  - Different visual styles (rounded vs sharp) create inconsistent user experience
+

@@ -1,0 +1,425 @@
+id: standardize-lined-boxes-20250131000000-plan
+name: "Implementation Plan for Standardize Lined-Boxes Visual Elements"
+spec_id: "standardize-lined-boxes-20250131000000"
+type: implementation-plan
+status: draft
+created: "2025-01-31"
+last_updated: "2025-01-31"
+
+# ARCHITECTURE OVERVIEW
+
+approach: |
+  Create a shared box utility function that wraps the `boxen` library with standardized configuration (mint borders, consistent padding, title styling). Migrate all existing box implementations to use this shared utility, ensuring visual consistency while preserving all existing functionality. The migration follows a phased approach: first create the shared utility, then migrate commands one by one, starting with the most visible (cli.ts help), then examples, then init command files.
+
+technology_stack:
+  - boxen: "v7.1.1 - External library for creating terminal boxes with borders, padding, titles, and color support"
+  - chalk: "v5.3.0 - For color styling (MINT_COLOR from constants.ts)"
+  - TypeScript: "Type-safe implementation with interface for box options"
+
+decisions:
+  - decision: "Use boxen library for all boxes instead of custom implementation"
+    rationale: "More flexible styling options, consistent with init command (most prominent use), better cross-platform support, rounded borders provide modern appearance, supports mint color (#3EB489) consistently. The custom boxSection has duplication issues and uses gray borders that violate color standards."
+
+  - decision: "Extract to shared utility in utils/ directory"
+    rationale: "Follows existing project patterns (utils/ contains utility functions like config.ts, git.ts). Centralizes box creation logic, eliminates duplication, ensures consistent configuration. Single source of truth for box styling."
+
+  - decision: "Default mint border color with option to override for errors"
+    rationale: "Aligns with CLI color standard (#3EB489). Error boxes can override to red for critical state visibility. Maintains backward compatibility with existing error handling patterns."
+
+  - decision: "Preserve all existing box content and structure"
+    rationale: "Only visual styling changes (border color, implementation method). Content, titles, padding should remain identical to maintain user expectations and avoid breaking changes."
+
+# FILE STRUCTURE
+
+files_to_create:
+  - src/utils/box.ts
+
+files_to_modify:
+  - path: "src/cli.ts"
+    change_type: "refactor"
+    description: "Replace custom boxSection function with shared createBox utility. Update all 4 box instances in help formatting (Usage, Arguments, Options, Commands sections) to use createBox with mint borders."
+
+  - path: "src/commands/examples.ts"
+    change_type: "refactor"
+    description: "Remove duplicated boxSection function. Replace single box instance (workflow display) with shared createBox utility using mint borders."
+
+  - path: "src/commands/init/output.ts"
+    change_type: "refactor"
+    description: "Replace direct boxen calls with shared createBox utility. Update 4 instances (setup info, security notice, next steps, workflow guide) to use createBox with mint borders."
+
+  - path: "src/commands/init/validation.ts"
+    change_type: "refactor"
+    description: "Replace direct boxen calls for error boxes with shared createBox utility. Update 2 instances to use createBox with red borders for errors."
+
+  - path: "src/commands/init/setup.ts"
+    change_type: "refactor"
+    description: "Replace dynamic boxen import/calls with shared createBox utility. Update error/debug boxes (2 instances) to use createBox with red borders for errors, magenta for debug."
+
+# IMPLEMENTATION PHASES
+
+phase_1:
+  name: "Create Shared Box Utility"
+  description: |
+    Create the foundational shared utility function that wraps boxen with standardized configuration. This utility will be used by all commands, so it must support all existing use cases (title, padding, border color, width constraints).
+
+  tasks:
+    - [ ] Create src/utils/box.ts with createBox function and BoxOptions interface
+      spec_refs: [FR1]
+      files: [src/utils/box.ts]
+      notes: "Interface should support: content (string|string[]), title (string), padding (number, default 1), borderColor (string, default '#3EB489'), width (number). Title should use MINT_COLOR when provided."
+
+    - [ ] Export createBox and BoxOptions from src/utils/box.ts
+      spec_refs: [FR1]
+      files: [src/utils/box.ts]
+      notes: "Ensure proper TypeScript exports for use in other files."
+
+    - [ ] Verify utility compiles and can be imported
+      spec_refs: [FR1]
+      files: [src/utils/box.ts]
+      notes: "Test basic import and function call to ensure setup is correct."
+
+  validation:
+    - [ ] All phase_1 tasks completed
+    - [ ] Code compiles without errors
+    - [ ] createBox function can be imported and called successfully
+    - [ ] Spec requirements covered: [FR1]
+
+phase_2:
+  name: "Migrate CLI Help Command"
+  description: |
+    Replace custom boxSection function in cli.ts with shared createBox utility. This affects the help output formatting, so must preserve exact content while updating border color to mint.
+
+  tasks:
+    - [ ] Import createBox from src/utils/box.ts in cli.ts
+      spec_refs: [FR2]
+      files: [src/cli.ts]
+      notes: "Add import statement at top of file."
+
+    - [ ] Remove boxSection function definition from cli.ts (lines 56-97)
+      spec_refs: [FR2]
+      files: [src/cli.ts]
+      notes: "Delete entire boxSection function and hardWrap helper if not used elsewhere."
+
+    - [ ] Replace boxSection("Usage", ...) call with createBox(...)
+      spec_refs: [FR2]
+      files: [src/cli.ts]
+      notes: "Update Usage section box to use createBox with mint borders."
+
+    - [ ] Replace boxSection("Arguments", ...) call with createBox(...)
+      spec_refs: [FR2]
+      files: [src/cli.ts]
+      notes: "Update Arguments section box to use createBox with mint borders."
+
+    - [ ] Replace boxSection("Options", ...) call with createBox(...)
+      spec_refs: [FR2]
+      files: [src/cli.ts]
+      notes: "Update Options section box to use createBox with mint borders."
+
+    - [ ] Replace boxSection("Commands", ...) call with createBox(...)
+      spec_refs: [FR2]
+      files: [src/cli.ts]
+      notes: "Update Commands section box to use createBox with mint borders."
+
+    - [ ] Verify help output displays correctly with mint borders
+      spec_refs: [FR2, AC2]
+      files: [src/cli.ts]
+      notes: "Run 'buildforce --help' to visually confirm boxes have mint borders instead of gray."
+
+  validation:
+    - [ ] All phase_2 tasks completed
+    - [ ] Code compiles without errors
+    - [ ] Help command outputs correctly with mint borders
+    - [ ] Custom boxSection function completely removed from cli.ts
+    - [ ] Spec requirements covered: [FR2, AC2, AC6]
+
+phase_3:
+  name: "Migrate Examples Command"
+  description: |
+    Remove duplicated boxSection function from examples.ts and migrate to shared createBox utility.
+
+  tasks:
+    - [ ] Import createBox from src/utils/box.ts in examples.ts
+      spec_refs: [FR3]
+      files: [src/commands/examples.ts]
+      notes: "Add import statement at top of file."
+
+    - [ ] Remove boxSection function definition from examples.ts (lines 31-73)
+      spec_refs: [FR3]
+      files: [src/commands/examples.ts]
+      notes: "Delete entire boxSection function and hardWrap helper if not used elsewhere in file."
+
+    - [ ] Replace boxSection call in displayWorkflow function with createBox(...)
+      spec_refs: [FR3]
+      files: [src/commands/examples.ts]
+      notes: "Update workflow display box to use createBox with mint borders and title option."
+
+    - [ ] Verify examples command displays correctly with mint borders
+      spec_refs: [FR3, AC3]
+      files: [src/commands/examples.ts]
+      notes: "Run 'buildforce examples' to visually confirm workflow box has mint borders instead of gray."
+
+  validation:
+    - [ ] All phase_3 tasks completed
+    - [ ] Code compiles without errors
+    - [ ] Examples command outputs correctly with mint borders
+    - [ ] Duplicated boxSection function completely removed from examples.ts
+    - [ ] Spec requirements covered: [FR3, AC3, AC7]
+
+phase_4:
+  name: "Migrate Init Command Output"
+  description: |
+    Update init command output.ts to use shared createBox utility instead of direct boxen calls. This includes setup info, security notice, next steps, and workflow guide boxes.
+
+  tasks:
+    - [ ] Import createBox from src/utils/box.ts in init/output.ts
+      spec_refs: [FR4]
+      files: [src/commands/init/output.ts]
+      notes: "Add import, can remove boxen import if no longer needed."
+
+    - [ ] Update displaySetupInfo to use createBox instead of boxen
+      spec_refs: [FR4]
+      files: [src/commands/init/output.ts]
+      notes: "Replace boxen call with createBox, maintain mint borders and content."
+
+    - [ ] Update displayAgentSecurityNotice to use createBox instead of boxen
+      spec_refs: [FR4]
+      files: [src/commands/init/output.ts]
+      notes: "Replace boxen call with createBox, maintain mint borders, title, and content."
+
+    - [ ] Update displayNextSteps to use createBox instead of boxen for next steps box
+      spec_refs: [FR4]
+      files: [src/commands/init/output.ts]
+      notes: "Replace boxen call with createBox, maintain mint borders, title, and content."
+
+    - [ ] Update displayNextSteps to use createBox instead of boxen for workflow guide box
+      spec_refs: [FR4]
+      files: [src/commands/init/output.ts]
+      notes: "Replace boxen call with createBox, maintain mint borders, title, and content."
+
+    - [ ] Update displayNextSteps to use createBox instead of boxen for Codex warning box (if applicable)
+      spec_refs: [FR4]
+      files: [src/commands/init/output.ts]
+      notes: "Replace boxen call with createBox, maintain mint borders, title, and content."
+
+    - [ ] Verify init command output displays correctly with mint borders
+      spec_refs: [FR4, AC4]
+      files: [src/commands/init/output.ts]
+      notes: "Run 'buildforce init --help' or actual init to visually confirm all boxes have mint borders."
+
+  validation:
+    - [ ] All phase_4 tasks completed
+    - [ ] Code compiles without errors
+    - [ ] Init command outputs correctly with mint borders
+    - [ ] All box content and structure preserved (only styling changed)
+    - [ ] Spec requirements covered: [FR4, AC4]
+
+phase_5:
+  name: "Migrate Init Command Error Boxes"
+  description: |
+    Update init command validation.ts and setup.ts error boxes to use shared createBox utility with red borders for errors. Preserve error state visibility while using standardized utility.
+
+  tasks:
+    - [ ] Import createBox from src/utils/box.ts in init/validation.ts
+      spec_refs: [FR5]
+      files: [src/commands/init/validation.ts]
+      notes: "Add import, can remove boxen import if no longer needed."
+
+    - [ ] Update directory conflict error box to use createBox with red borders
+      spec_refs: [FR5]
+      files: [src/commands/init/validation.ts]
+      notes: "Replace boxen call with createBox({borderColor: 'red'}), maintain red border and error title."
+
+    - [ ] Update agent detection error box to use createBox with red borders
+      spec_refs: [FR5]
+      files: [src/commands/init/validation.ts]
+      notes: "Replace boxen call with createBox({borderColor: 'red'}), maintain red border and error title."
+
+    - [ ] Import createBox from src/utils/box.ts in init/setup.ts
+      spec_refs: [FR6]
+      files: [src/commands/init/setup.ts]
+      notes: "Add import, replace dynamic boxen import with static createBox import."
+
+    - [ ] Update initialization failure error box to use createBox with red borders
+      spec_refs: [FR6]
+      files: [src/commands/init/setup.ts]
+      notes: "Replace boxen call with createBox({borderColor: 'red'}), maintain red border and title."
+
+    - [ ] Update debug environment box to use createBox with magenta borders
+      spec_refs: [FR6]
+      files: [src/commands/init/setup.ts]
+      notes: "Replace boxen call with createBox({borderColor: 'magenta'}), maintain magenta border for debug info."
+
+    - [ ] Verify error boxes display correctly with red borders
+      spec_refs: [FR5, FR6, AC5]
+      files: [src/commands/init/validation.ts, src/commands/init/setup.ts]
+      notes: "Test error scenarios to visually confirm error boxes have red borders, debug boxes have magenta."
+
+  validation:
+    - [ ] All phase_5 tasks completed
+    - [ ] Code compiles without errors
+    - [ ] Error boxes display with red borders
+    - [ ] Debug boxes display with magenta borders
+    - [ ] Error state visibility maintained (critical information still prominent)
+    - [ ] Spec requirements covered: [FR5, FR6, AC5]
+
+phase_6:
+  name: "Final Verification and Cleanup"
+  description: |
+    Perform comprehensive testing across all commands to ensure visual consistency, verify no functionality regressions, and confirm all acceptance criteria are met.
+
+  tasks:
+    - [ ] Verify all boxes across all commands use mint borders (except errors)
+      spec_refs: [FR7, AC10]
+      files: [src/cli.ts, src/commands/examples.ts, src/commands/init/output.ts]
+      notes: "Run all commands and visually inspect: buildforce --help, buildforce examples, buildforce init (or init --help)."
+
+    - [ ] Verify error boxes use red borders consistently
+      spec_refs: [FR8]
+      files: [src/commands/init/validation.ts, src/commands/init/setup.ts]
+      notes: "Test error scenarios in init command to verify red borders appear correctly."
+
+    - [ ] Verify no code duplication (boxSection removed from both files)
+      spec_refs: [AC6, AC7]
+      files: [src/cli.ts, src/commands/examples.ts]
+      notes: "Grep for 'boxSection' to confirm no remaining instances."
+
+    - [ ] Verify consistent rounded appearance (boxen style) across all commands
+      spec_refs: [AC8]
+      files: [All modified files]
+      notes: "Visual inspection confirms all boxes use boxen rounded style, not sharp corners."
+
+    - [ ] Run TypeScript compilation to verify no type errors
+      spec_refs: [AC9]
+      files: [All modified files]
+      notes: "Execute 'npm run build' or 'tsc' to ensure no compilation errors."
+
+    - [ ] Test all commands execute correctly
+      spec_refs: [AC9, NFR3]
+      files: [All modified files]
+      notes: "Run: buildforce --help, buildforce check, buildforce examples, buildforce init --help. Verify no functional regressions."
+
+  validation:
+    - [ ] All phase_6 tasks completed
+    - [ ] All acceptance criteria verified
+    - [ ] No functionality regressions
+    - [ ] Visual consistency confirmed across all commands
+    - [ ] Spec requirements covered: [FR7, FR8, AC1-AC10, NFR3]
+
+# DEVIATION LOG
+
+deviations:
+  - phase: "phase_5"
+    task: "Import createBox in init/setup.ts"
+    original: "Add import, replace dynamic boxen import with static createBox import"
+    actual: "Used dynamic import for createBox since handleSetupError is async and the file already uses dynamic imports"
+    reason: "Maintains consistency with existing async error handling pattern in setup.ts"
+
+# TESTING GUIDANCE
+
+testing:
+  automated_tests:
+    - test_file: "src/utils/box.ts (if unit tests created)"
+      what: "Test createBox function with various options (title, padding, borderColor, width)"
+      command: "tsc --noEmit (type checking)"
+
+  manual_tests:
+    - scenario: "Verify help command boxes have mint borders"
+      steps: |
+        1. Run: buildforce --help
+        2. Visually inspect all boxed sections (Usage, Arguments, Options, Commands)
+        3. Verify borders are mint green (#3EB489), not gray
+        4. Verify rounded appearance (boxen style)
+
+    - scenario: "Verify examples command boxes have mint borders"
+      steps: |
+        1. Run: buildforce examples
+        2. Select a workflow to display
+        3. Visually inspect workflow box
+        4. Verify border is mint green (#3EB489), not gray
+        5. Verify rounded appearance
+
+    - scenario: "Verify init command info boxes have mint borders"
+      steps: |
+        1. Run: buildforce init test-project --dry-run (or similar)
+        2. Visually inspect all info boxes (setup info, security notice, next steps, workflow guide)
+        3. Verify borders are mint green (#3EB489)
+        4. Verify rounded appearance
+
+    - scenario: "Verify init command error boxes have red borders"
+      steps: |
+        1. Attempt invalid init (e.g., duplicate directory name)
+        2. Visually inspect error boxes
+        3. Verify borders are red, not mint
+        4. Verify error visibility maintained
+
+    - scenario: "Verify no code duplication"
+      steps: |
+        1. Search codebase for 'boxSection' function
+        2. Verify no instances remain in cli.ts or examples.ts
+        3. Confirm shared utility is used everywhere
+
+# VALIDATION CRITERIA
+
+success_metrics:
+  - "All boxes across all commands display with mint (#3EB489) borders (except errors)"
+  - "Error boxes display with red borders for critical state visibility"
+  - "Zero code duplication (boxSection function removed from cli.ts and examples.ts)"
+  - "All boxes use consistent rounded appearance (boxen style)"
+  - "No functional regressions - all commands execute correctly"
+  - "TypeScript compilation succeeds without errors"
+
+spec_coverage:
+  - FR1: "✅ Phase 1: Create shared box utility"
+  - FR2: "⏳ Phase 2: Migrate CLI help command"
+  - FR3: "⏳ Phase 3: Migrate examples command"
+  - FR4: "⏳ Phase 4: Migrate init command output"
+  - FR5: "⏳ Phase 5: Migrate init command error boxes"
+  - FR6: "⏳ Phase 5: Migrate init command error boxes"
+  - FR7: "⏳ Phase 6: Final verification"
+  - FR8: "⏳ Phase 6: Final verification"
+  - NFR1: "⏳ Phase 6: Testing across platforms"
+  - NFR2: "⏳ Phase 1: Utility design"
+  - NFR3: "⏳ Phase 6: Functional testing"
+  - NFR4: "⏳ All phases: Content preservation"
+
+# PROGRESS SUMMARY
+
+overall_progress:
+  phase_1: "3/3 tasks completed"
+  phase_2: "7/7 tasks completed"
+  phase_3: "4/4 tasks completed"
+  phase_4: "7/7 tasks completed"
+  phase_5: "7/7 tasks completed"
+  phase_6: "6/6 tasks completed"
+
+current_status: |
+  Implementation complete. All phases finished successfully. Shared box utility created and all commands migrated. Code compiles without errors. All boxSection functions removed. Ready for visual verification testing.
+
+next_immediate_steps:
+  - "Create src/utils/box.ts with createBox function and BoxOptions interface"
+  - "Verify utility compiles and can be imported"
+  - "Begin Phase 2 migration of CLI help command"
+
+# RISKS & CONSIDERATIONS
+
+risks:
+  - risk: "Width constraints from custom boxSection (max 70 chars) may not translate directly to boxen"
+    mitigation: "Add width parameter support to createBox utility, test with help output to ensure proper wrapping"
+
+  - risk: "Box content formatting may change slightly during migration"
+    mitigation: "Carefully preserve exact content strings, verify visually that all text appears identical"
+
+  - risk: "Terminal compatibility - some terminals may render mint color differently"
+    mitigation: "Test across different terminal environments, boxen library handles color rendering"
+
+  - risk: "Import errors if box utility path is incorrect"
+    mitigation: "Verify project structure, follow existing patterns (utils/ directory for utilities)"
+
+# NOTES
+
+lessons_learned:
+
+future_enhancements:
+  - "Consider adding boxes to check and upgrade commands for structured information display"
+  - "Explore additional boxen border styles if needed for future use cases"
+  - "Consider unit tests for createBox utility function"

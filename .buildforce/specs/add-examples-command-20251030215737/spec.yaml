@@ -1,0 +1,173 @@
+id: add-examples-command-20251030215737
+name: "Examples Command"
+type: feature
+status: draft
+created: "2025-10-30"
+last_updated: "2025-11-01"
+
+summary: |
+  Add a CLI command `buildforce examples` that presents an interactive menu to select from 6 workflows
+  (Basic, Full, Documentation, Context Centering, Contribute to Existing Spec, Research During Build), then displays the selected workflow's example with
+  command sequence, description, and use case. Allows users to go back and select another workflow after viewing.
+  Extracts workflow details dynamically from README.md. Uses white color for banner and box titles, mint color (#3EB489) for options and section labels to match CLI help output styling.
+  Adds discoverability message in CLI help output promoting the examples command.
+
+# INTENT / PROBLEM STATEMENT
+
+problem: |
+  Users need to reference workflow examples and use cases, but currently must search through README.md manually.
+  There's no quick CLI command to view available workflows, their command sequences, and when to use each one.
+  This makes it harder for users to remember workflow patterns and discover new ways to use Buildforce effectively.
+
+motivation: |
+  By providing a dedicated `examples` command, users can quickly reference workflows without opening README.md.
+  This improves discoverability of workflow patterns, helps users choose the right workflow for their use case,
+  and provides quick access to command examples. The command serves as an interactive reference guide that
+  makes Buildforce more approachable for new users and serves as a reminder for experienced users.
+
+# GOALS
+
+primary_goals:
+  - Enable users to select and view workflow examples via interactive CLI command
+  - Present interactive menu with 6 workflows using arrow-key selection (selectWithArrows pattern)
+  - Display selected workflow details including command sequences, descriptions, and use cases
+  - Allow users to go back and select another workflow after viewing a workflow example
+  - Extract workflow details dynamically from README.md to maintain single source of truth
+  - Use white color for banner and box titles, mint color (#3EB489) for options and section labels to match CLI help output styling
+  - Add discoverability message in CLI help output to promote examples command
+
+secondary_goals:
+  - Use consistent formatting with existing CLI output (boxed sections, colors, styling)
+  - Maintain single source of truth (README.md) for examples
+  - Provide quick reference for workflow patterns without opening README.md
+
+# REQUIREMENTS
+
+functional_requirements:
+  - FR1: Command `buildforce examples` must present interactive menu with 6 workflows using arrow-key selection (selectWithArrows pattern)
+  - FR2: After workflow selection, command must display the selected workflow's example with command sequence, description, and use case
+  - FR3: Command must extract workflows dynamically from README.md file (Basic, Full, Documentation, Context Centering, Contribute to Existing Spec, Research During Build)
+  - FR4: Interactive menu must use existing boxed styles and formatting consistent with CLI help output
+  - FR5: Command must use hardcoded workflow IDs: basic, full, documentation, context-centering, contribute-existing, research-during-build (6 workflows total)
+  - FR6: Command output must use existing CLI formatting utilities (boxed sections, colored text) for consistency
+  - FR7: Command must parse README.md sections accurately, extracting workflow scenarios from lines 102-120 and Hello Buildforce from lines 56-70
+  - FR8: Command must handle missing README.md gracefully with appropriate error message
+  - FR9: BoxSection title must use white color (chalk.bold.white) to match CLI help output (cli.ts line 100), not mint color
+  - FR10: Banner logo text must use white color (chalk.white) consistently for all banner lines, not cycling through multiple colors, matching CLI help output (cli.ts line 37)
+  - FR11: Interactive menu option keys in selectWithArrows must use mint color (chalk.hex("#3EB489")) instead of cyan (chalk.cyan) to match CLI help options (cli.ts line 162)
+  - FR12: Section labels (Command Sequence, Description, When to Use) must use mint color instead of cyan
+  - FR13: After displaying a workflow example, command must provide option to go back and select another workflow
+  - FR14: CLI help output (--help) must display message below tagline promoting examples command: "Check our example workflows by typing `buildforce examples`"
+  - FR15: Tagline in showBanner function must use mint color (chalk.hex("#3EB489")) instead of yellow (chalk.yellow) to match CLI help output tagline styling (cli.ts line 41)
+  - FR16: After displaying workflow commands, add one blank row below the workflow display before closing
+  - FR17: Command must properly release terminal/stdin after completion so users can use terminal again (ensure inquirer properly closes stdin)
+
+non_functional_requirements:
+  - NFR1: Command execution must complete within 500ms for typical README.md sizes (performance requirement)
+  - NFR2: README.md parsing must be robust to minor formatting variations (resilience requirement)
+  - NFR3: Output formatting must match existing CLI commands' visual style including white for titles/banner and mint color for options/labels (consistency requirement)
+  - NFR4: Command must work across all supported platforms (Node.js >=18.0.0) (compatibility requirement)
+
+# SCOPE
+
+in_scope:
+  - Create new `examples` command handler in `src/commands/examples.ts`
+  - Register command in `src/cli.ts` (no options needed, interactive by default)
+  - Implement interactive workflow selection using selectWithArrows from lib/interactive.ts
+  - Implement README.md parsing logic to extract workflow scenarios
+  - Display selected workflow example with boxed formatting
+  - Use existing formatting utilities (boxSection) for output display
+  - Hardcode 6 workflows: basic, full, documentation, context-centering, contribute-existing, research-during-build
+  - Fix boxSection title color to white (chalk.bold.white) to match CLI help (currently using mint in examples.ts, should be white like cli.ts line 100)
+  - Fix banner logo to use white consistently (chalk.white) for all lines via showBanner, not cycling through multiple colors (lib/interactive.ts currently cycles colors)
+  - Fix interactive menu option keys in selectWithArrows to use mint color (chalk.hex("#3EB489")) instead of cyan (lib/interactive.ts line 14 currently uses chalk.cyan)
+  - Section labels already use mint color (correct implementation)
+  - Add back button/option after displaying workflow to allow selecting another workflow
+  - Add discoverability message in CLI help output (cli.ts renderBannerForHelp function) below tagline
+  - Fix tagline color in showBanner to use mint instead of yellow (lib/interactive.ts line 45 currently uses chalk.yellow.italic, should use mint like cli.ts line 41)
+  - Add blank row below workflow commands display before command exits
+  - Ensure proper terminal cleanup - release stdin/stdout so terminal is usable after command completion
+
+out_of_scope:
+  - Modifying or validating README.md structure (no validation, graceful handling of missing sections)
+  - Caching parsed examples (will re-parse on each execution)
+  - Adding examples to non-README sources
+  - Exporting examples to external formats (JSON, YAML, etc.)
+  - Non-interactive mode or command-line arguments for workflow selection
+
+# DESIGN PRINCIPLES
+
+design_principles:
+  - "Single source of truth: Examples live in README.md, command extracts dynamically"
+  - "Consistency: Use existing CLI formatting patterns and utilities"
+  - "Discoverability: Make workflows easy to find and understand"
+  - "Simplicity: Command should be straightforward - list flows, show examples, allow filtering"
+
+# ACCEPTANCE CRITERIA
+
+acceptance_criteria:
+  - AC1: Running `buildforce examples` presents interactive menu with 6 workflows (Basic, Full, Documentation, Context Centering, Contribute to Existing Spec, Research During Build) using arrow-key selection
+  - AC2: After selecting a workflow, command displays that workflow's complete example with command sequence, description, and use case
+  - AC3: Interactive menu uses boxed styles consistent with CLI help output (boxSection formatting)
+  - AC4: Command extracts workflow details correctly from README.md sections (lines 102-120 and 56-70)
+  - AC5: Output formatting matches existing CLI commands (boxed sections, white for titles and banner, mint for options and labels, consistent spacing)
+  - AC6: Command completes execution within 500ms for typical README.md files
+  - AC7: If README.md is missing, command displays clear error message directing user to project root
+  - AC8: Workflow selection interface matches existing interactive patterns (selectWithArrows from lib/interactive.ts)
+  - AC9: BoxSection titles use white color (chalk.bold.white) matching CLI help output
+  - AC10: Banner logo uses white color (chalk.white) consistently for all lines, matching CLI help output
+  - AC11: Interactive menu option keys use mint color (chalk.hex("#3EB489")) matching CLI help options
+  - AC12: Section labels (Command Sequence, Description, When to Use) use mint color instead of cyan
+  - AC13: After displaying workflow example, user can choose to go back and select another workflow
+  - AC14: CLI help output displays message below tagline: "Check our example workflows by typing `buildforce examples`"
+  - AC15: Tagline in showBanner uses mint color (chalk.hex("#3EB489")) matching CLI help output tagline (not yellow)
+  - AC16: After displaying workflow commands, one blank row appears below workflow display before command exits
+  - AC17: Command properly releases terminal/stdin after completion, allowing terminal to be usable again
+
+# ASSUMPTIONS & DEPENDENCIES
+
+assumptions:
+  - README.md exists in project root (error handling for missing file)
+  - Workflow sections in README.md are formatted consistently with headings and code blocks (graceful parsing)
+  - Commander.js is available and command registration pattern is consistent
+  - Existing interactive utilities (selectWithArrows) and formatting utilities (boxSection) provide sufficient functionality
+  - Interactive selection works in terminal environment (stdin.isTTY check may be needed)
+
+dependencies:
+  internal:
+    - cli-architecture: "Command registration follows existing pattern in src/cli.ts"
+    - formatting-utilities: "Uses lib/interactive.ts for selectWithArrows, boxSection from cli.ts for formatting, chalk for colors"
+  external:
+    - commander: "^12.0.0 (already in package.json)"
+    - fs-extra: "^11.2.0 (already in package.json for file operations)"
+
+# OPEN QUESTIONS
+
+open_questions: []
+
+# NOTES
+
+notes: |
+  The Context Centering workflow (/document → /research) is a new workflow pattern mentioned by the user.
+  It should be added to the workflow list alongside Basic, Full, Documentation, and Hello Buildforce.
+  
+  The "Contribute to Existing Spec" workflow is an iterative workflow: /spec (with context) → /build → /spec (iteratively) until satisfied, then /complete to finalize.
+  This workflow allows contributors to incrementally improve existing specs through iterative refinement cycles.
+  
+  The "Research During Build" workflow (/build → /research → /build) allows running research while actively building.
+  When `.current-spec` exists, `/research` skips cache append but research findings are available in conversation context.
+  The build agent can use research findings from conversation context to continue implementation without interrupting the build workflow.
+  This is useful when additional research is needed during implementation without stopping the build process.
+  
+  Color styling fixes needed based on user feedback:
+  - Banner title appears blue (from showBanner cycling colors) - should be white consistently like CLI help
+  - Interactive menu options appear cyan/blue - should be mint color like CLI help options
+  - Box section titles use mint - should use white to match CLI help box titles
+  - Section labels already correctly use mint color
+  
+  Future enhancements could include:
+  - Interactive selection menu using inquirer
+  - Exporting examples to JSON/YAML
+  - Caching parsed examples for performance
+  - Validating README.md structure and suggesting fixes
+

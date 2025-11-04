@@ -1,8 +1,9 @@
 import fs from "fs-extra";
 import path from "path";
 import chalk from "chalk";
-import boxen from "boxen";
-import inquirer from "inquirer";
+import { confirm } from "@inquirer/prompts";
+import { MINT_COLOR, INQUIRER_THEME } from "../../constants.js";
+import { createBox } from "../../utils/box.js";
 
 /**
  * Validate and normalize project name and location
@@ -48,38 +49,37 @@ export async function validateProjectSetup(
     projectName = path.basename(process.cwd());
     projectPath = process.cwd();
 
-    // Check if current directory has any files
-    const existingItems = await fs.readdir(projectPath);
-    if (existingItems.length > 0) {
+    // Check if Buildforce is already initialized
+    const buildforceDir = path.join(projectPath, ".buildforce");
+    const isBuildforceInitialized = await fs.pathExists(buildforceDir);
+
+    if (isBuildforceInitialized) {
       console.log(
-        chalk.yellow("Warning:"),
-        `Current directory is not empty (${existingItems.length} items)`
+        MINT_COLOR("Warning:"),
+        "Buildforce is already initialized in this directory"
       );
       console.log(
-        chalk.yellow(
-          "Template files will be merged with existing content and may overwrite existing files"
+        MINT_COLOR(
+          "Proceeding will overwrite existing Buildforce configuration and templates"
         )
       );
 
       if (force) {
         console.log(
-          chalk.cyan(
-            "--force supplied: skipping confirmation and proceeding with merge"
+          MINT_COLOR(
+            "--force supplied: skipping confirmation and proceeding with re-initialization"
           )
         );
       } else {
         // Ask for confirmation
-        const { confirmed } = await inquirer.prompt([
-          {
-            type: "confirm",
-            name: "confirmed",
-            message: "Do you want to continue?",
-            default: false,
-          },
-        ]);
+        const confirmed = await confirm({
+          message: "Do you want to continue?",
+          default: false,
+          theme: INQUIRER_THEME,
+        });
 
         if (!confirmed) {
-          console.log(chalk.yellow("Operation cancelled"));
+          console.log(MINT_COLOR("Operation cancelled"));
           process.exit(0);
         }
       }
@@ -90,16 +90,14 @@ export async function validateProjectSetup(
     // Check if project directory already exists
     if (await fs.pathExists(projectPath)) {
       console.log();
+      const errorContent =
+        `Directory '${MINT_COLOR(projectName)}' already exists\n` +
+        "Please choose a different project name or remove the existing directory.";
       console.log(
-        boxen(
-          `Directory '${chalk.cyan(projectName)}' already exists\n` +
-            "Please choose a different project name or remove the existing directory.",
-          {
-            title: chalk.red("Directory Conflict"),
-            padding: 1,
-            borderColor: "red",
-          }
-        )
+        createBox(errorContent, {
+          title: "Directory Conflict",
+          borderColor: "red",
+        })
       );
       console.log();
       process.exit(1);
@@ -166,18 +164,16 @@ export function checkAgentTool(
     if (!checkTool(selectedAi)) {
       const installUrl = agentChecks[selectedAi];
       console.log();
+      const errorContent =
+        `${MINT_COLOR(selectedAi)} not found\n` +
+        `Install with: ${MINT_COLOR(installUrl)}\n` +
+        `${aiChoices[selectedAi]} is required to continue with this project type.\n\n` +
+        `Tip: Use ${MINT_COLOR("--ignore-agent-tools")} to skip this check`;
       console.log(
-        boxen(
-          `${chalk.cyan(selectedAi)} not found\n` +
-            `Install with: ${chalk.cyan(installUrl)}\n` +
-            `${aiChoices[selectedAi]} is required to continue with this project type.\n\n` +
-            `Tip: Use ${chalk.cyan("--ignore-agent-tools")} to skip this check`,
-          {
-            title: chalk.red("Agent Detection Error"),
-            padding: 1,
-            borderColor: "red",
-          }
-        )
+        createBox(errorContent, {
+          title: "Agent Detection Error",
+          borderColor: "red",
+        })
       );
       console.log();
       process.exit(1);

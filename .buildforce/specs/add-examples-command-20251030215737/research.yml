@@ -1,0 +1,152 @@
+id: add-examples-command-20251030215737-research
+created: "2025-10-30"
+last_updated: "2025-11-01"
+
+summary: |
+  Research analyzed the README.md structure to identify all workflow examples and command usage patterns.
+  The CLI uses Commander.js with consistent subcommand patterns. Four workflow scenarios were identified:
+  Basic (spec → build), Full (research → spec → build → complete), Documentation (research → document),
+  and Hello Buildforce introductory workflow. Implementation requires parsing README.md dynamically to extract
+  workflows and display them with proper formatting.
+
+key_findings:
+  - "README.md contains 3 main workflow scenarios (lines 102-120) plus Hello Buildforce example (lines 56-70)"
+  - "CLI commands follow Commander.js pattern in src/cli.ts with handlers in src/commands/ directory"
+  - "Each command section has 'Examples' subsections with 3 examples each (research, spec, build, document)"
+  - "Existing formatting utilities in lib/interactive.ts and lib/step-tracker.ts can be reused for output"
+
+file_paths:
+  primary:
+    - path: "src/cli.ts"
+      relevance: "Main CLI entry point, command registration using Commander.js"
+    - path: "src/commands/check.ts"
+      relevance: "Example command implementation to follow pattern"
+    - path: "README.md"
+      relevance: "Source of all workflow examples and flows to extract"
+    - path: "src/types.ts"
+      relevance: "TypeScript interfaces for command options"
+  secondary:
+    - path: "src/lib/interactive.ts"
+      relevance: "Output formatting utilities (banner, boxes, colors)"
+    - path: "src/lib/step-tracker.ts"
+      relevance: "Progress display utilities for potential use"
+
+mermaid_diagrams:
+  - title: "Examples Command Flow"
+    description: "CLI command flow from entry point to output display"
+    diagram: |
+      ```mermaid
+      graph TD
+        A[CLI Entry: src/cli.ts] --> B[Commander.js Program]
+        B --> C[examples command]
+        C --> D[Parse README.md]
+        D --> E[Extract Workflows]
+        D --> F[Extract Command Examples]
+        E --> G{Flow IDs specified?}
+        G -->|Yes| H[Filter Selected Flows]
+        G -->|No| I[Display All Flows]
+        H --> J[Format Output]
+        I --> J
+        F --> K[Display Command Examples]
+        J --> L[Print to Console]
+        K --> L
+      ```
+```
+
+data_models:
+  - name: "ExampleFlow"
+    description: "Represents a workflow scenario with its command sequence and use case"
+    properties:
+      - name: "id"
+        type: "string"
+        required: true
+        description: "Unique identifier (e.g., 'basic', 'full', 'documentation', 'hello-buildforce', 'context-centering')"
+      - name: "name"
+        type: "string"
+        required: true
+        description: "Display name for the workflow"
+      - name: "description"
+        type: "string"
+        required: true
+        description: "When to use this workflow"
+      - name: "commandSequence"
+        type: "string[]"
+        required: true
+        description: "Array of slash commands in sequence"
+      - name: "useCase"
+        type: "string"
+        required: true
+        description: "Recommended scenario for this workflow"
+  - name: "CommandExample"
+    description: "Represents examples for individual commands"
+    properties:
+      - name: "command"
+        type: "string"
+        required: true
+        description: "Command name (e.g., '/research', '/spec')"
+      - name: "examples"
+        type: "Array<{query: string, context?: string}>"
+        required: true
+        description: "Array of example usages with optional context"
+  - name: "ExamplesOptions"
+    description: "CLI command options interface"
+    properties:
+      - name: "flows"
+        type: "string[]"
+        required: false
+        description: "Optional array of flow IDs to filter display"
+
+tldr:
+  - "Workflows identified: 4 scenarios (Basic, Full, Documentation, Hello Buildforce) plus new Context Centering workflow"
+  - "Command structure: Follow Commander.js pattern in src/cli.ts, handlers in src/commands/ directory"
+  - "Examples location: README.md contains structured sections (lines 102-120 for workflows, command-specific examples throughout)"
+  - "Implementation: Parse README.md dynamically, extract workflows/examples, support --flows filter, use existing formatting utilities"
+  - "Key files: src/cli.ts (registration), src/commands/examples.ts (handler), README.md (source data)"
+  - "Color styling fixes needed: Banner should use white consistently (not cycling), options should use mint (not cyan), box titles should use white (matching CLI help)"
+
+updates:
+  - date: "2025-11-01"
+    summary: "Added color styling consistency findings: banner title should be white (not cycling colors), interactive menu options should use mint color (not cyan), and box section titles should use white to match CLI help output"
+    merged_from_cache: true
+  - date: "2025-11-01"
+    summary: "User feedback: Banner title appears blue (from showBanner cycling), options appear cyan/blue, box titles use mint but should be white. Updated spec requirements: FR9 (white box titles), FR10 (white banner consistently), FR11 (mint options), FR12 (mint labels - already correct)"
+    merged_from_cache: true
+
+code_snippets:
+  - title: "CLI Help Banner Implementation"
+    language: "typescript"
+    description: "Reference implementation showing consistent white banner color"
+    code: |
+      const renderBannerForHelp = () => {
+        const lines = rendered.split("\n");
+        const centered = lines
+          .map((line) => {
+            const pad = Math.max(0, Math.floor((terminalWidth - line.length) / 2));
+            return " ".repeat(pad) + chalk.white(line);
+          })
+          .join("\n");
+      };
+
+  - title: "CLI Help Box Section Title"
+    language: "typescript"
+    description: "Reference implementation showing white box titles"
+    code: |
+      const titleLine = `│${" ".repeat(pad)}${chalk.bold.white(title)}${" ".repeat(
+        maxLine - pad - titlePlain.length,
+      )}│`;
+
+  - title: "CLI Help Options Color"
+    language: "typescript"
+    description: "Reference implementation showing mint color for options"
+    code: |
+      program.configureHelp({
+        optionTerm(option) {
+          return mint(option.flags);
+        },
+      });
+
+architectural_decisions:
+  - pattern: "Color Consistency in CLI Output"
+    description: "CLI help output uses consistent colors: white for banners and box titles, mint (#3EB489) for interactive elements like options and commands"
+    rationale: "Visual consistency across CLI commands improves user experience and brand recognition. The examples command must match this styling pattern."
+

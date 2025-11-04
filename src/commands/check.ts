@@ -1,6 +1,6 @@
 import chalk from "chalk";
 import { showBanner } from "../lib/interactive.js";
-import { BANNER, TAGLINE } from "../constants.js";
+import { TAGLINE, GREEN_COLOR } from "../constants.js";
 import { checkTool } from "../utils/index.js";
 import { StepTracker } from "../lib/step-tracker.js";
 
@@ -21,7 +21,7 @@ function checkToolForTracker(tool: string, tracker: StepTracker): boolean {
  * Check that all required tools are installed
  */
 export function checkCommand(): void {
-  showBanner(BANNER, TAGLINE);
+  showBanner("", TAGLINE);
   console.log(chalk.bold("Checking for installed tools..."));
   console.log();
 
@@ -56,7 +56,7 @@ export function checkCommand(): void {
   console.log(tracker.render());
   console.log();
 
-  console.log(chalk.bold.green("Buildforce CLI is ready to use!"));
+  console.log(GREEN_COLOR.bold("Buildforce CLI is ready to use!"));
   console.log();
 
   if (!gitOk) {

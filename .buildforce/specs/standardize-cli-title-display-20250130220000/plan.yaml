@@ -1,0 +1,273 @@
+id: standardize-cli-title-display-20250130220000-plan
+name: "Implementation Plan for Standardize CLI Title Display"
+spec_id: "standardize-cli-title-display-20250130220000"
+type: implementation-plan
+status: draft
+created: "2025-01-30"
+last_updated: "2025-01-30"
+
+# ARCHITECTURE OVERVIEW
+
+approach: |
+  Refactor banner rendering to use a centralized shared function that generates the 3-line format
+  (figlet title, tagline, instruction). Update `showBanner()` in `interactive.ts` to use figlet
+  instead of ASCII art and include the instruction line. Replace `renderBannerForHelp()` and
+  duplicate banner code in `cli.ts` to use the shared function. All command calls will
+  automatically get the new format since they use `showBanner()`.
+
+technology_stack:
+  - figlet: "ASCII art font rendering (already installed)"
+  - chalk: "Terminal color formatting (already installed)"
+  - TypeScript: "Type safety for function refactoring"
+
+decisions:
+  - decision: "Centralize banner logic in `showBanner()` function in `interactive.ts`"
+    rationale: "Single source of truth eliminates duplication. `interactive.ts` already contains banner-related utilities, making it the logical home for this shared function."
+
+  - decision: "Use figlet for all banners (replace ASCII art BANNER constant)"
+    rationale: "Figlet provides consistent, professional-looking title rendering. The --help command already uses it successfully, so standardizing on figlet ensures visual consistency."
+
+  - decision: "Maintain backward-compatible function signature if possible"
+    rationale: "Making `showBanner()` signature backward compatible (same parameters but different implementation) avoids breaking changes to all command files."
+
+# FILE STRUCTURE
+
+files_to_create:
+  - "No new files required"
+
+files_to_modify:
+  - path: "src/lib/interactive.ts"
+    change_type: "edit"
+    description: "Update `showBanner()` to use figlet and include instruction line. Change function to generate 3-line format matching renderBannerForHelp() pattern."
+
+  - path: "src/cli.ts"
+    change_type: "refactor"
+    description: "Replace `renderBannerForHelp()` to call shared `showBanner()` function. Remove duplicate banner code from lines 321-337 (default init help). Update import to use new showBanner signature."
+
+# IMPLEMENTATION PHASES
+
+phase_1:
+  name: "Refactor showBanner() Function"
+  description: |
+    Update the core `showBanner()` function in `interactive.ts` to generate the 3-line format
+    using figlet, matching the implementation pattern from `renderBannerForHelp()`.
+
+  tasks:
+    - [x] Update `showBanner()` function signature and implementation
+      spec_refs: [FR2, FR3, FR4, FR6, NFR4]
+      files: [src/lib/interactive.ts]
+      notes: "Created generateBanner() function and updated showBanner() to use it. Maintains backward compatibility."
+
+    - [x] Import figlet in `interactive.ts`
+      spec_refs: [FR2]
+      files: [src/lib/interactive.ts]
+      notes: "Added `import figlet from 'figlet'` - chalk already imported"
+
+    - [x] Import TAGLINE constant in `interactive.ts`
+      spec_refs: [FR3]
+      files: [src/lib/interactive.ts]
+      notes: "Added `import { TAGLINE } from '../constants.js'`"
+
+    - [x] Define instruction message constant
+      spec_refs: [FR4]
+      files: [src/lib/interactive.ts]
+      notes: "Defined inline in generateBanner(): 'Check our example workflows by typing `buildforce examples`'"
+
+    - [x] Implement centering logic for all three lines
+      spec_refs: [FR6]
+      files: [src/lib/interactive.ts]
+      notes: "Implemented centering based on terminal width (process.stdout.columns || 80) for all three lines"
+
+    - [x] Apply correct colors (white title, mint tagline, dim instruction)
+      spec_refs: [FR2, FR3, FR4]
+      files: [src/lib/interactive.ts]
+      notes: "Applied chalk.white() for title, chalk.hex('#3EB489') for tagline, chalk.dim() for instruction"
+
+  validation:
+    - [ ] All phase_1 tasks completed
+    - [ ] Code compiles without errors
+    - [ ] showBanner() function generates 3-line format matching --help appearance
+    - [ ] Function signature remains compatible (or updates are minimal)
+    - [ ] Spec requirements covered: [FR2, FR3, FR4, FR6, NFR4]
+
+phase_2:
+  name: "Refactor CLI Help Banner"
+  description: |
+    Update `cli.ts` to use the shared `showBanner()` function instead of maintaining separate
+    `renderBannerForHelp()` implementation. This eliminates code duplication.
+
+  tasks:
+    - [x] Update `renderBannerForHelp()` to call shared `showBanner()` function
+      spec_refs: [FR1, NFR4]
+      files: [src/cli.ts]
+      notes: "Replaced renderBannerForHelp() to call generateBanner() and return the result"
+
+    - [x] Remove duplicate banner code from default init help (lines 321-337)
+      spec_refs: [FR5, NFR4]
+      files: [src/cli.ts]
+      notes: "Replaced inline figlet banner code with call to generateBanner() function"
+
+    - [x] Update imports in `cli.ts` if needed
+      spec_refs: [FR1]
+      files: [src/cli.ts]
+      notes: "Added generateBanner import, removed unused figlet and TAGLINE imports"
+
+  validation:
+    - [ ] All phase_2 tasks completed
+    - [ ] Code compiles without errors
+    - [ ] --help banner still displays correctly using shared function
+    - [ ] Default init help shows 3-line banner
+    - [ ] No duplicate banner rendering code remains in cli.ts
+    - [ ] Spec requirements covered: [FR1, FR5, NFR4]
+
+phase_3:
+  name: "Update Command Calls and Verification"
+  description: |
+    Verify all command calls automatically work with updated showBanner(), test all CLI entry
+    points, and optionally clean up unused BANNER constant.
+
+  tasks:
+    - [ ] Verify examples command shows 3-line banner
+      spec_refs: [AC2]
+      files: [src/commands/examples.ts]
+      notes: "Command calls showBanner() - should automatically work with new implementation"
+
+    - [ ] Verify check command shows 3-line banner
+      spec_refs: [AC3]
+      files: [src/commands/check.ts]
+      notes: "Command calls showBanner() - should automatically work with new implementation"
+
+    - [ ] Verify upgrade command shows 3-line banner
+      spec_refs: [AC4]
+      files: [src/commands/upgrade/index.ts]
+      notes: "Command calls showBanner() - should automatically work with new implementation"
+
+    - [ ] Verify init command shows 3-line banner
+      spec_refs: [AC5, AC6]
+      files: [src/commands/init/index.ts]
+      notes: "Command calls showBanner() - should automatically work with new implementation"
+
+    - [ ] Test all CLI entry points manually
+      spec_refs: [AC1, AC2, AC3, AC4, AC5, AC6, AC7]
+      files: []
+      notes: "Run each command and verify 3-line banner appears correctly and is centered"
+
+    - [x] Remove unused BANNER constant from constants.ts
+      spec_refs: []
+      files: [src/constants.ts]
+      notes: "Removed BANNER constant (ASCII art) as it's replaced by figlet. Updated all command files to remove BANNER imports and pass empty string to showBanner()"
+
+  validation:
+    - [ ] All phase_3 tasks completed
+    - [ ] All commands display consistent 3-line banner format
+    - [ ] All banners are properly centered
+    - [ ] No visual regressions compared to --help banner
+    - [ ] Spec requirements covered: [AC1-AC9]
+
+# DEVIATION LOG
+
+deviations:
+  # Populated during implementation if deviations occur
+
+# TESTING GUIDANCE
+
+testing:
+  automated_tests:
+    - test_file: "N/A - CLI tool, manual testing recommended"
+      what: "Banner rendering output"
+      command: "Manual visual verification"
+
+  manual_tests:
+    - scenario: "Verify --help shows 3-line banner"
+      steps: |
+        1. Run `buildforce --help`
+        2. Verify banner shows: figlet "BUILDFORCE" (white), tagline (mint green), instruction (dim gray)
+        3. Verify all three lines are centered
+
+    - scenario: "Verify examples command shows 3-line banner"
+      steps: |
+        1. Run `buildforce examples`
+        2. Verify banner matches --help format exactly
+        3. Verify all three lines are centered
+
+    - scenario: "Verify check command shows 3-line banner"
+      steps: |
+        1. Run `buildforce check`
+        2. Verify banner matches --help format exactly
+        3. Verify all three lines are centered
+
+    - scenario: "Verify upgrade command shows 3-line banner"
+      steps: |
+        1. Run `buildforce upgrade`
+        2. Verify banner matches --help format exactly
+        3. Verify all three lines are centered
+
+    - scenario: "Verify init command shows 3-line banner"
+      steps: |
+        1. Run `buildforce init` (or just `buildforce`)
+        2. Verify banner matches --help format exactly
+        3. Verify all three lines are centered
+
+# VALIDATION CRITERIA
+
+success_metrics:
+  - "All CLI entry points display identical 3-line banner format"
+  - "No duplicate banner rendering code exists in codebase"
+  - "Banner rendering uses figlet (not ASCII art) consistently"
+  - "All banners are properly centered based on terminal width"
+
+spec_coverage:
+  - FR1: "⏳ Phase 2: Task 1"
+  - FR2: "⏳ Phase 1: Tasks 1, 2"
+  - FR3: "⏳ Phase 1: Tasks 1, 3"
+  - FR4: "⏳ Phase 1: Tasks 1, 4"
+  - FR5: "⏳ Phase 2: Task 2"
+  - FR6: "⏳ Phase 1: Task 5"
+  - NFR1: "⏳ Phase 1: Task 1 (figlet performance)"
+  - NFR2: "⏳ Phase 1: Task 5 (terminal width responsive)"
+  - NFR3: "⏳ Phase 1: Task 1 (backward compatibility)"
+  - NFR4: "⏳ Phase 1: Task 1, Phase 2: Tasks 1, 2"
+
+# PROGRESS SUMMARY
+
+overall_progress:
+  phase_1: "6/6 tasks completed"
+  phase_2: "3/3 tasks completed"
+  phase_3: "1/6 tasks completed (remaining tasks are verification/testing)"
+
+current_status: |
+  Implementation complete. All code changes finished:
+  - Created generateBanner() function with 3-line format
+  - Updated showBanner() to use generateBanner()
+  - Refactored cli.ts to use shared function
+  - Removed unused BANNER constant
+  - Code compiles successfully
+  
+  Remaining: Manual testing of all CLI entry points
+
+next_immediate_steps:
+  - "Test all CLI commands to verify 3-line banner appears correctly"
+  - "Verify all banners are centered properly"
+  - "Confirm no visual regressions"
+
+# RISKS & CONSIDERATIONS
+
+risks:
+  - risk: "Function signature changes might break existing calls"
+    mitigation: "Maintain backward compatibility by keeping same function name and parameters (just change internal implementation)"
+
+  - risk: "Terminal width detection might fail in some environments"
+    mitigation: "Use fallback to 80 columns if process.stdout.columns is undefined (already handled in current code)"
+
+  - risk: "figlet rendering might have slight performance impact"
+    mitigation: "figlet is already used in --help without issues, so impact should be minimal. Monitor during testing."
+
+# NOTES
+
+lessons_learned:
+  - "Centralizing banner logic will make future banner format changes easier"
+
+future_enhancements:
+  - "Consider making banner customizable (different messages per command) if needed in future"
+  - "Consider adding banner display configuration option if users request it"
+

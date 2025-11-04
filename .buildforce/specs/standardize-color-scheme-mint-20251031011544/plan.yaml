@@ -1,0 +1,328 @@
+id: standardize-color-scheme-mint-20251031011544-plan
+name: "Implementation Plan for Standardize Color Scheme to Mint"
+spec_id: "standardize-color-scheme-mint-20251031011544"
+type: implementation-plan
+status: draft
+created: "2025-10-31"
+last_updated: "2025-10-31"
+
+# ARCHITECTURE OVERVIEW
+
+approach: |
+  Implement color standardization through systematic file-by-file replacement of yellow and cyan colors with mint (#3EB489). First, centralize mint color definition in constants.ts by exporting MINT_COLOR. Then proceed file-by-file, starting with high-priority files that have the most color usage, then medium-priority files. Investigate boxen mint support early to determine the appropriate replacement strategy (will use hex codes if string "mint" not supported). Update all files to import MINT_COLOR from constants.ts. Maintain error colors unchanged to preserve critical visual distinction for failures.
+
+technology_stack:
+  - chalk: "Terminal color library - already in use, supports hex colors"
+  - boxen: "Box border library - need to verify mint color support (string or hex)"
+
+decisions:
+  - decision: "Centralize mint color definition in constants.ts by exporting MINT_COLOR"
+    rationale: "Single source of truth for color definition improves maintainability. Since we're updating 14 files anyway, centralizing eliminates duplication and makes future updates easier. All files will import from constants.ts."
+
+  - decision: "Preserve error colors (red/magenta) unchanged"
+    rationale: "Error states require distinct visual cues for critical failures. Changing to mint would reduce error visibility and could confuse users"
+
+  - decision: "Investigate boxen mint support during implementation, use hex codes if string not supported"
+    rationale: "Boxen may not support 'mint' as string. Investigate early in Phase 1, but proceed with hex code fallback to avoid blocking implementation. Hex codes are more reliable across different terminal environments."
+
+# FILE STRUCTURE
+
+files_to_create:
+  - []
+
+files_to_modify:
+  - path: "src/constants.ts"
+    change_type: "edit"
+    description: "Export MINT_COLOR constant for centralized mint color definition"
+
+  - path: "src/cli.ts"
+    change_type: "edit"
+    description: "Replace local mint definition with import from constants.ts"
+
+  - path: "src/lib/interactive.ts"
+    change_type: "edit"
+    description: "Replace local mint definitions (2 occurrences) with import from constants.ts"
+  - path: "src/commands/init/index.ts"
+    change_type: "edit"
+    description: "Replace chalk.yellow() with mint (1 occurrence), chalk.cyan() with mint (2 occurrences)"
+
+  - path: "src/commands/upgrade/index.ts"
+    change_type: "edit"
+    description: "Replace chalk.yellow() with mint (5 occurrences), chalk.cyan() with mint (4 occurrences)"
+
+  - path: "src/commands/examples.ts"
+    change_type: "edit"
+    description: "Replace chalk.yellow() with mint (3 occurrences for arrows and warnings)"
+
+  - path: "src/commands/init/output.ts"
+    change_type: "edit"
+    description: "Replace chalk.cyan() with mint (15+ occurrences), update borderColor: 'cyan' (3x) and borderColor: 'yellow' (2x) to mint"
+
+  - path: "src/lib/step-tracker.ts"
+    change_type: "edit"
+    description: "Replace chalk.cyan() with mint (2 occurrences: title, running symbol), chalk.yellow() with mint (1 occurrence: skipped symbol)"
+
+  - path: "src/lib/local-artifacts.ts"
+    change_type: "edit"
+    description: "Replace chalk.cyan() with mint (2 occurrences), chalk.yellow() with mint (2 occurrences)"
+
+  - path: "src/lib/github.ts"
+    change_type: "edit"
+    description: "Replace chalk.cyan() with mint (7 occurrences), chalk.yellow() with mint (1 occurrence)"
+
+  - path: "src/lib/extract.ts"
+    change_type: "edit"
+    description: "Replace chalk.cyan() with mint (3 occurrences), chalk.yellow() with mint (2 occurrences)"
+
+  - path: "src/commands/init/validation.ts"
+    change_type: "edit"
+    description: "Replace chalk.yellow() with mint (3 occurrences), chalk.cyan() with mint (4 occurrences). Keep red error borders."
+
+  - path: "src/commands/upgrade/execution.ts"
+    change_type: "edit"
+    description: "Replace chalk.yellow() with mint (1 occurrence)"
+
+  - path: "src/utils/git.ts"
+    change_type: "edit"
+    description: "Replace chalk.cyan() with mint (1 occurrence)"
+
+# IMPLEMENTATION PHASES
+
+phase_1:
+  name: "Investigation and High-Priority Files"
+  description: |
+    Investigate boxen mint color support and replace colors in high-priority files with the most usage.
+    This phase establishes the pattern and resolves any technical questions about boxen compatibility.
+
+  tasks:
+    - [x] Centralize mint color: Export MINT_COLOR from src/constants.ts
+      spec_refs: [FR8]
+      files: [src/constants.ts]
+      notes: "Add export const MINT_COLOR = chalk.hex('#3EB489') to constants.ts"
+
+    - [x] Update cli.ts and interactive.ts to import MINT_COLOR from constants.ts
+      spec_refs: [FR8]
+      files: [src/cli.ts, src/lib/interactive.ts]
+      notes: "Remove local mint definitions, import MINT_COLOR from constants.ts"
+
+    - [x] Investigate boxen library mint color support (string "mint" vs hex codes)
+      spec_refs: [FR7]
+      files: []
+      notes: "Check boxen documentation or test mint color support. Use hex codes if string not supported."
+
+    - [x] Replace colors in src/commands/init/output.ts (highest usage: 15+ cyan, 5 border colors)
+      spec_refs: [FR2, FR3, FR4, FR8]
+      files: [src/commands/init/output.ts]
+      notes: "Import MINT_COLOR from constants.ts. Extensive cyan usage and boxen borders. Test boxen mint support here first."
+
+    - [x] Replace colors in src/commands/upgrade/index.ts (9 total: 5 yellow, 4 cyan)
+      spec_refs: [FR1, FR2, FR8]
+      files: [src/commands/upgrade/index.ts]
+      notes: "Import MINT_COLOR from constants.ts. Multiple warnings and info messages"
+
+    - [x] Replace colors in src/lib/step-tracker.ts (3 occurrences: title, running, skipped)
+      spec_refs: [FR5, FR8]
+      files: [src/lib/step-tracker.ts]
+      notes: "Import MINT_COLOR from constants.ts. Step tracker is used by multiple commands - high visibility"
+
+    - [x] Replace colors in src/commands/examples.ts (3 yellow occurrences)
+      spec_refs: [FR1, FR8]
+      files: [src/commands/examples.ts]
+      notes: "Import MINT_COLOR from constants.ts. Arrow symbols and warnings"
+
+  validation:
+    - [x] All phase_1 tasks completed
+    - [x] Code compiles without errors
+    - [x] MINT_COLOR exported from constants.ts and imported by all updated files
+    - [x] Boxen mint support verified and implemented (using hex codes "#3EB489")
+    - [x] Spec requirements covered: [FR1, FR2, FR3, FR4, FR5, FR7, FR8]
+
+phase_2:
+  name: "Medium-Priority Files"
+  description: |
+    Complete color replacement in remaining files with moderate usage.
+    These files complete the standardization across all CLI components.
+
+  tasks:
+    - [x] Replace colors in src/commands/init/index.ts (3 occurrences: 1 yellow, 2 cyan)
+      spec_refs: [FR1, FR2, FR8]
+      files: [src/commands/init/index.ts]
+      notes: "Import MINT_COLOR from constants.ts. Init command main entry point"
+
+    - [x] Replace colors in src/commands/init/validation.ts (7 occurrences: 3 yellow, 4 cyan)
+      spec_refs: [FR1, FR2, FR6, FR8]
+      files: [src/commands/init/validation.ts]
+      notes: "Import MINT_COLOR from constants.ts. Keep red error borders unchanged"
+
+    - [x] Replace colors in src/lib/local-artifacts.ts (4 occurrences: 2 cyan, 2 yellow)
+      spec_refs: [FR1, FR2, FR8]
+      files: [src/lib/local-artifacts.ts]
+      notes: "Import MINT_COLOR from constants.ts. Local artifact resolution messages"
+
+    - [x] Replace colors in src/lib/github.ts (8 occurrences: 7 cyan, 1 yellow)
+      spec_refs: [FR1, FR2, FR8]
+      files: [src/lib/github.ts]
+      notes: "Import MINT_COLOR from constants.ts. GitHub API integration messages"
+
+    - [x] Replace colors in src/lib/extract.ts (5 occurrences: 3 cyan, 2 yellow)
+      spec_refs: [FR1, FR2, FR8]
+      files: [src/lib/extract.ts]
+      notes: "Import MINT_COLOR from constants.ts. Template extraction messages"
+
+    - [x] Replace colors in src/commands/upgrade/execution.ts (1 yellow occurrence)
+      spec_refs: [FR1, FR8]
+      files: [src/commands/upgrade/execution.ts]
+      notes: "Import MINT_COLOR from constants.ts. Rollback message"
+
+    - [x] Replace colors in src/utils/git.ts (1 cyan occurrence)
+      spec_refs: [FR2, FR8]
+      files: [src/utils/git.ts]
+      notes: "Import MINT_COLOR from constants.ts. Git initialization message"
+
+  validation:
+    - [x] All phase_2 tasks completed
+    - [x] Code compiles without errors
+    - [x] All 14 files updated with mint colors and importing MINT_COLOR from constants.ts
+    - [x] Spec requirements covered: [FR1, FR2, FR8]
+
+phase_3:
+  name: "Verification and Testing"
+  description: |
+    Verify all color replacements are complete, test all commands visually,
+    and ensure error colors remain unchanged where appropriate.
+
+  tasks:
+    - [x] Verify all yellow replacements (grep for remaining chalk.yellow)
+      spec_refs: [AC1]
+      files: []
+      notes: "Confirm no yellow instances remain (except in error contexts if any) - VERIFIED: No matches found"
+
+    - [x] Verify all cyan replacements (grep for remaining chalk.cyan)
+      spec_refs: [AC2]
+      files: []
+      notes: "Confirm no cyan instances remain (except in error contexts if any) - VERIFIED: No matches found"
+
+    - [ ] Visual test: Run init command and verify mint colors
+      spec_refs: [AC6]
+      files: []
+      notes: "Check init command output visually - requires manual testing"
+
+    - [ ] Visual test: Run upgrade command and verify mint colors
+      spec_refs: [AC6]
+      files: []
+      notes: "Check upgrade command output visually - requires manual testing"
+
+    - [ ] Visual test: Run examples command and verify mint colors
+      spec_refs: [AC6]
+      files: []
+      notes: "Check examples command output visually - requires manual testing"
+
+    - [ ] Visual test: Run check command and verify mint colors
+      spec_refs: [AC6]
+      files: []
+      notes: "Check command uses step-tracker - verify mint colors - requires manual testing"
+
+    - [x] Verify error colors unchanged (grep for red/magenta in validation.ts and setup.ts)
+      spec_refs: [AC5, FR6]
+      files: [src/commands/init/validation.ts, src/commands/init/setup.ts]
+      notes: "Confirm error colors remain for error states - VERIFIED: 4 instances of red/magenta borders preserved"
+
+  validation:
+    - [ ] All phase_3 tasks completed (automated checks done, visual tests require manual verification)
+    - [x] All acceptance criteria met (AC1, AC2, AC5, AC8 verified)
+    - [ ] Visual inspection confirms cohesive mint UI (requires manual testing)
+    - [x] Spec requirements covered: [FR1, FR2, FR3, FR4, FR5, FR6, FR7, FR8]
+
+# DEVIATION LOG
+
+deviations:
+  - phase: "phase_1"
+    task: "Investigate boxen library mint color support"
+    original: "Check if boxen supports 'mint' as string color name"
+    actual: "Used hex color code '#3EB489' directly in borderColor property - boxen v7.1.1 accepts hex codes"
+    reason: "Boxen accepts hex color codes directly, making this approach reliable and consistent with mint color definition"
+
+# TESTING GUIDANCE
+
+testing:
+  automated_tests:
+    - test_file: "N/A - Color changes are cosmetic"
+      what: "Verify code compiles without errors"
+      command: "npm run build or tsc --noEmit"
+
+  manual_tests:
+    - scenario: "Visual verification of mint color scheme"
+      steps: |
+        1. Run `buildforce init --help` and verify mint colors in help output
+        2. Run `buildforce init test-project` and verify mint colors in interactive prompts and output
+        3. Run `buildforce upgrade` and verify mint colors in upgrade messages
+        4. Run `buildforce examples` and verify mint colors in workflow display
+        5. Run `buildforce check` and verify mint colors in step tracker
+        6. Verify error messages still show red/magenta colors appropriately
+
+# VALIDATION CRITERIA
+
+success_metrics:
+  - "Zero occurrences of chalk.yellow() remain (except error contexts)"
+  - "Zero occurrences of chalk.cyan() remain (except error contexts)"
+  - "All boxen borders use mint-compatible colors"
+  - "All commands display consistent mint UI when executed"
+  - "Error colors (red/magenta) preserved in error handling contexts"
+
+spec_coverage:
+  - FR1: "⏳ Phase 1: Tasks 4-6, Phase 2: Tasks 1-7"
+  - FR2: "⏳ Phase 1: Tasks 4-6, Phase 2: Tasks 1-7"
+  - FR3: "⏳ Phase 1: Task 4"
+  - FR4: "⏳ Phase 1: Task 4"
+  - FR5: "⏳ Phase 1: Task 6"
+  - FR6: "⏳ Phase 2: Task 2, Phase 3: Task 7"
+  - FR7: "⏳ Phase 1: Task 3"
+  - FR8: "⏳ Phase 1: Tasks 1-2, Phase 1: Tasks 4-6, Phase 2: Tasks 1-7"
+  - NFR1: "⏳ All phases - visual hierarchy maintained"
+  - NFR2: "⏳ All phases - cosmetic changes only"
+  - NFR3: "⏳ All phases - hex color support verified"
+
+# PROGRESS SUMMARY
+
+overall_progress:
+  phase_1: "7/7 tasks completed"
+  phase_2: "7/7 tasks completed"
+  phase_3: "3/7 tasks completed (automated verification done, visual tests require manual testing)"
+
+current_status: |
+  Implementation complete for Phases 1 and 2. All color replacements done:
+  - MINT_COLOR centralized in constants.ts
+  - All 14 files updated to import and use MINT_COLOR
+  - All yellow/cyan chalk instances replaced with mint
+  - All boxen borders updated to mint (#3EB489)
+  - Error colors (red/magenta) preserved
+  - Code compiles successfully
+  - Automated verification confirms no remaining yellow/cyan instances
+  - Visual tests require manual execution for final confirmation
+
+next_immediate_steps:
+  - "Perform visual testing of CLI commands (init, upgrade, examples, check) to verify mint colors"
+  - "Manual verification of cohesive mint UI across all command outputs"
+
+# RISKS & CONSIDERATIONS
+
+risks:
+  - risk: "Boxen library may not support 'mint' as string color name"
+    mitigation: "Investigate early (Phase 1 Task 1). If not supported, use hex color codes or find compatible alternative. May need to check boxen source code or documentation."
+
+  - risk: "Terminal environments may render hex colors differently"
+    mitigation: "Mint (#3EB489) already works in cli.ts and interactive.ts. Test in multiple terminals if needed, but risk is low given existing usage."
+
+  - risk: "Missing a color instance during replacement"
+    mitigation: "Use grep to verify all instances are replaced. Phase 3 includes verification tasks using grep for remaining yellow/cyan."
+
+  - risk: "Accidentally replacing error colors"
+    mitigation: "Explicitly preserve red/magenta in validation.ts and setup.ts. Phase 3 includes verification task to confirm error colors remain."
+
+# NOTES
+
+lessons_learned:
+  - "Research identified specific file locations and line numbers - use this for systematic replacement"
+
+future_enhancements:
+  - "Create color theme configuration system if additional colors are needed in future"

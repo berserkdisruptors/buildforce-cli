@@ -1,6 +1,7 @@
 import path from "path";
 import chalk from "chalk";
-import boxen from "boxen";
+import { MINT_COLOR, GREEN_COLOR } from "../../constants.js";
+import { createBox } from "../../utils/box.js";
 
 /**
  * Display project setup information
@@ -13,9 +14,9 @@ export function displaySetupInfo(
   const currentDir = process.cwd();
 
   const setupLines = [
-    chalk.cyan("Buildforce Project Setup"),
+    MINT_COLOR("Buildforce Project Setup"),
     "",
-    `${"Project".padEnd(15)} ${chalk.green(projectName)}`,
+    `${"Project".padEnd(15)} ${GREEN_COLOR(projectName)}`,
     `${"Working Path".padEnd(15)} ${chalk.dim(currentDir)}`,
   ];
 
@@ -23,12 +24,7 @@ export function displaySetupInfo(
     setupLines.push(`${"Target Path".padEnd(15)} ${chalk.dim(projectPath)}`);
   }
 
-  console.log(
-    boxen(setupLines.join("\n"), {
-      padding: 1,
-      borderColor: "cyan",
-    })
-  );
+  console.log(createBox(setupLines.join("\n")));
   console.log();
 }
 
@@ -42,21 +38,14 @@ export function displayAgentSecurityNotice(
   if (agentFolderMap[selectedAi]) {
     const agentFolder = agentFolderMap[selectedAi];
     console.log();
-    console.log(
-      boxen(
-        `Some agents may store credentials, auth tokens, or other identifying and private artifacts in the agent folder within your project.\n` +
-          `Consider adding ${chalk.cyan(
-            agentFolder
-          )} (or parts of it) to ${chalk.cyan(
-            ".gitignore"
-          )} to prevent accidental credential leakage.`,
-        {
-          title: chalk.yellow("Agent Folder Security"),
-          padding: 1,
-          borderColor: "yellow",
-        }
-      )
-    );
+    const securityContent =
+      `Some agents may store credentials, auth tokens, or other identifying and private artifacts in the agent folder within your project.\n` +
+      `Consider adding ${MINT_COLOR(
+        agentFolder
+      )} (or parts of it) to ${MINT_COLOR(
+        ".gitignore"
+      )} to prevent accidental credential leakage.`;
+    console.log(createBox(securityContent, { title: "Agent Folder Security" }));
   }
 }
 
@@ -69,10 +58,41 @@ export function displayNextSteps(
   selectedAi: string,
   isHere: boolean
 ): void {
+  // Project Ready details
+  const projectReadyLines = [
+    `The ${MINT_COLOR(
+      ".buildforce"
+    )} directory is created and will store your spec-driven development artifacts and context repository:`,
+    "",
+    `  ${MINT_COLOR(
+      ".buildforce/context/"
+    )} - Accumulated project context from completed specs`,
+    `  ${MINT_COLOR(
+      ".buildforce/specs/"
+    )}   - Active and historical spec directories`,
+    "",
+    `Each workflow iteration creates a spec folder:`,
+    `  ${chalk.gray(
+      "feature-name-20251028143052/"
+    )}             - First feature`,
+    `  ${chalk.gray(
+      "another-feature-name-20251029143052-/"
+    )}    - Second feature`,
+    "",
+    `${MINT_COLOR(
+      "IMPORTANT:"
+    )} The .buildforce directory is version-controlled and will be used to track your spec-driven development artifacts and context repository.`,
+  ];
+
+  console.log();
+  console.log(
+    createBox(projectReadyLines.join("\n"), { title: "Project Ready" })
+  );
+
   const stepsLines: string[] = [];
   if (!isHere) {
     stepsLines.push(
-      `1. Go to the project folder: ${chalk.cyan(`cd ${projectName}`)}`
+      `1. Go to the project folder: ${MINT_COLOR(`cd ${projectName}`)}`
     );
   } else {
     stepsLines.push("1. You're already in the project directory!");
@@ -89,97 +109,71 @@ export function displayNextSteps(
         : `export CODEX_HOME="${codexPath}"`;
 
     stepsLines.push(
-      `${stepNum}. Set ${chalk.cyan(
+      `${stepNum}. Set ${MINT_COLOR(
         "CODEX_HOME"
-      )} environment variable before running Codex: ${chalk.cyan(cmd)}`
+      )} environment variable before running Codex: ${MINT_COLOR(cmd)}`
     );
     stepNum++;
   }
 
   stepsLines.push(
-    `${stepNum}. Start using the spec-driven workflow with your AI agent:`
+    `${stepNum}. Start using the spec-driven workflow with ${MINT_COLOR(
+      "slash commands"
+    )} to interact with your AI agent:`
   );
   stepsLines.push(
     "   " +
-      chalk.cyan("/research") +
-      " - Gather context and prepare for development"
+      MINT_COLOR("/buildfroce.research") +
+      " - Search accumulated project context and explore codebase patterns"
   );
   stepsLines.push(
     "   " +
-      chalk.cyan("/spec") +
-      "     - Define what to build (requirements) and how (plan)"
+      MINT_COLOR("/buildfroce.spec") +
+      "     - Materialize your intent into a structured specification and plan"
   );
   stepsLines.push(
     "   " +
-      chalk.cyan("/build") +
-      "    - Execute implementation with validation"
+      MINT_COLOR("/buildfroce.build") +
+      "    - Let the agent follow the plan"
   );
   stepsLines.push(
     "   " +
-      chalk.cyan("/complete") +
-      " - Finalize spec and update knowledge base"
+      MINT_COLOR("/buildfroce.complete") +
+      " - Validate requirements and store the knowledge in the context repository"
+  );
+  stepsLines.push(
+    "   " +
+      MINT_COLOR("/buildfroce.document") +
+      " - Create context files for existing functionality without creating a spec"
   );
 
   console.log();
-  console.log(
-    boxen(stepsLines.join("\n"), {
-      title: "Next Steps",
-      padding: 1,
-      borderColor: "cyan",
-    })
-  );
-
-  // Workflow details
-  const workflowLines = [
-    chalk.bold("Understanding the Workflow"),
-    "",
-    `The .buildforce directory stores project knowledge:`,
-    `  ${chalk.cyan(
-      ".buildforce/context/"
-    )} - Accumulated project context from completed specs`,
-    `  ${chalk.cyan(
-      ".buildforce/specs/"
-    )}   - Active and historical spec directories`,
-    "",
-    `Each workflow iteration creates a spec folder:`,
-    `  ${chalk.gray("001-feature-name/")}  - First feature`,
-    `  ${chalk.gray("002-another/")}       - Second feature`,
-    `  ${chalk.gray("...")}`,
-    "",
-    `Start your first feature with ${chalk.cyan(
-      "/research"
-    )} to gather context,`,
-    `then ${chalk.cyan("/spec")} to define what you're building.`,
-  ];
-
-  console.log();
-  console.log(
-    boxen(workflowLines.join("\n"), {
-      title: "Workflow Guide",
-      padding: 1,
-      borderColor: "cyan",
-    })
-  );
+  console.log(createBox(stepsLines.join("\n"), { title: "Next Steps" }));
 
   // Codex warning
   if (selectedAi === "codex") {
     const warningText =
-      chalk.bold.yellow("Important Note:") +
+      MINT_COLOR(chalk.bold("Important Note:")) +
       "\n\n" +
-      `Custom prompts do not yet support arguments in Codex. You may need to manually specify additional project instructions directly in prompt files located in ${chalk.cyan(
+      `Custom prompts do not yet support arguments in Codex. You may need to manually specify additional project instructions directly in prompt files located in ${MINT_COLOR(
         ".codex/prompts/"
       )}.\n\n` +
-      `For more information, see: ${chalk.cyan(
+      `For more information, see: ${MINT_COLOR(
         "https://github.com/openai/codex/issues/2890"
       )}`;
 
     console.log();
-    console.log(
-      boxen(warningText, {
-        title: "Slash Commands in Codex",
-        padding: 1,
-        borderColor: "yellow",
-      })
-    );
+    console.log(createBox(warningText, { title: "Slash Commands in Codex" }));
   }
+
+  const proTipsLines = [
+    `1. Use ${MINT_COLOR("/buildforce.research")} and then ${MINT_COLOR(
+      "/buildforce.document"
+    )} to create context files for existing functionality without creating a spec`,
+    "",
+    `2. Iterate as much as you want on each phase (research, spec or build) until you are confident that the agent has all the needed context, your intent is captured properly, you agree with the plan and the implementation is complete`,
+  ];
+
+  console.log();
+  console.log(createBox(proTipsLines.join("\n"), { title: "Pro Tips" }));
 }

@@ -1,0 +1,120 @@
+id: standardize-cli-title-display-20250130220000
+name: "Standardize CLI Title Display"
+type: feature
+status: draft
+created: "2025-01-30"
+last_updated: "2025-01-30"
+
+summary: |
+  Standardize all CLI title displays to use the same 3-line format (figlet title, tagline, instruction)
+  currently shown in --help, ensuring a cohesive user experience across all CLI entry points.
+
+# INTENT / PROBLEM STATEMENT
+
+problem: |
+  Currently, the CLI has inconsistent banner/title displays. The `--help` command shows a polished
+  3-line format with figlet-generated "BUILDFORCE" title, tagline, and instruction message. However,
+  all other commands (examples, check, upgrade, init) use a 2-line format via `showBanner()` function
+  that shows ASCII art title and tagline, missing the instruction line. This inconsistency creates
+  a fragmented user experience and breaks the cohesive visual identity of the CLI tool.
+
+motivation: |
+  Consistent visual presentation across all CLI entry points builds user trust and creates a
+  professional, polished experience. The 3-line format already exists and works well in `--help`,
+  so standardizing all commands to use it will unify the CLI's visual identity. Additionally,
+  including the instruction line ("Check our example workflows by typing `buildforce examples`")
+  in all commands increases discoverability of workflow examples, which is valuable for user
+  onboarding and adoption.
+
+# GOALS
+
+primary_goals:
+  - Standardize all CLI title displays to use identical 3-line format (figlet title, tagline, instruction)
+  - Eliminate code duplication by centralizing banner rendering in a shared function
+  - Maintain visual consistency with existing --help banner appearance
+
+secondary_goals:
+  - Increase discoverability of workflow examples by showing instruction line everywhere
+  - Remove unused BANNER constant after migration to clean up codebase
+
+# REQUIREMENTS
+
+functional_requirements:
+  - FR1: All CLI commands (examples, check, upgrade, init) must display the same 3-line banner format as --help
+  - FR2: Banner must show figlet-generated "BUILDFORCE" title (white, centered)
+  - FR3: Banner must show tagline "Context-first Spec-Driven Development framework" (mint green #3EB489, centered)
+  - FR4: Banner must show instruction "Check our example workflows by typing `buildforce examples`" (dim gray, centered)
+  - FR5: Default init command help (when no args/flags) must use the same 3-line format
+  - FR6: All banner displays must be centered based on terminal width
+
+non_functional_requirements:
+  - NFR1: Banner rendering must be performant (no noticeable delay when commands start)
+  - NFR2: Banner format must be responsive to terminal width changes
+  - NFR3: Code changes must maintain backward compatibility (no breaking changes to function signatures if possible)
+  - NFR4: Banner rendering logic must be DRY (no duplication across files)
+
+# SCOPE
+
+in_scope:
+  - Update `showBanner()` function in `src/lib/interactive.ts` to use figlet and include instruction line
+  - Replace `renderBannerForHelp()` in `src/cli.ts` to use shared banner function
+  - Remove duplicate banner code from `src/cli.ts` (lines 321-337)
+  - Update all command calls to use new banner format (should be automatic via function update)
+  - Verify all CLI entry points show consistent 3-line format
+
+out_of_scope:
+  - Changing the actual text content of title, tagline, or instruction message
+  - Adding new banner variants or customization options
+  - Modifying other CLI output formatting (help boxes, etc.)
+  - Adding configuration options to disable banner
+  - Changing color scheme (mint green, white, dim gray remain the same)
+
+# DESIGN PRINCIPLES
+
+design_principles:
+  - "DRY (Don't Repeat Yourself): Centralize banner logic in one function, eliminate duplication"
+  - "Consistency First: All entry points must show identical format for cohesive UX"
+  - "Backward Compatible: Minimize breaking changes to existing function signatures"
+  - "Progressive Enhancement: Build on existing --help implementation pattern"
+
+# ACCEPTANCE CRITERIA
+
+acceptance_criteria:
+  - AC1: Running `buildforce --help` shows 3-line banner (figlet title, tagline, instruction)
+  - AC2: Running `buildforce examples` shows 3-line banner matching --help format
+  - AC3: Running `buildforce check` shows 3-line banner matching --help format
+  - AC4: Running `buildforce upgrade` shows 3-line banner matching --help format
+  - AC5: Running `buildforce init` (with no args) shows 3-line banner matching --help format
+  - AC6: Running `buildforce` (default init) shows 3-line banner matching --help format
+  - AC7: All banners are centered based on terminal width
+  - AC8: No duplicate banner rendering code exists in codebase
+  - AC9: All banner displays use figlet (not ASCII art BANNER constant)
+
+# ASSUMPTIONS & DEPENDENCIES
+
+assumptions:
+  - figlet package is already installed and available (used in --help)
+  - Terminal width detection (process.stdout.columns) is reliable
+  - Users want consistent banner experience across all commands
+  - Instruction line ("Check our example workflows...") is appropriate for all commands
+
+dependencies:
+  internal:
+    - figlet: "Package already used for --help banner generation"
+    - chalk: "Package already used for color formatting"
+  external:
+    - "No new external dependencies required"
+
+# OPEN QUESTIONS
+
+open_questions:
+  # All resolved - instruction line will be same everywhere, BANNER constant will be removed
+
+# NOTES
+
+notes: |
+  The current --help implementation (`renderBannerForHelp()`) provides the reference implementation.
+  The goal is to extract this logic into a shared function that all commands can use, ensuring
+  perfect visual consistency. The figlet font "ANSI Shadow" and color scheme (white title, mint
+  green tagline, dim gray instruction) should be preserved exactly as they appear in --help.
+
