@@ -1,0 +1,133 @@
+id: fix-release-version-collision-20251104000000
+name: "Fix Release Workflow Version Collision Bug"
+type: feature
+status: draft
+created: "2025-11-04"
+last_updated: "2025-11-04"
+
+summary: |
+  Fix the release workflow to always create releases by finding the next unused version number.
+  Prevents version collisions when workflow runs multiple times on the same commit.
+
+# INTENT / PROBLEM STATEMENT
+
+problem: |
+  The release workflow currently skips creating releases when it detects a version collision.
+  This happens when:
+  1. Workflow runs multiple times on the same commit (manual re-run, workflow_dispatch)
+  2. Multiple sequential releases get created pointing to the same commit
+  3. Next PR merge triggers workflow which calculates a version that already exists
+  4. check-release-exists.sh returns exists=true, causing workflow to skip all release steps
+
+  Evidence shows v0.0.23 and v0.0.24 both point to commit 781a15b, and v0.0.21 and v0.0.22
+  both point to commit 8c24924. When get-next-version.sh uses git describe, it returns the
+  alphabetically first tag, causing the calculated "next" version to already exist.
+
+motivation: |
+  Every workflow run should create a release - this is the expected behavior when merging PRs
+  or manually triggering releases. Users should not encounter silent skips. The workflow should
+  be resilient to re-runs and always increment to find an unused version number, ensuring
+  predictable release creation regardless of how many times the workflow executes on a commit.
+
+# GOALS
+
+primary_goals:
+  - Ensure every workflow run creates a release (never skip)
+  - Prevent version collisions by finding next unused version number
+  - Maintain backward compatibility with existing release workflow structure
+
+secondary_goals:
+  - Preserve template versioning feature functionality
+  - Improve version calculation robustness for edge cases
+  - Maintain pre-release version bump commit strategy
+
+# REQUIREMENTS
+
+functional_requirements:
+  - FR1: Version calculation script must check if calculated version already exists as a git tag
+  - FR2: If calculated version exists as tag, increment patch version and check again
+  - FR3: Continue incrementing until finding a version number that does not exist as a tag
+  - FR4: Version bump commit message must reflect the actual unused version being created
+  - FR5: Workflow must remove or bypass the check-release-exists step that causes skipping
+  - FR6: Every workflow run must result in a GitHub release being created with a unique version tag
+
+non_functional_requirements:
+  - NFR1: Must maintain backward compatibility with existing workflow steps and script interfaces
+  - NFR2: Must preserve template versioning functionality (update-template-versions.sh integration)
+  - NFR3: Must preserve [skip ci] flag in version bump commit to prevent infinite loops
+  - NFR4: Version calculation must complete in reasonable time (< 10 iterations expected)
+  - NFR5: Must handle edge cases gracefully (manual re-runs, workflow_dispatch, rapid successive runs)
+
+# SCOPE
+
+in_scope:
+  - Modify get-next-version.sh to implement version existence checking and increment-until-unused logic
+  - Remove or modify check-release-exists workflow step to prevent skipping
+  - Update version bump commit message to use the final calculated version
+  - Test workflow behavior with multiple runs on same commit
+
+out_of_scope:
+  - Changing semantic versioning strategy (remain patch-increment only)
+  - Modifying template versioning feature implementation
+  - Adding major/minor version increment logic
+  - Implementing conventional commits or semantic release
+  - Changing release package creation logic
+  - Modifying GitHub release format or structure
+
+# DESIGN PRINCIPLES
+
+design_principles:
+  - "Always create a release - never skip workflow execution"
+  - "Find next available version - increment until unused number found"
+  - "Fail fast - if version iteration exceeds reasonable limit, error clearly"
+  - "Preserve existing workflow structure - minimize changes to other steps"
+  - "Maintain idempotency - running workflow multiple times should be safe"
+
+# ACCEPTANCE CRITERIA
+
+acceptance_criteria:
+  - AC1: Running workflow on commit with existing tag v0.0.24 creates release v0.0.25
+  - AC2: Running workflow again on same commit creates release v0.0.26
+  - AC3: Running workflow third time on same commit creates release v0.0.27
+  - AC4: Version bump commit message reflects actual version being created (e.g., "chore: bump version to v0.0.25 [skip ci]")
+  - AC5: Template files are updated with the correct unused version number
+  - AC6: GitHub release is created with tag matching the calculated unused version
+  - AC7: Workflow completes successfully without skipping release creation steps
+  - AC8: All existing release packages (22 zip files) are created and uploaded correctly
+
+# ASSUMPTIONS & DEPENDENCIES
+
+assumptions:
+  - Git repository has existing tags following semantic versioning (v0.0.X format)
+  - gh CLI is authenticated and available in workflow environment
+  - Template versioning feature scripts are functioning correctly
+  - Maximum 100 version increments should be sufficient (v0.0.24 → v0.0.124 absolute worst case)
+
+dependencies:
+  internal:
+    - release-workflow: "Core workflow that orchestrates all release steps"
+    - template-versioning: "Feature that updates template files with version numbers"
+    - get-next-version.sh: "Script being modified to implement new logic"
+    - create-github-release.sh: "Script that creates the actual GitHub release"
+  external:
+    - git: "For tag checking and version extraction"
+    - gh: "GitHub CLI for release operations"
+    - bash: "Shell scripting for version calculation logic"
+
+# OPEN QUESTIONS
+
+open_questions: []
+
+# NOTES
+
+notes: |
+  The root cause was identified through investigation showing multiple tags pointing to
+  the same commit (v0.0.23 and v0.0.24 → 781a15b). The workflow's check-release-exists
+  safeguard became a liability when version collisions occurred.
+
+  The solution approach is inspired by the user's preference: "ALWAYS create a release"
+  by incrementing until finding an unused version. This is more resilient than skipping
+  and provides predictable behavior.
+
+  The fix preserves the pre-release version bump commit strategy which is critical for
+  the template versioning feature - tags must point to commits containing versioned templates.

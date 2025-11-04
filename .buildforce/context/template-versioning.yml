@@ -3,7 +3,7 @@ name: "Automatic Template Versioning in Release Workflow"
 type: feature
 status: production
 created: 2025-11-03
-last_updated: 2025-11-03
+last_updated: 2025-11-04
 
 summary: |
   Automatic version injection system for BuildForce templates during GitHub release workflow.
@@ -36,6 +36,7 @@ files:
   primary:
     - .github/workflows/scripts/update-template-versions.sh
     - .github/workflows/release.yml
+    - .github/workflows/scripts/get-next-version.sh
   secondary:
     - src/templates/spec-template.yaml
     - src/templates/plan-template.yaml
@@ -66,8 +67,14 @@ design_decisions:
   - decision: "Script is idempotent - skips update if version already matches target"
     rationale: "Idempotency prevents unnecessary git changes and allows safe re-runs. If version already matches, no changes are made, resulting in clean git status. Critical for workflow reliability and debugging."
 
-  - decision: "Version bump placed after get-next-version, before check-release-exists in workflow"
-    rationale: "This placement ensures version is calculated first from git tags, templates are updated with that version, changes are committed and pushed, and then release checks and package creation proceed with the versioned commit as the source."
+  - decision: "Version bump placed after get-next-version, before release package creation in workflow"
+    rationale: "This placement ensures version is calculated first from git tags, templates are updated with that version, changes are committed and pushed, and then release package creation proceeds with the versioned commit as the source."
+
+  - decision: "Implement increment-until-unused version calculation to prevent version collisions"
+    rationale: "Workflow can run multiple times on same commit (manual re-runs, workflow_dispatch), causing multiple sequential releases pointing to same commit. Version calculation now loops incrementing patch version until finding an unused tag, ensuring every workflow run creates a release without skipping."
+
+  - decision: "Remove check-release-exists workflow step"
+    rationale: "The check-release-exists step was causing releases to be skipped when version collisions occurred. Since get-next-version.sh now guarantees unused versions via increment loop, this check is redundant and harmful. All release creation steps now run unconditionally."
 
 interfaces:
   script_signature:
@@ -139,41 +146,72 @@ evolution:
       - Uses awk for portable YAML manipulation
       - Integrates seamlessly with existing release workflow
 
+  - version: "1.1"
+    date: "2025-11-04"
+    changes: |
+      Fixed release workflow version collision bug:
+      - Enhanced get-next-version.sh with increment-until-unused logic
+      - Added version_tag_exists() function using git tag -l for tag checking
+      - Implemented while loop that increments patch version until finding unused version
+      - Added max iteration limit of 100 with clear error message
+      - Added informational logging for debugging re-runs
+      - Removed check-release-exists workflow step that was causing skips
+      - Removed all conditional execution from release creation steps
+      - All workflow steps now run unconditionally
+
+      Root cause:
+      - Workflow could run multiple times on same commit (manual re-runs, workflow_dispatch)
+      - Multiple sequential releases created pointing to same commit (e.g., v0.0.23 and v0.0.24 both at commit 781a15b)
+      - git describe returned alphabetically first tag when multiple existed
+      - check-release-exists detected collision and skipped release creation
+
+      Solution:
+      - Version calculation now guarantees unused version before any template updates
+      - Every workflow run creates a release regardless of how many times it's executed
+      - Workflow is resilient to re-runs with predictable versioning behavior
+
 related_specs:
   - template-versioning-20251103000000
+  - fix-release-version-collision-20251104000000
 
 workflow_sequence:
-  step_1: "Build TypeScript CLI (existing)"
-  step_2: "Get next version from git tags (existing)"
-  step_3: "Update templates with version (NEW)"
-  step_4: "Commit with 'chore: bump version to vX.Y.Z [skip ci]' (NEW)"
-  step_5: "Push commit to main (NEW)"
-  step_6: "Check if release already exists (existing)"
-  step_7: "Create release packages from versioned commit (existing)"
-  step_8: "Create GitHub release with tag (existing)"
+  step_1: "Build TypeScript CLI"
+  step_2: "Get next unused version from git tags (with increment-until-unused logic)"
+  step_3: "Update templates with calculated unused version"
+  step_4: "Commit with 'chore: bump version to vX.Y.Z [skip ci]'"
+  step_5: "Push commit to main"
+  step_6: "Create release packages from versioned commit (always runs)"
+  step_7: "Generate release notes (always runs)"
+  step_8: "Create GitHub release with tag (always runs)"
+  step_9: "Update pyproject.toml version (always runs)"
 
 technical_details:
   script_functions:
-    - name: "has_yaml_frontmatter"
-      purpose: "Detect markdown files with --- YAML frontmatter --- structure"
+    get_next_version_sh:
+      - name: "version_tag_exists"
+        purpose: "Check if a version tag exists in git repository using git tag -l"
 
-    - name: "is_pure_yaml"
-      purpose: "Detect files with .yaml or .yml extension"
+    update_template_versions_sh:
+      - name: "has_yaml_frontmatter"
+        purpose: "Detect markdown files with --- YAML frontmatter --- structure"
 
-    - name: "version_matches_yaml"
-      purpose: "Check if version in pure YAML file already matches target"
+      - name: "is_pure_yaml"
+        purpose: "Detect files with .yaml or .yml extension"
 
-    - name: "version_matches_frontmatter"
-      purpose: "Check if version in YAML frontmatter already matches target"
+      - name: "version_matches_yaml"
+        purpose: "Check if version in pure YAML file already matches target"
 
-    - name: "update_version_yaml"
-      purpose: "Update version in pure YAML file using awk"
+      - name: "version_matches_frontmatter"
+        purpose: "Check if version in YAML frontmatter already matches target"
 
-    - name: "update_version_frontmatter"
-      purpose: "Update version in markdown YAML frontmatter using awk"
+      - name: "update_version_yaml"
+        purpose: "Update version in pure YAML file using awk"
 
-    - name: "update_version"
-      purpose: "Main router function that delegates to appropriate handler"
+      - name: "update_version_frontmatter"
+        purpose: "Update version in markdown YAML frontmatter using awk"
+
+      - name: "update_version"
+        purpose: "Main router function that delegates to appropriate handler"
 
   validation_logic:
     - "Version format validation using regex"
@@ -206,6 +244,17 @@ notes: |
   already have the target version, the script reports this and exits successfully without
   making any changes.
 
+  Version collision fix (v1.1):
+  The increment-until-unused logic in get-next-version.sh ensures that every workflow run
+  creates a release, even when the workflow is manually re-run or triggered multiple times
+  on the same commit. This was critical to fix a bug where releases were being skipped when
+  version numbers collided. The workflow is now resilient to any number of re-runs with
+  predictable sequential versioning (v0.0.25, v0.0.26, v0.0.27, etc.).
+
+  The max iteration limit of 100 provides a safety net against infinite loops while being
+  far beyond realistic scenarios. In practice, most workflows will find an unused version
+  within 1-3 iterations.
+
   Future enhancements could include:
   - PowerShell variant of the update script (NFR4 currently out of scope)
   - Individual template versioning if templates evolve at different rates
@@ -213,6 +262,7 @@ notes: |
   - Automatic changelog generation based on version bumps
   - Backfilling versions for existing releases (currently out of scope)
   - Integration with upgrade command to compare user's template version with latest
+  - Surfacing version increment count in release notes for debugging
 
   The implementation aligns with "Approach 1: Pre-Release Version Bump Commit" from
   the initial brainstorming, which was selected for its clean git history and
