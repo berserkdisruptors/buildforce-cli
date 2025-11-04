@@ -67,7 +67,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Troubleshooting guide
   - Contribution guidelines
   - Roadmap
-- MIT License
+- Apache License 2.0
 - Code of Conduct (Contributor Covenant v2.1)
 
 ### Technical

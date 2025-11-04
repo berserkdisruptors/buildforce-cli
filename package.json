@@ -10,7 +10,7 @@
   "files": [
     "dist/**/*",
     "README.md",
-    "LICENSE"
+    "LICENSE.md"
   ],
   "scripts": {
     "build": "tsc",
@@ -33,7 +33,7 @@
     "ai-assisted-development"
   ],
   "author": "Berserk Disruptors",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/berserkdisruptors/buildforce-cli"
