@@ -49,23 +49,25 @@ export async function validateProjectSetup(
     projectName = path.basename(process.cwd());
     projectPath = process.cwd();
 
-    // Check if current directory has any files
-    const existingItems = await fs.readdir(projectPath);
-    if (existingItems.length > 0) {
+    // Check if Buildforce is already initialized
+    const buildforceDir = path.join(projectPath, ".buildforce");
+    const isBuildforceInitialized = await fs.pathExists(buildforceDir);
+
+    if (isBuildforceInitialized) {
       console.log(
         MINT_COLOR("Warning:"),
-        `Current directory is not empty (${existingItems.length} items)`
+        "Buildforce is already initialized in this directory"
       );
       console.log(
         MINT_COLOR(
-          "Template files will be merged with existing content and may overwrite existing files"
+          "Proceeding will overwrite existing Buildforce configuration and templates"
         )
       );
 
       if (force) {
         console.log(
           MINT_COLOR(
-            "--force supplied: skipping confirmation and proceeding with merge"
+            "--force supplied: skipping confirmation and proceeding with re-initialization"
           )
         );
       } else {
