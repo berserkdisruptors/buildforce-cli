@@ -1,5 +1,5 @@
 ---
-version: "0.0.22"
+version: "0.0.24"
 description: Build the code changes required for the current spec following the plan, with progress tracking, deviation logging, and iterative refinement.
 scripts:
   sh: src/scripts/bash/get-spec-paths.sh --json
