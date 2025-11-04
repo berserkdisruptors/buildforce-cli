@@ -123,27 +123,27 @@ export function displayNextSteps(
   );
   stepsLines.push(
     "   " +
-      MINT_COLOR("/buildfroce.research") +
+      MINT_COLOR("/buildforce.research") +
       " - Search accumulated project context and explore codebase patterns"
   );
   stepsLines.push(
     "   " +
-      MINT_COLOR("/buildfroce.spec") +
+      MINT_COLOR("/buildforce.spec") +
       "     - Materialize your intent into a structured specification and plan"
   );
   stepsLines.push(
     "   " +
-      MINT_COLOR("/buildfroce.build") +
+      MINT_COLOR("/buildforce.build") +
       "    - Let the agent follow the plan"
   );
   stepsLines.push(
     "   " +
-      MINT_COLOR("/buildfroce.complete") +
-      " - Validate requirements and store the knowledge in the context repository"
+      MINT_COLOR("/buildforce.complete") +
+      " - Validate requirements and update the context repository"
   );
   stepsLines.push(
     "   " +
-      MINT_COLOR("/buildfroce.document") +
+      MINT_COLOR("/buildforce.document") +
       " - Create context files for existing functionality without creating a spec"
   );
 
