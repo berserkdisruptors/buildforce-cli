@@ -155,6 +155,36 @@ export async function setupProject(
 
     tracker.complete("config", ".buildforce/buildforce.json");
 
+    // Ensure buildforce.json is in .gitignore
+    const gitignorePath = path.join(projectPath, ".gitignore");
+    if (await fs.pathExists(gitignorePath)) {
+      const gitignoreContent = await fs.readFile(gitignorePath, "utf8");
+
+      // Check if buildforce.json is already in gitignore
+      if (!gitignoreContent.includes(".buildforce/buildforce.json")) {
+        // Check if .current-spec exists and replace it, or just add buildforce.json
+        if (gitignoreContent.includes(".buildforce/.current-spec")) {
+          const updatedContent = gitignoreContent.replace(
+            ".buildforce/.current-spec",
+            ".buildforce/buildforce.json"
+          );
+          await fs.writeFile(gitignorePath, updatedContent, "utf8");
+
+          if (debug) {
+            console.log(chalk.gray(`\nUpdated .gitignore: replaced .current-spec with buildforce.json`));
+          }
+        } else {
+          // Add buildforce.json to gitignore
+          const updatedContent = gitignoreContent.trimEnd() + "\n.buildforce/buildforce.json\n";
+          await fs.writeFile(gitignorePath, updatedContent, "utf8");
+
+          if (debug) {
+            console.log(chalk.gray(`\nUpdated .gitignore: added buildforce.json`));
+          }
+        }
+      }
+    }
+
     // Git step
     if (!noGit) {
       tracker.start("git");

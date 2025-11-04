@@ -1,0 +1,136 @@
+id: migrate-currentspec-to-json-20251029000000
+name: "Migrate .current-spec to buildforce.json Configuration"
+type: feature
+status: draft
+created: 2025-10-29
+last_updated: 2025-10-29
+
+summary: |
+  Migrate state tracking from .buildforce/.current-spec plain text file to a structured
+  buildforce.json configuration file with a currentSpec field, improving extensibility
+  and consistency with modern configuration patterns.
+
+# INTENT / PROBLEM STATEMENT
+
+problem: |
+  The current .current-spec file is a plain text file containing only the active spec folder name.
+  While simple, this approach limits extensibility for future state tracking needs (e.g., project
+  metadata, configuration options, feature flags). A JSON configuration file would provide a more
+  structured, extensible foundation for managing project state and configuration.
+
+motivation: |
+  Moving to buildforce.json enables:
+  1. Structured configuration with schema validation potential
+  2. Single location for all buildforce project settings (not just current spec)
+  3. Better tooling support (JSON editors, linters, IDE autocomplete)
+  4. Easier extension for future configuration needs (e.g., project name, author, custom settings)
+  5. Consistency with common CLI patterns (package.json, tsconfig.json, etc.)
+
+# GOALS
+
+primary_goals:
+  - Replace .current-spec plain text file with buildforce.json containing currentSpec field
+  - Update all slash commands and scripts to use JSON-based state tracking
+  - Preserve existing behavior (gitignore, lifecycle, CREATE/UPDATE mode logic)
+
+secondary_goals:
+  - Establish foundation for future configuration extensions
+  - Add buildforce.json to .gitignore to maintain local session state behavior
+  - Document migration path in context files
+
+# REQUIREMENTS
+
+functional_requirements:
+  - FR1: Create buildforce.json file structure with currentSpec field only (minimal schema)
+  - FR2: Update common.sh functions to read/write currentSpec from buildforce.json (no .current-spec fallback)
+  - FR3: Update create-spec-files.sh to write currentSpec to buildforce.json after folder creation
+  - FR4: Update /spec command template to read currentSpec from buildforce.json for CREATE/UPDATE determination
+  - FR5: Update /research command template to check buildforce.json currentSpec for cache accumulation logic
+  - FR6: Update /complete command template to read currentSpec from buildforce.json and clear it on completion
+  - FR7: Update init command to add buildforce.json to .gitignore automatically
+
+non_functional_requirements:
+  - NFR1: No performance degradation - JSON parsing should be fast for small config files
+  - NFR2: Maintain atomic write operations to prevent partial state corruption
+  - NFR3: Preserve existing .gitignore behavior - buildforce.json should be local session state, added to .gitignore during init
+  - NFR4: Cross-platform compatibility - JSON parsing must work in bash and PowerShell scripts
+  - NFR5: Error handling - graceful fallback if buildforce.json is malformed or missing
+
+# SCOPE
+
+in_scope:
+  - Create buildforce.json schema with currentSpec field only (minimal)
+  - Update bash functions in common.sh for JSON read/write operations
+  - Update create-spec-files.sh to write to buildforce.json
+  - Update all command templates (spec.md, research.md, complete.md) to reference buildforce.json
+  - Update init command to automatically add buildforce.json to .gitignore
+  - Update context documentation to reflect new state tracking mechanism
+
+out_of_scope:
+  - PowerShell script updates (can be done in separate spec if needed)
+  - Migration tooling for existing .current-spec files (clean slate approach - users start fresh)
+  - Adding additional configuration fields beyond currentSpec (future enhancement)
+  - Schema validation tooling or buildforce.schema.json file (rely on convention and documentation)
+  - Changes to spec folder structure or naming conventions
+
+# DESIGN PRINCIPLES
+
+design_principles:
+  - "Maintain simplicity - buildforce.json should be human-readable and easy to edit manually"
+  - "Preserve existing behavior - only change the storage mechanism, not the logic"
+  - "Enable future extensibility - structure should accommodate additional fields without breaking changes"
+  - "Graceful degradation - system should work even if buildforce.json is missing or malformed"
+
+# ACCEPTANCE CRITERIA
+
+acceptance_criteria:
+  - AC1: buildforce.json is created with currentSpec field when /spec CREATE mode runs
+  - AC2: All slash commands correctly read currentSpec from buildforce.json for state determination
+  - AC3: /complete command clears currentSpec field in buildforce.json (sets to null)
+  - AC4: Init command automatically adds buildforce.json to .gitignore
+  - AC5: All existing workflows (CREATE, UPDATE, completion) work identically to before
+  - AC6: Context documentation is updated to reflect buildforce.json usage
+
+# ASSUMPTIONS & DEPENDENCIES
+
+assumptions:
+  - buildforce.json will be fully gitignored and used only for local development state
+  - Minimal schema (currentSpec only) is sufficient for current needs, extensible for future
+  - JSON parsing tools (jq for bash, ConvertFrom-Json for PowerShell) are available or can be simulated
+  - Users will not manually edit buildforce.json during active sessions (or accept risk of corruption)
+  - No schema validation file needed - convention and documentation are sufficient
+  - No backward compatibility needed - clean break from .current-spec
+
+dependencies:
+  internal:
+    - common.sh: "get_current_spec() and set_current_spec() functions require updates"
+    - create-spec-files.sh: "Must call updated set_current_spec() to write JSON"
+    - spec.md: "Template must reference buildforce.json for state reading"
+    - research.md: "Template must check buildforce.json for cache accumulation logic"
+    - complete.md: "Template must read and clear currentSpec from buildforce.json"
+    - init-command: "Must add buildforce.json to .gitignore during initialization"
+  external:
+    - jq: "Optional - for robust JSON parsing in bash (can use fallback methods)"
+
+# OPEN QUESTIONS
+
+open_questions: []
+
+# NOTES
+
+notes: |
+  The migration preserves all existing behavior and only changes the storage mechanism from
+  plain text to JSON. This is a foundation for future configuration enhancements but remains
+  minimal for this spec (currentSpec field only).
+
+  Clean break from .current-spec - no backward compatibility layer needed. Users upgrade to
+  a system that only reads/writes buildforce.json, simplifying implementation.
+
+  Research findings show .current-spec is used in 6 key locations across scripts and templates,
+  all of which need updates for buildforce.json support.
+
+  Clarifications from user:
+  - Minimal schema (currentSpec only), no additional metadata fields
+  - No backward compatibility needed - clean break from .current-spec
+  - buildforce.json fully gitignored, added automatically during init
+  - No schema validation file - rely on convention

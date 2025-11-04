@@ -1,4 +1,5 @@
 ---
+version: "0.0.25"
 description: Create or update context files for existing functionality without requiring a spec-driven development session.
 ---
 
@@ -16,8 +17,8 @@ Before proceeding, verify sufficient context exists:
 
 - Check conversation history for file reads and substantive discussion about components, architecture, or patterns
 - If minimal context detected (0-2 file reads AND no substantive technical discussion):
-  - Respond: "I notice there's limited context in our conversation. Would you like to run `/research [topic]` first to gather information about what you'd like to document?"
-  - Wait for user to either provide more context or run `/research`
+  - Respond: "I notice there's limited context in our conversation. Would you like to run `/buildforce:research [topic]` first to gather information about what you'd like to document?"
+  - Wait for user to either provide more context or run `/buildforce:research`
 - If sufficient context exists, proceed with workflow below
 
 ## Workflow Steps
@@ -26,7 +27,7 @@ Before proceeding, verify sufficient context exists:
 
    Do a proactive search to determine which context files need updates or creation:
 
-   - **Read `.buildforce/context/_index.yml`** to see all existing context files
+   - **Read `.buildforce/context/_index.yaml`** to see all existing context files
    - **Analyze conversation history** to identify which system components/features/modules/patterns to document
      - **CRITICAL**: Conversation history is the primary source since no spec.yaml/plan.yaml exists
      - Extract key design decisions, implementation details, architectural patterns, responsibilities, dependencies
@@ -42,23 +43,23 @@ Before proceeding, verify sufficient context exists:
 
    - Use component/feature/module identity, NOT spec intent
    - Format: kebab-case, max 50 characters, no numeric or timestamp prefixes
-   - Examples: `authentication.yml`, `build-command.yml`, `error-handling.yml`, `plan-template.yml`
+   - Examples: `authentication.yaml`, `build-command.yaml`, `error-handling.yaml`, `plan-template.yaml`
    - Validate: lowercase alphanumeric and hyphens only
-   - **Check for ID conflicts**: Search `_index.yml` to ensure generated ID doesn't already exist
+   - **Check for ID conflicts**: Search `_index.yaml` to ensure generated ID doesn't already exist
    - If conflict exists: Choose alternative ID (append descriptor like `-module` or `-feature`, use synonym)
 
 3. **Create/Update Context Files**:
 
    **For NEW context files**:
 
-   - Load `.buildforce/context/_schema.yml` to understand required structure and fields
-   - Create new file at `.buildforce/context/{generated-filename}.yml`
+   - Load `.buildforce/context/_schema.yaml` to understand required structure and fields
+   - Create new file at `.buildforce/context/{generated-filename}.yaml`
    - Populate ALL schema sections with actual context from conversation history
    - **NEVER leave placeholder text** like "[Agent will populate]" - fill in real content or omit optional fields
 
    **For EXISTING context files**:
 
-   - Read current content from `.buildforce/context/{filename}.yml`
+   - Read current content from `.buildforce/context/{filename}.yaml`
    - Preserve all existing values (id, created date, version history)
    - Update `last_updated` to today's date
    - Intelligently merge new information:
@@ -71,12 +72,12 @@ Before proceeding, verify sufficient context exists:
 
 4. **Update Context Index**:
 
-   Update `.buildforce/context/_index.yml` with new entries:
+   Update `.buildforce/context/_index.yaml` with new entries:
 
    - For each NEW context file created, add entry:
      ```yaml
      - id: {semantic-id}
-       file: {filename}.yml
+       file: {filename}.yaml
        type: {module/feature/component/pattern}
        description: {short-one-liner-description}
        tags: [{auto-generated-tags}]
@@ -87,7 +88,7 @@ Before proceeding, verify sufficient context exists:
    - **Related context field** (OPTIONAL): Add array of closely related context IDs for discovery
      - Include for: feature families, dependent modules, sibling features
      - Only add significant relationships (avoid over-populating)
-     - IDs must exist in _index.yml
+     - IDs must exist in _index.yaml
      - Example: `[slash-commands, plan-template, spec-command]`
    - Maintain proper YAML indentation (2 spaces per level)
    - Preserve existing entries (do not modify or delete)
@@ -112,6 +113,6 @@ Before proceeding, verify sufficient context exists:
    - **Related contexts updated** (if any): List filenames
    - **File size advisory** (if applicable): "Consider decomposing [filename] into smaller focused files (currently >500 lines)"
    - **Achievement summary**: 1-2 sentences describing what was documented
-   - Example: "Created authentication-module.yml context file documenting JWT-based authentication with OAuth2 integration. Updated error-handling.yml to include auth error patterns."
+   - Example: "Created authentication-module.yaml context file documenting JWT-based authentication with OAuth2 integration. Updated error-handling.yaml to include auth error patterns."
 
 Context: {$ARGUMENTS}

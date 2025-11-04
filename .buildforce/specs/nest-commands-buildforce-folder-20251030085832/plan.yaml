@@ -1,0 +1,325 @@
+# Plan Template for /build Agent Execution
+# This template is optimized for AI agent consumption during /build commands
+# It provides checkbox-based progress tracking, deviation logging, and spec traceability
+
+id: nest-commands-buildforce-folder-20251030085832-plan
+name: "Implementation Plan for Nest Commands in buildforce Subdirectory"
+spec_id: "nest-commands-buildforce-folder-20251030085832"
+type: implementation-plan
+status: draft
+created: "2025-10-30"
+last_updated: "2025-10-30"
+
+# ARCHITECTURE OVERVIEW
+# Describe the high-level implementation approach and key technical decisions.
+
+approach: |
+  The implementation focuses on modifying the `generate_commands()` function in the
+  create-release-packages.sh script to create a `buildforce/` subdirectory within
+  each agent's command folder before deploying command files. This is a surgical
+  change that only affects the output directory path - no changes to command content,
+  template processing, or placeholder substitution are needed.
+
+  The approach is:
+  1. Identify all locations where commands are generated (generate_commands function)
+  2. Update the mkdir and output path to include buildforce/ subdirectory
+  3. Test with local artifact generation (AGENTS=claude SCRIPTS=sh)
+  4. Verify ZIP contents and extracted structure
+  5. Test full matrix (all 11 agents × 2 script types)
+
+technology_stack:
+  - bash: "Shell scripting for create-release-packages.sh modifications"
+  - zip: "Archive creation for release artifacts"
+  - mkdir -p: "Creating nested directory structures"
+
+decisions:
+  - decision: "Add buildforce/ subdirectory to all agent command paths"
+    rationale: "Provides namespace isolation without breaking command functionality. All agents support nested subdirectories. Minimal code change with maximum organizational benefit."
+
+  - decision: "Modify generate_commands() function instead of case statements"
+    rationale: "The generate_commands() function is called for all agents, so modifying it once updates all 11 agents consistently. This reduces duplication and ensures consistency."
+
+  - decision: "Use mkdir -p for buildforce subdirectory creation"
+    rationale: "mkdir -p creates parent directories as needed and doesn't error if directory already exists. This is idempotent and safe for repeated runs."
+
+  - decision: "Test with AGENTS=claude SCRIPTS=sh before full matrix"
+    rationale: "Claude with bash is the most common configuration. Testing this first provides quick validation before running the full 22-variant matrix, saving time during development."
+
+# FILE STRUCTURE
+# List all files to be created or modified during implementation
+
+files_to_create: []
+
+files_to_modify:
+  - path: ".github/workflows/scripts/create-release-packages.sh"
+    change_type: "edit"
+    description: "Update generate_commands() function to create buildforce/ subdirectory and deploy commands to nested path"
+
+# IMPLEMENTATION PHASES
+# Break down the implementation into logical phases with checkbox-based task tracking
+# Use [ ] for pending tasks and [x] for completed tasks
+# Each task should link back to spec requirements via spec_refs
+
+phase_1:
+  name: "Update Command Generation Script"
+  description: |
+    Modify the generate_commands() function to create the buildforce/ subdirectory
+    and update the output directory path for all command files.
+
+  tasks:
+    - [x] Locate generate_commands() function in create-release-packages.sh (line ~40)
+      spec_refs: [FR2]
+      files: [.github/workflows/scripts/create-release-packages.sh]
+      notes: "Function signature: generate_commands() { local agent=$1 ext=$2 arg_format=$3 output_dir=$4 script_variant=$5 ..."
+
+    - [x] Update mkdir -p "$output_dir" to mkdir -p "$output_dir/buildforce"
+      spec_refs: [FR1, FR2]
+      files: [.github/workflows/scripts/create-release-packages.sh]
+      notes: "This creates the nested subdirectory before writing command files"
+
+    - [x] Update all output file paths from "$output_dir/$name.$ext" to "$output_dir/buildforce/$name.$ext"
+      spec_refs: [FR1, FR3]
+      files: [.github/workflows/scripts/create-release-packages.sh]
+      notes: "Affects both TOML and MD case statements in generate_commands() function"
+
+  validation:
+    - [ ] All phase_1 tasks completed
+    - [ ] Code syntax is valid (no bash errors)
+    - [ ] Changes affect only the output_dir path, not command content
+    - [ ] Spec requirements covered: [FR1, FR2, FR3]
+
+phase_2:
+  name: "Test Single Agent Configuration"
+  description: |
+    Generate a single agent variant (claude + sh) locally to verify the nested
+    structure is created correctly before running the full matrix.
+
+  tasks:
+    - [x] Run npm run build to compile TypeScript CLI
+      spec_refs: [FR5]
+      files: []
+      notes: "Prerequisite for create-release-packages.sh"
+
+    - [x] Run AGENTS=claude SCRIPTS=sh .github/workflows/scripts/create-release-packages.sh v0.0.99
+      spec_refs: [FR5, AC1]
+      files: []
+      notes: "Generates single ZIP in .genreleases/ directory"
+
+    - [x] Verify .genreleases/buildforce-cli-template-claude-sh-v0.0.99.zip exists
+      spec_refs: [FR5]
+      files: []
+      notes: "Confirms script completed without errors"
+
+    - [x] Unzip and inspect directory structure: unzip -l .genreleases/buildforce-cli-template-claude-sh-v0.0.99.zip | grep commands
+      spec_refs: [FR1, FR6, AC1, AC4]
+      files: []
+      notes: "Verify commands are at .claude/commands/buildforce/*.md path"
+
+    - [x] Count command files: should have 6 files (research, spec, plan, build, complete, document)
+      spec_refs: [FR3, AC4]
+      files: []
+      notes: "Ensure all slash commands are present in nested path"
+
+    - [x] Verify no commands remain in .claude/commands/*.md (parent directory should be empty)
+      spec_refs: [AC5]
+      files: []
+      notes: "Confirms complete migration to nested structure"
+
+  validation:
+    - [ ] All phase_2 tasks completed
+    - [ ] ZIP archive contains commands at buildforce/ subdirectory
+    - [ ] No errors during ZIP generation
+    - [ ] Spec requirements covered: [FR1, FR3, FR5, FR6]
+
+phase_3:
+  name: "Test Local Artifact Init"
+  description: |
+    Test the full init flow using local artifacts to verify extracted commands
+    are deployed to the correct nested path.
+
+  tasks:
+    - [x] Initialize test project with local artifact: buildforce init test-nested --local --ai claude --script sh
+      spec_refs: [FR6, AC3]
+      files: []
+      notes: "Uses locally generated ZIP from phase_2"
+
+    - [x] Verify commands exist at test-nested/.claude/commands/buildforce/*.md
+      spec_refs: [FR1, FR6, AC3]
+      files: []
+      notes: "Check with: ls -la test-nested/.claude/commands/buildforce/"
+
+    - [x] Verify all 6 command files are present (research, spec, plan, build, complete, document)
+      spec_refs: [FR3, AC4]
+      files: []
+      notes: "Count with: ls test-nested/.claude/commands/buildforce/ | wc -l"
+
+    - [x] Clean up test project: rm -rf test-nested
+      spec_refs: []
+      files: []
+      notes: "Cleanup after verification"
+
+  validation:
+    - [ ] All phase_3 tasks completed
+    - [ ] Commands deployed to nested buildforce/ subdirectory
+    - [ ] Init flow completes successfully
+    - [ ] Spec requirements covered: [FR1, FR3, FR6]
+
+phase_4:
+  name: "Test Full Agent Matrix"
+  description: |
+    Run the full release package generation for all agents and script variants
+    to ensure consistency across all 22 combinations.
+
+  tasks:
+    - [x] Run full matrix: .github/workflows/scripts/create-release-packages.sh v0.0.99
+      spec_refs: [FR4, FR5, AC2]
+      files: []
+      notes: "Generates all 11 agents × 2 script types = 22 ZIP files"
+
+    - [x] Verify 22 ZIP files exist in .genreleases/
+      spec_refs: [FR5, AC2]
+      files: []
+      notes: "Check with: ls .genreleases/*.zip | wc -l"
+
+    - [x] Spot-check 3-4 different agent ZIPs for nested command structure
+      spec_refs: [FR4, AC2]
+      files: []
+      notes: "Test claude, gemini, copilot - different command formats (.md, .toml, .prompt.md)"
+
+    - [x] Verify gemini uses .gemini/commands/buildforce/*.toml path
+      spec_refs: [FR1, FR4]
+      files: []
+      notes: "Check TOML-based agents have correct structure"
+
+    - [x] Verify copilot uses .github/prompts/buildforce/*.prompt.md path
+      spec_refs: [FR1, FR4]
+      files: []
+      notes: "Check special-case agent folder (prompts vs commands)"
+
+    - [x] Run build pipeline smoke test: Check for script errors or warnings
+      spec_refs: [NFR2, AC6]
+      files: []
+      notes: "Review script output for any unexpected errors"
+
+  validation:
+    - [ ] All phase_4 tasks completed
+    - [ ] All 22 ZIP variants generated successfully
+    - [ ] Nested structure consistent across all agents
+    - [ ] Spec requirements covered: [FR4, FR5, NFR2]
+
+# DEVIATION LOG
+# The /build agent populates this section when implementation deviates from the original plan
+# Format: phase → task → original plan → actual implementation → reason for deviation
+
+deviations:
+  - phase: "phase_2"
+    task: "Run AGENTS=claude SCRIPTS=sh script"
+    original: "Script should run without errors"
+    actual: "Fixed validate_subset() return code bug: changed 'return $ok' to '[[ $ok -eq 1 ]]'"
+    reason: "The validate_subset() function was using backwards exit code logic (returning 1 for success instead of 0). This prevented the script from running. Fixed by using [[ $ok -eq 1 ]] which returns proper bash exit codes."
+
+# TESTING GUIDANCE
+# Structured guidance for testing the implementation
+
+testing:
+  automated_tests: []
+
+  manual_tests:
+    - scenario: "Verify single agent nested command deployment"
+      steps: |
+        1. Run: AGENTS=claude SCRIPTS=sh .github/workflows/scripts/create-release-packages.sh v0.0.99
+        2. Run: unzip -l .genreleases/buildforce-cli-template-claude-sh-v0.0.99.zip | grep "commands/buildforce"
+        3. Expected: 6 lines showing .claude/commands/buildforce/*.md files
+        4. Run: unzip -l .genreleases/buildforce-cli-template-claude-sh-v0.0.99.zip | grep ".claude/commands/.*\.md" | grep -v buildforce
+        5. Expected: 0 lines (no commands in parent directory)
+
+    - scenario: "Verify local artifact init with nested structure"
+      steps: |
+        1. Run: buildforce init test-nested --local --ai claude --script sh
+        2. Run: ls -la test-nested/.claude/commands/buildforce/
+        3. Expected: 6 .md files (research, spec, plan, build, complete, document)
+        4. Run: ls test-nested/.claude/commands/*.md 2>/dev/null
+        5. Expected: No files found (empty parent directory)
+        6. Cleanup: rm -rf test-nested
+
+    - scenario: "Verify multi-agent consistency"
+      steps: |
+        1. Run: .github/workflows/scripts/create-release-packages.sh v0.0.99
+        2. Run: for zip in .genreleases/*.zip; do echo "Checking $zip"; unzip -l "$zip" | grep -E "(commands|prompts)/buildforce" | head -3; done
+        3. Expected: Each ZIP shows commands in buildforce/ subdirectory
+        4. Verify different command formats (.md for claude/cursor, .toml for gemini/qwen, .prompt.md for copilot)
+
+# VALIDATION CRITERIA
+# Define success metrics and track spec requirement coverage
+
+success_metrics:
+  - "All 22 ZIP variants contain commands in buildforce/ subdirectory"
+  - "No commands remain in parent directory (flat structure removed)"
+  - "Build pipeline completes with exit code 0"
+  - "Local init deploys commands to nested path"
+
+spec_coverage:
+  - FR1: "✅ Phase 1: Task 2-3 (update mkdir and output paths)"
+  - FR2: "✅ Phase 1: Task 1-2 (modify generate_commands function)"
+  - FR3: "✅ Phase 1: Task 3 + Phase 2: Task 5 (all 6 commands in nested path)"
+  - FR4: "✅ Phase 4: Task 3-5 (verify consistency across agents)"
+  - FR5: "✅ Phase 2: Task 2 + Phase 4: Task 1 (npm run create-release-packages)"
+  - FR6: "✅ Phase 3: Task 1-3 (local init verification)"
+  - NFR1: "✅ Implicit: No migration of existing projects - they continue working"
+  - NFR2: "✅ Phase 4: Task 6 (build pipeline smoke test)"
+  - NFR3: "✅ Implicit: Nested structure adds minimal overhead"
+  - NFR4: "✅ Phase 1: Task 2-3 (simple mkdir -p and path changes)"
+
+# PROGRESS SUMMARY
+# Track overall progress and identify next steps
+
+overall_progress:
+  phase_1: "3/3 tasks completed ✅"
+  phase_2: "6/6 tasks completed ✅"
+  phase_3: "4/4 tasks completed ✅"
+  phase_4: "6/6 tasks completed ✅"
+
+current_status: |
+  ✅ Implementation completed successfully!
+
+  All phases completed:
+  - Phase 1: Modified generate_commands() function to nest commands in buildforce/ subdirectory
+  - Phase 2: Tested single agent (claude+sh) - commands correctly nested
+  - Phase 3: Tested local artifact init - commands deployed to nested path
+  - Phase 4: Generated all 22 ZIP variants - consistent nested structure across all agents
+
+  Deviation: Fixed validate_subset() return code bug discovered during Phase 2 testing.
+
+next_immediate_steps:
+  - "Clean up test artifacts: rm -rf .genreleases"
+  - "Run final validation against all acceptance criteria"
+  - "Review implementation and testing results"
+
+# RISKS & CONSIDERATIONS
+# Document potential risks and mitigation strategies
+
+risks:
+  - risk: "Agents may not support nested command subdirectories"
+    mitigation: "Test with primary agents (Claude, Copilot, Cursor) first. Document any limitations. Most modern AI assistants support nested commands."
+
+  - risk: "Existing projects may break if users upgrade without re-initialization"
+    mitigation: "Document in release notes that users should run 'buildforce upgrade' or 'buildforce init' to adopt new structure. Old structure continues to work."
+
+  - risk: "Script errors during generation could produce invalid ZIPs"
+    mitigation: "Test incrementally with single agent first (phase 2). Verify ZIP contents before full matrix. Pipeline will catch errors."
+
+  - risk: "Special-case agents (copilot uses 'prompts' not 'commands') may need different path"
+    mitigation: "Review case statements for copilot and other special cases. Adjust output_dir logic if needed. Test these agents specifically in phase 4."
+
+# NOTES
+# Capture lessons learned and future enhancement ideas
+
+lessons_learned:
+  - "Modifying generate_commands() once updates all 11 agents - good abstraction"
+  - "Testing with single agent before full matrix saves time during development"
+  - "Local artifact testing provides fast feedback loop for init flow verification"
+
+future_enhancements:
+  - "Consider allowing users to customize command subdirectory name via buildforce.json"
+  - "Add automated tests to CI/CD that verify command paths in generated ZIPs"
+  - "Document command organization best practices for users adding custom commands"

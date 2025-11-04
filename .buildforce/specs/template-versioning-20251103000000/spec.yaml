@@ -1,0 +1,134 @@
+id: template-versioning-20251103000000
+name: "Automatic Template Versioning in Release Workflow"
+type: feature
+status: draft
+created: "2025-11-03"
+last_updated: "2025-11-03"
+
+summary: |
+  Automatically inject version numbers into all template files during the release workflow, creating a pre-release commit that versions templates before creating GitHub releases, ensuring distributed templates are self-describing and version-aware.
+
+# INTENT / PROBLEM STATEMENT
+
+problem: |
+  Currently, template files (plan-template.md, spec-template.yaml, etc.) have no version field, making it impossible to trace which release version a user's initialized project came from. When users run `buildforce init`, they receive templates without version information, creating difficulties in debugging, support, and upgrade scenarios. There's no way to know if a user is working with v0.1.0 templates or v0.2.0 templates.
+
+motivation: |
+  Version-aware templates enable traceability, better support, and informed upgrade decisions. Users and maintainers can quickly identify template versions, understand compatibility, and make data-driven decisions about when to upgrade. This creates a foundation for future upgrade tooling and improves the user experience when troubleshooting issues or seeking support.
+
+# GOALS
+
+primary_goals:
+  - Automatically version all template files with the release version number
+  - Create a pre-release version bump commit before GitHub release creation
+  - Ensure distributed template packages contain versioned templates matching the release tag
+
+secondary_goals:
+  - Maintain clean git history with clear version bump commits
+  - Avoid workflow loops triggered by version bump commits
+  - Create foundation for future template upgrade tooling
+
+# REQUIREMENTS
+
+functional_requirements:
+  - FR1: All template files must have a `version` field in YAML frontmatter matching the release version (includes spec-template.yaml, plan-template.yaml, research-template.yml, and all command .md files in src/templates/commands/)
+  - FR2: Version bump must occur as a dedicated commit before release creation with message format "chore: bump version to vX.Y.Z [skip ci]"
+  - FR3: Version bump script must update all templates in src/templates/ directory recursively, including all .yaml files and all .md command files in subdirectories
+  - FR4: Version format must be semantic version without 'v' prefix (e.g., "0.1.0" not "v0.1.0")
+  - FR5: Version bump commit must use [skip ci] flag to prevent infinite workflow loops
+  - FR6: Release workflow must create tag from the version bump commit, ensuring tag points to versioned templates
+  - FR7: Failed version bumps must fail the workflow to prevent unversioned releases
+
+non_functional_requirements:
+  - NFR1: Version bump process must complete in under 30 seconds to avoid slowing release workflow
+  - NFR2: Script must be idempotent - running multiple times with same version produces same result
+  - NFR3: Version update must preserve all other YAML frontmatter and template content
+  - NFR4: Solution must work with both bash and powershell script variants
+
+# SCOPE
+
+in_scope:
+  - Creating update-template-versions.sh script to inject version into templates
+  - Modifying .github/workflows/release.yml to add version bump step before release creation
+  - Updating all templates in src/templates/ to include version field in YAML frontmatter (spec-template.yaml, plan-template.yaml, research-template.yml, and ALL command .md files in src/templates/commands/)
+  - Ensuring version bump commit uses [skip ci] to prevent workflow loops
+  - Verifying version bump commit is the commit that gets tagged
+
+out_of_scope:
+  - Versioning individual templates separately (all templates share release version)
+  - Automatic upgrade tooling to migrate users from old to new template versions
+  - Version compatibility checks or breaking change detection
+  - Versioning non-template files (scripts, documentation, etc.)
+  - Backfilling versions for existing releases
+
+# DESIGN PRINCIPLES
+
+design_principles:
+  - "Version at source: Templates in repository should reflect their current version"
+  - "Atomic versioning: All templates share the same version number matching the release"
+  - "Fail-safe: Version bump failures must prevent releases to avoid shipping unversioned templates"
+  - "Workflow hygiene: Use [skip ci] to prevent infinite loops from version bump commits"
+
+# ACCEPTANCE CRITERIA
+
+acceptance_criteria:
+  - AC1: Running `buildforce init` with a versioned release produces templates with correct version field
+  - AC2: Git history shows version bump commits with format "chore: bump version to vX.Y.Z [skip ci]"
+  - AC3: Release tags point to commits containing versioned templates matching the tag version
+  - AC4: Version bump script updates all .yaml files (spec, plan, research templates) and all 6 command .md files (spec.md, plan.md, build.md, complete.md, document.md, research.md) in src/templates/ recursively
+  - AC5: Version bump commit does not trigger additional workflow runs due to [skip ci] flag
+  - AC6: Manual test: Create release for v0.1.0, verify all templates in release packages contain "version: 0.1.0" as first field in YAML frontmatter, including all 6 command .md files
+
+# ASSUMPTIONS & DEPENDENCIES
+
+assumptions:
+  - All templates with YAML frontmatter will be versioned; templates without frontmatter are skipped
+  - Release workflow has write permissions to push commits to main branch
+  - GITHUB_TOKEN has sufficient permissions to trigger workflows and push commits
+  - Version field will be the first field in YAML frontmatter (immediately after opening ---)
+
+dependencies:
+  internal:
+    - release-workflow: "Modifies .github/workflows/release.yml to add version bump step"
+    - template-structure: "All templates must support YAML frontmatter with version field"
+  external:
+    - gh-cli: "Uses gh CLI for release operations"
+    - git: "Requires git commands for commit and push operations"
+
+# OPEN QUESTIONS
+
+open_questions:
+  # All questions have been resolved:
+  # - Version field: First field in YAML frontmatter (immediately after opening ---)
+  # - Templates without frontmatter: Skip silently and continue
+  # - Token for commit push: GITHUB_TOKEN
+  # - Version validation: Check and skip update if version already matches (idempotent)
+  # - Workflow placement: After build, before get-next-version
+
+# NOTES
+
+notes: |
+  This feature aligns with Approach 1 from the brainstorming session: Pre-Release Version Bump Commit.
+
+  Clarified decisions:
+  - Version field placement: First field in YAML frontmatter (immediately after opening ---)
+  - Templates without frontmatter: Skip silently and continue processing
+  - Commit push token: GITHUB_TOKEN (default GitHub Actions token)
+  - Version validation: Idempotent - skip update if version already matches
+  - Workflow placement: After build, before get-next-version
+
+  Note: The workflow placement requires the version update script to calculate the next version independently (by reading latest git tag), or we need to adjust the workflow to run get-next-version first, pass the version to update-template-versions.sh, then continue with the rest of the workflow.
+
+  Recommended workflow order:
+  1. Build TypeScript CLI
+  2. Get next version (e.g., v0.1.0) - calculates version from git tags
+  3. Update templates with version 0.1.0 - uses version from step 2
+  4. Commit with "chore: bump version to v0.1.0 [skip ci]"
+  5. Push commit to main using GITHUB_TOKEN
+  6. Check if release exists
+  7. Create release packages from versioned commit
+  8. Create GitHub release with tag v0.1.0 pointing to versioned commit
+
+  The [skip ci] flag is critical to prevent infinite loops where the version bump commit triggers another workflow run.
+
+  Future considerations: This creates foundation for upgrade command to compare user's template version with latest available version.

@@ -1,6 +1,10 @@
 <div align="center">
 
-<img src=".github/assets/logo.png" alt="BuildForce CLI Logo" width="300"/>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset=".github/assets/logo-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset=".github/assets/logo-light.png">
+  <img src=".github/assets/logo.png" alt="BuildForce CLI Logo" width="250"/>
+</picture>
 
 **Context-First Spec-Driven Development framework**
 
@@ -50,7 +54,7 @@ AI agents start fresh with each session and reverse engineer the codebase on-dem
 ```
 
 <div align="center">
-<img src=".github/assets/screenshot-init.png" alt="BuildForce initialization screenshot" width="700"/>
+<img src=".github/assets/screenshot-init.png" alt="Buildforce initialization screenshot" width="700"/>
 </div>
 
 ### Your First Workflow (Hello Buildforce)
@@ -67,7 +71,7 @@ Open your AI assistant (Claude Code, Cursor, etc.) in any existing project and r
 /complete
 ```
 
-This workflow works on any codebase! BuildForce will analyze your project, identify README inconsistencies, and fix them systematically. Context from `/research` informs your spec. Spec requirements guide the plan. Build executes with deviation tracking. Completion validates everything and saves knowledge to your context repository for future work.
+This workflow works on any codebase! Buildforce will analyze your project, identify README inconsistencies, and fix them systematically. Context from `/research` informs your spec. Spec requirements guide the plan. Build executes with deviation tracking. Completion validates everything and saves knowledge to your context repository for future work.
 
 ## How It Works
 
@@ -144,27 +148,7 @@ The key insight: Buildforce isn't just about individual commands. It's about how
 
 **What it does:**
 
-1. Reads `.buildforce/context/_index.yml` and searches accumulated project knowledge first
-2. Explores codebase using glob/grep when codebase patterns are relevant
-3. Fetches current information via web search if query contains recency indicators ("current", "latest", "2025", "best practices")
-4. Produces structured report with file paths, architecture diagrams (Mermaid), data models, and recommendations
-5. Caches research output to `.buildforce/.research-cache.md` for materialization into `research.yml` during `/spec`
-
-**Output sections:**
-
-- Research Summary
-- Project Context (from `.buildforce/context/`)
-- Codebase Findings (file paths, code patterns)
-- External Knowledge (documentation links, best practices)
-- TLDR (3-7 bullet points of key findings)
-- Next Steps
-
-**Key features:**
-
-- Context-first: Always searches your accumulated knowledge before external sources
-- Recency detection: Automatically triggers web search when query implies current information needed
-- Structured output: Explicitly documents file paths, architecture, and data models for easy reference
-- Research persistence: Caches output for intelligent materialization into spec's `research.yml`
+Searches your project's accumulated context repository first, then explores your codebase and fetches current information from the web when needed. Produces a structured report with file paths, architecture diagrams, data models, and actionable recommendations. Research findings persist in conversation history and can be materialized into structured files during spec creation, ensuring your specifications are always informed by existing patterns and current best practices.
 
 **Pro tip**: Run `/research` before `/spec` to ensure specifications are informed by existing patterns and current best practices. Research output stays in context window to guide requirement identification.
 
@@ -192,53 +176,7 @@ The key insight: Buildforce isn't just about individual commands. It's about how
 
 **What it does:**
 
-1. Determines CREATE vs UPDATE mode by checking `.buildforce/.current-spec` file
-2. Generates semantic folder name with timestamp (e.g., `add-jwt-auth-20250130143052`)
-3. Runs `.buildforce/scripts/bash/create-spec-files.sh` to create folder and template files
-4. Materializes research cache from `.buildforce/.research-cache.md` into `research.yml` (if exists)
-5. Populates `spec.yaml` with problem statement, functional requirements (FR1, FR2...), non-functional requirements (NFR1, NFR2...), acceptance criteria (AC1, AC2...), scope (in/out), design principles, open questions
-6. Asks clarifying questions if intent is vague or context insufficient
-
-**Output file structure:**
-
-```yaml
-id: add-jwt-auth-20250130143052
-name: "JWT Authentication"
-type: feature
-status: draft
-summary: |
-  Brief description of what this spec addresses
-
-problem: |
-  What problem this solves and why it matters
-
-functional_requirements:
-  - FR1: Issue JWT token on successful login
-  - FR2: Validate JWT on protected endpoints
-
-acceptance_criteria:
-  - AC1: Login returns 200 with JWT within 300ms p95
-  - AC2: Invalid credentials return 401 within 100ms
-
-in_scope:
-  - User login with email/password
-  - JWT token issuance and validation
-
-out_of_scope:
-  - OAuth integration
-  - Two-factor authentication
-
-open_questions:
-  - Should tokens be stored in httpOnly cookies or localStorage?
-```
-
-**Key features:**
-
-- Semantic folder naming: Feature identity preserved in folder name (not just timestamp)
-- CREATE/UPDATE modes: Intelligently detects if updating existing spec or creating new
-- Research materialization: Automatically converts research cache into structured `research.yml`
-- Requirement traceability: Every requirement gets unique ID (FR1, NFR1, AC1) for tracking through plan and build
-- Clarifying questions: Asks user to resolve ambiguities before proceeding
+Converts your feature description into a structured specification with clear requirements, acceptance criteria, and scope boundaries. Creates both a `spec.yaml` (defining WHAT to build) and `plan.yaml` (defining HOW to build it) in a timestamped folder. If you've done research beforehand, it intelligently materializes those findings into a structured file. When requirements are unclear, it asks clarifying questions to ensure everyone's aligned before implementation begins.
 
 **Pro tip**: Run `/spec` multiple times to refine requirements. UPDATE mode loads existing spec and allows iteration without losing previous work.
 
@@ -266,51 +204,7 @@ open_questions:
 
 **What it does:**
 
-1. Loads `spec.yaml` and `plan.yaml` from current feature directory
-2. Loads `research.yml` if it exists for implementation context (file paths, patterns, data models, code snippets)
-3. Executes tasks sequentially from plan phases
-4. Updates task checkboxes in `plan.yaml` as work completes: `- [ ]` becomes `- [x]`
-5. Logs deviations when implementation differs from plan (phase, task, original, actual, reason)
-6. Validates implementation against BOTH spec requirements AND plan steps
-7. Runs tests and provides testing guidance (what to test, how to test, results)
-8. Supports iterative refinement: run `/build` multiple times with different instructions
-
-**Deviation tracking example:**
-
-```yaml
-deviations:
-  - phase: "phase_1"
-    task: "Create JWT service"
-    original: "Use jsonwebtoken library"
-    actual: "Used jose library instead"
-    reason: "jsonwebtoken lacks native ESM support; jose is ESM-first with better TypeScript types"
-
-  - phase: "phase_2"
-    task: "Add login endpoint"
-    original: "Return JWT in response body"
-    actual: "Set JWT in httpOnly cookie"
-    reason: "Cookie approach provides better XSS protection per security review"
-```
-
-**Progress tracking in plan.yaml:**
-
-```yaml
-phase_1:
-  name: "Core Authentication"
-  tasks:
-    - [x] Create JWT service
-    - [x] Add login endpoint
-    - [ ] Create authentication middleware
-```
-
-**Key features:**
-
-- Progress tracking: Live checkbox updates in `plan.yaml` show completion status
-- Deviation logging: Transparency about what changed and why (Original → Actual → Reason)
-- Dual validation: Checks against spec requirements AND plan steps
-- Iterative refinement: Multiple `/build` invocations accumulate deviations (not replaced)
-- Testing guidance: Suggests what/how to test, runs automated tests, reports results
-- Code quality checks: Verifies compilation, runs tests, checks for obvious issues before presenting work
+Executes your implementation following the spec and plan, checking off tasks as work progresses and logging any deviations from the original approach. Validates the work against both requirements and plan steps, runs tests, and provides clear guidance on what still needs verification. Supports iterative refinement—you can run it multiple times with feedback to converge on the right solution while maintaining full transparency about what changed and why.
 
 **Pro tip**: Don't try to do everything in one `/build`. Run it, review output, then run `/build [refinement instructions]` to iterate. Deviation log tracks entire journey from first attempt to final implementation.
 
@@ -328,61 +222,7 @@ phase_1:
 
 **What it does:**
 
-1. Loads `spec.yaml` and `plan.yaml` from current feature directory
-2. Validates all spec requirements implemented (FR1, FR2, NFR1, AC1, AC2 all met?)
-3. Reviews deviation log across all `/build` iterations
-4. Generates completion report: requirement validation, implementation summary, deviations, files modified, testing status
-5. Creates context file(s) in `.buildforce/context/` with semantic kebab-case naming (e.g., `jwt-authentication.yml`)
-6. Updates `.buildforce/context/_index.yml` with references, tags, and relationships
-7. Intelligently updates related context files with cross-references
-8. Clears `.buildforce/.current-spec` to reset spec state
-9. Optionally archives or deletes research cache
-10. Requires explicit user confirmation before finalizing
-
-**Generated context file structure:**
-
-```yaml
-id: jwt-authentication
-name: "JWT Authentication System"
-type: feature
-created_at: "2025-01-30T14:30:52Z"
-last_updated: "2025-01-30T16:45:12Z"
-
-summary: |
-  JWT-based authentication system using jose library with httpOnly cookie storage.
-
-spec_reference: ".buildforce/specs/add-jwt-auth-20250130143052/spec.yaml"
-plan_reference: ".buildforce/specs/add-jwt-auth-20250130143052/plan.yaml"
-
-key_decisions:
-  - Used jose library instead of jsonwebtoken for ESM support
-  - Tokens stored in httpOnly cookies (not localStorage) for XSS protection
-  - 1h access token expiry with refresh token rotation
-
-primary_files:
-  - src/auth/jwt.service.ts
-  - src/auth/auth.controller.ts
-  - src/middleware/auth.middleware.ts
-
-related_contexts:
-  - authentication-patterns
-  - api-security
-  - user-service
-
-tags:
-  - authentication
-  - security
-  - JWT
-```
-
-**Key features:**
-
-- Requirement validation: Explicit check that all FR, NFR, AC from spec are satisfied
-- Context file generation: Converts spec+plan+implementation into reusable knowledge
-- Automatic cross-referencing: Updates related context files to link to new context
-- Index maintenance: Keeps `.buildforce/context/_index.yml` current with all contexts
-- State clearing: Resets spec state so next `/spec` starts fresh
-- Confirmation required: User must approve before finalization (prevents accidental completion)
+Validates that all spec requirements are met, reviews the deviation log, and generates a comprehensive completion report. Captures the knowledge from your feature (design decisions, key files, implementation choices) into structured context files that live in your project's context repository. Updates cross-references and clears the active spec state. Requires your explicit confirmation before finalizing—once complete, this feature's knowledge becomes searchable for future work.
 
 **Pro tip**: Don't rush to `/complete`. Validate thoroughly first. Once complete, the feature knowledge enters your context repository and will inform future `/research` queries.
 
@@ -410,56 +250,7 @@ tags:
 
 **What it does:**
 
-1. Checks conversation history for sufficient context (file reads, technical discussion)
-2. Reads `.buildforce/context/_index.yml` to identify existing contexts
-3. Determines UPDATE vs CREATE: updates existing file if component already documented, creates new file otherwise
-4. Auto-detects context type (module, feature, component, pattern, architecture)
-5. Generates semantic kebab-case filename without numeric prefixes (e.g., `authentication.yml`, `error-handling.yml`)
-6. Checks for ID conflicts in `_index.yml` and resolves duplicates
-7. Populates context file from conversation history: design decisions, implementation details, patterns, responsibilities, dependencies
-8. Updates `.buildforce/context/_index.yml` with tags for discoverability
-9. Automatically updates related context files with cross-references
-
-**Generated context file example:**
-
-```yaml
-id: error-handling
-name: "Error Handling Patterns"
-type: pattern
-created_at: "2025-01-30T10:15:00Z"
-
-summary: |
-  Centralized error handling using Express error middleware with typed error classes.
-
-pattern_details: |
-  All errors extend AppError base class with statusCode and isOperational properties.
-  Error middleware at app.ts catches all errors and returns consistent JSON response.
-  Unhandled promise rejections caught by global handler.
-
-primary_files:
-  - src/errors/AppError.ts
-  - src/errors/errorHandler.middleware.ts
-  - src/app.ts
-
-related_contexts:
-  - api-architecture
-  - logging-strategy
-
-tags:
-  - error-handling
-  - middleware
-  - patterns
-```
-
-**Key features:**
-
-- Standalone utility: Works independently without spec/build cycle
-- Empty context check: Prompts for `/research` if insufficient context in conversation
-- Smart update vs create: Prevents duplicate contexts for same component
-- Multiple components: Single `/document` can update/create multiple context files
-- Semantic naming: Uses component identity, not spec intent (no timestamps or numbers)
-- ID conflict resolution: Ensures unique IDs in context repository
-- Cross-referencing: Maintains relationships between related contexts
+Creates or updates structured context files in your project's knowledge repository by analyzing conversation history. Works independently of the spec-driven workflow—perfect for documenting existing code, architectural patterns, or legacy components. Intelligently determines whether to create new files or update existing ones, automatically resolves naming conflicts, and maintains cross-references between related contexts. If your conversation lacks sufficient context, it prompts you to gather more information first.
 
 **Pro tip**: Prepare context window first (read files, discuss architecture) before running `/document`. The command analyzes conversation history to extract documentation, so richer context produces better results. Natural complement to `/research`: research reads context, document writes context.
 
@@ -485,152 +276,40 @@ Buildforce works with 11 AI coding assistants:
 
 **How configuration works:**
 
-Buildforce installs slash command files (research.md, spec.md, plan.md, build.md, complete.md, document.md) into your chosen assistant's configuration folder during initialization. Commands become available in your AI chat via `/research`, `/spec`, etc. All templates and scripts are copied to `.buildforce/` in your project directory. You can switch assistants later by manually copying command files between folders.
+Buildforce installs slash command files (research.md, spec.md, build.md, complete.md, document.md) into your chosen assistant's configuration folder during initialization. Commands become available in your AI chat via `/research`, `/spec`, etc. All templates and scripts are copied to `.buildforce/` in your project directory. You can switch assistants later by manually copying command files between folders.
 
 ---
 
 ## Contributing
 
-We welcome contributions from the community! Whether you're fixing bugs, adding features, improving documentation, or sharing feedback, your help makes Buildforce better for everyone.
+Buildforce is **open source** and welcomes contributions! We're building the future of AI-assisted development together.
+
+### Quick Start for Contributors
+
+```bash
+git clone https://github.com/berserkdisruptors/buildforce-cli.git
+cd buildforce-cli
+npm install
+npm run build
+npm link
+```
 
 ### How to Contribute
 
-1. **Check existing issues** - Someone might already be working on it
+1. **Check existing issues** - [View open issues](https://github.com/berserkdisruptors/buildforce-cli/issues)
+2. **Create an issue** - Describe the problem or feature request
+3. **Fork & branch** - Create a feature branch
+4. **Use Buildforce for development** - Follow the structured workflow
+5. **Test locally** - `npm link` and test your changes
+6. **Submit PR** - Describe your changes and link related issues
 
-   - [View open issues](https://github.com/berserkdisruptors/buildforce-cli/issues)
-   - [View open pull requests](https://github.com/berserkdisruptors/buildforce-cli/pulls)
+See [CONTRIBUTING.md](CONTRIBUTING.md) for more details.
 
-2. **Create an issue** (optional but recommended)
+---
 
-   - Describe the problem or feature request
-   - Wait for feedback before starting work
-   - [Create new issue](https://github.com/berserkdisruptors/buildforce-cli/issues/new)
+## Roadmap
 
-3. **Fork the repository**
-
-   ```bash
-   # Click "Fork" on GitHub, then clone your fork
-   git clone https://github.com/YOUR-USERNAME/buildforce-cli.git
-   cd buildforce-cli
-   ```
-
-4. **Create a branch**
-
-   ```bash
-   git checkout -b feature/your-feature-name
-   # or
-   git checkout -b fix/your-bugfix-name
-   ```
-
-5. **Make your changes**
-
-   - Write clean, well-documented code
-   - Follow existing code style
-   - Add tests if applicable
-   - Update documentation
-
-6. **Test your changes**
-
-   ```bash
-   # Build the project
-   npm run build
-
-   # Test locally
-   npm link
-   buildforce test-project --debug
-
-   # Run tests (when available)
-   npm test
-   ```
-
-7. **Commit your changes**
-
-   ```bash
-   git add .
-   git commit -m "feat: Add amazing new feature"
-   # or
-   git commit -m "fix: Fix critical bug"
-   ```
-
-   **Commit message format**:
-
-   - `feat:` - New feature
-   - `fix:` - Bug fix
-   - `docs:` - Documentation changes
-   - `style:` - Code style changes (formatting, etc.)
-   - `refactor:` - Code refactoring
-   - `test:` - Adding tests
-   - `chore:` - Maintenance tasks
-
-8. **Push to your fork**
-
-   ```bash
-   git push origin feature/your-feature-name
-   ```
-
-9. **Submit a Pull Request**
-   - Go to the original repository
-   - Click "New Pull Request"
-   - Describe your changes
-   - Link related issues
-   - Wait for review
-
-### Coding Standards
-
-- **TypeScript** - Use strict mode, proper types
-- **ESModules** - Use import/export (not require)
-- **Formatting** - No enforced linter yet, match existing code style
-- **Comments** - Explain WHY, not WHAT (code should be self-explanatory)
-- **Error handling** - Always handle errors gracefully
-- **Documentation** - Update README for user-facing changes
-
-### Testing
-
-Currently, Buildforce doesn't have automated tests. We welcome contributions to add:
-
-- Unit tests for utilities
-- Integration tests for CLI commands
-- End-to-end tests for workflows
-
-### Documentation
-
-Help improve documentation:
-
-- Fix typos or unclear sections in README
-- Add examples to command documentation
-- Write tutorials or guides for [buildforce.dev](https://buildforce.dev)
-- Improve code comments
-
-### Reporting Bugs
-
-Found a bug? [Create an issue](https://github.com/berserkdisruptors/buildforce-cli/issues/new) with:
-
-- Clear title and description
-- Steps to reproduce
-- Expected vs actual behavior
-- Environment (Node version, OS, AI assistant)
-- Error messages or screenshots
-
-### Requesting Features
-
-Have an idea? [Create a feature request](https://github.com/berserkdisruptors/buildforce-cli/issues/new) with:
-
-- Use case - Why is this needed?
-- Proposed solution - How should it work?
-- Alternatives considered
-- Additional context
-
-### Code of Conduct
-
-This project follows the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.md). By participating, you agree to uphold this code. Please report unacceptable behavior to the maintainers.
-
-### Need Help?
-
-- **Questions?** - Ask in [Discussions](https://github.com/berserkdisruptors/buildforce-cli/discussions)
-- **Stuck?** - Comment on the issue or PR
-- **Want to chat?** - [Join our community](https://buildforce.dev/community) (coming soon)
-
-Thank you for contributing to Buildforce!
+See [ROADMAP.md](ROADMAP.md) for our development roadmap and upcoming features.
 
 ---
 
@@ -643,35 +322,13 @@ Thank you for contributing to Buildforce!
 - **GitHub Issues**: [Report bugs or request features](https://github.com/berserkdisruptors/buildforce-cli/issues)
 - **Discussions**: [Ask questions or share ideas](https://github.com/berserkdisruptors/buildforce-cli/discussions)
 
+> **Note**: Discord server invite link needs to be created and updated above
+
 ---
 
 ## License
 
-Buildforce CLI is [MIT licensed](LICENSE).
-
-```
-MIT License
-
-Copyright (c) 2025 Berserk Disruptors
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-```
+MIT License - see [LICENSE](LICENSE) for details.
 
 ---
 
@@ -684,3 +341,5 @@ If Buildforce helps you build better software with AI assistants, please star th
 ---
 
 **Made with ❤️ by [Berserk Disruptors](https://github.com/berserkdisruptors)**
+
+_Building the future of AI-assisted development, one context file at a time._

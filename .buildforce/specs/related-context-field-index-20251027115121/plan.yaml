@@ -3,7 +3,7 @@
 # It provides checkbox-based progress tracking, deviation logging, and spec traceability
 
 id: related-context-field-index-20251027115121-plan
-name: "Implementation Plan for Related Context Field in _index.yml"
+name: "Implementation Plan for Related Context Field in _index.yaml"
 spec_id: "related-context-field-index-20251027115121"
 type: implementation-plan
 status: draft
@@ -15,14 +15,14 @@ last_updated: "2025-10-27"
 
 approach: |
   This is a documentation-focused enhancement that adds a new optional field to the context
-  index structure. The implementation involves adding inline documentation to the _index.yml
+  index structure. The implementation involves adding inline documentation to the _index.yaml
   template, removing unused schema sections, and updating command instructions. No code changes
   are required—only YAML and Markdown documentation updates.
 
   The approach is:
-  1. Add comprehensive inline documentation comment block to src/context/_index.yml explaining all index fields
-  2. Add example entries to src/context/_index.yml template with related_context populated
-  3. Remove unused index_structure section from .buildforce/context/_schema.yml
+  1. Add comprehensive inline documentation comment block to src/context/_index.yaml explaining all index fields
+  2. Add example entries to src/context/_index.yaml template with related_context populated
+  3. Remove unused index_structure section from .buildforce/context/_schema.yaml
   4. Update command templates (/complete and /document) to instruct agents on populating the field
   5. Ensure consistency in formatting and indentation across all files
 
@@ -36,15 +36,15 @@ decisions:
                 context entries have significant relationships worth cross-referencing, so
                 mandatory would create noise."
 
-  - decision: "Place related_context in _index.yml entries, not in context YAML files"
+  - decision: "Place related_context in _index.yaml entries, not in context YAML files"
     rationale: "The index is specifically designed for discovery—this is a discovery field.
                 Adding it to individual context files would create duplication and maintenance
                 burden (bidirectional updates)."
 
-  - decision: "Use inline documentation in _index.yml template instead of _schema.yml"
-    rationale: "The _schema.yml currently has an unused index_structure section that's confusing.
-                Since agents read _index.yml directly during context discovery, inline documentation
-                provides immediate context. The _schema.yml should remain focused on context file
+  - decision: "Use inline documentation in _index.yaml template instead of _schema.yaml"
+    rationale: "The _schema.yaml currently has an unused index_structure section that's confusing.
+                Since agents read _index.yaml directly during context discovery, inline documentation
+                provides immediate context. The _schema.yaml should remain focused on context file
                 structure only, not index structure."
 
   - decision: "No automated validation of related_context IDs"
@@ -62,13 +62,13 @@ decisions:
 files_to_create: []
 
 files_to_modify:
-  - path: "src/context/_index.yml"
+  - path: "src/context/_index.yaml"
     change_type: "edit"
     description: "Add comprehensive inline documentation comment block explaining all index fields, add example entries with populated related_context field"
 
-  - path: "src/context/_schema.yml"
+  - path: "src/context/_schema.yaml"
     change_type: "edit"
-    description: "Remove unused index_structure section to reduce confusion (this is the TEMPLATE, not .buildforce/context/_schema.yml)"
+    description: "Remove unused index_structure section to reduce confusion (this is the TEMPLATE, not .buildforce/context/_schema.yaml)"
 
   - path: "src/templates/commands/complete.md"
     change_type: "edit"
@@ -86,19 +86,19 @@ files_to_modify:
 phase_1:
   name: "Index Template Documentation and Examples"
   description: |
-    Add comprehensive inline documentation to src/context/_index.yml explaining all index entry
+    Add comprehensive inline documentation to src/context/_index.yaml explaining all index entry
     fields, and include example entries with related_context populated. This provides complete
     guidance directly in the template that agents read during context discovery.
 
   tasks:
-    - [x] Add inline documentation comment block at top of src/context/_index.yml
+    - [x] Add inline documentation comment block at top of src/context/_index.yaml
       spec_refs: [FR2, AC1, AC2, AC7]
-      files: [src/context/_index.yml]
+      files: [src/context/_index.yaml]
       notes: "Explain all fields: id, file, type, description, tags, related_context with format, examples, usage guidelines"
 
     - [x] Add at least two example context entries with populated related_context arrays
       spec_refs: [FR3, AC3]
-      files: [src/context/_index.yml]
+      files: [src/context/_index.yaml]
       notes: "Include examples showing slash-commands with related command contexts, and another showing module relationships"
 
   validation:
@@ -111,19 +111,19 @@ phase_1:
 phase_2:
   name: "Schema Template Cleanup"
   description: |
-    Remove the unused index_structure section from src/context/_schema.yml (the product template)
+    Remove the unused index_structure section from src/context/_schema.yaml (the product template)
     to reduce confusion. The schema should focus only on context YAML file structure, not index
     structure. Note: We update the TEMPLATE (src/), not the instance (.buildforce/).
 
   tasks:
-    - [x] Remove index_structure section from src/context/_schema.yml
+    - [x] Remove index_structure section from src/context/_schema.yaml
       spec_refs: [FR4, AC4]
-      files: [src/context/_schema.yml]
+      files: [src/context/_schema.yaml]
       notes: "Delete lines 158-165 (index_structure section). This is the TEMPLATE file that users get."
 
   validation:
     - [x] All phase_2 tasks completed
-    - [x] src/context/_schema.yml maintains proper YAML formatting after removal
+    - [x] src/context/_schema.yaml maintains proper YAML formatting after removal
     - [x] No references to index_structure remain in template
     - [x] Spec requirements covered: [FR4, AC4]
 
@@ -131,7 +131,7 @@ phase_3:
   name: "Command Template Instructions"
   description: |
     Update /complete and /document command templates to instruct agents to populate
-    related_context when adding entries to _index.yml.
+    related_context when adding entries to _index.yaml.
 
   tasks:
     - [x] Update complete.md step 6 (Update Context Index) with related_context instruction
@@ -158,17 +158,17 @@ phase_4:
   tasks:
     - [x] Verify all modified files maintain YAML/Markdown formatting consistency
       spec_refs: [NFR3, AC8]
-      files: [src/context/_schema.yml, src/context/_index.yml, src/templates/commands/complete.md, src/templates/commands/document.md]
+      files: [src/context/_schema.yaml, src/context/_index.yaml, src/templates/commands/complete.md, src/templates/commands/document.md]
       notes: "Check indentation, line breaks, list formatting (all src/ template files)"
 
     - [x] Confirm related_context is documented as optional in inline documentation
       spec_refs: [NFR1]
-      files: [src/context/_index.yml]
+      files: [src/context/_index.yaml]
       notes: "Ensure 'optional' status is explicit in inline documentation comment block"
 
     - [x] Verify usage guidelines balance clarity with agent discretion
       spec_refs: [NFR2]
-      files: [src/context/_index.yml, src/templates/commands/complete.md, src/templates/commands/document.md]
+      files: [src/context/_index.yaml, src/templates/commands/complete.md, src/templates/commands/document.md]
       notes: "Guidelines should be clear but not overly prescriptive"
 
   validation:
@@ -190,9 +190,9 @@ testing:
   automated_tests: []
 
   manual_tests:
-    - scenario: "Verify src/context/_index.yml inline documentation and examples"
+    - scenario: "Verify src/context/_index.yaml inline documentation and examples"
       steps: |
-        1. Read src/context/_index.yml
+        1. Read src/context/_index.yaml
         2. Verify comprehensive inline documentation comment block exists at top
         3. Confirm all fields are documented: id, file, type, description, tags, related_context
         4. Check that documentation includes format, usage guidelines, and examples
@@ -201,9 +201,9 @@ testing:
         7. Verify related_context contains plausible context IDs
         8. Check YAML formatting is correct
 
-    - scenario: "Verify _schema.yml template cleanup"
+    - scenario: "Verify _schema.yaml template cleanup"
       steps: |
-        1. Read src/context/_schema.yml (TEMPLATE file)
+        1. Read src/context/_schema.yaml (TEMPLATE file)
         2. Confirm index_structure section has been removed
         3. Verify no references to index structure remain
         4. Check YAML formatting is still valid
@@ -221,16 +221,16 @@ testing:
 
 success_metrics:
   - "All four modified files (all in src/) updated successfully"
-  - "src/context/_index.yml includes comprehensive inline documentation for all fields"
-  - "src/context/_index.yml template has at least two examples with related_context"
-  - "src/context/_schema.yml (template) has index_structure section removed"
+  - "src/context/_index.yaml includes comprehensive inline documentation for all fields"
+  - "src/context/_index.yaml template has at least two examples with related_context"
+  - "src/context/_schema.yaml (template) has index_structure section removed"
   - "Both command templates instruct agents to populate related_context"
 
 spec_coverage:
   - FR1: "✓ Phase 1: Task 2 (related_context field added to example entries)"
   - FR2: "✓ Phase 1: Task 1 (inline documentation explains all fields)"
   - FR3: "✓ Phase 1: Task 2 (at least two examples with related_context)"
-  - FR4: "✓ Phase 2: Task 1 (index_structure section removed from _schema.yml)"
+  - FR4: "✓ Phase 2: Task 1 (index_structure section removed from _schema.yaml)"
   - FR5: "✓ Phase 3: Task 1 (complete.md updated with instruction)"
   - FR6: "✓ Phase 3: Task 2 (document.md updated with instruction)"
   - FR7: "✓ Phase 1: Task 1 (inline documentation includes validation guidance)"
@@ -251,8 +251,8 @@ current_status: |
   All implementation phases completed successfully. All spec requirements met with no deviations.
 
   Files modified:
-  - src/context/_index.yml: Added comprehensive inline documentation and two example entries with related_context
-  - src/context/_schema.yml: Removed unused index_structure section
+  - src/context/_index.yaml: Added comprehensive inline documentation and two example entries with related_context
+  - src/context/_schema.yaml: Removed unused index_structure section
   - src/templates/commands/complete.md: Added related_context instruction to step 6
   - src/templates/commands/document.md: Added related_context instruction to step 4
 
@@ -284,7 +284,7 @@ lessons_learned:
   - "Removing unused sections (index_structure) reduces confusion and maintenance burden"
 
 future_enhancements:
-  - "Add automated validation to check related_context IDs exist in _index.yml"
+  - "Add automated validation to check related_context IDs exist in _index.yaml"
   - "Create a script to suggest related_context values based on dependency analysis"
   - "Implement bidirectional relationship checking (warn if A→B exists but B→A missing)"
   - "Add related_context visualization tool to show context relationship graph"

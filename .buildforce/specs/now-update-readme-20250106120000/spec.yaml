@@ -153,7 +153,7 @@ dependencies:
     - package.json: "Source of version, license, repository URL"
     - src/config/agents.ts: "List of supported AI assistants"
     - src/cli.ts: "CLI command structure and options"
-    - .buildforce/context/slash-commands.yml: "Documentation of slash command workflow"
+    - .buildforce/context/slash-commands.yaml: "Documentation of slash command workflow"
     - CHANGELOG.md: "Changelog content to reference or link"
     - CODE_OF_CONDUCT.md: "Code of Conduct to reference (to be created separately)"
   external:

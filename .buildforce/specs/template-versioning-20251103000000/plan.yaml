@@ -1,0 +1,367 @@
+# Plan Template for /build Agent Execution
+# This template is optimized for AI agent consumption during /build commands
+# It provides checkbox-based progress tracking, deviation logging, and spec traceability
+
+id: template-versioning-20251103000000-plan
+name: "Implementation Plan for Automatic Template Versioning"
+spec_id: "template-versioning-20251103000000"
+type: implementation-plan
+status: draft
+created: "2025-11-03"
+last_updated: "2025-11-03"
+
+# ARCHITECTURE OVERVIEW
+# Describe the high-level implementation approach and key technical decisions.
+
+approach: |
+  Implement template versioning using a pre-release commit strategy. The approach involves creating a new bash script that scans all templates, injects version numbers into YAML frontmatter, commits the changes with [skip ci] flag, and pushes to main before release creation. The release workflow will be modified to call this script after version calculation but before package building, ensuring all distributed packages contain versioned templates.
+
+  The implementation follows a fail-safe pattern: any error in version bumping must halt the workflow to prevent unversioned releases. The script will use sed for YAML manipulation to update or insert the version field while preserving all other frontmatter content.
+
+technology_stack:
+  - Bash scripting for update-template-versions.sh script
+  - sed and awk for YAML frontmatter manipulation
+  - GitHub Actions workflow modifications for .github/workflows/release.yml
+  - git commands for committing and pushing version bumps
+  - gh CLI for potential release verification (if needed)
+
+decisions:
+  - decision: "Use sed to inject/update version field in YAML frontmatter"
+    rationale: "sed is universally available in GitHub Actions ubuntu runners, handles inline file editing, and provides predictable pattern matching for YAML fields. Alternative of using yq would require additional dependencies."
+
+  - decision: "Version format is semantic version without 'v' prefix (0.1.0 not v0.1.0)"
+    rationale: "YAML frontmatter typically uses clean semver format. The 'v' prefix is for git tags, not for version metadata. This keeps templates cleaner and more professional."
+
+  - decision: "Place version field as first field in YAML frontmatter (immediately after opening ---)"
+    rationale: "Placing version as the very first field makes it immediately visible when opening templates and ensures maximum consistency across all templates."
+
+  - decision: "Use [skip ci] in commit message to prevent workflow loops"
+    rationale: "Version bump commits should not trigger new workflow runs. The [skip ci] flag is a GitHub Actions convention that prevents this infinite loop scenario."
+
+  - decision: "Script operates on src/templates/ directory recursively"
+    rationale: "Templates are organized in src/templates/ with subdirectories (commands/, etc.). Recursive processing ensures all templates are versioned regardless of directory depth."
+
+  - decision: "Skip files without YAML frontmatter silently"
+    rationale: "Not all files in src/templates/ may have YAML frontmatter. Silently skipping these files allows flexibility and avoids breaking the workflow for edge cases."
+
+  - decision: "Use GITHUB_TOKEN for version bump commit push"
+    rationale: "GITHUB_TOKEN is automatically available in GitHub Actions and has sufficient permissions for pushing to the repository. No need for additional PAT_TOKEN configuration."
+
+  - decision: "Script is idempotent - skips update if version already matches"
+    rationale: "Idempotency prevents unnecessary git changes and allows safe re-runs. If version already matches, no changes are made, resulting in clean git status."
+
+# FILE STRUCTURE
+# List all files to be created or modified during implementation
+
+files_to_create:
+  - .github/workflows/scripts/update-template-versions.sh
+
+files_to_modify:
+  - path: ".github/workflows/release.yml"
+    change_type: "edit"
+    description: "Add version bump step after get-next-version but before check-release-exists"
+
+  - path: "src/templates/spec-template.yaml"
+    change_type: "edit"
+    description: "Add version field placeholder in YAML frontmatter"
+
+  - path: "src/templates/plan-template.yaml"
+    change_type: "edit"
+    description: "Add version field placeholder in YAML frontmatter"
+
+  - path: "src/templates/research-template.yml"
+    change_type: "edit"
+    description: "Add version field placeholder in YAML frontmatter"
+
+  - path: "src/templates/commands/*.md"
+    change_type: "edit"
+    description: "Add version field to YAML frontmatter in all 6 command templates (spec.md, plan.md, build.md, complete.md, document.md, research.md)"
+
+# IMPLEMENTATION PHASES
+# Break down the implementation into logical phases with checkbox-based task tracking
+# Use [ ] for pending tasks and [x] for completed tasks
+# Each task should link back to spec requirements via spec_refs
+
+phase_1:
+  name: "Create Version Update Script"
+  description: |
+    Build the core update-template-versions.sh script that handles version injection into templates. This phase creates the foundation for the versioning system and ensures it can correctly modify YAML frontmatter without breaking template structure.
+
+  tasks:
+    - [x] Create .github/workflows/scripts/update-template-versions.sh script
+      spec_refs: [FR3, FR4, FR7, NFR2, NFR3]
+      files: [.github/workflows/scripts/update-template-versions.sh]
+      notes: "Script must accept version argument, validate format, and process templates recursively"
+
+    - [x] Implement YAML frontmatter detection logic
+      spec_refs: [FR1, NFR3]
+      files: [.github/workflows/scripts/update-template-versions.sh]
+      notes: "Detect files with --- YAML frontmatter --- structure, skip files without it silently (no error)"
+
+    - [x] Implement version field injection using sed
+      spec_refs: [FR1, FR4, NFR3]
+      files: [.github/workflows/scripts/update-template-versions.sh]
+      notes: "If version field exists, update it. If not, insert it after opening --- as first field. Skip if version already matches (idempotent)"
+
+    - [x] Add error handling and validation
+      spec_refs: [FR7, NFR2]
+      files: [.github/workflows/scripts/update-template-versions.sh]
+      notes: "Exit with non-zero code on errors, validate version format matches semver pattern"
+
+    - [x] Make script executable and test locally
+      spec_refs: [NFR1]
+      files: [.github/workflows/scripts/update-template-versions.sh]
+      notes: "chmod +x and test with AGENTS=claude SCRIPTS=sh bash .github/workflows/scripts/update-template-versions.sh v0.0.99"
+
+  validation:
+    - [x] All phase_1 tasks completed
+    - [x] Script runs successfully with test version
+    - [x] Templates have version field correctly injected/updated
+    - [x] Spec requirements covered: [FR1, FR3, FR4, FR7, NFR2, NFR3]
+
+phase_2:
+  name: "Add Version Field to All Templates"
+  description: |
+    Update all existing templates to include a version field placeholder in their YAML frontmatter. This ensures consistency and makes the version update script's job easier by providing a uniform structure to work with.
+
+    Total files to version: 9 templates (3 core templates: spec, plan, research + 6 command .md files: spec, plan, build, complete, document, research)
+
+  tasks:
+    - [x] Add version placeholder to spec-template.yaml
+      spec_refs: [FR1]
+      files: [src/templates/spec-template.yaml]
+      notes: "Add version: '[VERSION]' as first field in frontmatter (immediately after opening ---)"
+
+    - [x] Add version placeholder to plan-template.yaml
+      spec_refs: [FR1]
+      files: [src/templates/plan-template.yaml]
+      notes: "Add version: '[VERSION]' as first field in frontmatter (immediately after opening ---)"
+
+    - [x] Add version placeholder to research-template.yml
+      spec_refs: [FR1]
+      files: [src/templates/research-template.yml]
+      notes: "Add version: '[VERSION]' as first field in frontmatter (immediately after opening ---)"
+
+    - [x] Add version placeholders to all 6 command templates in src/templates/commands/
+      spec_refs: [FR1, FR3]
+      files: [src/templates/commands/spec.md, src/templates/commands/plan.md, src/templates/commands/build.md, src/templates/commands/complete.md, src/templates/commands/document.md, src/templates/commands/research.md]
+      notes: "Update all 6 .md command files with version field as first field in YAML frontmatter"
+
+  validation:
+    - [x] All phase_2 tasks completed
+    - [x] All templates have version field in YAML frontmatter
+    - [x] Version field placement is consistent across all templates
+    - [x] Spec requirements covered: [FR1, FR3]
+
+phase_3:
+  name: "Integrate Version Bump into Release Workflow"
+  description: |
+    Modify the GitHub Actions release workflow to call the version update script at the correct point in the release process, commit the changes with [skip ci], and push to main before creating release packages.
+
+  tasks:
+    - [x] Add version bump step to release.yml after build
+      spec_refs: [FR2, FR5, FR6]
+      files: [.github/workflows/release.yml]
+      notes: "Insert step after Build TypeScript CLI, before get-next-version (or adjust to pass version from get-next-version to update script)"
+
+    - [x] Configure version bump step to call update-template-versions.sh
+      spec_refs: [FR4, FR7]
+      files: [.github/workflows/release.yml]
+      notes: "Pass ${{ steps.get_tag.outputs.new_version }} without 'v' prefix using parameter expansion"
+
+    - [x] Add git commit step with [skip ci] flag
+      spec_refs: [FR2, FR5]
+      files: [.github/workflows/release.yml]
+      notes: "Commit message format: 'chore: bump version to vX.Y.Z [skip ci]'"
+
+    - [x] Add git push step to main branch
+      spec_refs: [FR6]
+      files: [.github/workflows/release.yml]
+      notes: "Use GITHUB_TOKEN for push (already has write permissions in workflow)"
+
+    - [x] Ensure subsequent steps use updated commit
+      spec_refs: [FR6]
+      files: [.github/workflows/release.yml]
+      notes: "Verify create-release-packages and create-github-release reference versioned commit"
+
+  validation:
+    - [x] All phase_3 tasks completed
+    - [ ] Workflow runs without errors
+    - [ ] Version bump commit appears in git history with [skip ci]
+    - [ ] Spec requirements covered: [FR2, FR5, FR6, FR7]
+
+phase_4:
+  name: "Testing and Validation"
+  description: |
+    Thoroughly test the complete versioning workflow end-to-end, verify templates are correctly versioned, and ensure the release process works as expected without workflow loops.
+
+  tasks:
+    - [ ] Test full release workflow with test version
+      spec_refs: [AC1, AC2, AC3, AC6]
+      files: []
+      notes: "Trigger workflow manually or push to main, observe version bump commit and release creation"
+
+    - [ ] Verify version bump commit does not trigger new workflow run
+      spec_refs: [AC5, FR5]
+      files: []
+      notes: "Check GitHub Actions to ensure [skip ci] prevents loop"
+
+    - [ ] Download release packages and verify template versions
+      spec_refs: [AC1, AC6]
+      files: []
+      notes: "Extract zip files from release, check that all templates have correct version field"
+
+    - [ ] Verify git tag points to version bump commit
+      spec_refs: [AC3, FR6]
+      files: []
+      notes: "Use git show <tag> to confirm tag references versioned commit"
+
+    - [ ] Test buildforce init with versioned release
+      spec_refs: [AC1]
+      files: []
+      notes: "Run buildforce init, check that initialized templates have version field"
+
+  validation:
+    - [ ] All phase_4 tasks completed
+    - [ ] All acceptance criteria verified
+    - [ ] No workflow loops observed
+    - [ ] Spec requirements covered: [AC1, AC2, AC3, AC4, AC5, AC6]
+
+# DEVIATION LOG
+# The /build agent populates this section when implementation deviates from the original plan
+# Format: phase → task → original plan → actual implementation → reason for deviation
+
+deviations:
+  - phase: "phase_1"
+    task: "Implement version field injection using sed"
+    original: "Use sed for YAML manipulation to update or insert the version field"
+    actual: "Used awk for updating existing version fields in pure YAML files, sed for markdown frontmatter"
+    reason: "macOS sed doesn't support the '0,/pattern/s//' syntax for first-occurrence-only replacement. Switched to awk which provides portable cross-platform behavior and better control over first-match replacement."
+
+  - phase: "phase_1"
+    task: "Script structure"
+    original: "Single update function handling all file types"
+    actual: "Separate functions for pure YAML files (.yaml, .yml) vs markdown files with YAML frontmatter (.md)"
+    reason: "Template files have two distinct formats: pure YAML (spec, plan, research templates) and markdown with YAML frontmatter (command templates). Separate functions provide clearer logic and better error handling for each format."
+
+  - phase: "phase_2"
+    task: "Add version placeholders to templates"
+    original: "Manually add version: '[VERSION]' placeholder to each template"
+    actual: "Script automatically adds version field during testing, templates now have version: '0.0.99'"
+    reason: "During Phase 1 testing, the update script was executed multiple times which automatically added version fields to all templates. This accelerated Phase 2 completion and validates the script works correctly."
+
+  - phase: "phase_3"
+    task: "Workflow step placement"
+    original: "Add version bump after get-next-version but adjust ordering as needed"
+    actual: "Added version bump after get-next-version, before check-release-exists"
+    reason: "This placement ensures version is calculated first, templates are updated, changes are committed, and then release checks and package creation proceed with the versioned commit."
+
+# TESTING GUIDANCE
+# Structured guidance for testing the implementation
+
+testing:
+  automated_tests:
+    - test_file: ".github/workflows/scripts/update-template-versions.sh"
+      what: "Script functionality with various template formats"
+      command: "AGENTS=claude SCRIPTS=sh bash .github/workflows/scripts/update-template-versions.sh v0.0.99"
+
+  manual_tests:
+    - scenario: "End-to-end release workflow test"
+      steps: |
+        1. Push a commit to main that triggers the release workflow
+        2. Monitor GitHub Actions workflow run
+        3. Verify version bump commit appears in git history with format "chore: bump version to vX.Y.Z [skip ci]"
+        4. Verify no additional workflow runs are triggered by the version bump commit
+        5. Download release artifacts from GitHub Releases
+        6. Extract zip files and inspect templates for version field
+        7. Run `git show <tag>` to confirm tag points to versioned commit
+        8. Run `buildforce init` with the new release and verify templates have version
+
+    - scenario: "Idempotency test"
+      steps: |
+        1. Run update-template-versions.sh with version 0.1.0
+        2. Run update-template-versions.sh again with same version 0.1.0
+        3. Verify no additional changes are made (git diff shows no changes)
+        4. Verify templates still have version: 0.1.0
+
+# VALIDATION CRITERIA
+# Define success metrics and track spec requirement coverage
+
+success_metrics:
+  - "Version bump script completes in under 10 seconds"
+  - "100% of templates in src/templates/ directory contain version field"
+  - "Version bump commits do not trigger workflow loops"
+  - "Release packages contain templates matching release version"
+  - "Git tags point to commits with versioned templates"
+
+spec_coverage:
+  # Auto-track which spec requirements are implemented in which tasks
+  # Format: requirement_id: status + location
+  - FR1: "⏳ Phase 1: Task 1-3, Phase 2: All tasks"
+  - FR2: "⏳ Phase 3: Task 1, 3"
+  - FR3: "⏳ Phase 1: Task 1, 3, Phase 2: Task 4"
+  - FR4: "⏳ Phase 1: Task 3, Phase 3: Task 2"
+  - FR5: "⏳ Phase 3: Task 3"
+  - FR6: "⏳ Phase 3: Task 4-5"
+  - FR7: "⏳ Phase 1: Task 4, Phase 3: Task 2"
+  - NFR1: "⏳ Phase 1: Task 5"
+  - NFR2: "⏳ Phase 1: Task 1, 4"
+  - NFR3: "⏳ Phase 1: Task 1-3"
+  - NFR4: "⏳ Phase 1: Task 1 (bash only, powershell out of scope)"
+  - AC1: "⏳ Phase 4: Task 1, 5"
+  - AC2: "⏳ Phase 4: Task 1"
+  - AC3: "⏳ Phase 4: Task 4"
+  - AC4: "⏳ Phase 1: Task 1"
+  - AC5: "⏳ Phase 4: Task 2"
+  - AC6: "⏳ Phase 4: Task 3"
+
+# PROGRESS SUMMARY
+# Track overall progress and identify next steps
+
+overall_progress:
+  phase_1: "5/5 tasks completed"
+  phase_2: "4/4 tasks completed"
+  phase_3: "5/5 tasks completed"
+  phase_4: "0/5 tasks completed"
+
+current_status: |
+  Implementation complete for Phases 1-3. All templates now have version fields, the update script is working correctly with full idempotency, and the release workflow has been modified to include version bump, commit, and push steps. Phase 4 (testing and validation) is ready to begin with a real workflow run.
+
+next_immediate_steps:
+  - "Test full release workflow with a test version to validate end-to-end functionality"
+  - "Verify [skip ci] prevents workflow loops"
+  - "Validate that release packages contain correctly versioned templates"
+
+# RISKS & CONSIDERATIONS
+# Document potential risks and mitigation strategies
+
+risks:
+  - risk: "sed command fails on templates with unexpected YAML structure"
+    mitigation: "Add robust error handling, validate YAML structure before modification, test with all existing templates"
+
+  - risk: "Version bump commit triggers workflow loop despite [skip ci]"
+    mitigation: "Verify [skip ci] syntax is correct, test with small changes first, add workflow condition to detect version bump commits"
+
+  - risk: "GITHUB_TOKEN lacks permissions to push to main branch"
+    mitigation: "Verify workflow has contents: write permissions, which grants GITHUB_TOKEN push access"
+
+  - risk: "Race condition if multiple commits pushed simultaneously"
+    mitigation: "GitHub Actions serializes workflow runs on same branch, but document expected behavior in notes"
+
+  - risk: "Script modifies templates incorrectly, breaking template structure"
+    mitigation: "Implement comprehensive testing in Phase 4, use version control to recover if needed, test script locally before pushing"
+
+# NOTES
+# Capture lessons learned and future enhancement ideas
+
+lessons_learned:
+  - "Pre-release version bump pattern provides clean git history and versioned releases"
+  - "YAML frontmatter manipulation requires careful handling to preserve structure"
+  - "[skip ci] is critical to prevent infinite workflow loops"
+
+future_enhancements:
+  - "Add version validation in buildforce init to warn users about outdated templates"
+  - "Create upgrade command that compares user template version with latest release"
+  - "Add changelog generation based on version bumps"
+  - "Support individual template versioning if needed in the future"
+  - "Add automated tests for update-template-versions.sh script"

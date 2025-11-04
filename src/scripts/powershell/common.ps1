@@ -1,6 +1,34 @@
 #!/usr/bin/env pwsh
 # Common PowerShell functions analogous to common.sh
 
+# Get buildforce root by checking for .buildforce directory in current working directory
+# This enables monorepo support and prevents path confusion
+function Get-BuildforceRoot {
+    $currentDir = $PWD.Path
+
+    # Check if .buildforce exists in current working directory
+    if (Test-Path (Join-Path $currentDir '.buildforce') -PathType Container) {
+        return $currentDir
+    }
+
+    # Not found - provide clear error message
+    Write-Error @"
+ERROR: .buildforce directory not found in current directory.
+
+This command must be run from the directory where you initialized buildforce.
+
+Solutions:
+  1. Change to your buildforce root directory:
+     cd /path/to/your/buildforce/project
+
+  2. Or initialize a new buildforce project here:
+     buildforce init .
+
+Tip: Look for the directory containing .buildforce/ folder.
+"@
+    throw "Buildforce root not found"
+}
+
 # Find repository root by searching for project markers (.git or .buildforce)
 function Find-RepositoryRoot {
     param(
@@ -43,21 +71,85 @@ function Get-RepoRoot {
     return $fallbackRoot
 }
 
-# Get current spec from state file
+# Get current spec from buildforce.json
 function Get-CurrentSpec {
-    param([string]$RepoRoot)
-    $stateFile = Join-Path $RepoRoot '.buildforce/.current-spec'
-    if (Test-Path $stateFile) {
-        return (Get-Content $stateFile -Raw).Trim()
+    param([string]$BuildforceRoot)
+    $jsonFile = Join-Path $BuildforceRoot '.buildforce/buildforce.json'
+
+    # Return empty if file doesn't exist
+    if (-not (Test-Path $jsonFile)) {
+        return $null
     }
+
+    try {
+        # Parse JSON and extract currentSpec field
+        $content = Get-Content $jsonFile -Raw | ConvertFrom-Json
+
+        # Return currentSpec value (null if not set)
+        if ($null -ne $content.currentSpec -and $content.currentSpec -ne "") {
+            return $content.currentSpec
+        }
+    } catch {
+        # JSON parsing failed, return null
+    }
+
     return $null
 }
 
-# Set current spec in state file
+# Set current spec in buildforce.json
 function Set-CurrentSpec {
-    param([string]$RepoRoot, [string]$SpecFolder)
-    $stateFile = Join-Path $RepoRoot '.buildforce/.current-spec'
-    Set-Content -Path $stateFile -Value $SpecFolder -NoNewline
+    param([string]$BuildforceRoot, [string]$SpecFolder)
+    $jsonFile = Join-Path $BuildforceRoot '.buildforce/buildforce.json'
+    $tempFile = "$jsonFile.tmp"
+
+    # Read existing JSON if file exists
+    if (Test-Path $jsonFile) {
+        try {
+            $existingContent = Get-Content $jsonFile -Raw | ConvertFrom-Json
+
+            # Update currentSpec field, preserving all other fields
+            $existingContent | Add-Member -MemberType NoteProperty -Name "currentSpec" -Value $SpecFolder -Force
+            $jsonContent = $existingContent
+        } catch {
+            # JSON parsing failed, create minimal structure
+            $jsonContent = @{ currentSpec = $SpecFolder }
+        }
+    } else {
+        # Create new JSON with currentSpec only
+        $jsonContent = @{ currentSpec = $SpecFolder }
+    }
+
+    # Atomic write: write to temp file first, then move
+    $jsonContent | ConvertTo-Json -Depth 10 | Set-Content -Path $tempFile -NoNewline
+    Move-Item -Path $tempFile -Destination $jsonFile -Force
+}
+
+# Clear current spec in buildforce.json (set to null)
+function Clear-CurrentSpec {
+    param([string]$BuildforceRoot)
+    $jsonFile = Join-Path $BuildforceRoot '.buildforce/buildforce.json'
+    $tempFile = "$jsonFile.tmp"
+
+    # Read existing JSON if file exists
+    if (Test-Path $jsonFile) {
+        try {
+            $existingContent = Get-Content $jsonFile -Raw | ConvertFrom-Json
+
+            # Set currentSpec field to null, preserving all other fields
+            $existingContent | Add-Member -MemberType NoteProperty -Name "currentSpec" -Value $null -Force
+            $jsonContent = $existingContent
+        } catch {
+            # JSON parsing failed, create minimal structure with null
+            $jsonContent = @{ currentSpec = $null }
+        }
+    } else {
+        # Create new JSON with currentSpec null
+        $jsonContent = @{ currentSpec = $null }
+    }
+
+    # Atomic write: write to temp file first, then move
+    $jsonContent | ConvertTo-Json -Depth 10 | Set-Content -Path $tempFile -NoNewline
+    Move-Item -Path $tempFile -Destination $jsonFile -Force
 }
 
 function Get-CurrentBranch {
@@ -77,8 +169,8 @@ function Get-CurrentBranch {
     }
     
     # For non-git repos, try to find the latest feature directory
-    $repoRoot = Get-RepoRoot
-    $specsDir = Join-Path $repoRoot ".buildforce/specs"
+    $buildforceRoot = Get-BuildforceRoot
+    $specsDir = Join-Path $buildforceRoot ".buildforce/specs"
     
     if (Test-Path $specsDir) {
         $latestFeature = ""
@@ -133,44 +225,44 @@ function Test-FeatureBranch {
 }
 
 function Get-FeatureDir {
-    param([string]$RepoRoot, [string]$Branch)
-    Join-Path $RepoRoot ".buildforce/specs/$Branch"
+    param([string]$BuildforceRoot, [string]$Branch)
+    Join-Path $BuildforceRoot ".buildforce/specs/$Branch"
 }
 
 function Get-SpecPaths {
-    $repoRoot = Get-RepoRoot
-    $specFolder = Get-CurrentSpec -RepoRoot $repoRoot
+    $buildforceRoot = Get-BuildforceRoot
+    $specFolder = Get-CurrentSpec -BuildforceRoot $buildforceRoot
     $specDir = ""
 
     if ($specFolder) {
-        $specDir = Join-Path $repoRoot ".buildforce/specs/$specFolder"
+        $specDir = Join-Path $buildforceRoot ".buildforce/specs/$specFolder"
     }
 
     [PSCustomObject]@{
-        REPO_ROOT = $repoRoot
-        SPEC_DIR  = $specDir
+        BUILDFORCE_ROOT = $buildforceRoot
+        SPEC_DIR        = $specDir
     }
 }
 
 function Get-FeaturePathsEnv {
-    $repoRoot = Get-RepoRoot
+    $buildforceRoot = Get-BuildforceRoot
     $currentBranch = Get-CurrentBranch
     $hasGit = Test-HasGit
-    $featureDir = Get-FeatureDir -RepoRoot $repoRoot -Branch $currentBranch
+    $featureDir = Get-FeatureDir -BuildforceRoot $buildforceRoot -Branch $currentBranch
 
     [PSCustomObject]@{
-        REPO_ROOT     = $repoRoot
-        CURRENT_BRANCH = $currentBranch
-        HAS_GIT       = $hasGit
-        FEATURE_DIR   = $featureDir
-        SPEC_DIR      = $featureDir
-        FEATURE_SPEC  = Join-Path $featureDir 'spec.md'
-        IMPL_PLAN     = Join-Path $featureDir 'plan.md'
-        TASKS         = Join-Path $featureDir 'tasks.md'
-        RESEARCH      = Join-Path $featureDir 'research.md'
-        DATA_MODEL    = Join-Path $featureDir 'data-model.md'
-        QUICKSTART    = Join-Path $featureDir 'quickstart.md'
-        CONTRACTS_DIR = Join-Path $featureDir 'contracts'
+        BUILDFORCE_ROOT = $buildforceRoot
+        CURRENT_BRANCH  = $currentBranch
+        HAS_GIT         = $hasGit
+        FEATURE_DIR     = $featureDir
+        SPEC_DIR        = $featureDir
+        FEATURE_SPEC    = Join-Path $featureDir 'spec.md'
+        IMPL_PLAN       = Join-Path $featureDir 'plan.md'
+        TASKS           = Join-Path $featureDir 'tasks.md'
+        RESEARCH        = Join-Path $featureDir 'research.md'
+        DATA_MODEL      = Join-Path $featureDir 'data-model.md'
+        QUICKSTART      = Join-Path $featureDir 'quickstart.md'
+        CONTRACTS_DIR   = Join-Path $featureDir 'contracts'
     }
 }
 

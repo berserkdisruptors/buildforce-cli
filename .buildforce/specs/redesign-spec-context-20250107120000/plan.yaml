@@ -47,8 +47,8 @@ decisions:
   - decision: "Manual migration with sequential timestamps (not git commit dates)"
     rationale: "Git commit dates may not reflect logical chronology (rebasing, squashing). Sequential timestamps (Jan 1, Jan 2, Jan 3) maintain order clearly. Only 3 specs to migrate - manual assignment is fastest."
 
-  - decision: "/complete template instructs agent to use _index.yml, not pass file list"
-    rationale: "_index.yml is the source of truth for context files. Agent reads index, determines which files exist, makes intelligent update vs create decision. Passing list couples template to script unnecessarily."
+  - decision: "/complete template instructs agent to use _index.yaml, not pass file list"
+    rationale: "_index.yaml is the source of truth for context files. Agent reads index, determines which files exist, makes intelligent update vs create decision. Passing list couples template to script unnecessarily."
 
   - decision: "Timestamp in agent, not script"
     rationale: "Agent needs timestamp for folder name construction (prepend to slug). If script generated timestamp, agent couldn't construct final name to pass via --folder-name. Agent uses consistent conversation timestamp for deterministic naming within session."
@@ -73,7 +73,7 @@ files_to_modify:
 
   - path: "src/templates/commands/complete.md"
     change_type: "edit"
-    description: "Add instructions for agent to: (1) read .buildforce/context/_index.yml, (2) analyze conversation/spec/plan for component names, (3) determine update vs create, (4) check file sizes >500 lines for decomposition advisory."
+    description: "Add instructions for agent to: (1) read .buildforce/context/_index.yaml, (2) analyze conversation/spec/plan for component names, (3) determine update vs create, (4) check file sizes >500 lines for decomposition advisory."
 
   - path: "src/templates/spec-template.yaml"
     change_type: "edit"
@@ -103,7 +103,7 @@ files_to_modify:
     change_type: "edit"
     description: "Update id field from '006-now-update-readme' to '20250105120000-now-update-readme'"
 
-  - path: ".buildforce/context/*.yml"
+  - path: ".buildforce/context/*.yaml"
     change_type: "edit"
     description: "Find/replace old spec IDs (004-, 005-, 006-) with new timestamp IDs in related_specs sections across all context files"
 
@@ -214,10 +214,10 @@ phase_3:
       files: [src/templates/commands/spec.md]
       notes: "Instruct agent: pass final timestamp-slug via --folder-name to create-spec-files script"
 
-    - [x] Add _index.yml reading instructions to complete.md
+    - [x] Add _index.yaml reading instructions to complete.md
       spec_refs: [FR9, FR11]
       files: [src/templates/commands/complete.md]
-      notes: "Instruct agent: read .buildforce/context/_index.yml to discover existing context files"
+      notes: "Instruct agent: read .buildforce/context/_index.yaml to discover existing context files"
 
     - [x] Add conversation/spec/plan analysis instructions to complete.md
       spec_refs: [FR8, FR11]
@@ -236,7 +236,7 @@ phase_3:
 
   validation:
     - [x] spec.md template includes all naming generation steps
-    - [x] complete.md template includes _index.yml reading and analysis steps
+    - [x] complete.md template includes _index.yaml reading and analysis steps
     - [x] Template instructions are clear and actionable for agents
     - [x] Spec requirements covered: [FR3, FR4, FR5, FR7, FR8, FR9, FR10, FR11, FR15, NFR2]
 
@@ -296,7 +296,7 @@ phase_5:
 
     - [x] Find and replace old spec IDs in context files' related_specs sections
       spec_refs: [NFR5]
-      files: [.buildforce/context/*.yml]
+      files: [.buildforce/context/*.yaml]
       notes: "Grep for '004-', '005-', '006-' in context files, replace with timestamp IDs"
 
   validation:
@@ -330,7 +330,7 @@ phase_6:
     - [x] Test /complete command with context file analysis
       spec_refs: [AC6, AC7, AC9]
       files: []
-      notes: "Run /complete, verify agent reads _index.yml, updates existing files, creates new only if needed"
+      notes: "Run /complete, verify agent reads _index.yaml, updates existing files, creates new only if needed"
 
     - [x] Test context filename validation
       spec_refs: [AC11, FR15]
@@ -360,7 +360,7 @@ deviations:
   - phase: "additional"
     task: "Context file renaming"
     original: "Not explicitly in plan - context files mentioned in spec but not in plan phases"
-    actual: "Renamed 5 context files to remove numeric prefixes and updated _index.yml"
+    actual: "Renamed 5 context files to remove numeric prefixes and updated _index.yaml"
     reason: "User requested semantic naming for context files to match new naming philosophy. Aligns with spec FR7 and FR15 requirements for semantic context naming without numeric prefixes."
 
   - phase: "phase_3"
@@ -371,15 +371,15 @@ deviations:
 
   - phase: "phase_3"
     task: "Update complete.md template"
-    original: "Add instructions for _index.yml reading, conversation analysis, context filename generation, and update vs create decision"
+    original: "Add instructions for _index.yaml reading, conversation analysis, context filename generation, and update vs create decision"
     actual: "Completely rewrote complete.md as template-only command (removed script dependency), created 9-step workflow for agent-driven context file management, added comprehensive instructions for schema usage and intelligent merging"
-    reason: "User feedback: complete-spec.sh/ps1 scripts auto-generated context files with spec ID as filename and hardcoded content, contradicting semantic naming philosophy. Scripts also overwrote files instead of intelligent merges. Eliminated script entirely - agent now handles all operations using _schema.yml template."
+    reason: "User feedback: complete-spec.sh/ps1 scripts auto-generated context files with spec ID as filename and hardcoded content, contradicting semantic naming philosophy. Scripts also overwrote files instead of intelligent merges. Eliminated script entirely - agent now handles all operations using _schema.yaml template."
 
   - phase: "phase_3"
     task: "Add description field to context index"
     original: "Not in plan - context index entries only had id, file, type, tags"
     actual: "Added description field between type and tags in complete.md step 6 instructions"
-    reason: "User requested short one-liner descriptions (max 100 chars) in _index.yml entries to improve searchability without opening files."
+    reason: "User requested short one-liner descriptions (max 100 chars) in _index.yaml entries to improve searchability without opening files."
 
 # TESTING GUIDANCE
 
@@ -409,8 +409,8 @@ testing:
       steps: |
         1. Complete a spec that modifies authentication logic
         2. Run: /complete
-        3. Verify agent reads .buildforce/context/_index.yml
-        4. Verify agent determines authentication.yml should be updated (not created)
+        3. Verify agent reads .buildforce/context/_index.yaml
+        4. Verify agent determines authentication.yaml should be updated (not created)
         5. Verify agent generates filename without timestamp prefix
         6. Verify context file updated with new information
 
@@ -439,7 +439,7 @@ spec_coverage:
   - FR6: "✓ Phase 2: Tasks 2-4 (folder name validation)"
   - FR7: "✓ Phase 3: Task 6 (context filename generation)"
   - FR8: "✓ Phase 3: Task 5 (conversation/spec/plan analysis)"
-  - FR9: "✓ Phase 3: Tasks 4,7 (_index.yml reading, update vs create)"
+  - FR9: "✓ Phase 3: Tasks 4,7 (_index.yaml reading, update vs create)"
   - FR10: "✓ Phase 3: Task 7 (file size checking for decomposition)"
   - FR11: "✓ Phase 3: Tasks 4,5,7 (multiple context files support)"
   - FR12: "✓ Phase 1: Tasks 1-4 (fuzzy matching removal)"
@@ -511,7 +511,7 @@ risks:
     mitigation: "Template instructions include max 35 char constraint. Script validation provides fast feedback if agent violates. Agent can retry with shorter name."
 
   - risk: "Context file references might break if any 004-006 references missed during migration"
-    mitigation: "Use grep to exhaustively search all .yml files for old IDs. Double-check _index.yml, context files, and spec files."
+    mitigation: "Use grep to exhaustively search all .yaml files for old IDs. Double-check _index.yaml, context files, and spec files."
 
   - risk: "50-character limit may be too restrictive for complex features"
     mitigation: "Timestamp consumes 15 chars, leaving 35 for semantic slug. Most features describable in 3-5 words (avg 20-30 chars). Can be revisited if empirically problematic."

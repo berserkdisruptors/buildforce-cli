@@ -1,0 +1,127 @@
+id: reorder-research-workflow-20251103143500
+name: "Reorder Research Command Workflow for Better UX"
+type: feature
+status: draft
+created: "2025-11-03"
+last_updated: "2025-11-03"
+
+summary: |
+  Fix UX issue in /research command where cache persistence happens after TLDR and Next Steps,
+  forcing users to scroll back. Reorder workflow so cache saving occurs before final summary sections.
+
+# INTENT / PROBLEM STATEMENT
+
+problem: |
+  The /research command currently presents findings in this order:
+  1. Research content (Summary, Context, Findings, etc.)
+  2. TLDR section
+  3. Next Steps section
+  4. Research persistence (save to .research-cache.md)
+  
+  This creates a poor user experience because:
+  - The most important information (TLDR and Next Steps) appears in the middle
+  - Cache saving operation appears last, causing output after the summary
+  - Users must scroll back up to see the TLDR after the cache file is created
+  - The "Next Steps" instruction mentions "After presenting findings..." which is misleading since 
+    findings were already presented
+
+motivation: |
+  By reordering the workflow, we ensure:
+  - TLDR and Next Steps remain the last visible content (no scrolling needed)
+  - Research persistence becomes a silent internal step between content and summary
+  - Clearer workflow structure with explicit step numbering
+  - Natural reading order: content → summary (TLDR) → action items (Next Steps)
+  - Removal of redundant/confusing instructions about section ordering
+
+# GOALS
+
+primary_goals:
+  - Reorder research.md workflow so cache persistence happens before TLDR and Next Steps
+  - Make research persistence an explicit numbered workflow step
+  - Ensure TLDR and Next Steps remain the last visible output for users
+  - Improve workflow clarity with proper step numbering
+
+secondary_goals:
+  - Remove redundant instruction about TLDR/Next Steps ordering
+  - Clean up misleading language in Next Steps section
+  - Maintain template-only implementation approach (no code changes)
+
+# REQUIREMENTS
+
+functional_requirements:
+  - FR1: Research persistence must become Step 7 in the workflow (after Data Models, before TLDR)
+  - FR2: TLDR section must become Step 8 (after Research Persistence, before Next Steps)
+  - FR3: Next Steps must become Step 9 (final step in workflow)
+  - FR4: Remove instruction "ALWAYS add a '## TLDR' section before 'Next Steps'"
+  - FR5: Update Next Steps description to remove "After presenting findings..." language
+  - FR6: Maintain complete "## Research Persistence" section as Step 7 content
+  - FR7: Preserve all existing persistence logic (state checking, cache format, append behavior)
+
+non_functional_requirements:
+  - NFR1: Template-only modification - no TypeScript/JavaScript code changes
+  - NFR2: Backward compatibility - cache format and materialization logic unchanged
+  - NFR3: Clear documentation - step numbering makes workflow self-documenting
+
+# SCOPE
+
+in_scope:
+  - Reorder steps 6-9 in src/templates/commands/research.md
+  - Move "## Research Persistence" section to become Step 7
+  - Renumber TLDR as Step 8 and Next Steps as Step 9
+  - Remove redundant ordering instruction from TLDR step
+  - Update Next Steps description text
+  - Preserve all persistence logic and behavior
+
+out_of_scope:
+  - Changes to cache format or structure
+  - Changes to materialization logic in spec.md
+  - Changes to cleanup logic in complete.md
+  - Modifications to research-template.yaml
+  - Changes to any TypeScript/JavaScript code
+
+# DESIGN PRINCIPLES
+
+design_principles:
+  - "User-facing output should end with summary and action items"
+  - "Internal operations (cache saving) should be invisible to users"
+  - "Step numbering provides implicit ordering - avoid redundant instructions"
+  - "Template modifications preserve existing functionality"
+
+# ACCEPTANCE CRITERIA
+
+acceptance_criteria:
+  - AC1: When /research executes, TLDR appears before Next Steps in output
+  - AC2: When /research executes, no output appears after Next Steps section
+  - AC3: Cache file (.research-cache.md) is still created with complete research content
+  - AC4: Cache accumulation logic still respects buildforce.json currentSpec state
+  - AC5: TLDR step description does not mention ordering relative to Next Steps
+  - AC6: Next Steps step description does not mention "After presenting findings"
+  - AC7: Step 7 contains complete "## Research Persistence" section with all substeps
+
+# ASSUMPTIONS & DEPENDENCIES
+
+assumptions:
+  - Agents follow step numbering in sequential order
+  - Current persistence logic is working correctly
+  - Users read output from top to bottom (don't jump to end)
+
+dependencies:
+  internal:
+    - research-slash-command: "Template being modified"
+    - research-persistence: "Feature being improved"
+    - state-tracking: "buildforce.json currentSpec checking unchanged"
+  external: []
+
+# OPEN QUESTIONS
+
+open_questions: []
+
+# NOTES
+
+notes: |
+  This is a UX improvement to existing functionality, not a new feature. The three-stage
+  pipeline (accumulation, materialization, cleanup) remains unchanged - only the presentation
+  order in the /research command is affected.
+  
+  The change maintains the principle that research persistence is an internal mechanism that
+  should not disrupt the user-facing output flow.

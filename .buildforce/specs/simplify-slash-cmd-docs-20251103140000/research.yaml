@@ -1,0 +1,131 @@
+id: "simplify-slash-cmd-docs-20251103140000-research"
+created: "2025-11-03"
+last_updated: "2025-11-03"
+
+summary: |
+  Comprehensive analysis of slash command documentation in README.md covering all 5 commands
+  (/research, /spec, /build, /complete, /document). Research revealed consistent documentation
+  structure across commands with technical implementation details, YAML examples, and key features
+  sections. Documentation accurately reflects actual command template behavior.
+
+key_findings:
+  - "README documents 5 slash commands with consistent 7-component structure: purpose, usage, examples, workflow steps, key features, YAML examples, and pro tips"
+  - "Each command section follows identical format across lines 127-470 of README.md"
+  - "Documentation is accurate - all README descriptions align with actual template behavior"
+  - "Current 'What it does' sections are technical and implementation-focused (8-10 numbered steps showing internal mechanics)"
+  - "File structure examples and key features add significant length without improving user understanding"
+  - "Pro tips provide practical optimization advice and are well-received"
+
+file_paths:
+  primary:
+    - path: "README.md"
+      relevance: "Lines 127-470 contain all slash command documentation to be simplified"
+    - path: "src/templates/commands/research.md"
+      relevance: "Source template for /research command (30 lines)"
+    - path: "src/templates/commands/spec.md"
+      relevance: "Source template for /spec command (319 lines)"
+    - path: "src/templates/commands/build.md"
+      relevance: "Source template for /build command (43 lines)"
+    - path: "src/templates/commands/complete.md"
+      relevance: "Source template for /complete command (187 lines)"
+    - path: "src/templates/commands/document.md"
+      relevance: "Source template for /document command (118 lines)"
+
+  secondary:
+    - path: ".buildforce/context/slash-commands.yaml"
+      relevance: "Context file documenting slash command system architecture"
+    - path: ".buildforce/context/_index.yaml"
+      relevance: "Index with references to all command-related context files"
+
+architectural_decisions:
+  - pattern: "Consistent Documentation Structure"
+    description: "All 5 commands follow identical section format for predictability"
+    rationale: "Users can quickly scan any command section knowing structure is consistent"
+
+  - pattern: "Technical Implementation Details"
+    description: "Current 'What it does' sections explain internal mechanics with 8-10 numbered steps"
+    rationale: "Originally designed to show transparency but creates cognitive overhead for users who just want to trust the system"
+
+data_models:
+  - name: "Current Command Documentation Structure"
+    description: "Standard format for each slash command section"
+    properties:
+      - name: "header"
+        type: "string"
+        required: true
+        description: "### /command - Title format"
+
+      - name: "purpose"
+        type: "string"
+        required: true
+        description: "One-sentence goal statement"
+
+      - name: "usage"
+        type: "code_block"
+        required: true
+        description: "Command syntax with /command <args>"
+
+      - name: "examples"
+        type: "array[string]"
+        required: true
+        description: "3+ realistic use cases"
+
+      - name: "what_it_does"
+        type: "array[string]"
+        required: true
+        description: "8-10 numbered technical implementation steps"
+
+      - name: "output_sections_or_key_features"
+        type: "object"
+        required: false
+        description: "Either output sections list or key features bullet list"
+
+      - name: "yaml_examples"
+        type: "code_block"
+        required: false
+        description: "File structure examples showing generated YAML"
+
+      - name: "pro_tip"
+        type: "string"
+        required: true
+        description: "Practical optimization advice"
+
+  - name: "Desired Simplified Structure"
+    description: "User's preferred documentation format"
+    properties:
+      - name: "header"
+        type: "string"
+        required: true
+        description: "### /command - Title format (unchanged)"
+
+      - name: "purpose"
+        type: "string"
+        required: true
+        description: "One-sentence goal statement (unchanged)"
+
+      - name: "usage"
+        type: "code_block"
+        required: true
+        description: "Command syntax (unchanged)"
+
+      - name: "examples"
+        type: "array[string]"
+        required: true
+        description: "1-3 examples (reduced from 3+)"
+
+      - name: "what_it_does"
+        type: "string"
+        required: true
+        description: "High-level user-perspective description (simplified from technical steps)"
+
+      - name: "pro_tip"
+        type: "string"
+        required: true
+        description: "Practical optimization advice (unchanged)"
+
+tldr:
+  - "README documents 5 slash commands (lines 127-470) with technical implementation details"
+  - "User wants simplified format: keep purpose, usage, 1-3 examples, pro tips"
+  - "Remove: YAML file structure examples, key features sections"
+  - "Change: 'What it does' from technical steps to high-level user-perspective description"
+  - "Goal: Users should understand value proposition quickly to decide if they trust the system"

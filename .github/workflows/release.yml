@@ -39,33 +39,39 @@ jobs:
         run: |
           chmod +x .github/workflows/scripts/get-next-version.sh
           .github/workflows/scripts/get-next-version.sh
-      - name: Check if release already exists
-        id: check_release
+      - name: Update template versions
         run: |
-          chmod +x .github/workflows/scripts/check-release-exists.sh
-          .github/workflows/scripts/check-release-exists.sh ${{ steps.get_tag.outputs.new_version }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          chmod +x .github/workflows/scripts/update-template-versions.sh
+          VERSION="${{ steps.get_tag.outputs.new_version }}"
+          VERSION_NO_V="${VERSION#v}"
+          .github/workflows/scripts/update-template-versions.sh "$VERSION_NO_V"
+      - name: Commit version bump
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add src/templates/
+          if git diff --cached --quiet; then
+            echo "No template changes to commit"
+          else
+            git commit -m "chore: bump version to ${{ steps.get_tag.outputs.new_version }} [skip ci]"
+            git push origin HEAD:main
+          fi
       - name: Create release package variants
-        if: steps.check_release.outputs.exists == 'false'
         run: |
           chmod +x .github/workflows/scripts/create-release-packages.sh
           .github/workflows/scripts/create-release-packages.sh ${{ steps.get_tag.outputs.new_version }}
       - name: Generate release notes
-        if: steps.check_release.outputs.exists == 'false'
         id: release_notes
         run: |
           chmod +x .github/workflows/scripts/generate-release-notes.sh
           .github/workflows/scripts/generate-release-notes.sh ${{ steps.get_tag.outputs.new_version }} ${{ steps.get_tag.outputs.latest_tag }}
       - name: Create GitHub Release
-        if: steps.check_release.outputs.exists == 'false'
         run: |
           chmod +x .github/workflows/scripts/create-github-release.sh
           .github/workflows/scripts/create-github-release.sh ${{ steps.get_tag.outputs.new_version }}
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
       - name: Update version in pyproject.toml (for release artifacts only)
-        if: steps.check_release.outputs.exists == 'false'
         run: |
           chmod +x .github/workflows/scripts/update-version.sh
           .github/workflows/scripts/update-version.sh ${{ steps.get_tag.outputs.new_version }}

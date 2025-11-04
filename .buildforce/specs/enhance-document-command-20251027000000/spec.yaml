@@ -71,8 +71,8 @@ functional_requirements:
   - FR2: Guidelines 1-6 MUST be restructured to mirror /complete steps 3-6 pattern (Analyze Context Requirements → Generate Filenames → Create/Update Files → Update Index)
   - FR3: Guideline for analyzing context requirements MUST emphasize careful conversation history analysis since no spec.yaml/plan.yaml exists
   - FR4: Guideline for generating filenames MUST include detailed rules: kebab-case, max 50 characters, no numeric/timestamp prefixes, component identity (not spec intent), lowercase alphanumeric and hyphens only
-  - FR5: Guideline for generating filenames MUST include ID conflict checking strategy: search _index.yml proactively, choose alternative ID if conflict exists (append descriptor, use synonym)
-  - FR6: Guideline for creating/updating files MUST distinguish between CREATE mode (new files with _schema.yml) and UPDATE mode (intelligent merge with preservation)
+  - FR5: Guideline for generating filenames MUST include ID conflict checking strategy: search _index.yaml proactively, choose alternative ID if conflict exists (append descriptor, use synonym)
+  - FR6: Guideline for creating/updating files MUST distinguish between CREATE mode (new files with _schema.yaml) and UPDATE mode (intelligent merge with preservation)
   - FR7: Guideline for updating index MUST specify entry structure: id, file, type, description (short one-liner max 100 chars), auto-generated tags
   - FR8: Final guideline (replacing confirmation) MUST provide condensed completion summary: files created/updated, what was documented, brief achievement summary
   - FR9: Completion summary MUST NOT request user confirmation - command should execute writes and report what was done
@@ -101,7 +101,7 @@ in_scope:
 out_of_scope:
   - Changing command signature or arguments ($ARGUMENTS format)
   - Adding script execution (remains template-only)
-  - Modifying context schema structure (_schema.yml changes)
+  - Modifying context schema structure (_schema.yaml changes)
   - Changing index structure beyond adding description field
   - Integration with /research command (only suggest, don't auto-invoke)
   - Automatic context splitting when >500 lines (advisory only)
@@ -124,9 +124,9 @@ acceptance_criteria:
   - AC1: Empty context detection implemented - when user runs /document with minimal conversation context, agent suggests running /research first
   - AC2: Guidelines restructured to match /complete steps 3-6 pattern with similar section names and structure
   - AC3: Filename generation guideline includes all validation rules: kebab-case, max 50 chars, no prefixes, component identity, alphanumeric+hyphens
-  - AC4: Filename generation guideline includes ID conflict resolution: search _index.yml first, choose alternative (append descriptor/use synonym)
+  - AC4: Filename generation guideline includes ID conflict resolution: search _index.yaml first, choose alternative (append descriptor/use synonym)
   - AC5: Context analysis guideline emphasizes conversation history review to identify components/features/patterns to document
-  - AC6: Create/Update files guideline distinguishes CREATE mode (_schema.yml) vs UPDATE mode (intelligent merge)
+  - AC6: Create/Update files guideline distinguishes CREATE mode (_schema.yaml) vs UPDATE mode (intelligent merge)
   - AC7: Index update guideline specifies entry structure including description field (max 100 chars one-liner)
   - AC8: Final guideline provides completion summary instead of confirmation: files created/updated, what documented, brief achievement
   - AC9: Completion summary does NOT request user confirmation - writes are executed automatically
@@ -148,8 +148,8 @@ assumptions:
 dependencies:
   internal:
     - complete-command: "Reference for steps 3-6 workflow patterns, filename rules, completion summary format"
-    - context/_schema.yml: "Template structure for new context files (unchanged)"
-    - context/_index.yml: "Index for ID conflict checking and entry updates (add description field)"
+    - context/_schema.yaml: "Template structure for new context files (unchanged)"
+    - context/_index.yaml: "Index for ID conflict checking and entry updates (add description field)"
   external: {}
 
 # OPEN QUESTIONS
@@ -162,7 +162,7 @@ notes: |
   Key /complete patterns to adopt:
 
   **Step 3 - Analyze Context Requirements** (becomes new guideline 1-2):
-  - Proactive search of _index.yml to discover existing contexts
+  - Proactive search of _index.yaml to discover existing contexts
   - Analyze conversation history to identify components/features/modules modified
   - Determine UPDATE vs CREATE for each component
   - Multiple components possible (one /document may affect multiple contexts)
@@ -171,12 +171,12 @@ notes: |
   **Step 4 - Generate Context Filenames** (becomes new guideline 3):
   - Use component/feature/module identity, NOT spec intent
   - Format: kebab-case, max 50 characters, no numeric or timestamp prefixes
-  - Examples: authentication.yml, build-command.yml, error-handling.yml
+  - Examples: authentication.yaml, build-command.yaml, error-handling.yaml
   - Validate: lowercase alphanumeric and hyphens only
-  - Check for ID conflicts in _index.yml, choose alternative if exists
+  - Check for ID conflicts in _index.yaml, choose alternative if exists
 
   **Step 5 - Create/Update Context Files** (becomes new guideline 4):
-  - For NEW: Load _schema.yml, populate ALL fields, NEVER leave placeholders
+  - For NEW: Load _schema.yaml, populate ALL fields, NEVER leave placeholders
   - For EXISTING: Read current content, preserve values (id, created), update last_updated,
     intelligently merge (add dependencies, append files, add evolution entry, append related_specs)
 

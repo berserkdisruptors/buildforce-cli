@@ -7,12 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- `/spec` now creates and updates both `spec.yaml` (WHAT) and `plan.yaml` (HOW) in parallel
+
+### Removed
+
+- `/plan` slash command retired; planning responsibilities merged into `/spec`
+
 ### Planned
 
 - Enhanced spec templates with more structured requirement types
 - Plan validation with automated completeness checks
 - Testing integration with built-in test file generation
-- Visualization tools for generating diagrams from specs/plans
+ - Visualization tools for generating diagrams from specs/plans
 
 ## [0.0.1] - 2025-01-15
 

@@ -1,0 +1,184 @@
+id: spec-command
+name: "Spec Command Template"
+type: feature
+status: production
+created: 2025-01-23
+last_updated: 2025-10-29
+
+summary: |
+  Template-based slash command that guides AI agents through creating or updating structured
+  specification files. Uses buildforce.json state tracking to determine CREATE vs UPDATE mode.
+  Delegates semantic-slug-first folder naming to agents in CREATE flow only.
+
+responsibilities:
+  - Guide agents through spec creation workflow with 7 structured steps
+  - Determine CREATE vs UPDATE mode using buildforce.json currentSpec field
+  - Instruct agents to generate semantic-slug-first folder names (CREATE mode only)
+  - Execute create-spec-files script with agent-generated folder name
+  - Capture WHAT needs to be built (not HOW) in spec.yaml files
+  - Identify ambiguities and prompt for clarifying questions using standardized format
+  - Validate prerequisite context from /research commands
+
+dependencies:
+  internal:
+    - create-spec-files.sh: "Bash script for creating spec folder structure"
+    - create-spec-files.ps1: "PowerShell equivalent for cross-platform support"
+    - spec-template.yaml: "Template structure for new spec files"
+    - state-tracking: "Reads buildforce.json currentSpec field to determine CREATE vs UPDATE mode"
+    - research-persistence: "Materializes .research-cache.md into research.yaml, reads it for context-aware spec population"
+  external:
+    - None (template-only command)
+
+files:
+  primary:
+    - src/templates/commands/spec.md
+  secondary:
+    - src/scripts/bash/create-spec-files.sh
+    - src/scripts/powershell/create-spec-files.ps1
+    - src/templates/spec-template.yaml
+
+command_signature:
+  syntax: "/spec [feature-description]"
+  arguments:
+    - name: "feature-description"
+      type: "string"
+      required: false
+      description: "Brief description of the feature to spec (can be provided in follow-up)"
+  examples:
+    - "/spec Add JWT authentication with refresh tokens"
+    - "/spec Refactor error handling middleware"
+
+design_decisions:
+  - decision: "Use buildforce.json currentSpec field for CREATE vs UPDATE determination"
+    rationale: "Migrated from .current-spec to buildforce.json for structured configuration. Single source of truth for active spec state with extensibility for future metadata."
+
+  - decision: "Move folder name generation to CREATE flow only"
+    rationale: "UPDATE mode doesn't need new folder names - it modifies existing spec. Reduces complexity and avoids confusion."
+
+  - decision: "Remove create-update-pattern.md reference"
+    rationale: "Legacy file didn't exist and caused confusion. Direct .current-spec check is self-explanatory."
+
+  - decision: "Timestamp generation in agent, not script"
+    rationale: "Agent needs timestamp to construct full folder name before passing to script. Allows deterministic naming within conversation session."
+
+  - decision: "Remove fuzzy search mentions"
+    rationale: "Fuzzy matching removed from scripts entirely. No longer relevant to command workflow."
+
+  - decision: "Semantic-first folder naming (slug-timestamp instead of timestamp-slug)"
+    rationale: "Improves discoverability, IDE autocomplete, and aligns with context file naming philosophy. Timestamp suffix maintains uniqueness while prioritizing human-readable semantic information."
+
+  - decision: "Standardized clarifying question format (numeric questions + alphabetical options + X for Other)"
+    rationale: "Reduces user cognitive load and confusion by providing consistent, predictable structure for question responses. Format uses 1,2,3 numbering, A,B,C options, and X for free-form answers. Applied when predefined options make sense, with flexibility for plain text questions when appropriate."
+
+  - decision: "Add spec summary to final output (before plan summary)"
+    rationale: "Users need a recap of WHAT (spec) before seeing HOW (plan) before running /build. A flowing narrative summary that synthesizes the full spec.yaml context increases user confidence and provides a validation checkpoint. For UPDATE mode, shows only deltas to keep output concise."
+
+  - decision: "Add template structure verification instruction to Step 2c (after file population)"
+    rationale: "Users reported bugs where plan.yaml files had incorrect structures, causing downstream /build issues. Explicit verification instruction directs agents to check both spec.yaml and plan.yaml structure immediately after population (optimal correction point). Leverages agent intelligence for structural checking without programmatic validation. Verification applies to CREATE mode only since UPDATE mode rarely rewrites entire file structures."
+
+evolution:
+  - version: "1.0"
+    date: "2025-01-07"
+    changes: "Initial template with agent-driven folder name generation and script parameter passing"
+
+  - version: "2.0"
+    date: "2025-01-23"
+    changes: "Refactored to use .current-spec for CREATE/UPDATE determination, moved folder generation to CREATE flow only, removed legacy references"
+
+  - version: "3.0"
+    date: "2025-10-24"
+    changes: "Reversed naming convention from {timestamp}-{slug} to {slug}-{timestamp} for improved discoverability and IDE autocomplete. Updated validation to enforce semantic slug starting with letter."
+
+  - version: "4.0"
+    date: "2025-10-24"
+    changes: "Added standardized clarifying question format to Step 4 with explicit formatting rules (numeric questions, alphabetical options A/B/C, X for Other), format template, 2 complete examples, and usage guidance. Improves UX consistency and reduces user confusion during spec clarification phase."
+
+  - version: "5.0"
+    date: "2025-10-24"
+    changes: "Added spec summary to final output in Step 6 (Report completion). Spec summary appears before plan summary, synthesizes full spec.yaml context into flowing narrative (not structured sections), adapts to feature complexity (1 sentence for simple, paragraph for complex), and uses delta view for UPDATE mode. Provides users with complete WHAT + HOW context before running /build."
+
+  - version: "6.0"
+    date: "2025-10-24"
+    changes: "Added template structure verification instruction to Step 2c (line 65, after plan.yaml population). Directs agents to verify both spec.yaml and plan.yaml follow template structure by checking all top-level sections exist, required metadata fields are present, and field types match templates. Addresses user-reported bugs where plan.yaml files had incorrect structures. Verification applies to CREATE mode only. Template increased from 232 to 234 lines (2-line increase)."
+
+  - version: "7.0"
+    date: "2025-10-28"
+    changes: "Added research persistence integration. CREATE mode: Added Step 2c to materialize .research-cache.md into research.yaml before populating spec.yaml, then reads research.yaml to inform requirement identification (Step 2d). UPDATE mode: Added Step 3a to load existing research.yaml for context consistency, Step 3b to merge new cache if exists. Template increased from 239 to 319 lines. Enables context-aware spec population with research findings."
+
+  - version: "8.0"
+    date: "2025-10-29"
+    changes: "Migrated state tracking from .current-spec to buildforce.json. Updated CREATE/UPDATE mode determination to read currentSpec field from buildforce.json instead of plain text file. Template references updated accordingly. Enables structured configuration with future extensibility."
+
+related_specs:
+  - redesign-spec-context-20250107120000
+  - swap-timestamp-slug-order-20251024093000
+  - research-persistence-intelligent-20251027213207
+  - standardize-question-format-20251024000000
+  - add-spec-summary-output-20251024000000
+  - add-template-verification-20251024142000
+  - migrate-currentspec-to-json-20251029000000
+
+notes: |
+  The /spec command follows a 7-step workflow:
+  1. Determine CREATE vs UPDATE mode (check buildforce.json currentSpec field)
+  2. For CREATE: Generate folder name, run script, populate spec
+  3. For UPDATE: Load existing spec, merge new information
+  4. Validate prerequisite context
+  5. Identify ambiguities and clarifying questions
+  6. Apply behavior rules (focus on WHAT not HOW)
+  7. Report completion
+
+  Folder naming format for CREATE mode:
+  - Semantic slug: kebab-case, 3-5 words, max 35 chars, must start with letter
+  - Timestamp: YYYYMMDDHHmmss (14 digits, UTC)
+  - Combined: {slug}-{timestamp} (max 50 chars total)
+  - Example: add-auth-jwt-20250123145030
+
+  Breaking change (v3.0): Format reversed from {timestamp}-{slug} to {slug}-{timestamp}.
+  This prioritizes semantic information for better discoverability and IDE autocomplete support.
+
+  Key principle: Specs capture WHAT needs to be built, not HOW to build it.
+  Implementation details belong in the plan.yaml, not spec.yaml.
+
+  The command emphasizes active use of open_questions section to capture
+  ambiguities rather than making assumptions. Agents should present open
+  questions to users before proceeding to /plan.
+
+  Clarifying Question Format (v4.0):
+  - Questions numbered sequentially: 1, 2, 3, 4...
+  - Provide 2-3 predefined options per question: A, B, C
+  - Always include final option: X. Other (please specify)
+  - Use structured format when predefined options make sense
+  - Fall back to plain text questions when options would be artificial
+  - Format is documented in spec.md Step 4 (lines 110-159)
+
+  Example question format:
+  **1. What should be the JWT token expiration time?**
+     A. 15 minutes
+     B. 30 minutes
+     C. 1 hour
+     X. Other (please specify)
+
+  Users can respond with: "1. A; 2. B" or "1. X: custom value; 2. C"
+
+  Spec Summary Format (v5.0):
+  - Appears in Step 6 final output, before plan summary
+  - Flowing narrative (not structured sections) that synthesizes full spec.yaml
+  - Combines: problem/motivation, goals, requirements (FR/NFR), scope (in/out), acceptance criteria
+  - Adaptive verbosity: 1 sentence for simple features, 2-3 sentences (paragraph) for complex
+  - CREATE mode: Full spec context summary
+  - UPDATE mode: Delta view only (what changed)
+  - Scannable in 10-15 seconds, fits with plan summary in 40-60 lines total
+  - Provides validation checkpoint before /build execution
+
+  Template Structure Verification (v6.0):
+  - Added to Step 2c (line 65), after both files are populated but before continuing to Step 3
+  - Directs agents to verify populated files follow template structure
+  - Checks both spec.yaml AND plan.yaml explicitly
+  - Validates: all top-level sections exist, required metadata fields present, field types match
+  - Sections checked for spec.yaml: INTENT, GOALS, REQUIREMENTS, SCOPE, DESIGN PRINCIPLES, ACCEPTANCE CRITERIA, ASSUMPTIONS & DEPENDENCIES, OPEN QUESTIONS, NOTES
+  - Sections checked for plan.yaml: ARCHITECTURE OVERVIEW, FILE STRUCTURE, IMPLEMENTATION PHASES, DEVIATION LOG, TESTING GUIDANCE, VALIDATION CRITERIA, PROGRESS SUMMARY, RISKS & CONSIDERATIONS, NOTES
+  - Required metadata: id, name, type, status, created, last_updated
+  - Applies to CREATE mode only (UPDATE mode has minimal risk of structural rewrites)
+  - Uses imperative tone ("Verify template structure") consistent with template style
+  - Addresses reported user bugs where plan.yaml files had incorrect structures

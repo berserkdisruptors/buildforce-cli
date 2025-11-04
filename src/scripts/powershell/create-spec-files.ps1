@@ -39,18 +39,18 @@ if ($FolderName.Length -gt 50) {
     exit 1
 }
 
-# Get repository root using common function
+# Get buildforce root using common function
 try {
-    $repoRoot = Get-RepoRoot
+    $buildforceRoot = Get-BuildforceRoot
 } catch {
-    Write-Error "Error: Could not determine repository root. Please run this script from within the repository."
+    Write-Error "Error: Could not determine buildforce root. Please run this script from a directory containing .buildforce folder."
     exit 1
 }
 
-Set-Location $repoRoot
+Set-Location $buildforceRoot
 
-$specsDir = Join-Path $repoRoot '.buildforce/specs'
-$templatesDir = Join-Path $repoRoot '.buildforce/templates'
+$specsDir = Join-Path $buildforceRoot '.buildforce/specs'
+$templatesDir = Join-Path $buildforceRoot '.buildforce/templates'
 New-Item -ItemType Directory -Path $specsDir -Force | Out-Null
 
 # Create new spec folder
@@ -83,7 +83,7 @@ if (Test-Path $planTemplate) {
 }
 
 # Update state file to track current spec across sessions
-Set-CurrentSpec $repoRoot $FolderName
+Set-CurrentSpec $buildforceRoot $FolderName
 
 # Set CURRENT_SPEC environment variable for session tracking
 $env:CURRENT_SPEC = $FolderName

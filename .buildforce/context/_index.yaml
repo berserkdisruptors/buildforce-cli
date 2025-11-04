@@ -61,7 +61,7 @@ version: "1.0"
 
 contexts:
   - id: slash-commands
-    file: slash-commands.yml
+    file: slash-commands.yaml
     type: module
     description: "Core slash command system enabling spec-driven development workflow for AI agents"
     tags: [core, workflow, agents]
@@ -69,7 +69,6 @@ contexts:
       [
         research-slash-command,
         spec-command,
-        iterate-plan-command,
         build-command,
         complete-command,
         document-command,
@@ -78,14 +77,14 @@ contexts:
       ]
 
   - id: research-slash-command
-    file: research-slash-command.yml
+    file: research-slash-command.yaml
     type: feature
     description: "Slash command for gathering context from project knowledge, codebase, and external sources"
     tags: [core, workflow, research, context-gathering]
     related_context: [slash-commands, cli-architecture, document-command]
 
   - id: build-command
-    file: build-command.yml
+    file: build-command.yaml
     type: feature
     description: "Slash command for implementing features following spec and plan with progress tracking"
     tags:
@@ -97,11 +96,10 @@ contexts:
         workflow-enhancement,
         script-execution,
       ]
-    related_context:
-      [slash-commands, plan-template, iterate-plan-command, spec-command]
+    related_context: [slash-commands, plan-template, spec-command]
 
   - id: plan-template
-    file: plan-template.yml
+    file: plan-template.yaml
     type: feature
     description: "YAML template structure for implementation plans with task tracking and validation"
     tags:
@@ -115,29 +113,10 @@ contexts:
         spec-traceability,
         workflow-enhancement,
       ]
-    related_context:
-      [iterate-plan-command, build-command, spec-command, slash-commands]
-
-  - id: iterate-plan-command
-    file: iterate-plan-command.yml
-    type: feature
-    description: "Slash command for creating and refining implementation plans from specifications"
-    tags:
-      [
-        slash-command,
-        plan,
-        command-iteration,
-        compression,
-        workflow-enhancement,
-        script-execution,
-        fixed-output-format,
-        user-approval,
-      ]
-    related_context:
-      [slash-commands, plan-template, spec-command, build-command]
+    related_context: [build-command, spec-command, slash-commands]
 
   - id: document-command
-    file: document-command.yml
+    file: document-command.yaml
     type: feature
     description: "Enhanced /document command with /complete UX patterns, empty context detection, and completion summaries"
     tags:
@@ -161,7 +140,7 @@ contexts:
       ]
 
   - id: readme-documentation
-    file: readme-documentation.yml
+    file: readme-documentation.yaml
     type: feature
     description: "Primary documentation for Buildforce CLI covering installation, workflow, and contribution"
     tags:
@@ -183,7 +162,7 @@ contexts:
     related_context: [cli-architecture, slash-commands]
 
   - id: spec-command
-    file: spec-command.yml
+    file: spec-command.yaml
     type: feature
     description: "Template-based /spec command for creating/updating specifications with state-based CREATE vs UPDATE logic"
     tags:
@@ -196,11 +175,10 @@ contexts:
         agent-driven,
         workflow-core,
       ]
-    related_context:
-      [slash-commands, iterate-plan-command, plan-template, complete-command]
+    related_context: [slash-commands, plan-template, complete-command]
 
   - id: complete-command
-    file: complete-command.yml
+    file: complete-command.yaml
     type: feature
     description: "Template-only /complete command for finalizing specs with agent-driven context file management"
     tags:
@@ -216,7 +194,7 @@ contexts:
     related_context: [slash-commands, spec-command, document-command]
 
   - id: upgrade-command
-    file: upgrade-command.yml
+    file: upgrade-command.yaml
     type: feature
     description: "Slash command for upgrading projects to latest templates while preserving user content"
     tags:
@@ -240,7 +218,7 @@ contexts:
       ]
 
   - id: cli-architecture
-    file: cli-architecture.yml
+    file: cli-architecture.yaml
     type: module
     description: "Comprehensive CLI architecture with template distribution, context management, and multi-agent support"
     tags:
@@ -267,15 +245,15 @@ contexts:
       ]
 
   - id: research-persistence
-    file: research-persistence.yml
+    file: research-persistence.yaml
     type: feature
-    description: "Research persistence with three-stage pipeline: accumulation, intelligent materialization, and cleanup"
+    description: "Conversation-based research materialization system enabling structured research.yaml artifacts"
     tags:
       [
         research,
         persistence,
         materialization,
-        cache,
+        conversation-based,
         workflow-enhancement,
         template-only,
       ]
@@ -283,7 +261,7 @@ contexts:
       [research-slash-command, spec-command, build-command, complete-command]
 
   - id: local-artifact-resolution
-    file: local-artifact-resolution.yml
+    file: local-artifact-resolution.yaml
     type: feature
     description: "Local artifact resolution system for offline workflows and faster testing iterations"
     tags:
@@ -311,3 +289,57 @@ contexts:
         discoverability,
       ]
     related_context: [cli-architecture, readme-documentation]
+
+  - id: yaml-extension-standard
+    file: yaml-extension-standard.yaml
+    type: pattern
+    description: "Codebase standard enforcing .yaml extension for all YAML files to eliminate inconsistency"
+    tags:
+      [
+        pattern,
+        standard,
+        yaml,
+        file-extensions,
+        consistency,
+        breaking-change,
+        codebase-wide,
+      ]
+    related_context:
+      [
+        cli-architecture,
+        spec-command,
+        build-command,
+        complete-command,
+        document-command,
+        research-slash-command,
+      ]
+
+  - id: state-tracking
+    file: state-tracking.yaml
+    type: feature
+    description: "JSON-based state tracking using buildforce.json to manage active spec sessions"
+    tags:
+      [
+        core,
+        state-management,
+        buildforce-json,
+        configuration,
+        workflow-foundation,
+      ]
+    related_context:
+      [spec-command, research-persistence, complete-command, cli-architecture]
+
+  - id: template-versioning
+    file: template-versioning.yml
+    type: feature
+    description: "Automatic version injection for templates in release workflow with pre-commit strategy"
+    tags:
+      [
+        release-workflow,
+        templates,
+        versioning,
+        github-actions,
+        automation,
+        workflow-enhancement,
+      ]
+    related_context: [cli-architecture, plan-template, upgrade-command]

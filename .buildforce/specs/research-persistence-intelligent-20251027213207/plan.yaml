@@ -15,7 +15,7 @@ last_updated: "2025-10-28"
 approach: |
   This feature adds research persistence through a three-stage pipeline:
   1. Accumulation: /research appends to .buildforce/.research-cache.md
-  2. Materialization: /spec intelligently condenses cache into research.yml
+  2. Materialization: /spec intelligently condenses cache into research.yaml
   3. Cleanup: /complete deletes cache after finalization
 
   Template-based implementation (no code) modifying three commands and .gitignore.
@@ -23,7 +23,7 @@ approach: |
 
 technology_stack:
   - Markdown for cache log format (.research-cache.md)
-  - YAML for materialized research (research.yml)
+  - YAML for materialized research (research.yaml)
   - Template instructions for slash commands
 
 decisions:
@@ -36,13 +36,13 @@ decisions:
   - decision: "Cache only accumulates before spec creation"
     rationale: "Enforces 1:1 research-spec relationship using .current-spec state."
 
-  - decision: "Gitignore cache, commit research.yml"
-    rationale: "Cache is temporary working file. research.yml is versioned spec artifact."
+  - decision: "Gitignore cache, commit research.yaml"
+    rationale: "Cache is temporary working file. research.yaml is versioned spec artifact."
 
 # FILE STRUCTURE
 
 files_to_create:
-  - src/templates/research-template.yml
+  - src/templates/research-template.yaml
 
 files_to_modify:
   - path: "src/templates/commands/research.md"
@@ -66,7 +66,7 @@ files_to_modify:
 phase_1:
   name: "Define Research Artifacts Structure"
   description: |
-    Define structures for .research-cache.md (log format) and research.yml (materialized format).
+    Define structures for .research-cache.md (log format) and research.yaml (materialized format).
     Create flexible template file that preserves information richness (diagrams, models, snippets).
     Reference current /research output structure from research.md template.
 
@@ -78,27 +78,27 @@ phase_1:
 
     - [x] Define cache log format with session separators, timestamps, research type, preserving all content
       spec_refs: [FR1, FR2, FR3]
-      files: [src/templates/research-template.yml]
+      files: [src/templates/research-template.yaml]
       notes: "Format: === separator, timestamp, type (research_command|freeform_context), full content with diagrams/models/snippets"
 
-    - [x] Create flexible research.yml template structure with optional sections and preservation guidance
+    - [x] Create flexible research.yaml template structure with optional sections and preservation guidance
       spec_refs: [FR5, FR9, FR11, FR12, AC4, AC11]
-      files: [src/templates/research-template.yml]
+      files: [src/templates/research-template.yaml]
       notes: "Sections: summary, key_findings, file_paths, mermaid_diagrams, data_models, code_snippets, architectural_decisions, external_references, tldr. Mark sections as OPTIONAL."
 
     - [x] Document materialization strategy emphasizing preservation of diagrams, models, snippets, TLDR
       spec_refs: [FR5, NFR1, AC4]
-      files: [src/templates/research-template.yml]
+      files: [src/templates/research-template.yaml]
       notes: "Explain intelligent condensation: preserve structure, diagrams, models, code - essential for /build context. Not verbatim, but preserve info-rich elements."
 
     - [x] Add template comments explaining flexible structure (not all sections required)
       spec_refs: [FR12, AC11]
-      files: [src/templates/research-template.yml]
+      files: [src/templates/research-template.yaml]
       notes: "Clarify template is guidance, not enforcement. Adapt sections to research content type."
 
   validation:
     - [ ] All phase_1 tasks completed
-    - [ ] research-template.yml exists in src/templates/
+    - [ ] research-template.yaml exists in src/templates/
     - [ ] Template structure is flexible with optional sections
     - [ ] Preservation guidance for diagrams/models/snippets is clear
     - [ ] Cache format preserves all content types
@@ -124,7 +124,7 @@ phase_2:
     - [x] Add check if cache should accumulate (no .current-spec exists)
       spec_refs: [FR10]
       files: [src/templates/commands/research.md]
-      notes: "If .current-spec exists, skip cache append (research should merge with existing research.yml)"
+      notes: "If .current-spec exists, skip cache append (research should merge with existing research.yaml)"
 
   validation:
     - [ ] All phase_2 tasks completed
@@ -136,8 +136,8 @@ phase_2:
 phase_3:
   name: "Update /spec Command - CREATE Mode (Materialization + Consumption)"
   description: |
-    Add materialization logic to parse cache and create research.yml preserving essential artifacts.
-    Add consumption logic to read research.yml when populating spec.yaml for context-aware requirements.
+    Add materialization logic to parse cache and create research.yaml preserving essential artifacts.
+    Add consumption logic to read research.yaml when populating spec.yaml for context-aware requirements.
 
   tasks:
     - [x] Add Step 2c for research materialization after script execution
@@ -150,30 +150,30 @@ phase_3:
       files: [src/templates/commands/spec.md]
       notes: "If not exists: log info and proceed. If exists: read and parse."
 
-    - [x] Add intelligent materialization instructions referencing .buildforce/templates/research-template.yml
+    - [x] Add intelligent materialization instructions referencing .buildforce/templates/research-template.yaml
       spec_refs: [FR5, FR11, NFR1, AC3, AC4, AC10]
       files: [src/templates/commands/spec.md]
-      notes: "Instruct agent to read .buildforce/templates/research-template.yml for structure guidance. Analyze cache, preserve: summary, key findings, file paths, mermaid diagrams, data models, code snippets, architectural decisions, external refs, TLDR."
+      notes: "Instruct agent to read .buildforce/templates/research-template.yaml for structure guidance. Analyze cache, preserve: summary, key findings, file paths, mermaid diagrams, data models, code snippets, architectural decisions, external refs, TLDR."
 
     - [x] Emphasize preservation of information-rich elements during materialization
       spec_refs: [FR5, AC4]
       files: [src/templates/commands/spec.md]
       notes: "Explicitly state: DO NOT truncate diagrams, data models, or code snippets. These are essential for /build. Condense prose, preserve artifacts."
 
-    - [x] Add instruction to write research.yml to specs/{folder}/ with flexible structure
+    - [x] Add instruction to write research.yaml to specs/{folder}/ with flexible structure
       spec_refs: [FR4, FR9, FR12, AC9]
       files: [src/templates/commands/spec.md]
       notes: "Use Write tool. Follow template structure but allow optional sections based on content. Not all research has diagrams - adapt accordingly."
 
-    - [x] Add instruction to read research.yml after materialization to inform spec.yaml population
+    - [x] Add instruction to read research.yaml after materialization to inform spec.yaml population
       spec_refs: [FR13, AC14]
       files: [src/templates/commands/spec.md]
-      notes: "In Step 2d (Populate spec.yaml), instruct agent to read research.yml (if exists) to inform requirement identification, scope definition, and open_questions population with research context."
+      notes: "In Step 2d (Populate spec.yaml), instruct agent to read research.yaml (if exists) to inform requirement identification, scope definition, and open_questions population with research context."
 
   validation:
     - [ ] All phase_3 tasks completed
     - [ ] Step 2c added for materialization
-    - [ ] Step 2d enhanced to consume research.yml
+    - [ ] Step 2d enhanced to consume research.yaml
     - [ ] Materialization logic references template
     - [ ] Preservation of diagrams/models/snippets is explicit
     - [ ] Research consumption for spec population is clear
@@ -182,19 +182,19 @@ phase_3:
 phase_4:
   name: "Update /spec Command - UPDATE Mode (Merging + Consumption)"
   description: |
-    Add intelligent merging so new research merges with existing research.yml preserving
-    information. Add consumption logic to read research.yml when updating spec.yaml.
+    Add intelligent merging so new research merges with existing research.yaml preserving
+    information. Add consumption logic to read research.yaml when updating spec.yaml.
 
   tasks:
-    - [x] Add logic to check if research.yml exists in spec folder
+    - [x] Add logic to check if research.yaml exists in spec folder
       spec_refs: [FR6, FR13]
       files: [src/templates/commands/spec.md]
       notes: "In Step 3 (UPDATE mode), after loading spec.yaml and plan.yaml"
 
-    - [x] Add instruction to read research.yml to inform spec.yaml updates
+    - [x] Add instruction to read research.yaml to inform spec.yaml updates
       spec_refs: [FR13, AC14]
       files: [src/templates/commands/spec.md]
-      notes: "Before analyzing user input, read research.yml (if exists) to maintain context consistency and inform requirement updates"
+      notes: "Before analyzing user input, read research.yaml (if exists) to maintain context consistency and inform requirement updates"
 
     - [x] Add logic to check if new cache exists (.research-cache.md)
       spec_refs: [FR6]
@@ -204,45 +204,45 @@ phase_4:
     - [x] Add intelligent merge instructions preserving information richness
       spec_refs: [FR6, AC5]
       files: [src/templates/commands/spec.md]
-      notes: "Parse cache, compare with existing research.yml. Append new findings with 'UPDATE: [date]' separator. Preserve new diagrams, models, snippets. Don't duplicate existing content."
+      notes: "Parse cache, compare with existing research.yaml. Append new findings with 'UPDATE: [date]' separator. Preserve new diagrams, models, snippets. Don't duplicate existing content."
 
   validation:
     - [ ] All phase_4 tasks completed
     - [ ] UPDATE mode includes merge logic
-    - [ ] UPDATE mode includes research.yml consumption
+    - [ ] UPDATE mode includes research.yaml consumption
     - [ ] Merge prevents duplication while preserving new artifacts
     - [ ] Spec requirements covered: [FR6, FR13, AC5, AC14]
 
 phase_5:
   name: "Update /complete Command Template (Consumption + Cleanup)"
   description: |
-    Add logic to read research.yml for context enrichment when creating context files.
+    Add logic to read research.yaml for context enrichment when creating context files.
     Add cleanup logic to delete .research-cache.md after spec finalization.
 
   tasks:
-    - [x] Add instruction to read research.yml in Step 3 (Analyze context requirements)
+    - [x] Add instruction to read research.yaml in Step 3 (Analyze context requirements)
       spec_refs: [FR15, AC16]
       files: [src/templates/commands/complete.md]
-      notes: "After reading spec.yaml and plan.yaml, check if research.yml exists. If yes, read it to extract research findings (file paths, architectural patterns, design decisions) for context file enrichment."
+      notes: "After reading spec.yaml and plan.yaml, check if research.yaml exists. If yes, read it to extract research findings (file paths, architectural patterns, design decisions) for context file enrichment."
 
     - [x] Add cleanup step after context file creation (Step 9)
       spec_refs: [FR7, AC6]
       files: [src/templates/commands/complete.md]
-      notes: "After updating _index.yml, before completion summary"
+      notes: "After updating _index.yaml, before completion summary"
 
     - [x] Add instruction to check if .research-cache.md exists
       spec_refs: [FR7]
       files: [src/templates/commands/complete.md]
       notes: "Use Bash tool to check existence, delete if present"
 
-    - [x] Add note that materialized research preserved in research.yml
+    - [x] Add note that materialized research preserved in research.yaml
       spec_refs: [AC9]
       files: [src/templates/commands/complete.md]
-      notes: "Explain cache cleaned but research.yml remains as artifact"
+      notes: "Explain cache cleaned but research.yaml remains as artifact"
 
   validation:
     - [ ] All phase_5 tasks completed
-    - [ ] Research.yml consumption added for context enrichment
+    - [ ] Research.yaml consumption added for context enrichment
     - [ ] Cleanup logic added to complete.md
     - [ ] Cache deletion is conditional
     - [ ] Spec requirements covered: [FR7, FR15, AC6, AC9, AC16]
@@ -250,23 +250,23 @@ phase_5:
 phase_6:
   name: "Update /build Command Template"
   description: |
-    Add logic to load research.yml alongside spec.yaml and plan.yaml for implementation context.
+    Add logic to load research.yaml alongside spec.yaml and plan.yaml for implementation context.
 
   tasks:
-    - [x] Add instruction to load research.yml in artifact loading section
+    - [x] Add instruction to load research.yaml in artifact loading section
       spec_refs: [FR14, AC15]
       files: [src/templates/commands/build.md]
-      notes: "In 'Loading Spec Artifacts' section, add explicit instruction to check if specs/{folder}/research.yml exists. If yes, read it alongside spec.yaml and plan.yaml for comprehensive implementation context including diagrams, models, code snippets, architectural decisions."
+      notes: "In 'Loading Spec Artifacts' section, add explicit instruction to check if specs/{folder}/research.yaml exists. If yes, read it alongside spec.yaml and plan.yaml for comprehensive implementation context including diagrams, models, code snippets, architectural decisions."
 
-    - [x] Emphasize research.yml provides critical context for implementation
+    - [x] Emphasize research.yaml provides critical context for implementation
       spec_refs: [FR14]
       files: [src/templates/commands/build.md]
-      notes: "Explain research.yml contains: file paths discovered, mermaid diagrams (architecture flows), data models (properties/types), code snippets (examples/patterns), TLDR - essential for informed implementation."
+      notes: "Explain research.yaml contains: file paths discovered, mermaid diagrams (architecture flows), data models (properties/types), code snippets (examples/patterns), TLDR - essential for informed implementation."
 
   validation:
     - [ ] All phase_6 tasks completed
-    - [ ] research.yml loading added to artifact loading instructions
-    - [ ] Purpose and contents of research.yml clearly explained
+    - [ ] research.yaml loading added to artifact loading instructions
+    - [ ] Purpose and contents of research.yaml clearly explained
     - [ ] Spec requirements covered: [FR14, AC15]
 
 phase_7:
@@ -289,7 +289,7 @@ phase_8:
   name: "Verify Template Structure and Distribution"
   description: |
     Verify all modified templates maintain proper structure, follow conventions, and that
-    research-template.yml will be automatically distributed via existing release packaging.
+    research-template.yaml will be automatically distributed via existing release packaging.
 
   tasks:
     - [x] Verify research.md template follows existing command patterns
@@ -307,9 +307,9 @@ phase_8:
       files: [src/templates/commands/complete.md]
       notes: "Cleanup before completion summary"
 
-    - [x] Verify research-template.yml exists in src/templates/ (will be auto-packaged)
+    - [x] Verify research-template.yaml exists in src/templates/ (will be auto-packaged)
       spec_refs: [FR11, AC10, AC13]
-      files: [src/templates/research-template.yml, .github/workflows/scripts/create-release-packages.sh]
+      files: [src/templates/research-template.yaml, .github/workflows/scripts/create-release-packages.sh]
       notes: "Confirm file exists. Verify lines 115-127 of create-release-packages.sh will copy it (no code changes needed)"
 
     - [x] Test edge cases: empty cache, malformed cache, missing cache
@@ -320,7 +320,7 @@ phase_8:
   validation:
     - [ ] All phase_7 tasks completed
     - [ ] All templates properly structured
-    - [ ] research-template.yml will be automatically packaged and distributed
+    - [ ] research-template.yaml will be automatically packaged and distributed
     - [ ] Edge cases handled gracefully
     - [ ] Spec requirements covered: [FR11, AC10, AC12, AC13, NFR4]
 
@@ -350,9 +350,9 @@ testing:
       steps: |
         1. Ensure .research-cache.md exists with content
         2. Run /spec to create new spec
-        3. Verify specs/{folder}/research.yml created
-        4. Verify research.yml is condensed (not verbatim copy)
-        5. Check research.yml structure: summary, key_findings, file_paths, architectural_decisions, external_references
+        3. Verify specs/{folder}/research.yaml created
+        4. Verify research.yaml is condensed (not verbatim copy)
+        5. Check research.yaml structure: summary, key_findings, file_paths, architectural_decisions, external_references
 
     - scenario: "Test spec creation without research cache"
       steps: |
@@ -360,15 +360,15 @@ testing:
         2. Run /spec to create new spec
         3. Verify info message displayed (not error)
         4. Verify spec.yaml and plan.yaml created successfully
-        5. Verify no research.yml created (graceful degradation)
+        5. Verify no research.yaml created (graceful degradation)
 
     - scenario: "Test research merge in UPDATE mode"
       steps: |
-        1. Create spec with research.yml
+        1. Create spec with research.yaml
         2. Run /research with new query
         3. Verify cache accumulates new research
         4. Run /spec to update existing spec
-        5. Verify research.yml updated with new findings
+        5. Verify research.yaml updated with new findings
         6. Check for duplication (should not duplicate)
 
     - scenario: "Test cache cleanup on /complete"
@@ -376,14 +376,14 @@ testing:
         1. Ensure .research-cache.md exists
         2. Run /complete to finalize spec
         3. Verify .research-cache.md deleted
-        4. Verify research.yml remains in specs/{folder}/
+        4. Verify research.yaml remains in specs/{folder}/
 
 # VALIDATION CRITERIA
 
 success_metrics:
   - "All command templates updated with correct instructions"
   - "Cache accumulation works for multiple research sessions"
-  - "Materialization produces condensed, structured research.yml"
+  - "Materialization produces condensed, structured research.yaml"
   - "Cache cleanup prevents orphaned files"
   - ".gitignore prevents cache from being committed"
 
@@ -439,20 +439,20 @@ overall_progress:
 current_status: |
   Spec and plan created with emphasis on:
   1. Preserving information richness (diagrams, models, snippets) during materialization
-  2. Ensuring consuming commands (/spec, /build, /complete) can access materialized research.yml
+  2. Ensuring consuming commands (/spec, /build, /complete) can access materialized research.yaml
   Ready for /build execution.
 
 next_immediate_steps:
   - "Start with Phase 1: Review /research output structure from research.md"
-  - "Create flexible research-template.yml in src/templates/ with optional sections"
+  - "Create flexible research-template.yaml in src/templates/ with optional sections"
   - "Document preservation strategy for diagrams, data models, code snippets, TLDR"
-  - "Ensure commands reference research.yml for context-aware operation"
+  - "Ensure commands reference research.yaml for context-aware operation"
 
 # RISKS & CONSIDERATIONS
 
 risks:
   - risk: "Agents may struggle with intelligent materialization"
-    mitigation: "Provide clear examples in research-template.yml. Test with real cache content."
+    mitigation: "Provide clear examples in research-template.yaml. Test with real cache content."
 
   - risk: "Cache format may become inconsistent"
     mitigation: "Provide explicit format with examples. Session separators make parsing resilient."
@@ -475,6 +475,6 @@ lessons_learned:
 
 future_enhancements:
   - "Add /research-note command for explicit free-form context appending"
-  - "Add validation for research.yml structure (schema checking)"
-  - "Add research.yml to /build agent's artifact loading instructions"
-  - "Consider research.yml as input to /complete for richer context documentation"
+  - "Add validation for research.yaml structure (schema checking)"
+  - "Add research.yaml to /build agent's artifact loading instructions"
+  - "Consider research.yaml as input to /complete for richer context documentation"
