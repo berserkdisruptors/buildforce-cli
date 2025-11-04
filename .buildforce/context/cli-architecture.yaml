@@ -3,7 +3,7 @@ name: Buildforce CLI Architecture
 type: module
 status: production
 created: 2025-10-27
-last_updated: 2025-10-30
+last_updated: 2025-11-04
 
 summary: |
   Comprehensive architecture of the Buildforce CLI tool - a Node.js-based command-line
@@ -118,8 +118,8 @@ design_decisions:
   - decision: "Support local artifact resolution via --local flag"
     rationale: "Enables offline workflows, local testing during development, and faster iteration cycles. Developers can test locally-built artifacts without publishing to GitHub Releases."
 
-  - decision: "Nest BuildForce commands in buildforce/ subdirectory"
-    rationale: "Provides namespace isolation to prevent collision with user-defined custom commands. All 11 agents deploy commands to {agent-folder}/commands/buildforce/ (or prompts/buildforce/ for Copilot), improving discoverability and following common organizational patterns. Users can easily distinguish BuildForce commands from their own."
+  - decision: "Prefix BuildForce commands with buildforce. in flat directory"
+    rationale: "Provides namespace isolation without subdirectory nesting. All 11 agents deploy commands with buildforce. prefix (e.g., buildforce.spec.md) to {agent-folder}/commands/ (or prompts/ for Copilot). Flat structure simplifies discovery while preventing collision with user-defined commands. Dot notation in invocation (/buildforce.spec) is intuitive and widely recognized in CLI systems."
 
 architecture_patterns:
   entry_point: |
@@ -212,23 +212,24 @@ architecture_patterns:
 
   agent_configuration: |
     Supported Assistants (11+):
-    - Claude → .claude/commands/buildforce/
-    - Copilot → .github/prompts/buildforce/
-    - Cursor → .cursor/commands/buildforce/
-    - Gemini → .gemini/commands/buildforce/
-    - Qwen → .qwen/commands/buildforce/
-    - Windsurf → .windsurf/workflows/buildforce/
-    - Kilocode → .kilocode/workflows/buildforce/
-    - Auggie → .augment/commands/buildforce/
-    - Roo → .roo/commands/buildforce/
-    - OpenCode → .opencode/command/buildforce/
-    - Codex → .codex/prompts/buildforce/
+    - Claude → .claude/commands/buildforce.*.md
+    - Copilot → .github/prompts/buildforce.*.prompt.md
+    - Cursor → .cursor/commands/buildforce.*.md
+    - Gemini → .gemini/commands/buildforce.*.toml
+    - Qwen → .qwen/commands/buildforce.*.toml
+    - Windsurf → .windsurf/workflows/buildforce.*.md
+    - Kilocode → .kilocode/workflows/buildforce.*.md
+    - Auggie → .augment/commands/buildforce.*.md
+    - Roo → .roo/commands/buildforce.*.md
+    - OpenCode → .opencode/command/buildforce.*.md
+    - Codex → .codex/prompts/buildforce.*.md
 
     Command Deployment Structure:
-    - All BuildForce commands nested in buildforce/ subdirectory
+    - All BuildForce commands use buildforce. prefix in flat directory
     - Format varies by agent: .md (Claude, Cursor), .toml (Gemini, Qwen), .prompt.md (Copilot)
-    - 6 slash commands deployed: research, spec, plan, build, complete, document
-    - Namespace isolation prevents collision with user-defined custom commands
+    - 5 slash commands deployed: research, spec, build, complete, document
+    - Namespace isolation via filename prefix prevents collision with user-defined commands
+    - Invocation pattern: /buildforce.spec, /buildforce.research, /buildforce.build, etc.
 
     Detection Mechanism:
     - Uses which(tool) to find executables in PATH
@@ -344,8 +345,13 @@ evolution:
     date: "2025-10-30"
     changes: "Implemented nested command structure: all BuildForce commands now deploy to buildforce/ subdirectory within agent folders (e.g., .claude/commands/buildforce/). Modified generate_commands() function in create-release-packages.sh to create buildforce/ subdirectory and update output paths. Fixed validate_subset() return code bug. Verified across all 11 agents × 2 script variants (22 combinations)."
 
+  - version: "1.4"
+    date: "2025-11-04"
+    changes: "Reverted to prefix-based command naming: all BuildForce commands now use buildforce. prefix in flat directory structure (e.g., .claude/commands/buildforce.spec.md). Modified generate_commands() function to remove buildforce/ subdirectory creation and output commands with prefix-based naming (buildforce.$name.$ext). Updated all command template files to use /buildforce.* invocation pattern (dot notation instead of colon). Verified across all 11 agents × 2 script variants (22 combinations). Flat structure simplifies discovery while maintaining namespace isolation."
+
 related_specs:
   - nest-commands-buildforce-folder-20251030085832
+  - revert-to-prefix-naming-20251104000000
 
 notes: |
   Key architectural strengths:

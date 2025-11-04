@@ -1,0 +1,133 @@
+id: revert-to-prefix-naming-20251104000000
+name: "Revert to Prefix-Based Command Naming"
+type: feature
+status: draft
+created: "2025-11-04"
+last_updated: "2025-11-04"
+
+summary: |
+  Revert from nested command subdirectory structure (commands/buildforce/*.md) to prefix-based
+  flat naming (commands/buildforce.*.md) while maintaining namespace isolation. Commands will
+  use dot notation invocation (/buildforce.spec) instead of colon notation (/buildforce:spec).
+
+# INTENT / PROBLEM STATEMENT
+
+problem: |
+  Current nested structure (commands/buildforce/*.md) with colon-based invocation (/buildforce:spec)
+  requires subdirectory support from all agents. Some agents or IDEs may handle flat command directories
+  more naturally than nested subdirectories. The nested structure also adds an extra directory layer
+  that may not be necessary when prefix-based naming achieves the same namespace isolation goal.
+
+motivation: |
+  Prefix-based naming (buildforce.spec.md) provides equivalent namespace isolation in a flatter
+  directory structure. This approach may be simpler for agents that prefer or expect flat command
+  directories, while still clearly distinguishing BuildForce commands from user-defined commands.
+  The dot notation (/buildforce.spec) is also a common pattern in many CLI and slash command systems.
+
+# GOALS
+
+primary_goals:
+  - Revert command deployment from nested subdirectories to flat directories with buildforce. prefix
+  - Update command invocation pattern from colon notation (/buildforce:*) to dot notation (/buildforce.*)
+  - Maintain namespace isolation and prevent collisions with user-defined commands
+  - Ensure consistency across all 11 agents and 2 script variants (22 total artifacts)
+
+secondary_goals:
+  - Update context documentation to reflect prefix-based naming approach
+  - Verify local artifact resolution works with new naming pattern
+  - Test full release artifact generation pipeline
+
+# REQUIREMENTS
+
+functional_requirements:
+  - FR1: Commands MUST be deployed to {agent-folder}/commands/buildforce.*.{ext} instead of {agent-folder}/commands/buildforce/*.{ext}
+  - FR2: The generate_commands() function MUST create flat output directory without buildforce/ subdirectory
+  - FR3: All 5 slash commands (research, spec, build, complete, document) MUST use buildforce. prefix in filenames
+  - FR4: Command invocation pattern MUST change from /buildforce:* to /buildforce.* in all template files
+  - FR5: The deployment path structure MUST be consistent across all 11 supported agents
+  - FR6: Running create-release-packages.sh MUST produce ZIPs with correctly prefixed command files
+  - FR7: Extracted project templates MUST contain commands with buildforce. prefix after buildforce init
+
+non_functional_requirements:
+  - NFR1: Changes MUST NOT break existing projects already initialized with nested command structure
+  - NFR2: The build pipeline MUST complete successfully without errors
+  - NFR3: ZIP archive size MUST NOT increase (flat structure should be equivalent or smaller)
+  - NFR4: Command generation logic MUST remain maintainable and easy to understand
+
+# SCOPE
+
+in_scope:
+  - Modify generate_commands() function in create-release-packages.sh to remove buildforce/ subdirectory creation
+  - Update output file paths from "$output_dir/buildforce/$name.$ext" to "$output_dir/buildforce.$name.$ext"
+  - Update all command template files (src/templates/commands/*.md) to use /buildforce.* invocation pattern
+  - Update .buildforce/context/cli-architecture.yaml to reflect prefix-based naming decision
+  - Verify prefix-based structure in generated ZIP archives for all agent × script combinations
+  - Test local artifact resolution with new prefix-based naming
+
+out_of_scope:
+  - Migrating existing initialized projects to new command structure (users can upgrade or reinitialize)
+  - Changing command file content beyond invocation pattern references
+  - Modifying agent-specific command formats (.md, .toml, .prompt.md)
+  - Adding new commands or removing existing commands
+  - Changing the .buildforce/templates/ or .buildforce/scripts/ structure
+  - Updating existing release artifacts or GitHub releases (only affects future releases)
+
+# DESIGN PRINCIPLES
+
+design_principles:
+  - "Namespace isolation: BuildForce commands clearly separated via prefix, not subdirectory"
+  - "Consistency: All agents follow same flat structure with buildforce. prefix pattern"
+  - "Simplicity: Minimal code changes with maximum organizational benefit"
+  - "Backward compatibility: New projects use prefix naming, old projects continue working"
+  - "Clarity: Dot notation (/buildforce.spec) is intuitive and follows common CLI patterns"
+
+# ACCEPTANCE CRITERIA
+
+acceptance_criteria:
+  - AC1: Running "AGENTS=claude SCRIPTS=sh create-release-packages.sh v0.0.99" produces a ZIP with commands at .claude/commands/buildforce.*.md
+  - AC2: All 11 agents × 2 script variants (22 total combinations) have commands with buildforce. prefix in flat directories
+  - AC3: Unzipping a generated artifact and running "buildforce init --local" deploys commands to {agent}/commands/buildforce.*
+  - AC4: The 5 slash commands (research.md, spec.md, build.md, complete.md, document.md) have buildforce. prefix
+  - AC5: No commands remain in nested buildforce/ subdirectory (all use flat prefix pattern)
+  - AC6: Build pipeline completes without errors and produces valid ZIP archives
+  - AC7: All command template files reference /buildforce.* invocation pattern (not /buildforce:*)
+
+# ASSUMPTIONS & DEPENDENCIES
+
+assumptions:
+  - All agents support flat command directories with dot-prefixed filenames
+  - Users upgrading to new version will run "buildforce upgrade" or "buildforce init" to get new structure
+  - The generate_commands() function has write access to output_dir without subdirectory creation
+  - Dot notation in slash commands (/buildforce.spec) is recognized by all supported agents
+
+dependencies:
+  internal:
+    - create-release-packages.sh: "Core script that generates agent-specific command files"
+    - CLI init command: "Will extract commands to new flat prefix-based paths"
+    - CLI upgrade command: "Will update existing projects to new command structure"
+  external:
+    - bash: "4.0+ for script execution"
+    - zip: "For creating release archives"
+
+# OPEN QUESTIONS
+
+open_questions: []
+
+# NOTES
+
+notes: |
+  This change reverts the nested structure introduced in commit d34d931 (Oct 30, 2025) and
+  spec nest-commands-buildforce-folder-20251030085832. The reversion improves simplicity while
+  maintaining namespace isolation through filename prefixing.
+
+  The prefix-based structure results in paths like:
+  - .claude/commands/buildforce.research.md
+  - .gemini/commands/buildforce.research.toml
+  - .github/prompts/buildforce.research.prompt.md
+
+  Invocation patterns change from colon to dot:
+  - Old: /buildforce:spec, /buildforce:research, /buildforce:build
+  - New: /buildforce.spec, /buildforce.research, /buildforce.build
+
+  Testing strategy: Generate release packages locally, inspect ZIP contents, verify command paths
+  are correct, and test local artifact initialization before deployment.
