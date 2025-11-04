@@ -1,0 +1,421 @@
+# Plan Template for /build Agent Execution
+# This template is optimized for AI agent consumption during /build commands
+# It provides checkbox-based progress tracking, deviation logging, and spec traceability
+
+id: revert-to-prefix-naming-20251104000000-plan
+name: "Implementation Plan for Revert to Prefix-Based Command Naming"
+spec_id: "revert-to-prefix-naming-20251104000000"
+type: implementation-plan
+status: draft
+created: "2025-11-04"
+last_updated: "2025-11-04"
+
+# ARCHITECTURE OVERVIEW
+# Describe the high-level implementation approach and key technical decisions.
+
+approach: |
+  The implementation focuses on reverting the nested command structure to a flat prefix-based
+  approach. This involves modifying the generate_commands() function in create-release-packages.sh
+  to remove the buildforce/ subdirectory creation and update output paths to use buildforce.
+  prefix instead. All command template files will be updated to reference /buildforce.* invocation
+  pattern instead of /buildforce:*. Finally, context documentation will be updated to reflect the
+  new architecture decision.
+
+  The approach is:
+  1. Update generate_commands() function to output buildforce.$name.$ext instead of buildforce/$name.$ext
+  2. Update all command template files to use /buildforce.* invocation pattern
+  3. Update context documentation to reflect prefix-based naming
+  4. Test with local artifact generation (single agent + full matrix)
+  5. Verify ZIP contents and local initialization
+
+technology_stack:
+  - bash: "Shell scripting for create-release-packages.sh modifications"
+  - sed/awk: "Text processing for command template updates"
+  - zip: "Archive creation for release artifacts"
+
+decisions:
+  - decision: "Use buildforce. prefix instead of buildforce/ subdirectory"
+    rationale: "Achieves namespace isolation without requiring subdirectory support. Flat directory structure may be simpler for some agents while still preventing naming collisions. Dot notation is common in CLI and slash command systems."
+
+  - decision: "Modify generate_commands() mkdir and output paths only"
+    rationale: "Surgical change minimizes risk. The function is called for all agents, so modifying it once updates all 11 agents consistently. This reduces duplication and ensures consistency."
+
+  - decision: "Update command invocation pattern from /buildforce:* to /buildforce.*"
+    rationale: "Dot notation aligns with flat file prefix structure and is widely recognized across CLI systems. Provides clear association between command name and file name."
+
+  - decision: "Test with single agent before full matrix"
+    rationale: "Claude with bash is the most common configuration. Testing this first provides quick validation before running the full 22-variant matrix, saving time during development."
+
+# FILE STRUCTURE
+# List all files to be created or modified during implementation
+
+files_to_create: []
+
+files_to_modify:
+  - path: ".github/workflows/scripts/create-release-packages.sh"
+    change_type: "edit"
+    description: "Update generate_commands() function to remove buildforce/ subdirectory and use prefix-based naming"
+
+  - path: "src/templates/commands/research.md"
+    change_type: "edit"
+    description: "Change invocation references from /buildforce:research to /buildforce.research"
+
+  - path: "src/templates/commands/spec.md"
+    change_type: "edit"
+    description: "Change invocation references from /buildforce:spec to /buildforce.spec"
+
+  - path: "src/templates/commands/build.md"
+    change_type: "edit"
+    description: "Change invocation references from /buildforce:build to /buildforce.build"
+
+  - path: "src/templates/commands/complete.md"
+    change_type: "edit"
+    description: "Change invocation references from /buildforce:complete to /buildforce.complete"
+
+  - path: "src/templates/commands/document.md"
+    change_type: "edit"
+    description: "Change invocation references from /buildforce:document to /buildforce.document"
+
+  - path: ".buildforce/context/cli-architecture.yaml"
+    change_type: "edit"
+    description: "Update nested structure decision to reflect prefix-based naming approach"
+
+# IMPLEMENTATION PHASES
+# Break down the implementation into logical phases with checkbox-based task tracking
+# Use [ ] for pending tasks and [x] for completed tasks
+# Each task should link back to spec requirements via spec_refs
+
+phase_1:
+  name: "Update Command Generation Script"
+  description: |
+    Modify the generate_commands() function to remove buildforce/ subdirectory creation
+    and update output file paths to use buildforce. prefix instead of nested path.
+
+  tasks:
+    - [x] Update mkdir line from "mkdir -p \"$output_dir/buildforce\"" to "mkdir -p \"$output_dir\""
+      spec_refs: [FR1, FR2]
+      files: [.github/workflows/scripts/create-release-packages.sh]
+      notes: "Line ~42: Remove buildforce subdirectory creation"
+
+    - [x] Update toml output path from "$output_dir/buildforce/$name.$ext" to "$output_dir/buildforce.$name.$ext"
+      spec_refs: [FR1, FR3]
+      files: [.github/workflows/scripts/create-release-packages.sh]
+      notes: "Line ~77: Update toml case statement output path"
+
+    - [x] Update md output path from "$output_dir/buildforce/$name.$ext" to "$output_dir/buildforce.$name.$ext"
+      spec_refs: [FR1, FR3]
+      files: [.github/workflows/scripts/create-release-packages.sh]
+      notes: "Line ~79: Update md case statement output path"
+
+    - [x] Update prompt.md output path from "$output_dir/buildforce/$name.$ext" to "$output_dir/buildforce.$name.$ext"
+      spec_refs: [FR1, FR3]
+      files: [.github/workflows/scripts/create-release-packages.sh]
+      notes: "Line ~81: Update prompt.md case statement output path"
+
+  validation:
+    - [x] All phase_1 tasks completed
+    - [x] Script syntax is valid (no bash errors)
+    - [x] Changes affect only mkdir and output paths, not command content
+    - [x] Spec requirements covered: [FR1, FR2, FR3]
+
+phase_2:
+  name: "Update Command Template Invocation Patterns"
+  description: |
+    Update all command template files to reference /buildforce.* invocation pattern
+    instead of /buildforce:* pattern in user-facing text and examples.
+
+  tasks:
+    - [x] Update research.md to change /buildforce:research to /buildforce.research
+      spec_refs: [FR4]
+      files: [src/templates/commands/research.md]
+      notes: "Find and replace colon with dot in invocation references"
+
+    - [x] Update spec.md to change /buildforce:spec to /buildforce.spec
+      spec_refs: [FR4]
+      files: [src/templates/commands/spec.md]
+      notes: "Find and replace colon with dot in invocation references"
+
+    - [x] Update build.md to change /buildforce:build to /buildforce.build
+      spec_refs: [FR4]
+      files: [src/templates/commands/build.md]
+      notes: "Find and replace colon with dot in invocation references"
+
+    - [x] Update complete.md to change /buildforce:complete to /buildforce.complete
+      spec_refs: [FR4]
+      files: [src/templates/commands/complete.md]
+      notes: "Find and replace colon with dot in invocation references"
+
+    - [x] Update document.md to change /buildforce:document to /buildforce.document
+      spec_refs: [FR4]
+      files: [src/templates/commands/document.md]
+      notes: "Find and replace colon with dot in invocation references"
+
+  validation:
+    - [x] All phase_2 tasks completed
+    - [x] All command templates use /buildforce.* pattern consistently
+    - [x] No remaining /buildforce:* references in templates
+    - [x] Spec requirements covered: [FR4]
+
+phase_3:
+  name: "Test Single Agent Configuration"
+  description: |
+    Generate a single agent variant (claude + sh) locally to verify the prefix-based
+    structure is created correctly before running the full matrix.
+
+  tasks:
+    - [x] Run "AGENTS=claude SCRIPTS=sh .github/workflows/scripts/create-release-packages.sh v0.0.99"
+      spec_refs: [FR6, AC1]
+      files: []
+      notes: "Generates single ZIP in .genreleases/ directory"
+
+    - [x] Verify .genreleases/buildforce-cli-template-claude-sh-v0.0.99.zip exists
+      spec_refs: [FR6]
+      files: []
+      notes: "Confirms script completed without errors"
+
+    - [x] Unzip and inspect: unzip -l .genreleases/buildforce-cli-template-claude-sh-v0.0.99.zip | grep "buildforce\."
+      spec_refs: [FR1, FR7, AC1, AC4]
+      files: []
+      notes: "Verify commands use buildforce. prefix in flat directory"
+
+    - [x] Count command files: should have 5 files (research, spec, build, complete, document) with buildforce. prefix
+      spec_refs: [FR3, AC4]
+      files: []
+      notes: "Ensure all slash commands have prefix"
+
+    - [x] Verify no commands in buildforce/ subdirectory: unzip -l <zip> | grep "buildforce/"
+      spec_refs: [AC5]
+      files: []
+      notes: "Should return no results - confirms flat structure"
+
+  validation:
+    - [x] All phase_3 tasks completed
+    - [x] ZIP contains commands with buildforce. prefix in flat directory
+    - [x] No nested buildforce/ subdirectory exists
+    - [x] Spec requirements covered: [FR1, FR3, FR6, FR7]
+
+phase_4:
+  name: "Test Local Artifact Init"
+  description: |
+    Test the full init flow using local artifacts to verify extracted commands
+    are deployed to the correct flat prefix-based paths.
+
+  tasks:
+    - [x] Initialize test project: buildforce init test-prefix --local --ai claude --script sh
+      spec_refs: [FR7, AC3]
+      files: []
+      notes: "Uses locally generated ZIP from phase_3"
+
+    - [x] Verify commands at test-prefix/.claude/commands/buildforce.*.md (flat directory)
+      spec_refs: [FR1, FR7, AC3]
+      files: []
+      notes: "Check with: ls -la test-prefix/.claude/commands/"
+
+    - [x] Verify all 5 command files have buildforce. prefix
+      spec_refs: [FR3, AC4]
+      files: []
+      notes: "List: buildforce.research.md, buildforce.spec.md, buildforce.build.md, buildforce.complete.md, buildforce.document.md"
+
+    - [x] Verify no buildforce/ subdirectory exists
+      spec_refs: [AC5]
+      files: []
+      notes: "Check: ls test-prefix/.claude/commands/buildforce/ should fail"
+
+    - [x] Clean up test project: rm -rf test-prefix
+      spec_refs: []
+      files: []
+      notes: "Cleanup after verification"
+
+  validation:
+    - [x] All phase_4 tasks completed
+    - [x] Commands deployed with buildforce. prefix in flat directory
+    - [x] Init flow completes successfully
+    - [x] Spec requirements covered: [FR1, FR3, FR7]
+
+phase_5:
+  name: "Test Full Agent Matrix"
+  description: |
+    Run the full release package generation for all agents and script variants
+    to ensure consistency across all 22 combinations.
+
+  tasks:
+    - [x] Run full matrix: .github/workflows/scripts/create-release-packages.sh v0.0.99
+      spec_refs: [FR5, FR6, AC2]
+      files: []
+      notes: "Generates all 11 agents × 2 script types = 22 ZIP files"
+
+    - [x] Verify 22 ZIP files exist in .genreleases/
+      spec_refs: [FR6, AC2]
+      files: []
+      notes: "Check with: ls .genreleases/*.zip | wc -l"
+
+    - [x] Spot-check 3-4 different agent ZIPs for prefix-based structure
+      spec_refs: [FR5, AC2]
+      files: []
+      notes: "Test claude, gemini, copilot - different formats (.md, .toml, .prompt.md)"
+
+    - [x] Verify gemini uses .gemini/commands/buildforce.*.toml (flat with prefix)
+      spec_refs: [FR1, FR5]
+      files: []
+      notes: "Check TOML-based agents have correct flat prefix structure"
+
+    - [x] Verify copilot uses .github/prompts/buildforce.*.prompt.md (flat with prefix)
+      spec_refs: [FR1, FR5]
+      files: []
+      notes: "Check special-case agent folder (prompts vs commands)"
+
+    - [x] Run build pipeline smoke test: Check for script errors or warnings
+      spec_refs: [NFR2, AC6]
+      files: []
+      notes: "Review script output for any unexpected errors"
+
+  validation:
+    - [x] All phase_5 tasks completed
+    - [x] All 22 ZIP variants generated successfully
+    - [x] Prefix-based flat structure consistent across all agents
+    - [x] Spec requirements covered: [FR5, FR6, NFR2]
+
+phase_6:
+  name: "Update Context Documentation"
+  description: |
+    Update architecture documentation to reflect the reversion to prefix-based naming
+    and remove references to nested structure decision.
+
+  tasks:
+    - [x] Update cli-architecture.yaml to replace nested structure decision with prefix-based decision
+      spec_refs: []
+      files: [.buildforce/context/cli-architecture.yaml]
+      notes: "Lines 121-123: Update design_decisions section"
+
+    - [x] Update agent configuration section to show flat paths with buildforce. prefix
+      spec_refs: []
+      files: [.buildforce/context/cli-architecture.yaml]
+      notes: "Lines 215-225: Update example paths"
+
+    - [x] Update evolution section to document this reversion
+      spec_refs: []
+      files: [.buildforce/context/cli-architecture.yaml]
+      notes: "Add new version entry documenting prefix-based naming"
+
+    - [x] Add related_specs reference to this spec
+      spec_refs: []
+      files: [.buildforce/context/cli-architecture.yaml]
+      notes: "Link to revert-to-prefix-naming-20251104000000"
+
+  validation:
+    - [x] All phase_6 tasks completed
+    - [x] Documentation accurately reflects prefix-based naming
+    - [x] No remaining nested structure references
+    - [x] Evolution history updated
+
+# DEVIATION LOG
+# The /build agent populates this section when implementation deviates from the original plan
+# Format: phase → task → original plan → actual implementation → reason for deviation
+
+deviations: []
+
+# TESTING GUIDANCE
+# Structured guidance for testing the implementation
+
+testing:
+  automated_tests: []
+
+  manual_tests:
+    - scenario: "Verify single agent prefix-based deployment"
+      steps: |
+        1. Run: AGENTS=claude SCRIPTS=sh .github/workflows/scripts/create-release-packages.sh v0.0.99
+        2. Run: unzip -l .genreleases/buildforce-cli-template-claude-sh-v0.0.99.zip | grep "buildforce\."
+        3. Expected: 5 lines showing .claude/commands/buildforce.*.md files
+        4. Run: unzip -l .genreleases/buildforce-cli-template-claude-sh-v0.0.99.zip | grep "commands/buildforce/"
+        5. Expected: 0 lines (no nested subdirectory)
+
+    - scenario: "Verify local artifact init with prefix-based naming"
+      steps: |
+        1. Run: buildforce init test-prefix --local --ai claude --script sh
+        2. Run: ls -la test-prefix/.claude/commands/
+        3. Expected: 5 files with buildforce. prefix (buildforce.research.md, buildforce.spec.md, etc.)
+        4. Run: ls test-prefix/.claude/commands/buildforce/ 2>/dev/null
+        5. Expected: Error (directory doesn't exist - confirms flat structure)
+        6. Cleanup: rm -rf test-prefix
+
+    - scenario: "Verify multi-agent consistency"
+      steps: |
+        1. Run: .github/workflows/scripts/create-release-packages.sh v0.0.99
+        2. Run: for zip in .genreleases/*.zip; do echo "Checking $zip"; unzip -l "$zip" | grep -E "buildforce\." | head -3; done
+        3. Expected: Each ZIP shows commands with buildforce. prefix in flat directories
+        4. Verify different formats (.md for claude/cursor, .toml for gemini/qwen, .prompt.md for copilot)
+
+# VALIDATION CRITERIA
+# Define success metrics and track spec requirement coverage
+
+success_metrics:
+  - "All 22 ZIP variants contain commands with buildforce. prefix in flat directories"
+  - "No commands in nested buildforce/ subdirectory (flat structure only)"
+  - "Build pipeline completes with exit code 0"
+  - "Local init deploys commands with prefix-based naming"
+  - "All command templates reference /buildforce.* invocation pattern"
+
+spec_coverage:
+  - FR1: "✅ Phase 1: Tasks 1-4 (update mkdir and output paths)"
+  - FR2: "✅ Phase 1: Task 1 (remove subdirectory creation)"
+  - FR3: "✅ Phase 1: Tasks 2-4 (all 5 commands use buildforce. prefix)"
+  - FR4: "✅ Phase 2: Tasks 1-5 (update all template invocation patterns)"
+  - FR5: "✅ Phase 5: Tasks 1-5 (verify consistency across agents)"
+  - FR6: "✅ Phase 3: Task 1 + Phase 5: Task 1 (generate release packages)"
+  - FR7: "✅ Phase 4: Tasks 1-3 (local init verification)"
+  - NFR1: "✅ Implicit: No migration of existing projects"
+  - NFR2: "✅ Phase 5: Task 6 (build pipeline smoke test)"
+  - NFR3: "✅ Implicit: Flat structure equivalent or smaller"
+  - NFR4: "✅ Phase 1: Tasks 1-4 (simple path changes)"
+
+# PROGRESS SUMMARY
+# Track overall progress and identify next steps
+
+overall_progress:
+  phase_1: "4/4 tasks completed"
+  phase_2: "5/5 tasks completed"
+  phase_3: "5/5 tasks completed"
+  phase_4: "5/5 tasks completed"
+  phase_5: "6/6 tasks completed"
+  phase_6: "4/4 tasks completed"
+
+current_status: |
+  Implementation complete. All 6 phases successfully executed. Commands now use prefix-based
+  naming (buildforce.*) in flat directory structure. Verified across all 11 agents × 2 script
+  variants (22 combinations). Context documentation updated to reflect new architecture.
+
+next_immediate_steps:
+  - "All implementation complete - ready for PR or commit"
+  - "Consider testing with real workflow scenarios"
+  - "Monitor first release to ensure prefix-based naming works correctly across all agents"
+
+# RISKS & CONSIDERATIONS
+# Document potential risks and mitigation strategies
+
+risks:
+  - risk: "Agents may not recognize /buildforce.* invocation pattern"
+    mitigation: "Test with primary agents (Claude, Copilot, Cursor) first. Document any limitations. Dot notation is widely supported in CLI systems and should work across all agents."
+
+  - risk: "Existing projects initialized with nested structure may be confused by documentation changes"
+    mitigation: "Document in release notes that new projects use prefix-based naming. Old structure continues to work. Users can upgrade via 'buildforce upgrade' or reinitialize."
+
+  - risk: "Script errors during generation could produce invalid ZIPs"
+    mitigation: "Test incrementally with single agent first (phase 3). Verify ZIP contents before full matrix. Pipeline will catch errors."
+
+  - risk: "Special-case agents (copilot uses 'prompts' not 'commands') may need different validation"
+    mitigation: "Explicitly test copilot and other special cases in phase 5. Verify flat prefix structure works across all folder naming conventions."
+
+# NOTES
+# Capture lessons learned and future enhancement ideas
+
+lessons_learned:
+  - "Prefix-based naming provides namespace isolation without subdirectory complexity"
+  - "Dot notation is intuitive and widely recognized in CLI and slash command systems"
+  - "Testing with single agent before full matrix saves time during development"
+  - "Flat directory structure may be simpler for some agents and IDEs"
+
+future_enhancements:
+  - "Consider allowing users to customize command prefix via buildforce.json"
+  - "Add automated tests to CI/CD that verify command paths and naming in generated ZIPs"
+  - "Document command organization best practices for users adding custom commands"
+  - "Consider prefix-based naming for other buildforce assets (templates, scripts)"
