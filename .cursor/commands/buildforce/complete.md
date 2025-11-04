@@ -16,18 +16,18 @@ $ARGUMENTS
 
    Check if there's an active spec to complete:
 
-   - Read `.buildforce/.current-spec` file from current working directory
-   - If file doesn't exist or is empty: **ERROR** - Reply that there is no active spec and user must run `/spec` first
-   - If file has content (folder name): **PROCEED** - Extract folder name and continue
+   - Read `.buildforce/buildforce.json` file from current working directory and parse the `currentSpec` field
+   - If file doesn't exist or `currentSpec` is null/empty: **ERROR** - Reply that there is no active spec and user must run `/buildforce:spec` first
+   - If `currentSpec` field has a value (folder name): **PROCEED** - Extract folder name and continue
 
 2. **Load Spec Artifacts**:
 
    Load the spec and plan files from the active spec folder:
 
-   - Construct spec directory path: `.buildforce/specs/{folder-name}/` where folder-name comes from `.current-spec`
-   - Read `spec.yml` from spec directory
-   - Read `plan.yml` from spec directory if it exists
-   - Read `research.yml` from spec directory if it exist
+   - Construct spec directory path: `.buildforce/specs/{folder-name}/` where folder-name comes from `buildforce.json` `currentSpec` field
+   - Read `spec.yaml` from spec directory
+   - Read `plan.yaml` from spec directory if it exists
+   - Read `research.yaml` from spec directory if it exist
    - Parse key metadata: spec id, name, requirements, dependencies, files modified
    - Understand what was specified, planned, and implemented
 
@@ -35,7 +35,7 @@ $ARGUMENTS
 
    Do a proactive search to determine which context files need updates or creation:
 
-   - **Read `.buildforce/context/_index.yml`** to see all existing context files
+   - **Read `.buildforce/context/_index.yaml`** to see all existing context files
    - **Analyze spec and plan** to identify which system components/features/modules were actually modified
    - **Review conversation history** to extract key design decisions, implementation changes, and deviations
    - **Determine update vs create** for each component:
@@ -50,23 +50,23 @@ $ARGUMENTS
 
    - Use component/feature/module identity, NOT spec intent
    - Format: kebab-case, max 50 characters, no numeric or timestamp prefixes
-   - Examples: `authentication.yml`, `build-command.yml`, `error-handling.yml`, `plan-template.yml`
+   - Examples: `authentication.yaml`, `build-command.yaml`, `error-handling.yaml`, `plan-template.yaml`
    - Validate: lowercase alphanumeric and hyphens only
-   - **Check for ID conflicts**: Search `_index.yml` to ensure generated ID doesn't already exist
+   - **Check for ID conflicts**: Search `_index.yaml` to ensure generated ID doesn't already exist
    - If conflict exists: Choose alternative ID (append descriptor, use synonym)
 
 5. **Create/Update Context Files**:
 
    **For NEW context files**:
 
-   - Load `.buildforce/context/_schema.yml` to understand required structure and fields
-   - Create new file at `.buildforce/context/{generated-filename}.yml`
+   - Load `.buildforce/context/_schema.yaml` to understand required structure and fields
+   - Create new file at `.buildforce/context/{generated-filename}.yaml`
    - Populate ALL schema sections with actual context from the current spec session
    - **NEVER leave placeholder text** like "[Agent will populate]" - fill in real content
 
    **For EXISTING context files**:
 
-   - Read current content from `.buildforce/context/{filename}.yml`
+   - Read current content from `.buildforce/context/{filename}.yaml`
    - Preserve all existing values (id, created date, version history)
    - Update `last_updated` to today's date
    - Intelligently merge new information:
@@ -80,12 +80,12 @@ $ARGUMENTS
 
 6. **Update Context Index**:
 
-   Update `.buildforce/context/_index.yml` with new entries:
+   Update `.buildforce/context/_index.yaml` with new entries:
 
    - For each NEW context file created, add entry:
      ```yaml
      - id: {semantic-id}
-       file: {filename}.yml
+       file: {filename}.yaml
        type: {module/feature/component/pattern}
        description: {short-one-liner-description}
        tags: [{auto-generated-tags}]
@@ -96,7 +96,7 @@ $ARGUMENTS
    - **Related context field** (OPTIONAL): Add array of closely related context IDs for discovery
      - Include for: feature families, dependent modules, sibling features
      - Only add significant relationships (avoid over-populating)
-     - IDs must exist in \_index.yml
+     - IDs must exist in \_index.yaml
      - Example: `[slash-commands, plan-template, spec-command]`
    - Maintain proper YAML indentation (2 spaces per level)
    - Preserve existing entries (do not modify or delete)
@@ -112,23 +112,15 @@ $ARGUMENTS
    - Check that plan was followed or deviations were logged
    - If requirements are missing or incomplete: **ALERT USER** before finalizing
 
-8. **Clean Research Cache**:
-
-   Remove temporary research cache file:
-
-   - Check if `.buildforce/.research-cache.md` exists in current working directory
-   - If exists: Delete the file using Bash tool (e.g., `rm .buildforce/.research-cache.md`)
-   - If not exists: Skip cleanup (no cache to clean)
-   - **NOTE**: The materialized research.yml in specs/{folder-name}/ is preserved as a permanent artifact
-
-9. **Clear Spec State**:
+8. **Clear Spec State**:
 
    Mark the spec as complete:
 
-   - Delete `.buildforce/.current-spec` file from current working directory
+   - Read `.buildforce/buildforce.json` and set the `currentSpec` field to `null`
    - This signals that no active spec is in progress
+   - The `buildforce.json` file is preserved for future specs
 
-10. **Present Completion Summary**:
+9. **Present Completion Summary**:
 
 Provide a concise report to the user:
 
@@ -153,42 +145,42 @@ Provide a concise report to the user:
 **CREATE mode** (new component):
 
 ```
-1. Read .current-spec → "20250123150000-add-auth"
+1. Read buildforce.json currentSpec → "20250123150000-add-auth"
 2. Load spec.yaml and plan.yaml from .buildforce/specs/20250123150000-add-auth/
 3. Analyze: Introduced new authentication module
-4. Check _index.yml: No existing "authentication" context
-5. Generate filename: "authentication.yml"
-6. Load _schema.yml template
-7. Create .buildforce/context/authentication.yml with full content
-8. Add entry to _index.yml
-9. Delete .current-spec
-10. Report: "Created authentication.yml context file for new auth module"
+4. Check _index.yaml: No existing "authentication" context
+5. Generate filename: "authentication.yaml"
+6. Load _schema.yaml template
+7. Create .buildforce/context/authentication.yaml with full content
+8. Add entry to _index.yaml
+9. Clear currentSpec in buildforce.json (set to null)
+10. Report: "Created authentication.yaml context file for new auth module"
 ```
 
 **UPDATE mode** (existing component):
 
 ```
-1. Read .current-spec → "20250123160000-refactor-auth"
+1. Read buildforce.json currentSpec → "20250123160000-refactor-auth"
 2. Load spec.yaml and plan.yaml
 3. Analyze: Modified existing authentication module
-4. Check _index.yml: Found existing "authentication.yml"
-5. Read existing authentication.yml
+4. Check _index.yaml: Found existing "authentication.yaml"
+5. Read existing authentication.yaml
 6. Add evolution entry, update files list, append to related_specs
 7. No index update needed (entry exists)
-8. Delete .current-spec
-9. Report: "Updated authentication.yml with refactoring changes"
+8. Clear currentSpec in buildforce.json (set to null)
+9. Report: "Updated authentication.yaml with refactoring changes"
 ```
 
 **MIXED mode** (multiple components):
 
 ```
-1. Read .current-spec → "20250123170000-add-feature-x"
+1. Read buildforce.json currentSpec → "20250123170000-add-feature-x"
 2. Load spec.yaml and plan.yaml
 3. Analyze: Modified auth module, created new config module, touched error handling
-4. Check _index.yml: Found "authentication.yml" and "error-handling.yml", no "config-management.yml"
-5. UPDATE authentication.yml and error-handling.yml
-6. CREATE config-management.yml
-7. Add config-management entry to _index.yml
-8. Delete .current-spec
+4. Check _index.yaml: Found "authentication.yaml" and "error-handling.yaml", no "config-management.yaml"
+5. UPDATE authentication.yaml and error-handling.yaml
+6. CREATE config-management.yaml
+7. Add config-management entry to _index.yaml
+8. Clear currentSpec in buildforce.json (set to null)
 9. Report: "Updated 2 context files (authentication, error-handling) and created 1 new file (config-management)"
 ```
