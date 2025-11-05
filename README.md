@@ -327,7 +327,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for more details.
 - **Website**: [https://buildforce.dev](https://buildforce.dev) - Learn more about Buildforce
 - **GitHub Repository**: [https://github.com/berserkdisruptors/buildforce-cli](https://github.com/berserkdisruptors/buildforce-cli)
 - **npm Package**: [https://www.npmjs.com/package/@buildforce/cli](https://www.npmjs.com/package/@buildforce/cli)
-- **Discord**: [Join our community](https://discord.gg/buildforce) - Get help, share workflows, and connect with other users
+- **Discord**: [Join our community](https://discord.gg/9RdYyqYB) - Get help, share workflows, and connect with other users
 - **GitHub Issues**: [Report bugs or request features](https://github.com/berserkdisruptors/buildforce-cli/issues)
 - **Discussions**: [Ask questions or share ideas](https://github.com/berserkdisruptors/buildforce-cli/discussions)
 
