@@ -345,6 +345,6 @@ If Buildforce helps you build better software with AI assistants, please star th
 
 ---
 
-**Made with ❤️ by [Berserk Disruptors](https://github.com/berserkdisruptors)**
+**Made with 💪 by [Berserk Disruptors](https://github.com/berserkdisruptors)**
 
 _Building the future of AI-assisted development, one context file at a time._
