@@ -318,8 +318,6 @@ npm link
 5. **Test locally** - `npm link` and test your changes
 6. **Submit PR** - Describe your changes and link related issues
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for more details.
-
 ---
 
 ## Support & Community
