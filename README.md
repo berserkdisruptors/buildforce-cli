@@ -322,12 +322,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for more details.
 
 ---
 
-## Roadmap
-
-See [ROADMAP.md](ROADMAP.md) for our development roadmap and upcoming features.
-
----
-
 ## Support & Community
 
 - **Website**: [https://buildforce.dev](https://buildforce.dev) - Learn more about Buildforce
@@ -336,8 +330,6 @@ See [ROADMAP.md](ROADMAP.md) for our development roadmap and upcoming features.
 - **Discord**: [Join our community](https://discord.gg/buildforce) - Get help, share workflows, and connect with other users
 - **GitHub Issues**: [Report bugs or request features](https://github.com/berserkdisruptors/buildforce-cli/issues)
 - **Discussions**: [Ask questions or share ideas](https://github.com/berserkdisruptors/buildforce-cli/discussions)
-
-> **Note**: Discord server invite link needs to be created and updated above
 
 ---
 
