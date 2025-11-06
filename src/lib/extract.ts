@@ -88,7 +88,7 @@ export async function downloadAndExtractTemplate(
     }
 
     // Extract to temporary location first
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "specify-"));
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "buildforce-"));
 
     const zip = new AdmZip(zipPath);
     zip.extractAllTo(tempDir, true);

@@ -1,0 +1,125 @@
+version: "0.0.27"
+id: cleanup-spec-kit-references-20250122143052
+name: "Cleanup Spec-Kit Related References"
+type: feature
+status: draft
+created: "2025-01-22"
+last_updated: "2025-01-22"
+
+summary: |
+  Remove all references to "Spec-kit", "Specify", and related legacy naming from the Buildforce codebase.
+  This includes fixing a critical bug where PowerShell error messages reference a non-existent "/specify" command,
+  removing dead code (SPECIFY_FEATURE environment variable), and updating legacy naming to use "Buildforce" branding
+  consistently throughout the codebase.
+
+# INTENT / PROBLEM STATEMENT
+
+problem: |
+  During research, we discovered several references to "Spec-kit", "Specify", and related terms scattered throughout
+  the codebase. These references exist because Buildforce was initially inspired by Spec-kit's slash command patterns
+  for technical learning purposes, but we are in different realms and should not have lingering references to the
+  original project. The most critical issue is a bug where PowerShell error messages incorrectly reference "/specify"
+  (a non-existent command) instead of "/spec", which misleads users. Additionally, there's dead code checking for
+  a SPECIFY_FEATURE environment variable that's never set, and legacy naming in commit messages and warning labels
+  that should use "Buildforce" branding.
+
+motivation: |
+  Clean up all spec-kit related references to:
+  - Fix the critical bug causing user confusion (wrong command name in error messages)
+  - Remove dead code that adds maintenance overhead
+  - Establish clear Buildforce branding without legacy references
+  - Ensure consistency across bash and PowerShell implementations
+  - Clarify that Buildforce is its own project, not a fork or copy of Spec-kit
+
+# GOALS
+
+primary_goals:
+  - Fix critical bug: Change "/specify" to "/spec" in PowerShell error message
+  - Remove dead code: Delete SPECIFY_FEATURE environment variable check
+  - Update legacy naming: Replace "Specify template" with "Buildforce template" in git commit message
+  - Update warning labels: Change "[specify]" to "[spec]" for consistency
+
+secondary_goals:
+  - Update temp directory prefix from "specify-" to "buildforce-" for consistency
+  - Ensure bash and PowerShell implementations are consistent in error messages
+  - Verify no functional impact from these changes
+
+# REQUIREMENTS
+
+functional_requirements:
+  - FR1: PowerShell error message in get-spec-paths.ps1 must reference "/spec" instead of "/specify"
+  - FR2: SPECIFY_FEATURE environment variable check must be removed from common.ps1 Get-CurrentBranch function
+  - FR3: Git commit message in git.ts must reference "Buildforce template" instead of "Specify template"
+  - FR4: Warning label in common.ps1 must use "[spec]" instead of "[specify]"
+  - FR5: Temp directory prefix in extract.ts must use "buildforce-" instead of "specify-"
+
+non_functional_requirements:
+  - NFR1: All changes must maintain existing functionality - no breaking changes
+  - NFR2: Error messages must remain helpful and actionable after changes
+  - NFR3: Bash and PowerShell implementations must have consistent error message wording
+  - NFR4: Changes must not affect any existing workflows or user-facing behavior (except fixing the bug)
+
+# SCOPE
+
+in_scope:
+  - Fix error message in src/scripts/powershell/get-spec-paths.ps1 (line 67)
+  - Remove SPECIFY_FEATURE check from src/scripts/powershell/common.ps1 (lines 156-158)
+  - Update git commit message in src/utils/git.ts (line 49)
+  - Update warning label in src/scripts/powershell/common.ps1 (line 215)
+  - Update temp directory prefix in src/lib/extract.ts (line 91)
+
+out_of_scope:
+  - Template text using "please specify" (standard English, not related to Spec-kit)
+  - Verb usage of "specify" meaning "to indicate" (standard English)
+  - Any changes to functionality or behavior beyond naming/branding
+  - Changes to bash scripts (already correct)
+
+# DESIGN PRINCIPLES
+
+design_principles:
+  - "Consistency: All references should use 'Buildforce' branding"
+  - "Clarity: Error messages should reference correct commands"
+  - "Maintainability: Remove dead code to reduce confusion"
+  - "Non-breaking: Changes should be cosmetic only, no functional impact"
+
+# ACCEPTANCE CRITERIA
+
+acceptance_criteria:
+  - AC1: PowerShell error message correctly says "Run /spec first" (matches bash version)
+  - AC2: SPECIFY_FEATURE environment variable check is completely removed
+  - AC3: Git commit message uses "Buildforce template" terminology
+  - AC4: Warning label uses "[spec]" prefix consistently
+  - AC5: Temp directory prefix uses "buildforce-" instead of "specify-"
+  - AC6: All grep searches for "specify|Specify|SPECIFY" return only legitimate English verb usage
+  - AC7: No functional tests fail after changes
+  - AC8: Bash and PowerShell error messages are consistent in wording
+
+# ASSUMPTIONS & DEPENDENCIES
+
+assumptions:
+  - No external code depends on SPECIFY_FEATURE environment variable
+  - Git commit message change won't affect existing repositories
+  - Temp directory prefix change won't break any cleanup logic
+  - Warning label change is purely cosmetic
+
+dependencies:
+  internal:
+    - scripts/powershell: "PowerShell scripts need to be updated"
+    - utils/git: "Git utility functions need commit message update"
+    - lib/extract: "Template extraction needs temp directory prefix update"
+  external:
+    - None
+
+# OPEN QUESTIONS
+
+open_questions: []
+
+# NOTES
+
+notes: |
+  This cleanup is motivated by the fact that Buildforce was inspired by Spec-kit's slash command patterns for
+  technical learning, but we are in different realms and should have no lingering references. All changes are
+  cosmetic/branding updates except for the critical bug fix in the PowerShell error message.
+
+  The grep search found 15 instances, but most are legitimate English verb usage ("please specify", "must specify")
+  which should remain unchanged. Only the 5 instances listed in scope need to be updated.
