@@ -1,4 +1,4 @@
-version: "0.0.29"
+version: "0.0.30"
 # Plan Template for /build Agent Execution
 # This template is optimized for AI agent consumption during /build commands
 # It provides checkbox-based progress tracking, deviation logging, and spec traceability
