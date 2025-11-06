@@ -1,0 +1,139 @@
+id: commit-enforcement
+name: "Commit Enforcement and Contribution Standards"
+type: feature
+status: production
+created: "2025-11-06"
+last_updated: "2025-11-06"
+
+summary: |
+  Dual-layer enforcement system for conventional commits and branch naming conventions using
+  commitlint, husky, and GitHub Actions. Protects release automation that depends on commit
+  types for categorized release note generation. Includes commitizen for improved developer
+  experience with interactive commit message creation.
+
+responsibilities:
+  - Validate commit messages against Conventional Commits specification using commitlint
+  - Enforce branch naming conventions (type/description pattern) via git hooks
+  - Provide GitHub Actions workflow for PR branch name validation (safety net)
+  - Offer interactive commit message creation through commitizen
+  - Configure husky v9+ git hooks (commit-msg, pre-push) for local validation
+  - Document commit and branch naming conventions for contributors
+
+dependencies:
+  internal:
+    - release-workflow: "generate-release-notes.sh depends on commit types (feat, fix, docs, etc.) for categorized changelogs"
+    - README.md: "Contributing section documents commit conventions and commitizen usage"
+
+  external:
+    - "@commitlint/cli": "^20.1.0 - Core commitlint CLI for commit message linting"
+    - "@commitlint/config-conventional": "^20.0.0 - Conventional Commits preset rules"
+    - "husky": "^9.1.7 - Git hooks manager using prepare script"
+    - "commitizen": "^4.3.1 - Interactive CLI for guided commit message creation"
+    - "cz-conventional-changelog": "^3.3.0 - Commitizen adapter for Conventional Commits"
+
+files:
+  primary:
+    - commitlint.config.js: "ES module configuration with 11 commit types and lower-case subject enforcement"
+    - .husky/commit-msg: "Hook calling commitlint to validate commit messages"
+    - .husky/pre-push: "Hook validating branch names against regex pattern"
+    - .czrc: "Commitizen configuration with cz-conventional-changelog adapter"
+    - .github/workflows/branch-naming.yml: "GitHub Actions workflow for PR branch validation"
+
+  secondary:
+    - package.json: "Scripts section with 'prepare' and 'commit' scripts, devDependencies added"
+    - README.md: "Contributing section with commit and branch naming documentation"
+    - .buildforce/specs/conventional-commits-enforcement-20251106000000/: "Spec, plan, and research files"
+
+design_decisions:
+  - decision: "Use @commitlint/config-conventional as base configuration"
+    rationale: "Provides battle-tested rules for Conventional Commits spec. Aligns with project's existing informal usage and release workflow expectations. Reduces custom configuration needed."
+
+  - decision: "Configure commitlint.config.js with ES module syntax (export default)"
+    rationale: "Project uses TypeScript with NodeNext modules. ES module syntax ensures compatibility and consistency with project's module system."
+
+  - decision: "Use lower-case subject enforcement instead of sentence-case"
+    rationale: "Existing project commits use lowercase subjects (e.g., 'feat: enhance release notes'). Sentence-case would reject historical commits and break established convention. Aligning with project's pattern ensures consistency."
+
+  - decision: "Implement branch validation in pre-push hook, not pre-commit"
+    rationale: "pre-push validates before sharing code, avoiding annoyance of branch name rejection after work is done. Allows local commits on any branch, only enforces on push."
+
+  - decision: "Use regex pattern for branch naming instead of npm package"
+    rationale: "Simple bash regex validation is fast, has zero dependencies, and provides clear error messages. More maintainable than adding another npm package for basic validation."
+
+  - decision: "Add GitHub Actions branch validation workflow"
+    rationale: "Provides enforcement safety net for PRs created via web UI or commits pushed without running local hooks (--no-verify). Ensures all PRs meet naming standards."
+
+  - decision: "Include commitizen with cz-conventional-changelog adapter"
+    rationale: "Significantly improves DX for contributors unfamiliar with Conventional Commits. Interactive prompts guide users to valid commit messages, reducing rejected commits and frustration."
+
+interfaces:
+  commit_types:
+    - feat: "New feature (MINOR version bump)"
+    - fix: "Bug fix (PATCH version bump)"
+    - docs: "Documentation only changes"
+    - style: "Code formatting, no logic change"
+    - refactor: "Code restructuring, no behavior change"
+    - perf: "Performance improvements"
+    - test: "Adding or updating tests"
+    - build: "Build system or dependencies"
+    - ci: "CI/CD configuration"
+    - chore: "Maintenance tasks"
+    - revert: "Revert previous commit"
+
+  branch_naming_pattern:
+    regex: "^(main|staging|dev)$|^(feat|fix|chore|docs|refactor|perf|test|ci|build|revert|hotfix)/.+$"
+    protected_branches: ["main", "staging", "dev"]
+    valid_prefixes: ["feat", "fix", "chore", "docs", "refactor", "perf", "test", "ci", "build", "revert", "hotfix"]
+
+  npm_scripts:
+    - prepare: "husky - Runs automatically after npm install to initialize git hooks"
+    - commit: "cz - Launches commitizen interactive prompt for guided commit message creation"
+
+evolution:
+  - version: "1.0"
+    date: "2025-11-06"
+    changes: |
+      Initial implementation of commit enforcement system:
+      - Installed commitlint, husky v9+, and commitizen as devDependencies
+      - Created commitlint.config.js with ES modules and 11 commit types
+      - Configured subject-case as lower-case to match existing commit patterns
+      - Initialized husky with commit-msg and pre-push hooks
+      - Created GitHub Actions workflow for PR branch name validation
+      - Added commitizen with cz-conventional-changelog adapter
+      - Updated README with commit and branch naming conventions
+      - All hooks tested and working on macOS
+
+related_specs:
+  - conventional-commits-enforcement-20251106000000
+
+notes: |
+  **Validation Strategy:**
+  Dual-layer enforcement ensures commits cannot bypass validation:
+  - Local: Husky git hooks provide fast feedback during development
+  - Remote: GitHub Actions workflow validates PRs (cannot be bypassed with --no-verify)
+
+  **Error Messages:**
+  All validation failures include clear error messages with examples:
+  - Invalid commit: Shows required format and allowed types
+  - Invalid branch: Lists allowed patterns and example branch names
+
+  **Developer Experience:**
+  Commitizen provides interactive guided flow for new contributors:
+  - Run `npm run commit` to launch interactive prompt
+  - Select type, enter scope (optional), add description
+  - Commit automatically validated by commitlint hook
+
+  **Performance:**
+  Git hooks execute quickly (< 1 second) to avoid degrading commit/push workflow.
+
+  **Cross-Platform:**
+  Hooks use standard bash syntax and work across macOS, Linux, and Windows Git Bash.
+
+  **Breaking Change Protection:**
+  Lower-case subject enforcement aligns with existing commit history. No retroactive validation
+  applied to historical commits - enforcement is forward-looking only.
+
+  **Future Enhancements:**
+  - Consider adding automated version bumping based on commit types (semantic-release)
+  - Consider automated CHANGELOG.md generation from conventional commits
+  - Consider commitlint validation in CI/CD for all commits (not just PR branch naming)
