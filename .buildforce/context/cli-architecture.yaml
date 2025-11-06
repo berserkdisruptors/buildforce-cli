@@ -3,7 +3,7 @@ name: Buildforce CLI Architecture
 type: module
 status: production
 created: 2025-10-27
-last_updated: 2025-11-04
+last_updated: 2025-01-22
 
 summary: |
   Comprehensive architecture of the Buildforce CLI tool - a Node.js-based command-line
@@ -72,6 +72,8 @@ files:
     - src/utils/config.ts
     - src/types.ts
     - src/constants.ts
+    - src/scripts/powershell/get-spec-paths.ps1
+    - src/scripts/powershell/common.ps1
 
 interfaces:
   exports:
@@ -405,14 +407,17 @@ evolution:
     date: "2025-11-04"
     changes: "Reverted to prefix-based command naming: all BuildForce commands now use buildforce. prefix in flat directory structure (e.g., .claude/commands/buildforce.spec.md). Modified generate_commands() function to remove buildforce/ subdirectory creation and output commands with prefix-based naming (buildforce.$name.$ext). Updated all command template files to use /buildforce.* invocation pattern (dot notation instead of colon). Verified across all 11 agents × 2 script variants (22 combinations). Flat structure simplifies discovery while maintaining namespace isolation."
 
+  - version: "1.8"
+    date: "2025-01-22"
+    changes: "Cleaned up legacy spec-kit references: fixed critical bug in PowerShell error message (changed '/specify' to '/spec'), removed dead code (SPECIFY_FEATURE environment variable check), updated branding consistency (git commit messages, warning labels, temp directory prefixes now use 'Buildforce' branding). All changes maintain existing functionality with no breaking changes."
+
 related_specs:
   - "standardize-cli-title-display-20250130220000"
   - "standardize-color-scheme-mint-20251031011544"
   - "standardize-lined-boxes-20250131000000"
-
-related_specs:
-  - nest-commands-buildforce-folder-20251030085832
-  - revert-to-prefix-naming-20251104000000
+  - "nest-commands-buildforce-folder-20251030085832"
+  - "revert-to-prefix-naming-20251104000000"
+  - "cleanup-spec-kit-references-20250122143052"
 
 notes: |
   Key architectural strengths:
@@ -424,6 +429,12 @@ notes: |
   - Step tracking provides transparent progress feedback
   - Cohesive visual identity through standardized branding color (#D3FFCA)
   - Shared box utility component ensures consistent visual styling across all commands
+
+  Branding consistency:
+  - All references use "Buildforce" branding (no legacy spec-kit references)
+  - Error messages consistently reference correct commands (/spec, not /specify)
+  - PowerShell and bash implementations maintain consistent error message wording
+  - Dead code removed to reduce maintenance overhead
 
   Future considerations:
   - Plugin system for custom workflow extensions

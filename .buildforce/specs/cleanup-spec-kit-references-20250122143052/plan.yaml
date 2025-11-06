@@ -1,0 +1,252 @@
+version: "0.0.27"
+# Plan Template for /build Agent Execution
+# This template is optimized for AI agent consumption during /build commands
+# It provides checkbox-based progress tracking, deviation logging, and spec traceability
+
+id: cleanup-spec-kit-references-20250122143052-plan
+name: "Implementation Plan for Cleanup Spec-Kit Related References"
+spec_id: "cleanup-spec-kit-references-20250122143052"
+type: implementation-plan
+status: draft
+created: "2025-01-22"
+last_updated: "2025-01-22"
+
+# ARCHITECTURE OVERVIEW
+# Describe the high-level implementation approach and key technical decisions.
+
+approach: |
+  This is a straightforward refactoring task involving string replacements and dead code removal.
+  The implementation will proceed file-by-file, making targeted changes to remove spec-kit references
+  and fix the critical bug. Each change is isolated and low-risk, allowing for incremental validation.
+  We'll use search-and-replace operations with careful verification to ensure no unintended side effects.
+
+technology_stack:
+  - TypeScript/JavaScript: "For .ts files (git.ts, extract.ts)"
+  - PowerShell: "For .ps1 files (get-spec-paths.ps1, common.ps1)"
+
+decisions:
+  - decision: "Use direct string replacement for all changes"
+    rationale: "These are simple string replacements with no logic changes. Direct edits are safer than complex refactoring."
+
+  - decision: "Update temp directory prefix to 'buildforce-' for consistency"
+    rationale: "While cosmetic, this maintains consistent branding. The prefix is only used for temporary directories that are cleaned up, so no risk of breaking existing code."
+
+  - decision: "Keep 'please specify' template text unchanged"
+    rationale: "This is standard English usage, not a reference to Spec-kit. Changing it would be unnecessary and potentially confusing."
+
+# FILE STRUCTURE
+# List all files to be created or modified during implementation
+
+files_to_create:
+  - None
+
+files_to_modify:
+  - path: "src/scripts/powershell/get-spec-paths.ps1"
+    change_type: "edit"
+    description: "Change error message from 'Run /specify first' to 'Run /spec first' on line 67"
+  - path: "src/scripts/powershell/common.ps1"
+    change_type: "edit"
+    description: "Remove SPECIFY_FEATURE environment variable check (lines 156-158) and update warning label from '[specify]' to '[spec]' (line 215)"
+  - path: "src/utils/git.ts"
+    change_type: "edit"
+    description: "Change commit message from 'Specify template' to 'Buildforce template' on line 49"
+  - path: "src/lib/extract.ts"
+    change_type: "edit"
+    description: "Change temp directory prefix from 'specify-' to 'buildforce-' on line 91"
+
+# IMPLEMENTATION PHASES
+# Break down the implementation into logical phases with checkbox-based task tracking
+# Use [ ] for pending tasks and [x] for completed tasks
+# Each task should link back to spec requirements via spec_refs
+
+phase_1:
+  name: "Fix Critical Bug - PowerShell Error Message"
+  description: |
+    Fix the critical bug where PowerShell error message references non-existent "/specify" command.
+    This is the highest priority change as it directly impacts user experience.
+
+  tasks:
+    - [x] Update error message in get-spec-paths.ps1
+      spec_refs: [FR1, AC1]
+      files: [src/scripts/powershell/get-spec-paths.ps1]
+      notes: "Change line 67 from 'Run /specify first' to 'Run /spec first' to match bash version"
+
+  validation:
+    - [x] Error message correctly says "Run /spec first"
+    - [x] PowerShell script still exits with code 1 on error (functional behavior unchanged)
+    - [x] Message matches bash version wording (consistency check)
+
+phase_2:
+  name: "Remove Dead Code - SPECIFY_FEATURE Environment Variable"
+  description: |
+    Remove the dead code checking for SPECIFY_FEATURE environment variable that's never set.
+    This simplifies the codebase and removes maintenance overhead.
+
+  tasks:
+    - [x] Remove SPECIFY_FEATURE check from Get-CurrentBranch function
+      spec_refs: [FR2, AC2]
+      files: [src/scripts/powershell/common.ps1]
+      notes: "Remove lines 156-158: the if block checking $env:SPECIFY_FEATURE. Function should go directly to git branch check."
+
+  validation:
+    - [x] SPECIFY_FEATURE check is completely removed
+    - [x] Get-CurrentBranch function still works correctly (falls back to git branch check)
+    - [x] No references to SPECIFY_FEATURE remain in codebase
+
+phase_3:
+  name: "Update Legacy Naming - Branding Consistency"
+  description: |
+    Update remaining legacy naming references to use "Buildforce" branding consistently.
+    This includes git commit messages, warning labels, and temp directory prefixes.
+
+  tasks:
+    - [x] Update git commit message in git.ts
+      spec_refs: [FR3, AC3]
+      files: [src/utils/git.ts]
+      notes: "Change line 49 commit message from 'Specify template' to 'Buildforce template'"
+
+    - [x] Update warning label in common.ps1
+      spec_refs: [FR4, AC4]
+      files: [src/scripts/powershell/common.ps1]
+      notes: "Change line 215 warning label from '[specify]' to '[spec]' for consistency"
+
+    - [x] Update temp directory prefix in extract.ts
+      spec_refs: [FR5, AC5]
+      files: [src/lib/extract.ts]
+      notes: "Change line 91 temp directory prefix from 'specify-' to 'buildforce-'"
+
+  validation:
+    - [x] All naming references updated to use "Buildforce" or "/spec"
+    - [x] Git commit message uses correct branding
+    - [x] Warning label is consistent
+    - [x] Temp directory prefix updated
+    - [x] No functional impact from changes
+
+phase_4:
+  name: "Verification and Testing"
+  description: |
+    Verify all changes are correct and no unintended side effects were introduced.
+    Run grep searches to confirm only legitimate English verb usage remains.
+
+  tasks:
+    - [x] Run grep search to verify no spec-kit references remain
+      spec_refs: [AC6]
+      files: []
+      notes: "Run: grep -r 'specify|Specify|SPECIFY' --exclude-dir=node_modules --exclude-dir=.buildforce. Should only return legitimate English verb usage."
+
+    - [x] Verify bash and PowerShell error messages are consistent
+      spec_refs: [AC8, NFR3]
+      files: [src/scripts/bash/get-spec-paths.sh, src/scripts/powershell/get-spec-paths.ps1]
+      notes: "Compare error messages - both should say 'Run /spec first' with similar wording"
+
+    - [x] Test that no functional tests fail
+      spec_refs: [AC7, NFR1]
+      files: []
+      notes: "Run any existing tests to ensure no breaking changes"
+
+  validation:
+    - [x] Grep search confirms only legitimate English verb usage remains
+    - [x] Bash and PowerShell error messages are consistent
+    - [x] All acceptance criteria met
+    - [x] No functional tests fail
+
+# DEVIATION LOG
+# The /build agent populates this section when implementation deviates from the original plan
+# Format: phase → task → original plan → actual implementation → reason for deviation
+
+deviations:
+  []
+
+# TESTING GUIDANCE
+# Structured guidance for testing the implementation
+
+testing:
+  automated_tests:
+    - test_file: "N/A - No existing tests for these specific changes"
+      what: "Verify error messages and string replacements"
+      command: "Manual verification via grep and script execution"
+
+  manual_tests:
+    - scenario: "Test PowerShell error message"
+      steps: |
+        1. Navigate to a directory without .buildforce/specs folder
+        2. Run: pwsh src/scripts/powershell/get-spec-paths.ps1 -Json
+        3. Verify error message says "Run /spec first" (not "/specify")
+        4. Verify script exits with code 1
+
+    - scenario: "Test Get-CurrentBranch without SPECIFY_FEATURE"
+      steps: |
+        1. Ensure SPECIFY_FEATURE is not set
+        2. Call Get-CurrentBranch function
+        3. Verify it correctly falls back to git branch check
+        4. Verify no errors related to SPECIFY_FEATURE
+
+    - scenario: "Verify grep search results"
+      steps: |
+        1. Run: grep -r "specify|Specify|SPECIFY" --exclude-dir=node_modules --exclude-dir=.buildforce
+        2. Review results - should only show legitimate English verb usage
+        3. Verify no references to "/specify" command or "Specify template"
+
+# VALIDATION CRITERIA
+# Define success metrics and track spec requirement coverage
+
+success_metrics:
+  - "All spec-kit references removed except legitimate English verb usage"
+  - "PowerShell error message correctly references /spec command"
+  - "No dead code remains (SPECIFY_FEATURE check removed)"
+  - "All branding uses 'Buildforce' consistently"
+  - "Bash and PowerShell implementations are consistent"
+
+spec_coverage:
+  - FR1: "✅ Phase 1: Update error message"
+  - FR2: "✅ Phase 2: Remove SPECIFY_FEATURE check"
+  - FR3: "✅ Phase 3: Update git commit message"
+  - FR4: "✅ Phase 3: Update warning label"
+  - FR5: "✅ Phase 3: Update temp directory prefix"
+  - NFR1: "✅ Phase 4: Verify no breaking changes"
+  - NFR2: "✅ Phase 1: Error messages remain helpful"
+  - NFR3: "✅ Phase 4: Bash/PowerShell consistency"
+  - NFR4: "✅ Phase 4: No workflow impact"
+
+# PROGRESS SUMMARY
+# Track overall progress and identify next steps
+
+overall_progress:
+  phase_1: "1/1 tasks completed"
+  phase_2: "1/1 tasks completed"
+  phase_3: "3/3 tasks completed"
+  phase_4: "3/3 tasks completed"
+
+current_status: |
+  All implementation phases completed successfully. All spec-kit references have been removed except
+  legitimate English verb usage. Critical bug fixed (PowerShell error message now correctly says "/spec").
+  Dead code removed (SPECIFY_FEATURE check). All branding updated to use "Buildforce" consistently.
+  Verification complete - grep search confirms no spec-kit references remain, error messages are
+  consistent between bash and PowerShell, and no linting errors.
+
+next_immediate_steps:
+  - "Implementation complete - ready for review"
+
+# RISKS & CONSIDERATIONS
+# Document potential risks and mitigation strategies
+
+risks:
+  - risk: "Accidentally removing legitimate English verb usage of 'specify'"
+    mitigation: "Use targeted line-by-line changes, not global search-replace. Verify with grep after changes."
+
+  - risk: "Breaking functionality when removing SPECIFY_FEATURE check"
+    mitigation: "Verify Get-CurrentBranch function still works correctly after removal. Test fallback logic."
+
+  - risk: "Inconsistent error messages between bash and PowerShell"
+    mitigation: "Compare both implementations side-by-side and ensure wording matches."
+
+# NOTES
+# Capture lessons learned and future enhancement ideas
+
+lessons_learned:
+  - "Legacy references from inspiration projects should be cleaned up early to avoid confusion"
+  - "Dead code (like SPECIFY_FEATURE) should be removed to reduce maintenance overhead"
+
+future_enhancements:
+  - "Consider adding linting rules to prevent future references to external project names"
+  - "Document the origin story if needed, but keep codebase free of external project references"

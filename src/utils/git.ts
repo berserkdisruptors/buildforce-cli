@@ -46,7 +46,7 @@ export function initGitRepo(
 
     execSync("git init", { stdio: quiet ? "pipe" : "inherit" });
     execSync("git add .", { stdio: "pipe" });
-    execSync('git commit -m "Initial commit from Specify template"', {
+    execSync('git commit -m "Initial commit from Buildforce template"', {
       stdio: "pipe",
     });
 
