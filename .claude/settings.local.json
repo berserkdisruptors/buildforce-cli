@@ -73,7 +73,8 @@
       "WebSearch",
       "WebFetch(domain:commitlint.js.org)",
       "Bash(npx commitlint)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []

@@ -1,0 +1,25 @@
+name: Branch Naming Convention
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+jobs:
+  check-branch-name:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check branch name
+        run: |
+          BRANCH="${{ github.head_ref }}"
+          PATTERN="^(feat|fix|chore|docs|refactor|perf|test|ci|build|revert|hotfix)/.+$"
+
+          if ! echo "$BRANCH" | grep -qE "$PATTERN"; then
+            echo "❌ Branch name '$BRANCH' does not follow naming convention!"
+            echo ""
+            echo "Allowed patterns: feat/, fix/, chore/, docs/, refactor/, perf/, test/, ci/, build/, revert/, hotfix/"
+            echo ""
+            echo "Example: feat/add-conventional-commits"
+            exit 1
+          fi
+
+          echo "✅ Branch name '$BRANCH' is valid"
