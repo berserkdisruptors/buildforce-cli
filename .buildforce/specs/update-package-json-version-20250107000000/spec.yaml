@@ -1,0 +1,130 @@
+version: "0.0.27"
+id: update-package-json-version-20250107000000
+name: "Update package.json Version in Release Workflow"
+type: feature
+status: draft
+created: "2025-11-07"
+last_updated: "2025-11-07"
+
+summary: |
+  Enhance the release workflow to update package.json version field using the same pre-commit
+  strategy as template versioning, ensuring the version is persisted to git and stays in sync
+  with release tags. Simplify npm-publish workflow by removing redundant version update logic.
+
+# INTENT / PROBLEM STATEMENT
+
+problem: |
+  The package.json file in the repository has a hardcoded version "0.0.1" that never changes,
+  while template files are automatically versioned during releases. The npm-publish workflow
+  updates package.json in-memory during CI but this change is not persisted to git, causing
+  the repository version to drift from published npm package versions. This creates confusion
+  about which version is current and prevents users from seeing the actual version in the codebase.
+
+motivation: |
+  Persisting package.json version to git provides a single source of truth for the current
+  release version, improves traceability, ensures repository state matches published packages,
+  and aligns package.json versioning with the existing template versioning pattern. Users and
+  developers can immediately see the current version by looking at package.json in the repository.
+
+# GOALS
+
+primary_goals:
+  - Update package.json version in release workflow using pre-commit strategy
+  - Persist package.json version changes to git repository
+  - Ensure package.json version matches release tag and template versions
+
+secondary_goals:
+  - Simplify npm-publish workflow by removing redundant version update logic
+  - Maintain consistency between all versioned artifacts (templates, package.json, release tags)
+  - Follow npm best practices using official npm version command
+
+# REQUIREMENTS
+
+functional_requirements:
+  - FR1: Release workflow must update package.json version using npm version command with --no-git-tag-version flag
+  - FR2: Release workflow must update package.json version to match calculated version from get-next-version.sh
+  - FR3: Release workflow must commit package.json and package-lock.json changes along with template updates
+  - FR4: Commit message must include version number and [skip ci] flag to prevent workflow loops
+  - FR5: NPM publish workflow must verify package.json version matches release tag before publishing
+  - FR6: Both workflows must use the same version number from get-next-version.sh as single source of truth
+
+non_functional_requirements:
+  - NFR1: Version update must be atomic - both package.json and package-lock.json updated together via npm version
+  - NFR2: Workflow must handle version update failures gracefully with clear error messages
+  - NFR3: Solution must maintain backward compatibility with existing release process
+  - NFR4: Implementation must follow existing template versioning patterns for consistency
+
+# SCOPE
+
+in_scope:
+  - Add package.json version update step to release.yml workflow
+  - Modify commit step to include package.json and package-lock.json files
+  - Simplify or remove version update logic from npm-publish.yml workflow
+  - Add verification step to npm-publish.yml to confirm version consistency
+  - Update both workflows to share version from get-next-version.sh
+
+out_of_scope:
+  - Changing version numbering scheme or semantic versioning logic
+  - Modifying get-next-version.sh script (already works correctly)
+  - Backfilling versions for historical releases
+  - Changing template versioning implementation
+  - Adding version validation beyond basic consistency checks
+
+# DESIGN PRINCIPLES
+
+design_principles:
+  - "Follow the existing pre-commit versioning pattern established for templates"
+  - "Use official npm tooling (npm version) instead of manual JSON manipulation"
+  - "Maintain single source of truth for version numbers (get-next-version.sh)"
+  - "Keep workflows simple and avoid redundant version update logic"
+  - "Preserve [skip ci] pattern to prevent infinite workflow loops"
+
+# ACCEPTANCE CRITERIA
+
+acceptance_criteria:
+  - AC1: After release workflow completes, package.json version in repository matches release tag (without v prefix)
+  - AC2: package-lock.json version is also updated and committed with package.json
+  - AC3: Commit message includes version number and [skip ci] flag
+  - AC4: NPM publish workflow successfully publishes package without modifying package.json version
+  - AC5: Both workflows complete successfully without errors when triggered sequentially
+  - AC6: Manual inspection of git history shows package.json version updates in version bump commits
+
+# ASSUMPTIONS & DEPENDENCIES
+
+assumptions:
+  - npm version command is available in GitHub Actions ubuntu-latest runner
+  - get-next-version.sh script correctly calculates next unused version
+  - Template versioning workflow step already works and creates correct commits
+  - npm publish workflow triggers after release workflow completes
+
+dependencies:
+  internal:
+    - get-next-version.sh: "Provides single source of truth for version calculation"
+    - update-template-versions.sh: "Demonstrates pre-commit pattern to follow"
+    - release.yml: "Workflow that will be modified to update package.json"
+    - npm-publish.yml: "Workflow that will be simplified"
+  external:
+    - npm: "Version command used to update package.json and package-lock.json"
+    - git: "Used to commit and push version changes"
+    - github-actions: "Workflow orchestration and GITHUB_TOKEN for authenticated pushes"
+
+# OPEN QUESTIONS
+
+open_questions: []
+
+# NOTES
+
+notes: |
+  This implementation mirrors the template versioning feature documented in
+  .buildforce/context/template-versioning.yml. The key difference is using npm version
+  instead of custom bash scripts, since npm provides official tooling for package.json updates.
+
+  The --no-git-tag-version flag is critical - it tells npm version to update package.json
+  without creating git commits or tags, allowing the workflow to control git operations.
+
+  The --allow-same-version flag may be useful for testing scenarios where version needs
+  to be set to the same value, though this should be rare in production.
+
+  The npm-publish workflow should keep a verification step to ensure package.json version
+  matches the release tag, providing a safety check in case something goes wrong with the
+  release workflow version update.

@@ -42,8 +42,22 @@ jobs:
             echo "version=$VERSION" >> $GITHUB_OUTPUT
           fi
 
-      - name: Update package.json version
-        run: npm version ${{ steps.get_version.outputs.version }} --no-git-tag-version
+      - name: Verify package.json version
+        run: |
+          RELEASE_VERSION="${{ steps.get_version.outputs.version }}"
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+
+          echo "Release version: $RELEASE_VERSION"
+          echo "Package.json version: $PACKAGE_VERSION"
+
+          if [ "$PACKAGE_VERSION" != "$RELEASE_VERSION" ]; then
+            echo "⚠️  WARNING: Version mismatch detected!"
+            echo "package.json ($PACKAGE_VERSION) doesn't match release tag ($RELEASE_VERSION)"
+            echo "Updating package.json version as fallback..."
+            npm version "$RELEASE_VERSION" --no-git-tag-version --allow-same-version
+          else
+            echo "✓ Version verification successful: package.json matches release tag"
+          fi
 
       - name: Build TypeScript
         run: npm run build
