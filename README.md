@@ -47,25 +47,25 @@ AI agents start fresh with each session and reverse engineer the codebase on-dem
 Install the @buildforce/cli package globally:
 
 ```bash
-> npm install -g @buildforce/cli
+npm install -g @buildforce/cli
 ```
 
 Then initialize in a project:
 
 ```bash
-# Initialize in existing project
-> buildforce init .
+buildforce init .
 ```
 
+Initialize a new project:
+
 ```bash
-# Initialize in a new project
-> buildforce init my-project
+buildforce init my-project
 ```
 
 Or with npx:
 
 ```bash
-> npx @buildforce/cli init .
+npx @buildforce/cli init .
 ```
 
 <div align="center">
