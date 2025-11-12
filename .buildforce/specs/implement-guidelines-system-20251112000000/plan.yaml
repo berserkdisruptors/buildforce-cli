@@ -1,0 +1,541 @@
+version: "0.0.33"
+# Plan Template for /build Agent Execution
+# This template is optimized for AI agent consumption during /build commands
+# It provides checkbox-based progress tracking, deviation logging, and spec traceability
+
+id: implement-guidelines-system-20251112000000-plan
+name: "Implementation Plan for Project Guidelines System (_guidelines.yaml)"
+spec_id: "implement-guidelines-system-20251112000000"
+type: implementation-plan
+status: draft
+created: "2025-11-12"
+last_updated: "2025-01-12"
+
+# ARCHITECTURE OVERVIEW
+# Describe the high-level implementation approach and key technical decisions.
+
+approach: |
+  Three-phase incremental implementation strategy delivering independent value at each phase:
+
+  Phase 1 (Core Structure): Create _guidelines.yaml schema, template, and /document integration
+  for manual guideline creation. This provides immediate value by enabling teams to capture conventions.
+
+  Phase 2 (Validation): Add /spec and /build integration for guideline-aware planning and validation.
+  This enforces consistency by checking code against strict/recommended guidelines during implementation.
+
+  Phase 3 (Auto-Evolution): Implement /complete pattern detection and auto-update logic. This creates
+  a self-improving system that suggests new conventions based on actual codebase patterns.
+
+  All phases maintain backward compatibility - guidelines are optional, existing projects continue
+  to work without modification. Each phase modifies slash command templates (markdown files) without
+  requiring changes to CLI infrastructure.
+
+technology_stack:
+  - YAML schema for _guidelines.yaml structure (human-readable, AI-parseable)
+  - Markdown template modifications for slash command enhancements (document.md, spec.md, build.md, complete.md)
+  - Pattern matching heuristics for auto-detection (5+ file occurrences, 95%+ consistency)
+  - plan-template.yaml extension with guideline_compliance section
+
+decisions:
+  - decision: "Use YAML format for _guidelines.yaml"
+    rationale: "Consistent with existing context files, human-readable for manual editing, structured for AI parsing. Alternative (JSON) rejected for poor multi-line string handling."
+
+  - decision: "Three-phase implementation over single big-bang release"
+    rationale: "Each phase delivers independent value and can be tested/iterated. Reduces risk, enables early user feedback. Phase 1 can ship without Phase 2/3 completion."
+
+  - decision: "Minimal examples (5-10 lines) plus reference_files array strategy"
+    rationale: "Avoids context window bloat while providing actionable guidance. AI can read reference files on-demand during /build. Alternative (verbose inline examples) rejected for token cost."
+
+  - decision: "Enforcement levels: strict (fail build), recommended (warn), reference (context only)"
+    rationale: "Provides flexibility while ensuring critical conventions are enforced. Teams can gradually adopt patterns by starting with recommended, upgrading to strict. Alternative (boolean enforce flag) rejected for lack of nuance."
+
+  - decision: "Pattern detection requires user confirmation (never silent updates)"
+    rationale: "Builds trust by making auto-updates transparent and controllable. Prevents accidental convention capture. Alternative (silent auto-update) rejected for user control concerns."
+
+  - decision: "Modify slash command templates (markdown) instead of CLI infrastructure"
+    rationale: "Keeps implementation scoped to templates, no TypeScript/CLI changes needed. Reduces testing surface area, maintains backward compatibility. All logic lives in AI agent instructions."
+
+  - decision: "Add guideline_compliance section to plan.yaml (not separate file)"
+    rationale: "Keeps validation results alongside implementation plan for traceability. Single source of truth for build progress. Alternative (separate compliance.yaml) rejected for file proliferation."
+
+  - decision: "Remove grace period for strict guideline enforcement"
+    rationale: "Immediate enforcement ensures consistency from the start. Grace period approach rejected for complexity and ambiguity around when violations should fail. Teams can use 'recommended' enforcement initially and upgrade to 'strict' when ready, providing better control than time-based grace periods."
+
+# FILE STRUCTURE
+# List all files to be created or modified during implementation
+
+files_to_create:
+  - .buildforce/templates/guidelines-template.yaml
+  - .buildforce/context/_guidelines.yaml (example file for Buildforce CLI project itself)
+
+files_to_modify:
+  - path: "src/templates/commands/document.md"
+    change_type: "edit"
+    description: "Add /document guidelines specialized mode with schema-aware creation/update logic"
+
+  - path: "src/templates/commands/spec.md"
+    change_type: "edit"
+    description: "Add guideline loading step, treat _guidelines.yaml as highest priority context during plan generation"
+
+  - path: "src/templates/commands/build.md"
+    change_type: "edit"
+    description: "Add guideline compliance validation for strict/recommended enforcement levels with detailed violation reporting"
+
+  - path: "src/templates/commands/complete.md"
+    change_type: "edit"
+    description: "Add pattern detection heuristics and auto-update logic with user confirmation workflow"
+
+  - path: "src/templates/plan-template.yaml"
+    change_type: "edit"
+    description: "Add guideline_compliance section with strict_validations and recommended_validations arrays"
+
+  - path: ".buildforce/context/_index.yaml"
+    change_type: "edit"
+    description: "Register _guidelines.yaml as new context entry with type=pattern and relevant tags"
+
+# IMPLEMENTATION PHASES
+# Break down the implementation into logical phases with checkbox-based task tracking
+# Use [ ] for pending tasks and [x] for completed tasks
+# Each task should link back to spec requirements via spec_refs
+
+phase_1:
+  name: "Core Structure & Manual Creation (Phase 1)"
+  description: |
+    Create _guidelines.yaml schema, template, and /document integration. This phase delivers
+    immediate value by enabling teams to manually capture and document project conventions.
+    No validation or auto-detection yet - pure documentation infrastructure.
+
+  tasks:
+    - [x] Create guidelines-template.yaml with full schema documentation
+      spec_refs: [FR1, FR2, AC1]
+      files: [.buildforce/templates/guidelines-template.yaml]
+      notes: |
+        Schema must include all 9 categories: architectural_patterns, code_conventions,
+        naming_conventions, testing_standards, dependency_rules, security_requirements,
+        performance_guidelines, accessibility_standards, project_quirks.
+        Each guideline requires: name, description, enforcement (strict/recommended/reference),
+        optional examples/violations/reference_files.
+        Include comprehensive inline comments explaining each section.
+
+    - [x] Create example _guidelines.yaml for Buildforce CLI project
+      spec_refs: [FR2, NFR2, AC10]
+      files: [.buildforce/context/_guidelines.yaml]
+      notes: |
+        Demonstrate minimal example strategy with 2-3 real patterns from Buildforce codebase:
+        - Example 1: Template-only slash commands (reference existing command files)
+        - Example 2: Context file naming conventions (kebab-case, descriptive)
+        - Example 3: Project quirk (buildforce.json state tracking migration from .current-spec)
+        Each pattern shows enforcement level usage and reference_files array.
+
+    - [x] Update /document command for guidelines mode
+      spec_refs: [FR3, AC2]
+      files: [src/templates/commands/document.md]
+      notes: |
+        Add detection for `/document guidelines` invocation with two modes:
+
+        **Manual mode**: /document guidelines
+        - If _guidelines.yaml exists: UPDATE mode (intelligent merge of new guidelines)
+        - If _guidelines.yaml missing: CREATE mode (generate from conversation context)
+        - Agent analyzes conversation for conventions, extracts categories, formats per schema
+
+        **Scan mode**: /document scan guidelines
+        - Analyzes entire codebase for consistent patterns
+        - Uses same thresholds as /complete (5+ files, 95%+ consistency)
+        - Presents detected patterns for user confirmation
+        - Bootstrap initial _guidelines.yaml from existing codebase patterns
+        - Useful for projects adopting guidelines after significant development
+
+    - [x] Register _guidelines.yaml in context index
+      spec_refs: [FR10, AC9]
+      files: [.buildforce/context/_index.yaml]
+      notes: |
+        Add new context entry:
+        id: guidelines
+        file: _guidelines.yaml
+        type: pattern
+        description: "Project-wide conventions, standards, and coding patterns that must be followed"
+        tags: [standards, conventions, patterns, enforcement, validation, project-dna]
+
+  validation:
+    - [x] All phase_1 tasks completed
+    - [ ] guidelines-template.yaml contains all 9 categories with schema documentation
+    - [ ] Example _guidelines.yaml demonstrates minimal example strategy (5-10 line snippets + reference_files)
+    - [ ] /document guidelines mode successfully creates _guidelines.yaml from conversation
+    - [ ] _index.yaml contains guidelines entry with correct type and tags
+    - [ ] Manual testing: Create sample guideline via /document, verify YAML structure validity
+    - [ ] Spec requirements covered: [FR1, FR2, FR3, FR10, NFR1, NFR2, AC1, AC2, AC9, AC10]
+
+phase_2:
+  name: "Validation & Enforcement (Phase 2)"
+  description: |
+    Integrate guidelines into /spec and /build workflows. /spec loads guidelines as highest
+    priority context for plan generation. /build validates code against strict/recommended
+    guidelines and fails on strict violations. Adds guideline_compliance tracking to plan.yaml.
+
+  tasks:
+    - [x] Add guideline_compliance section to plan-template.yaml
+      spec_refs: [FR7, AC6]
+      files: [src/templates/plan-template.yaml]
+      notes: |
+        Add new section after DEVIATION LOG:
+        # GUIDELINE COMPLIANCE
+        # Track validation results for strict and recommended enforcement levels
+        guideline_compliance:
+          strict_validations: []
+          recommended_validations: []
+
+        Schema for strict_validations:
+          - guideline: string (guideline name)
+            status: "✓ PASS" | "✗ FAIL"
+            checked_files: [array of file paths]
+            violation: {file, line, issue, fix} (if FAIL)
+
+        Schema for recommended_validations:
+          - guideline: string
+            status: "✓ PASS" | "⚠ DEVIATION"
+            deviation: {original, actual, reason} (if DEVIATION)
+
+    - [x] Update /spec command to load and reference guidelines
+      spec_refs: [FR4, AC3]
+      files: [src/templates/commands/spec.md]
+      notes: |
+        Add step after research.yaml loading (Step 2d or 3a depending on CREATE/UPDATE):
+        "Load _guidelines.yaml if exists and treat as HIGHEST PRIORITY context when generating plan.yaml.
+        Reference specific guidelines in decisions, technology_stack, and phase task notes.
+        Example: 'Phase 1 tasks must follow Repository Pattern guideline (strict enforcement)'."
+
+        If _guidelines.yaml missing, no special action (backward compatible).
+
+    - [x] Update /build command with validation logic
+      spec_refs: [FR5, FR6, FR11, AC4, AC5, AC11]
+      files: [src/templates/commands/build.md]
+      notes: |
+        Add guideline 8 (new guideline after existing 7):
+        "8. **Guideline Compliance Validation** (AI Agent Self-Check):
+           - Load .buildforce/context/_guidelines.yaml if exists
+           - IMPORTANT: This validates AI-generated code against project conventions,
+             NOT user code. AI agent checks its own implementation for compliance.
+           - For each `strict` enforcement guideline:
+             * Analyze implemented code against pattern
+             * Flag violations with file path, line number, issue description, suggested fix
+             * FAIL BUILD immediately on any violation (no grace period)
+           - For each `recommended` enforcement guideline:
+             * Check for deviations from pattern
+             * Log deviations in plan.yaml guideline_compliance section with rationale
+             * DO NOT fail build for recommended deviations
+           - Update guideline_compliance section in plan.yaml with results
+           - If strict violations found, report and halt"
+
+        Provide clear examples of violation format:
+        File: src/services/UserService.ts
+        Line: 45
+        Issue: Direct Prisma call violates "Repository Pattern" guideline (strict)
+        Fix: Use UserRepository.findById(id) instead of prisma.user.findUnique()
+
+        CRITICAL: Guidelines are for AI agent education, not linting for developers.
+
+    - [x] Document validation behavior in plan notes
+      spec_refs: [FR5, FR6, NFR3]
+      files: [src/templates/plan-template.yaml]
+      notes: |
+        Add to NOTES section guidance on guideline validation:
+        "Guideline compliance is checked during /build execution. Strict enforcement guidelines
+        will fail the build if violated. Recommended guidelines log warnings but allow build
+        to continue. See guideline_compliance section for validation results."
+
+  validation:
+    - [x] All phase_2 tasks completed
+    - [x] plan-template.yaml contains guideline_compliance section with correct schema
+    - [x] /spec command loads _guidelines.yaml and references conventions in plan
+    - [x] /build command validates strict guidelines and fails on violations
+    - [x] /build command checks recommended guidelines and logs deviations without failing
+    - [x] Validation errors include file path, line number, issue, and suggested fix
+    - [ ] Manual testing: Create guideline with strict enforcement, violate it, verify build fails with details
+    - [ ] Manual testing: Create recommended guideline, deviate, verify warning logged but build succeeds
+    - [x] Spec requirements covered: [FR4, FR5, FR6, FR7, FR11, NFR3, AC3, AC4, AC5, AC6, AC11]
+
+phase_3:
+  name: "Auto-Evolution & Pattern Detection (Phase 3)"
+  description: |
+    Implement pattern detection in /complete that analyzes codebase for emerging conventions.
+    When patterns meet threshold (5+ files, 95%+ consistency), notify user and request
+    confirmation before auto-adding to _guidelines.yaml. Creates self-improving system.
+
+  tasks:
+    - [x] Add pattern detection heuristics to /complete command
+      spec_refs: [FR8, NFR4, AC7]
+      files: [src/templates/commands/complete.md]
+      notes: |
+        Add new step before final validation report:
+        "**Pattern Detection**:
+        - Analyze files modified/created in current spec for new patterns
+        - Detection criteria:
+          * Pattern appears in 5+ files
+          * Implementation consistency ≥95%
+          * Pattern is not already documented in _guidelines.yaml
+        - Detectable patterns:
+          * Architectural patterns (class structures, module organization)
+          * Naming conventions (file/variable/function naming consistency)
+          * Code conventions (error handling, transaction flows, API patterns)
+        - For each detected pattern, prepare suggestion with:
+          * Pattern name and description
+          * Occurrence count and consistency percentage
+          * Example files demonstrating pattern
+          * Suggested enforcement level (default: recommended)
+          * Draft guideline entry in _guidelines.yaml format"
+
+    - [x] Implement user notification and confirmation workflow
+      spec_refs: [FR9, NFR5, AC8]
+      files: [src/templates/commands/complete.md]
+      notes: |
+        After pattern detection, present findings to user:
+        "## Guideline Updates
+
+        ⚠️ The following conventions were detected and can be added to _guidelines.yaml:
+
+        1. **New Pattern: [Pattern Name]**
+           - Detected in X files with Y% consistency
+           - Enforcement level: [recommended|strict]
+           - Preview: [show draft guideline entry]
+           - Review: .buildforce/context/_guidelines.yaml (lines will be added)
+
+        Would you like to add these guidelines? (Y/n)"
+
+        If user confirms:
+        - Append new guidelines to appropriate category in _guidelines.yaml
+        - Update last_updated field
+        - Report additions: "Added 2 new guidelines: [list names]"
+
+        If user declines:
+        - Skip auto-update
+        - Optionally log declined patterns for future reference
+
+        CRITICAL: Never auto-update without explicit confirmation.
+
+    - [x] Update _guidelines.yaml with confirmed patterns
+      spec_refs: [FR9, AC8]
+      files: [src/templates/commands/complete.md]
+      notes: |
+        Agent must:
+        - Read existing _guidelines.yaml
+        - Append new guideline entries to appropriate category arrays
+        - Maintain existing structure and formatting
+        - Update last_updated field
+        - Use minimal example strategy (5-10 line snippet + reference_files)
+        - Set appropriate enforcement level (default recommended unless user specifies)
+        - Write updated _guidelines.yaml back to disk
+        - Report specific line numbers where additions were made
+
+    - [x] Add pattern detection documentation to notes
+      spec_refs: [NFR4, NFR5]
+      files: [src/templates/commands/complete.md, .buildforce/templates/guidelines-template.yaml]
+      notes: |
+        Document pattern detection thresholds and confirmation requirement:
+        - 5+ file occurrences required to trigger detection
+        - 95%+ consistency threshold prevents false positives
+        - User confirmation always required (never silent updates)
+        - Detection runs on files changed in current spec only (not entire codebase)
+        - Declined patterns not saved (user can manually add later via /document)
+
+  validation:
+    - [x] All phase_3 tasks completed
+    - [x] /complete detects patterns meeting threshold (5+ files, 95%+ consistency)
+    - [x] User notification presents pattern details with confirmation prompt
+    - [x] Auto-update requires explicit user confirmation (no silent modifications)
+    - [x] Confirmed patterns correctly appended to _guidelines.yaml in appropriate categories
+    - [x] Pattern additions use minimal example strategy (5-10 lines + reference_files)
+    - [x] last_updated field updated after pattern additions
+    - [ ] Manual testing: Create consistent pattern across 5+ files, run /complete, verify detection and confirmation workflow
+    - [ ] Manual testing: Decline pattern addition, verify _guidelines.yaml unchanged
+    - [x] Spec requirements covered: [FR8, FR9, NFR4, NFR5, AC7, AC8]
+
+# DEVIATION LOG
+# The /build agent populates this section when implementation deviates from the original plan
+# Format: phase → task → original plan → actual implementation → reason for deviation
+
+deviations:
+  - phase: "phase_2"
+    task: "Update /build command with validation logic"
+    original: "Include grace period logic with 7-day warning period before strict enforcement"
+    actual: "Implemented immediate strict enforcement without grace period"
+    reason: "User requested removal of grace period approach via /buildforce.spec update. Simplifies validation logic and provides clearer enforcement behavior. Teams can use 'recommended' enforcement level for gradual migration instead of time-based grace periods."
+
+# TESTING GUIDANCE
+# Structured guidance for testing the implementation
+
+testing:
+  automated_tests:
+    - test_file: "N/A - template-only implementation"
+      what: "No automated tests needed for markdown template modifications"
+      command: "Manual testing via workflow execution"
+
+  manual_tests:
+    - scenario: "Phase 1 - Create _guidelines.yaml via /document"
+      steps: |
+        1. Run /document guidelines in conversation with convention discussion
+        2. Verify _guidelines.yaml created in .buildforce/context/
+        3. Check YAML structure matches guidelines-template.yaml schema
+        4. Confirm all 9 categories present with correct schema
+        5. Verify example uses minimal code (5-10 lines) + reference_files
+        6. Check _index.yaml contains guidelines entry
+
+    - scenario: "Phase 1 - Update existing _guidelines.yaml"
+      steps: |
+        1. Create initial _guidelines.yaml with 1-2 patterns
+        2. Run /document guidelines with new convention discussion
+        3. Verify new guideline appended to appropriate category
+        4. Confirm existing guidelines unchanged
+        5. Check last_updated field updated
+
+    - scenario: "Phase 2 - Guideline-aware spec creation"
+      steps: |
+        1. Create _guidelines.yaml with strict enforcement pattern
+        2. Run /spec for new feature
+        3. Verify plan.yaml references guideline in decisions/tasks
+        4. Check plan acknowledges strict enforcement requirement
+        5. Confirm guideline_compliance section present in plan.yaml
+
+    - scenario: "Phase 2 - Strict guideline validation failure"
+      steps: |
+        1. Create _guidelines.yaml with strict enforcement pattern
+        2. Run /spec and /build
+        3. Intentionally violate strict guideline in implementation
+        4. Verify /build fails with specific error (file/line/issue/fix)
+        5. Confirm guideline_compliance section shows ✗ FAIL status
+        6. Check violation details include suggested fix
+
+    - scenario: "Phase 2 - Recommended guideline deviation"
+      steps: |
+        1. Create _guidelines.yaml with recommended enforcement pattern
+        2. Run /spec and /build
+        3. Intentionally deviate from recommended guideline
+        4. Verify /build succeeds (no failure)
+        5. Check guideline_compliance section shows ⚠ DEVIATION status
+        6. Confirm deviation includes rationale in plan.yaml
+
+    - scenario: "Phase 3 - Pattern detection and auto-update"
+      steps: |
+        1. Create consistent pattern across 5+ files in spec implementation
+        2. Run /build and /complete
+        3. Verify /complete detects pattern (notification displayed)
+        4. Check detection details (occurrence count, consistency %)
+        5. Confirm Y/n confirmation prompt displayed
+        6. Accept pattern addition
+        7. Verify _guidelines.yaml updated with new guideline
+        8. Check last_updated field updated
+        9. Confirm pattern uses minimal example strategy
+
+    - scenario: "Phase 3 - Pattern detection declined"
+      steps: |
+        1. Create consistent pattern across 5+ files
+        2. Run /complete
+        3. Verify pattern detection notification
+        4. Decline pattern addition (respond n)
+        5. Confirm _guidelines.yaml unchanged
+        6. Check no error or warning displayed
+
+    - scenario: "Backward compatibility - No _guidelines.yaml"
+      steps: |
+        1. Delete _guidelines.yaml if exists
+        2. Run full workflow: /spec → /build → /complete
+        3. Verify all commands succeed without errors
+        4. Confirm no guideline-related errors or warnings
+        5. Check backward compatibility maintained
+
+# VALIDATION CRITERIA
+# Define success metrics and track spec requirement coverage
+
+success_metrics:
+  - "_guidelines.yaml template created with all 9 categories and comprehensive schema documentation"
+  - "/document guidelines command successfully creates/updates _guidelines.yaml from conversation"
+  - "/spec command loads guidelines and references conventions in generated plans"
+  - "/build validates strict guidelines and fails build on violations with file/line/fix details"
+  - "/build logs recommended guideline deviations without failing build"
+  - "/complete detects patterns (5+ files, 95%+ consistency) and presents user confirmation"
+  - "Auto-update requires explicit user approval and correctly appends to _guidelines.yaml"
+  - "System maintains backward compatibility when _guidelines.yaml absent"
+
+spec_coverage:
+  # Auto-track which spec requirements are implemented in which tasks
+  # Format: requirement_id: status + location
+  - FR1: "⏳ Phase 1: Task 1 (Create guidelines-template.yaml)"
+  - FR2: "⏳ Phase 1: Tasks 1-2 (Schema + example)"
+  - FR3: "⏳ Phase 1: Task 3 (Update /document command)"
+  - FR4: "⏳ Phase 2: Task 2 (Update /spec command)"
+  - FR5: "⏳ Phase 2: Task 3 (Update /build for strict validation)"
+  - FR6: "⏳ Phase 2: Task 3 (Update /build for recommended validation)"
+  - FR7: "⏳ Phase 2: Task 1 (Add guideline_compliance to plan-template)"
+  - FR8: "⏳ Phase 3: Task 1 (Pattern detection heuristics)"
+  - FR9: "⏳ Phase 3: Tasks 2-3 (User confirmation and auto-update)"
+  - FR10: "⏳ Phase 1: Task 4 (Register in _index.yaml)"
+  - FR11: "⏳ Phase 2: Task 3 (Validation with file/line/fix details)"
+  - FR12: "⏳ Phase 1: Task 2 (reference_files array in example)"
+  - NFR1: "⏳ Phase 1: Task 1 (YAML format)"
+  - NFR2: "⏳ Phase 1: Task 2 (5-10 line examples)"
+  - NFR3: "⏳ Phase 2: Task 3 (Validation performance)"
+  - NFR4: "⏳ Phase 3: Task 1 (95%+ consistency threshold)"
+  - NFR5: "⏳ Phase 3: Task 2 (User confirmation required)"
+  - NFR6: "⏳ All phases (Guidelines optional, backward compatible)"
+
+# PROGRESS SUMMARY
+# Track overall progress and identify next steps
+
+overall_progress:
+  phase_1: "4/4 tasks completed"
+  phase_2: "4/4 tasks completed"
+  phase_3: "4/4 tasks completed"
+
+current_status: |
+  All three phases successfully implemented. Guidelines system is fully functional:
+  - Phase 1: Core structure, templates, and /document integration complete
+  - Phase 2: /spec and /build integration with validation complete
+  - Phase 3: Pattern detection and auto-update in /complete complete
+
+  Ready for testing and validation.
+
+next_immediate_steps:
+  - "Test /document guidelines creation workflow"
+  - "Test /spec guideline loading and referencing"
+  - "Test /build validation with strict and recommended guidelines"
+  - "Test /complete pattern detection and auto-update workflow"
+
+# RISKS & CONSIDERATIONS
+# Document potential risks and mitigation strategies
+
+risks:
+  - risk: "Over-specification: Too many guidelines become burdensome"
+    mitigation: "Start with minimal set of critical guidelines. Use recommended enforcement for gradual adoption. Document guideline deprecation process in future iterations."
+
+  - risk: "False positives in pattern detection (Phase 3)"
+    mitigation: "Conservative thresholds (5+ files, 95%+ consistency) reduce false positives. User confirmation prevents accidental additions. Allow pattern deletion via /document."
+
+  - risk: "Context window bloat from verbose examples"
+    mitigation: "Enforce minimal example strategy (5-10 lines + reference_files). Agent reads reference files on-demand. Template validation checks example length during /document."
+
+  - risk: "Validation performance overhead in /build (NFR3)"
+    mitigation: "Phase 2 testing must measure validation time. If >10% overhead, optimize by caching parsed guidelines or limiting checks to changed files only."
+
+  - risk: "Guideline conflicts (e.g., two naming conventions)"
+    mitigation: "First-wins strategy: First guideline in category takes precedence, later conflicts silently ignored during validation. Phase 1 documentation warns against creating conflicting guidelines. /document should detect potential conflicts and prompt user before adding."
+
+  - risk: "Backward compatibility broken for existing projects"
+    mitigation: "All guideline features optional. Check for _guidelines.yaml existence before loading. Workflow succeeds without guidelines. Test with legacy projects."
+
+# NOTES
+# Capture lessons learned and future enhancement ideas
+
+lessons_learned:
+  - "Three-phase strategy reduces risk and enables iterative testing. Each phase can ship independently."
+  - "Minimal example strategy critical for context window management. 5-10 line snippets + reference_files balances guidance with token cost."
+  - "User confirmation for auto-updates is non-negotiable. Trust requires transparency and control."
+  - "Enforcement levels provide flexibility spectrum: reference (context) → recommended (warn) → strict (fail). Teams can gradually adopt patterns."
+
+future_enhancements:
+  - "Phase 4: Linting rule generation (translate guidelines to ESLint/Prettier configs)"
+  - "Module-specific guidelines (different rules for src/admin vs src/public)"
+  - "Guideline versioning and deprecation system with changelog"
+  - "Proactive pattern suggestions during /research (before implementation)"
+  - "Migration tool to scan existing codebase and bootstrap initial guidelines"
+  - "Performance optimization: cache parsed guidelines, limit validation to changed files"
+  - "Conflict detection and resolution workflows for overlapping guidelines"
+  - "Multi-repository guideline inheritance (shared conventions across projects)"

@@ -362,3 +362,26 @@ contexts:
         developer-experience,
       ]
     related_context: [readme-documentation, cli-architecture]
+
+  - id: guidelines
+    file: _guidelines.yaml
+    type: pattern
+    description: "Project-wide conventions, standards, and coding patterns for AI agent education"
+    tags:
+      [
+        standards,
+        conventions,
+        patterns,
+        enforcement,
+        validation,
+        project-dna,
+        ai-education,
+      ]
+    related_context:
+      [
+        document-command,
+        spec-command,
+        build-command,
+        complete-command,
+        plan-template,
+      ]

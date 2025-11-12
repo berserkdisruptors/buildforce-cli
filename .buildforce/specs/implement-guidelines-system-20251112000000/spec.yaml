@@ -1,0 +1,201 @@
+version: "0.0.33"
+id: implement-guidelines-system-20251112000000
+name: "Project Guidelines System (_guidelines.yaml)"
+type: feature
+status: draft
+created: "2025-11-12"
+last_updated: "2025-01-12"
+
+summary: |
+  Implement _guidelines.yaml system to capture and enforce project-wide conventions, coding standards,
+  and architectural patterns. System acts as "Project DNA" that preserves tribal knowledge across
+  AI-assisted development sessions. Includes three-phase implementation: core structure with manual
+  creation via /document, validation enforcement in /build, and auto-evolution via /complete with
+  pattern detection.
+
+# INTENT / PROBLEM STATEMENT
+
+problem: |
+  AI agents start fresh with each session and constantly rediscover project patterns instead of
+  following established conventions. This leads to:
+  - Architectural drift as new features use inconsistent patterns
+  - Repeated violations of project-specific conventions (e.g., database transaction flows, API hooks)
+  - Loss of tribal knowledge when developers leave or context is forgotten
+  - No enforcement mechanism to ensure new code follows established standards
+  - Time wasted re-explaining conventions in every AI session
+
+motivation: |
+  A structured, enforceable guidelines system solves the "fresh AI session" problem by:
+  - Capturing hard-won conventions and project-specific patterns in machine-readable format
+  - Enforcing critical standards during /build phase with validation failures for strict rules
+  - Auto-detecting and suggesting new conventions as they emerge organically in the codebase
+  - Providing educational feedback when code violates guidelines (not just pass/fail)
+  - Creating a living document that evolves with the project's maturity
+  - Enabling consistency across team members and AI assistants
+
+# GOALS
+
+primary_goals:
+  - Create _guidelines.yaml schema that captures architectural patterns, code conventions, naming rules, and project quirks
+  - Enable manual guideline creation and updates via specialized /document guidelines mode
+  - Implement guideline-aware spec creation that references conventions during planning
+  - Add build-time validation that checks code compliance against strict/recommended guidelines
+  - Implement auto-detection of new patterns in /complete with user-confirmed updates
+
+secondary_goals:
+  - Minimize context window bloat through minimal examples plus reference_files strategy
+  - Support enforcement levels (strict/recommended/reference) for flexibility
+  - Provide actionable violation feedback with line references and correction guidance
+  - Track guideline compliance in plan.yaml validation sections
+  - Integrate guidelines seamlessly into existing workflow without disruption
+
+# REQUIREMENTS
+
+functional_requirements:
+  - FR1: Create _guidelines.yaml schema supporting categories (architectural_patterns, code_conventions, naming_conventions, testing_standards, dependency_rules, security_requirements, performance_guidelines, accessibility_standards, project_quirks)
+  - FR2: Each guideline must have name, description, enforcement level (strict/recommended/reference), and optional examples/violations/reference_files
+  - FR3: Implement /document guidelines specialized mode that creates or updates _guidelines.yaml from conversation context
+  - FR4: Update /spec command to load _guidelines.yaml and treat as highest priority context when creating plans
+  - FR5: Update /build command to validate code against strict enforcement guidelines and fail build on violations
+  - FR6: /build must check recommended enforcement guidelines and log deviations without failing build
+  - FR7: Add guideline_compliance section to plan.yaml tracking validation results for both strict and recommended levels
+  - FR8: Implement pattern detection in /complete that identifies new conventions (5+ files, 95%+ consistency)
+  - FR9: /complete must notify user and request confirmation before auto-adding detected patterns to _guidelines.yaml
+  - FR10: Register _guidelines.yaml in .buildforce/context/_index.yaml as new context entry with appropriate tags
+  - FR11: Validation failures must include specific file path, line number, violation description, and suggested fix
+  - FR12: Support reference_files array in guidelines pointing to codebase examples to avoid inline code bloat
+
+non_functional_requirements:
+  - NFR1: Guidelines file must remain human-readable and manually editable (YAML format)
+  - NFR2: Example code snippets limited to 5-10 lines per guideline to prevent context window bloat
+  - NFR3: Validation performance must not add more than 10% overhead to /build execution time
+  - NFR4: Pattern detection must have 95%+ consistency threshold to avoid false positives
+  - NFR5: Auto-update suggestions must require explicit user confirmation (never silent updates)
+  - NFR6: System must be backward compatible with existing projects (guidelines optional, not required)
+
+# SCOPE
+
+in_scope:
+  - _guidelines.yaml schema definition and initial template creation
+  - /document command enhancement for guidelines creation/update mode
+  - /spec command integration to load and reference guidelines as context
+  - /build command validation logic for strict and recommended enforcement
+  - guideline_compliance section addition to plan-template.yaml
+  - /complete command pattern detection and auto-update with user notification
+  - _index.yaml registration for _guidelines.yaml context entry
+  - Documentation of enforcement levels and validation behavior
+  - Example _guidelines.yaml with 2-3 sample patterns demonstrating minimal example strategy
+
+out_of_scope:
+  - Phase 4 advanced features (linting rule generation, module-specific guidelines, proactive suggestions)
+  - Guideline versioning and deprecation system (future enhancement)
+  - Conflict resolution workflows for guideline updates
+  - Integration with external linting tools (ESLint, Prettier, etc.)
+  - Guideline ownership and permission system
+  - Automated guideline migration tools for legacy projects
+  - Performance optimization beyond basic pattern matching
+  - Multi-repository guideline sharing or inheritance
+
+# DESIGN PRINCIPLES
+
+design_principles:
+  - "Minimal examples, maximum reference: Use reference_files array to point to real implementations instead of verbose inline examples"
+  - "Enforcement hierarchy: strict fails build, recommended warns, reference provides context only"
+  - "Education over punishment: Provide actionable correction guidance, not just binary pass/fail"
+  - "User control: All auto-updates require explicit confirmation, never silent modifications"
+  - "Incremental adoption: Guidelines are optional, existing projects work without them"
+  - "Living documentation: System evolves with project maturity through pattern detection"
+  - "Context-aware planning: /spec treats guidelines as highest priority when generating plans"
+
+# ACCEPTANCE CRITERIA
+
+acceptance_criteria:
+  - AC1: _guidelines.yaml template created with all 9 categories and enforcement level documentation
+  - AC2: /document guidelines command successfully creates _guidelines.yaml from conversation context
+  - AC3: /spec command loads _guidelines.yaml and references conventions in generated plans
+  - AC4: /build command validates strict enforcement guidelines and fails build on violation with file/line/fix details
+  - AC5: /build command checks recommended guidelines and logs deviations in plan.yaml without failing
+  - AC6: plan.yaml includes guideline_compliance section with strict_validations and recommended_validations arrays
+  - AC7: /complete detects patterns meeting threshold (5+ files, 95%+ consistency) and notifies user
+  - AC8: /complete auto-update requires user confirmation and reports additions to _guidelines.yaml
+  - AC9: _index.yaml contains _guidelines entry with type=pattern and relevant tags
+  - AC10: Example _guidelines.yaml demonstrates minimal example strategy with reference_files
+  - AC11: Validation errors include specific line references and suggested fixes
+  - AC12: System works with and without _guidelines.yaml present (backward compatible)
+
+# ASSUMPTIONS & DEPENDENCIES
+
+assumptions:
+  - AI agents can parse YAML structure reliably and extract guideline rules
+  - Pattern detection heuristics (5+ files, 95% consistency) are sufficient to avoid false positives
+  - Users will manually review and approve auto-detected patterns before they become enforced
+  - Reference_files strategy is sufficient to avoid context window bloat while providing adequate guidance
+  - /build agents can perform static code analysis to check guideline compliance
+  - Existing slash command templates can be enhanced without breaking current workflows
+
+dependencies:
+  internal:
+    - slash-commands: "All 5 commands require modifications (document, spec, build, complete)"
+    - context-repository: "_guidelines.yaml lives in .buildforce/context/ alongside other context files"
+    - plan-template: "Requires new guideline_compliance section for validation tracking"
+    - state-tracking: "No changes needed, but system must work with existing buildforce.json"
+  external:
+    - None (pure template and workflow enhancements, no new dependencies)
+
+# OPEN QUESTIONS
+
+open_questions: []
+
+# DESIGN DECISIONS (from clarification)
+
+clarifications:
+  - question: "Should guideline validation be configurable per-project?"
+    answer: "No - Enforcement levels are per-guideline only, no project-level override"
+
+  - question: "How should conflicts be resolved when existing code violates newly added strict guidelines?"
+    answer: "Immediate enforcement - Strict guidelines fail build immediately on violation"
+
+  - question: "Should /complete pattern detection analyze current spec or entire codebase?"
+    answer: "Current spec files only (faster, focused on recent work)"
+
+  - question: "Should we provide migration tool to scan codebase?"
+    answer: "Yes - Include in Phase 1 as /document scan command for bootstrapping initial guidelines"
+
+  - question: "What if _guidelines.yaml contains invalid YAML?"
+    answer: "Fail fast - Show error immediately, refuse to load (prevents silent failures)"
+
+  - question: "Should enforcement levels be per-guideline or per-project?"
+    answer: "Per-guideline only (maximum flexibility for individual rules)"
+
+  - question: "How to handle conflicting guidelines?"
+    answer: "First-wins - First guideline in category takes precedence, later conflicts ignored"
+
+# NOTES
+
+notes: |
+  CRITICAL CLARIFICATION: These guidelines are for AI agents to follow during implementation,
+  NOT linting rules for human developers. The validation happens during /build command execution
+  by the AI agent analyzing its own generated code against conventions. This is different from
+  traditional linting tools (ESLint, Prettier) that run in developer workflows.
+
+  The guidelines system teaches AI agents project-specific patterns so they generate consistent
+  code from the start, rather than requiring post-hoc linting corrections. Think of it as
+  "AI agent education" rather than "code quality enforcement."
+
+  This feature represents a significant enhancement to Buildforce's context-first philosophy.
+  By capturing and enforcing conventions, we move from "AI rediscovers patterns" to "AI follows
+  established standards." This is especially valuable for teams and long-lived projects where
+  consistency is critical.
+
+  Implementation priority: Phase 1 (core structure) → Phase 2 (validation) → Phase 3 (auto-evolution).
+  Each phase delivers independent value and can be tested/iterated separately.
+
+  The minimal examples strategy (5-10 line snippets + reference_files) is crucial for avoiding
+  context window bloat. AI agents can read reference files on-demand during /build if they need
+  more detailed examples.
+
+  Pattern detection thresholds (5+ files, 95% consistency) are intentionally conservative to prevent
+  false positives. Teams can adjust these in future iterations if they prove too strict or too lenient.
+
+  The user confirmation requirement for auto-updates is non-negotiable - silent modifications to
+  _guidelines.yaml would undermine trust in the system. Users must explicitly approve new conventions.

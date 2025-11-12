@@ -1,0 +1,248 @@
+# Project Guidelines Template
+# Version: 0.0.33
+# This file serves as "Project DNA" - capturing conventions, standards, and coding patterns
+# that AI agents should follow when implementing features.
+#
+# IMPORTANT: These guidelines are for AI agent education during /build, NOT linting rules
+# for human developers. The AI agent validates its own generated code against these patterns.
+#
+# USAGE:
+#   - Create via: /document guidelines
+#   - Update via: /document guidelines (intelligent merge of new patterns)
+#   - Bootstrap via: /document scan guidelines (analyze codebase for existing patterns)
+#   - Referenced by: /spec (planning context), /build (validation), /complete (auto-evolution)
+#
+# ENFORCEMENT LEVELS:
+#   - strict: MUST follow. Build fails on violations. Use for critical conventions.
+#   - recommended: SHOULD follow. Logs warnings on deviations. Use for best practices.
+#   - reference: Context only. No validation. Use for informational patterns.
+#
+# MINIMAL EXAMPLE STRATEGY:
+#   Keep inline examples short (5-10 lines). Use reference_files array to point to
+#   full implementations in codebase. This prevents context window bloat while providing
+#   actionable guidance.
+
+version: "0.0.33"
+last_updated: "YYYY-MM-DD"
+
+# =============================================================================
+# ARCHITECTURAL PATTERNS
+# High-level structural conventions and design patterns used across the project
+# =============================================================================
+
+architectural_patterns:
+  # Example:
+  # - pattern: "Repository Pattern"
+  #   description: |
+  #     All database access must go through repository classes, never direct ORM calls.
+  #     Repositories encapsulate query logic and provide clean domain interfaces.
+  #   enforcement: strict
+  #   examples:
+  #     - file: "src/repositories/UserRepository.ts"
+  #       snippet: |
+  #         class UserRepository {
+  #           async findById(id: string): Promise<User | null> {
+  #             return this.prisma.user.findUnique({ where: { id } })
+  #           }
+  #         }
+  #   violations:
+  #     - "Direct prisma.user.findUnique() calls in service layer"
+  #     - "Business logic mixed with data access code"
+  #   reference_files:
+  #     - "src/repositories/UserRepository.ts"
+  #     - "src/repositories/PostRepository.ts"
+
+# =============================================================================
+# CODE CONVENTIONS
+# Specific coding standards and implementation patterns
+# =============================================================================
+
+code_conventions:
+  # Example:
+  # - convention: "Error Handling Pattern"
+  #   description: |
+  #     All async operations must use try-catch with specific error types.
+  #     Rethrow with context if needed, never swallow exceptions.
+  #   enforcement: recommended
+  #   template: |
+  #     try {
+  #       await operation()
+  #     } catch (error) {
+  #       if (error instanceof SpecificError) {
+  #         throw new DomainError('Context', { cause: error })
+  #       }
+  #       throw error
+  #     }
+  #   reference_files:
+  #     - "src/services/UserService.ts"
+
+# =============================================================================
+# NAMING CONVENTIONS
+# File, variable, constant, and function naming rules
+# =============================================================================
+
+naming_conventions:
+  # Examples:
+  # files:
+  #   - "PascalCase for classes: UserService.ts, PostRepository.ts"
+  #   - "kebab-case for utilities: string-utils.ts, date-helpers.ts"
+  #   - "kebab-case for context files: _api-patterns.yaml, _glossary.yaml"
+  #
+  # variables:
+  #   - "camelCase for all variables: userId, postCount"
+  #   - "Descriptive names over abbreviations: userRepository vs userRepo"
+  #
+  # constants:
+  #   - "UPPER_SNAKE_CASE for globals: MAX_RETRY_COUNT, API_BASE_URL"
+  #   - "Enum members PascalCase: UserRole.Admin, OrderStatus.Pending"
+  #
+  # functions:
+  #   - "camelCase with action verbs: getUserById, validateEmail, handleSubmit"
+  #   - "Boolean functions start with is/has/should: isValid, hasPermission"
+
+# =============================================================================
+# TESTING STANDARDS
+# Testing requirements and patterns for different types of tests
+# =============================================================================
+
+testing_standards:
+  # Example:
+  # - standard: "Unit Test Structure"
+  #   description: |
+  #     All unit tests must follow AAA pattern: Arrange, Act, Assert.
+  #     Use descriptive test names explaining what is tested and expected outcome.
+  #   enforcement: recommended
+  #   example: |
+  #     describe('UserService.createUser', () => {
+  #       it('should create user with hashed password', async () => {
+  #         // Arrange
+  #         const userData = { email: 'test@example.com', password: 'plain' }
+  #         // Act
+  #         const user = await userService.createUser(userData)
+  #         // Assert
+  #         expect(user.password).not.toBe('plain')
+  #       })
+  #     })
+  #   reference_files:
+  #     - "tests/services/UserService.test.ts"
+
+# =============================================================================
+# DEPENDENCY RULES
+# Dependency management and architecture layer rules
+# =============================================================================
+
+dependency_rules:
+  # Example:
+  # - rule: "Layer Architecture Enforcement"
+  #   description: |
+  #     Dependencies must flow one direction: Controllers → Services → Repositories.
+  #     Repositories cannot import from Services. Services cannot import from Controllers.
+  #   enforcement: strict
+  #   layers:
+  #     - "controllers (presentation layer)"
+  #     - "services (business logic layer)"
+  #     - "repositories (data access layer)"
+  #   violation_example: "Service importing from Controller"
+
+# =============================================================================
+# SECURITY REQUIREMENTS
+# Security-critical conventions that must be followed
+# =============================================================================
+
+security_requirements:
+  # Example:
+  # - requirement: "Input Validation"
+  #   description: |
+  #     All user input must be validated before processing. Use validation library
+  #     (Zod/Yup) for schema validation, never manual string checks.
+  #   enforcement: strict
+  #   example: |
+  #     const userSchema = z.object({
+  #       email: z.string().email(),
+  #       password: z.string().min(8)
+  #     })
+  #     const validated = userSchema.parse(input)
+  #   reference_files:
+  #     - "src/validation/user-schemas.ts"
+
+# =============================================================================
+# PERFORMANCE GUIDELINES
+# Performance-related conventions for optimization
+# =============================================================================
+
+performance_guidelines:
+  # Example:
+  # - guideline: "Database Query Optimization"
+  #   description: |
+  #     All list queries must include pagination (limit/offset or cursor-based).
+  #     Select only required fields, avoid SELECT *.
+  #   enforcement: recommended
+  #   example: |
+  #     const users = await prisma.user.findMany({
+  #       select: { id: true, email: true, name: true },
+  #       take: 20,
+  #       skip: page * 20
+  #     })
+
+# =============================================================================
+# ACCESSIBILITY STANDARDS
+# Accessibility requirements for frontend code
+# =============================================================================
+
+accessibility_standards:
+  # Example:
+  # - standard: "Semantic HTML"
+  #   description: |
+  #     Use semantic HTML elements (button, nav, main, article) instead of generic divs.
+  #     All interactive elements must be keyboard accessible.
+  #   enforcement: recommended
+  #   example: |
+  #     <!-- Good -->
+  #     <button onClick={handleClick}>Submit</button>
+  #     <!-- Bad -->
+  #     <div onClick={handleClick}>Submit</div>
+
+# =============================================================================
+# PROJECT QUIRKS
+# Project-specific non-standard patterns with historical context
+# Useful for explaining "why we do it this way" that might seem unusual
+# =============================================================================
+
+project_quirks:
+  # Example:
+  # - quirk: "Manual Transaction Commit Pattern"
+  #   description: |
+  #     Unlike typical Prisma usage, we manually call transaction.commit() instead
+  #     of relying on auto-commit. This is because we integrate with legacy system
+  #     that requires explicit commit signals via webhook.
+  #   migration_guide: |
+  #     Once legacy system is decommissioned (target: Q3 2025), migrate to standard
+  #     Prisma transaction pattern with automatic commit on success.
+  #   reference_files:
+  #     - "src/services/LegacyIntegrationService.ts"
+# =============================================================================
+# NOTES
+# General guidance for using this file effectively
+# =============================================================================
+
+# ADDING NEW GUIDELINES:
+#   1. Manual: Run /document guidelines and describe the convention in conversation
+#   2. Auto: /complete detects patterns (5+ files, 95%+ consistency) and suggests additions
+#   3. Scan: Run /document scan guidelines to bootstrap from existing codebase
+#
+# ENFORCEMENT STRATEGY:
+#   - Start new guidelines as 'recommended' to gather feedback
+#   - Upgrade to 'strict' once proven valuable and team agrees
+#   - Use 'reference' for informational context that varies by use case
+#   - Strict guidelines fail build immediately on violation
+#   - For gradual migration, keep guidelines as 'recommended' until ready for strict enforcement
+#
+# CONFLICT RESOLUTION:
+#   - If guidelines conflict, first guideline in category takes precedence
+#   - /document detects potential conflicts and prompts before adding
+#   - Resolve conflicts manually by editing this file
+#
+# MAINTENANCE:
+#   - Review quarterly to remove outdated guidelines
+#   - Update reference_files when code is refactored
+#   - Deprecate guidelines by changing enforcement to 'reference' with migration notes

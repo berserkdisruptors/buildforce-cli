@@ -113,7 +113,102 @@ $ARGUMENTS
    - Check that plan was followed or deviations were logged
    - If requirements are missing or incomplete: **ALERT USER** before finalizing
 
-8. **Clear Spec State**:
+8. **Pattern Detection & Guidelines Auto-Update** (Optional Enhancement):
+
+   Analyze implemented code for emerging conventions and suggest additions to _guidelines.yaml:
+
+   **Check for Guidelines System**:
+   - Check if `.buildforce/context/_guidelines.yaml` exists
+   - If missing: Skip pattern detection (system not initialized)
+   - If exists: **PROCEED with pattern detection**
+
+   **Analyze Files for Patterns**:
+
+   Analyze files that were created or modified in the current spec for consistent patterns:
+
+   1. **Get modified files list**:
+      - Read `plan.yaml` to find files listed in `files_to_create` and `files_to_modify`
+      - These are the files to analyze for patterns
+      - Do NOT analyze entire codebase - focus on current spec implementation only
+
+   2. **Pattern detection criteria**:
+      - Pattern appears in **5+ files** from current spec
+      - Implementation consistency **≥95%** (near-identical structure/approach)
+      - Pattern is NOT already documented in existing _guidelines.yaml
+      - Pattern represents intentional convention, not accidental similarity
+
+   3. **Detectable pattern types**:
+      - **Architectural patterns**: Class structures, module organization, design patterns (e.g., Repository pattern, Factory pattern)
+      - **Naming conventions**: File/variable/function naming consistency (e.g., camelCase services, PascalCase components)
+      - **Code conventions**: Error handling, transaction flows, API patterns (e.g., try-catch structure, validation approach)
+      - **Testing patterns**: Test structure, mocking strategies, assertion patterns
+
+   4. **For each detected pattern**:
+      - Extract pattern name and description
+      - Calculate occurrence count and consistency percentage
+      - Identify 3-5 example files demonstrating the pattern
+      - Suggest appropriate category (architectural_patterns, code_conventions, etc.)
+      - Suggest enforcement level (default: `recommended` for safety)
+      - Draft guideline entry in _guidelines.yaml format with minimal example (5-10 lines)
+
+   **Present Detected Patterns to User**:
+
+   If patterns detected, present them BEFORE clearing spec state:
+
+   ```
+   ## Guideline Updates
+
+   ⚠️ The following conventions were detected and can be added to _guidelines.yaml:
+
+   ### Detected Pattern 1: [Pattern Name]
+   - **Detected in**: 7 files (98% consistency)
+   - **Category**: [architectural_patterns/code_conventions/naming_conventions]
+   - **Example files**: [src/services/UserService.ts, src/services/PostService.ts, src/services/OrderService.ts]
+   - **Suggested enforcement**: recommended
+   - **Preview**:
+     ```yaml
+     - pattern: "[Pattern Name]"
+       description: |
+         [Pattern description extracted from analysis]
+       enforcement: recommended
+       examples:
+         - file: "src/services/UserService.ts"
+           snippet: |
+             [5-10 line code snippet showing pattern]
+       reference_files:
+         - "src/services/UserService.ts"
+         - "src/services/PostService.ts"
+     ```
+
+   Would you like to add these patterns to _guidelines.yaml? (Y/n)
+   ```
+
+   **User Confirmation Workflow**:
+
+   - **If user confirms (Y or yes)**:
+     1. Read existing `.buildforce/context/_guidelines.yaml`
+     2. For each confirmed pattern:
+        - Append to appropriate category array
+        - Use minimal example strategy (5-10 line snippets)
+        - Include reference_files array from detected files
+        - Set enforcement to `recommended` (users can upgrade to strict later)
+     3. Update `last_updated` field to today's date (YYYY-MM-DD)
+     4. Write updated _guidelines.yaml back to disk
+     5. Report: "Added [N] new guidelines: [list pattern names with enforcement levels]"
+
+   - **If user declines (n or no)**:
+     1. Skip auto-update
+     2. Optionally mention: "You can manually add these patterns later via `/document guidelines`"
+     3. Continue to next step
+
+   - **CRITICAL**: Never auto-update without explicit user confirmation. This builds trust and prevents accidental convention capture.
+
+   **Pattern Detection Performance**:
+   - Keep analysis focused on modified files from current spec only
+   - Do not scan entire codebase (too expensive)
+   - If pattern detection takes >10 seconds, skip and mention: "Pattern detection skipped due to complexity - use `/document scan guidelines` for full codebase analysis"
+
+9. **Clear Spec State**:
 
    Mark the spec as complete:
 
@@ -121,13 +216,14 @@ $ARGUMENTS
    - This signals that no active spec is in progress
    - The `buildforce.json` file is preserved for future specs
 
-9. **Present Completion Summary**:
+10. **Present Completion Summary**:
 
 Provide a concise report to the user:
 
 - Spec ID and name that was completed
 - List of context files created (if any) with filenames
 - List of context files updated (if any) with what was added
+- **If patterns were detected and added**: Report guideline additions (e.g., "Added 2 new guidelines to _guidelines.yaml: Repository Pattern (recommended), Error Handling Pattern (recommended)")
 - Confirmation that all spec requirements were implemented
 - Brief summary of what was achieved with this spec (1-2 sentences)
 - **ALWAYS request user confirmation** that the completion is satisfactory
