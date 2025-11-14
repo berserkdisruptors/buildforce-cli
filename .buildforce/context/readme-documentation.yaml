@@ -3,7 +3,7 @@ name: "Comprehensive README Documentation for Buildforce CLI"
 type: feature
 status: production
 created: 2025-10-10
-last_updated: 2025-11-03
+last_updated: 2025-11-14
 
 summary: |
   Developer-focused README featuring simplified, user-perspective slash command documentation.
@@ -19,6 +19,7 @@ responsibilities:
   - Document quick start workflow from project initialization to first feature completion
   - Reference all CLI command options and flags (--ai, --script, --here, --force, etc.)
   - Document all 5 slash commands (/research, /spec, /build, /complete, /document) with simplified user-perspective descriptions
+  - Document /document guidelines mode for capturing project conventions with enforcement levels
   - Visualize workflow with Mermaid diagram showing 4-command core + 1 utility command
   - List all 11 supported AI assistants with configuration folders
   - Provide troubleshooting guidance for 5 common setup issues
@@ -95,10 +96,15 @@ evolution:
     date: "2025-11-03"
     changes: "Simplified slash command documentation (lines 127-257) focusing on user perspective and trust-building. Reduced command docs from 429 lines to 130 lines (62% reduction, 213 lines removed). Transformed technical 'What it does' sections (8-10 numbered steps) into 2-4 sentence outcome-focused descriptions. Removed all 8 YAML file structure examples. Removed all 5 'Key features' sections. Maintained Purpose, Usage, Examples (1-3 per command), and Pro tips. Structure now: Purpose → Usage → Examples → What it does → Pro tip. All 5 commands (/research, /spec, /build, /complete, /document) follow identical simplified structure. Documentation now emphasizes outcomes over implementation details while maintaining 100% accuracy. Zero deviations from plan."
 
+  - version: "3.2"
+    date: "2025-11-14"
+    changes: "Added guidelines feature documentation to README (Phase 4 of guidelines system implementation). Enhanced /document command section with Guidelines Mode subsection explaining /document guidelines and /document scan guidelines workflows. Documented three enforcement levels (strict/recommended/reference) with usage guidance. Updated 'What Makes It Different' comparison table to highlight convention enforcement ('Decisions preserved, searchable, and enforced via _guidelines.yaml'). Enhanced workflow bullet points for /spec, /build, /complete, /document to explain guidelines integration. Added new workflow scenario #4 for guidelines capture and enforcement. Total additions: ~25 lines. Maintains consistent tone and formatting with existing v3.1 structure. Zero deviations from plan."
+
 related_specs:
   - "now-update-readme-20250106120000 (spec.yaml and plan.yaml)"
   - "readme-v3-developer-focused-20250130000000 (spec.yaml and plan.yaml)"
   - "simplify-slash-cmd-docs-20251103140000 (spec.yaml and plan.yaml)"
+  - "implement-guidelines-system-20251112000000 (spec.yaml and plan.yaml - Phase 4)"
 
 notes: |
   README evolution: v1 comprehensive → v2 minimal → v3 developer-focused → v3.1 simplified user-perspective.
@@ -156,6 +162,17 @@ notes: |
   3. Requirements tracing (spec.yaml with AC vs conversation only)
   4. Plan generation (auto-converted to plan.yaml vs mode-specific)
   5. Deviation logging (Original → Actual → Reason vs untracked)
-  6. Decision preservation (searchable via /research vs forgotten)
+  6. Decision preservation (searchable, enforced via _guidelines.yaml vs forgotten)
   7. Knowledge sharing (team context repository vs individual knowledge)
   8. Feature building (accumulated wisdom vs from scratch)
+  9. Convention enforcement (_guidelines.yaml with strict/recommended levels vs no enforcement)
+
+  **v3.2 Guidelines Feature Documentation (2025-11-14):**
+  - Added Guidelines Mode subsection to /document command
+  - Documented /document guidelines and /document scan guidelines workflows
+  - Explained three enforcement levels (strict, recommended, reference)
+  - Enhanced "What Makes It Different" table row for architectural decisions
+  - Updated command bullet points to explain guidelines integration
+  - Added workflow scenario #4: Guidelines workflow
+  - Maintains v3.1's user-perspective, outcome-focused style
+  - Total additions: ~25 lines maintaining 600-800 line target

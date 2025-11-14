@@ -4,7 +4,7 @@ name: "Project Guidelines System (_guidelines.yaml)"
 type: feature
 status: draft
 created: "2025-11-12"
-last_updated: "2025-01-12"
+last_updated: "2025-11-14"
 
 summary: |
   Implement _guidelines.yaml system to capture and enforce project-wide conventions, coding standards,
@@ -64,6 +64,10 @@ functional_requirements:
   - FR10: Register _guidelines.yaml in .buildforce/context/_index.yaml as new context entry with appropriate tags
   - FR11: Validation failures must include specific file path, line number, violation description, and suggested fix
   - FR12: Support reference_files array in guidelines pointing to codebase examples to avoid inline code bloat
+  - FR13: Update README.md to document the guidelines feature in the /document command section
+  - FR14: Add guidelines usage examples showing /document guidelines creation workflow
+  - FR15: Document guideline enforcement levels (strict/recommended/reference) in README
+  - FR16: Add guidelines feature to "What Makes It Different" section highlighting convention enforcement
 
 non_functional_requirements:
   - NFR1: Guidelines file must remain human-readable and manually editable (YAML format)
@@ -85,6 +89,7 @@ in_scope:
   - _index.yaml registration for _guidelines.yaml context entry
   - Documentation of enforcement levels and validation behavior
   - Example _guidelines.yaml with 2-3 sample patterns demonstrating minimal example strategy
+  - README.md updates to document guidelines feature and usage examples
 
 out_of_scope:
   - Phase 4 advanced features (linting rule generation, module-specific guidelines, proactive suggestions)
@@ -122,6 +127,8 @@ acceptance_criteria:
   - AC10: Example _guidelines.yaml demonstrates minimal example strategy with reference_files
   - AC11: Validation errors include specific line references and suggested fixes
   - AC12: System works with and without _guidelines.yaml present (backward compatible)
+  - AC13: README.md documents guidelines feature with usage examples and enforcement levels
+  - AC14: README "What Makes It Different" section includes convention enforcement capability
 
 # ASSUMPTIONS & DEPENDENCIES
 

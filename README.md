@@ -36,7 +36,7 @@ AI agents start fresh with each session and reverse engineer the codebase on-dem
 | Requirements exist only in conversation       | User intent captured in `spec.yaml` with acceptance criteria                          |
 | Plans exist only in specific modes            | The captured spec is automatically converted into a plan that the user can iterate on |
 | Implementation deviations go untracked        | Deviations logged with rationale (Original → Actual → Reason)                         |
-| Architectural decisions forgotten             | Decisions preserved and searchable                                                    |
+| Architectural decisions forgotten             | Decisions preserved, searchable, and enforced via `_guidelines.yaml`                  |
 | Knowledge lives in individual developer heads | Shared context repository for team-wide knowledge                                     |
 | Each feature starts from scratch              | Each feature builds on accumulated project context                                    |
 
@@ -113,10 +113,10 @@ Buildforce uses slash commands inside AI assistant conversations to orchestrate 
 **What happens at each command:**
 
 - `/research`: Searches `.buildforce/context/` for accumulated knowledge, explores codebase patterns and search web if needed
-- `/spec`: Materializes user intent into structured requirements (functional, non-functional, acceptance criteria) saved as `spec.yaml` and actionable plan saved as `plan.yaml`
-- `/build`: Executes plan phases sequentially, updates progress, logs deviations from the plan on multiple iterations
-- `/complete`: Validates all requirements met, generates context files from spec+plan+implementation, updates context repository
-- `/document`: Standalone utility for documenting existing code without full spec-driven cycle
+- `/spec`: Materializes user intent into structured requirements (functional, non-functional, acceptance criteria) saved as `spec.yaml` and actionable plan saved as `plan.yaml`. Loads `_guidelines.yaml` as highest-priority context for convention-aware planning
+- `/build`: Executes plan phases sequentially, updates progress, logs deviations from the plan on multiple iterations. Validates code compliance against strict/recommended guidelines if `_guidelines.yaml` exists
+- `/complete`: Validates all requirements met, generates context files from spec+plan+implementation, updates context repository. Can auto-detect and suggest new guideline patterns
+- `/document`: Standalone utility for documenting existing code without full spec-driven cycle. Use `/document guidelines` to capture project conventions
 
 **Three workflow scenarios:**
 
@@ -133,11 +133,17 @@ Buildforce uses slash commands inside AI assistant conversations to orchestrate 
    ```
 
 3. **Documentation workflow** (manual context contribution):
+
    ```
    /research [topic] → /document [module]
    ```
 
-The key insight: Buildforce isn't just about individual commands. It's about how commands feed context forward (research informs spec, spec guides plan, plan drives build, build enriches context). This orchestration prevents context loss and creates knowledge that compounds over time.
+4. **Guidelines workflow** (capture and enforce conventions):
+   ```
+   /document guidelines → /spec [feature] → /build → /complete
+   ```
+
+The key insight: Buildforce isn't just about individual commands. It's about how commands feed context forward (research informs spec, spec guides plan, plan drives build, build enriches context). This orchestration prevents context loss and creates knowledge that compounds over time. Guidelines add convention enforcement—capture patterns with `/document guidelines`, and `/build` validates compliance automatically.
 
 ## Commands
 
@@ -268,6 +274,28 @@ Validates that all spec requirements are met, reviews the deviation log, and gen
 Creates or updates structured context files in your project's knowledge repository by analyzing conversation history. Works independently of the spec-driven workflow—perfect for documenting existing code, architectural patterns, or legacy components. Intelligently determines whether to create new files or update existing ones, automatically resolves naming conflicts, and maintains cross-references between related contexts. If your conversation lacks sufficient context, it prompts you to gather more information first.
 
 **Pro tip**: Prepare context window first (read files, discuss architecture) before running `/document`. The command analyzes conversation history to extract documentation, so richer context produces better results. Natural complement to `/research`: research reads context, document writes context.
+
+**Guidelines Mode**: Capture project-wide conventions and coding standards using `/document guidelines`. Creates or updates `_guidelines.yaml` with architectural patterns, naming conventions, and code standards that AI agents enforce during `/build`. Three workflows available:
+
+```
+/document guidelines
+```
+
+Creates or updates guidelines from conversation (manual mode). Discuss conventions in chat, then run command to capture them as structured guidelines.
+
+```
+/document scan guidelines
+```
+
+Bootstrap initial guidelines by analyzing existing codebase patterns (scan mode). Detects consistent patterns across 5+ files with 95%+ consistency.
+
+**Enforcement levels**:
+
+- **strict**: Build fails on violation (use for critical conventions)
+- **recommended**: Logs warnings only (use for best practices)
+- **reference**: Context only, no validation (use for informational patterns)
+
+Guidelines are loaded during `/spec` (as planning context), validated during `/build` (code compliance check), and can auto-evolve via `/complete` (pattern detection).
 
 ---
 

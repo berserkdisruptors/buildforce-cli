@@ -9,7 +9,7 @@ spec_id: "implement-guidelines-system-20251112000000"
 type: implementation-plan
 status: draft
 created: "2025-11-12"
-last_updated: "2025-01-12"
+last_updated: "2025-11-14"
 
 # ARCHITECTURE OVERVIEW
 # Describe the high-level implementation approach and key technical decisions.
@@ -349,6 +349,87 @@ phase_3:
     - [ ] Manual testing: Decline pattern addition, verify _guidelines.yaml unchanged
     - [x] Spec requirements covered: [FR8, FR9, NFR4, NFR5, AC7, AC8]
 
+phase_4:
+  name: "README Documentation (Phase 4)"
+  description: |
+    Update README.md to document the guidelines feature with usage examples, enforcement
+    levels, and integration into the existing workflow documentation. Enhance the
+    "What Makes It Different" section to highlight convention enforcement capability.
+
+  tasks:
+    - [x] Update /document command section in README
+      spec_refs: [FR13, FR14, AC13]
+      files: [README.md]
+      notes: |
+        Enhance the /document command section (currently at line 246) to include:
+
+        **Add guidelines mode documentation**:
+        - Explain /document guidelines mode for capturing project conventions
+        - Show usage examples:
+          ```
+          /document guidelines
+
+          /document scan guidelines
+          ```
+        - Document three workflows:
+          1. Manual creation: /document guidelines (from conversation)
+          2. Manual update: /document guidelines (intelligent merge)
+          3. Bootstrap scan: /document scan guidelines (analyze codebase)
+
+        **Add enforcement levels explanation**:
+        - strict: MUST follow, build fails on violation
+        - recommended: SHOULD follow, logs warnings
+        - reference: Context only, no validation
+
+        Keep consistent with existing command documentation style.
+
+    - [x] Add guidelines to "What Makes It Different" table
+      spec_refs: [FR16, AC14]
+      files: [README.md]
+      notes: |
+        Update the comparison table (currently at line 30) to include:
+
+        | AI Assistant only | AI Assistant + Buildforce |
+        | ... existing rows ... |
+        | No convention enforcement | Project conventions enforced via _guidelines.yaml |
+
+        Or integrate into existing row about "Architectural decisions forgotten":
+        "Architectural decisions forgotten" vs "Decisions preserved, searchable, and enforced via guidelines"
+
+    - [x] Add guidelines workflow integration note
+      spec_refs: [FR13, AC13]
+      files: [README.md]
+      notes: |
+        In the "How It Works" section workflow visualization (line 97-111), add a note
+        explaining that guidelines are loaded during /spec and validated during /build:
+
+        Add bullet point to existing workflow description:
+        - Guidelines enforce conventions throughout workflow (loaded in /spec, validated in /build)
+
+        Keep minimal and consistent with existing documentation density.
+
+    - [x] Add guidelines example to workflow scenarios
+      spec_refs: [FR14, AC13]
+      files: [README.md]
+      notes: |
+        Consider adding a brief guidelines-focused example to the "What happens at each command"
+        section or as a standalone note. Example:
+
+        **Guidelines integration**: Create _guidelines.yaml via /document guidelines to capture
+        conventions. /spec loads guidelines as context, /build validates compliance, /complete
+        can auto-detect new patterns.
+
+        Keep concise - 1-2 sentences maximum.
+
+  validation:
+    - [x] All phase_4 tasks completed
+    - [x] README /document section documents guidelines mode with examples
+    - [x] Enforcement levels (strict/recommended/reference) explained clearly
+    - [x] "What Makes It Different" table includes convention enforcement
+    - [x] README changes maintain consistent tone and formatting with existing content
+    - [x] No broken links or formatting issues introduced
+    - [x] Spec requirements covered: [FR13, FR14, FR15, FR16, AC13, AC14]
+
 # DEVIATION LOG
 # The /build agent populates this section when implementation deviates from the original plan
 # Format: phase → task → original plan → actual implementation → reason for deviation
@@ -470,6 +551,10 @@ spec_coverage:
   - FR10: "⏳ Phase 1: Task 4 (Register in _index.yaml)"
   - FR11: "⏳ Phase 2: Task 3 (Validation with file/line/fix details)"
   - FR12: "⏳ Phase 1: Task 2 (reference_files array in example)"
+  - FR13: "⏳ Phase 4: Task 1 (Update README /document section)"
+  - FR14: "⏳ Phase 4: Tasks 1,4 (Add guidelines usage examples)"
+  - FR15: "⏳ Phase 4: Task 1 (Document enforcement levels)"
+  - FR16: "⏳ Phase 4: Task 2 (Add to 'What Makes It Different')"
   - NFR1: "⏳ Phase 1: Task 1 (YAML format)"
   - NFR2: "⏳ Phase 1: Task 2 (5-10 line examples)"
   - NFR3: "⏳ Phase 2: Task 3 (Validation performance)"
@@ -484,20 +569,22 @@ overall_progress:
   phase_1: "4/4 tasks completed"
   phase_2: "4/4 tasks completed"
   phase_3: "4/4 tasks completed"
+  phase_4: "4/4 tasks completed"
 
 current_status: |
-  All three phases successfully implemented. Guidelines system is fully functional:
+  All four phases successfully implemented. Guidelines system is fully functional and documented.
+
   - Phase 1: Core structure, templates, and /document integration complete
   - Phase 2: /spec and /build integration with validation complete
   - Phase 3: Pattern detection and auto-update in /complete complete
+  - Phase 4: README documentation complete
 
-  Ready for testing and validation.
+  Implementation complete. Ready for final validation and testing.
 
 next_immediate_steps:
-  - "Test /document guidelines creation workflow"
-  - "Test /spec guideline loading and referencing"
-  - "Test /build validation with strict and recommended guidelines"
-  - "Test /complete pattern detection and auto-update workflow"
+  - "Validate README changes for formatting consistency"
+  - "Test guidelines workflow end-to-end"
+  - "Consider running /complete to finalize this spec"
 
 # RISKS & CONSIDERATIONS
 # Document potential risks and mitigation strategies
