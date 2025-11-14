@@ -1,0 +1,196 @@
+version: "0.0.33"
+id: "implement-guidelines-system-20251112000000-research"
+created: "2025-11-12"
+last_updated: "2025-11-12"
+
+summary: |
+  Brainstorming session exploring _guidelines.yaml system for capturing project-wide conventions,
+  standards, and coding patterns. System designed as "Project DNA" file that accumulates tribal
+  knowledge and enforces consistency across AI-assisted development sessions. Covers three implementation
+  phases: core structure, validation enforcement, and auto-evolution with pattern detection.
+
+key_findings:
+  - "_guidelines.yaml acts as living documentation of project conventions with enforcement levels (strict/recommended/reference)"
+  - "Integration points: /document creates/updates guidelines, /spec uses as context, /build validates compliance, /complete auto-updates based on pattern detection"
+  - "Core categories: architectural_patterns, code_conventions, naming_conventions, testing_standards, dependency_rules, security_requirements, performance_guidelines, accessibility_standards, project_quirks"
+  - "Enforcement levels enable flexibility: strict (MUST follow, build fails), recommended (SHOULD follow, warns), reference (context only)"
+  - "Validation strategy checks implemented code against guidelines with specific line references and correction guidance"
+  - "Auto-update logic detects new patterns with consistency thresholds (95%+ across 5+ files) and notifies user before adding"
+  - "Guidelines include minimal essential examples plus references to avoid context window bloat"
+  - "Scope concerns: module-specific guidelines, guideline versioning/deprecation, conflict resolution workflows"
+
+file_paths:
+  primary:
+    - path: ".buildforce/context/_guidelines.yaml"
+      relevance: "New file to be created - central repository for project conventions"
+    - path: "src/templates/commands/document.md"
+      relevance: "Needs enhancement to support /document guidelines mode"
+    - path: "src/templates/commands/spec.md"
+      relevance: "Must load and reference _guidelines.yaml during spec creation"
+    - path: "src/templates/commands/build.md"
+      relevance: "Requires guideline compliance validation logic"
+    - path: "src/templates/commands/complete.md"
+      relevance: "Needs pattern detection and auto-update logic"
+
+  secondary:
+    - path: ".buildforce/context/_index.yaml"
+      relevance: "Must register _guidelines.yaml as new context entry"
+    - path: "src/templates/plan-template.yaml"
+      relevance: "Needs guideline_compliance section for validation tracking"
+
+data_models:
+  - name: "_guidelines.yaml"
+    description: "Master schema for project-wide conventions and standards"
+    properties:
+      - name: "version"
+        type: "string"
+        required: true
+        description: "CLI version for schema compatibility"
+
+      - name: "last_updated"
+        type: "string (YYYY-MM-DD)"
+        required: true
+        description: "Last modification date for tracking evolution"
+
+      - name: "architectural_patterns"
+        type: "array"
+        required: false
+        description: "High-level structural conventions"
+        schema:
+          pattern: "string (pattern name)"
+          description: "string (multi-line explanation)"
+          enforcement: "strict | recommended | reference"
+          examples:
+            - file: "string (path)"
+              snippet: "string (code example - minimal)"
+          violations: "array of strings (common mistakes)"
+          reference_files: "array of strings (paths to see pattern in action)"
+
+      - name: "code_conventions"
+        type: "array"
+        required: false
+        description: "Specific coding standards and implementation patterns"
+        schema:
+          convention: "string"
+          description: "string (multi-line)"
+          enforcement: "strict | recommended | reference"
+          template: "string (code template - optional)"
+          reference_files: "array of strings"
+
+      - name: "naming_conventions"
+        type: "object"
+        required: false
+        description: "File, variable, constant naming rules"
+        schema:
+          files: "array of pattern strings"
+          variables: "array of pattern strings"
+          constants: "array of pattern strings"
+          functions: "array of pattern strings"
+
+      - name: "testing_standards"
+        type: "array"
+        required: false
+        description: "Testing requirements and patterns"
+        schema:
+          standard: "string"
+          enforcement: "strict | recommended | reference"
+          reference_files: "array of strings"
+
+      - name: "dependency_rules"
+        type: "array"
+        required: false
+        description: "Dependency management and architecture layer rules"
+        schema:
+          rule: "string"
+          enforcement: "strict | recommended | reference"
+          layers: "array (optional - for layer architecture)"
+
+      - name: "security_requirements"
+        type: "array"
+        required: false
+        description: "Security-critical conventions"
+        schema:
+          requirement: "string"
+          enforcement: "strict | recommended | reference"
+
+      - name: "performance_guidelines"
+        type: "array"
+        required: false
+        description: "Performance-related conventions"
+        schema:
+          guideline: "string"
+          enforcement: "strict | recommended | reference"
+
+      - name: "accessibility_standards"
+        type: "array"
+        required: false
+        description: "Accessibility requirements"
+        schema:
+          standard: "string"
+          enforcement: "strict | recommended | reference"
+
+      - name: "project_quirks"
+        type: "array"
+        required: false
+        description: "Project-specific non-standard patterns with historical context"
+        schema:
+          quirk: "string"
+          description: "string (why this quirk exists)"
+          migration_guide: "string (optional - how to phase out)"
+
+    relationships:
+      - "Referenced by all slash commands during workflow execution"
+      - "Updated by /complete when new patterns detected with 95%+ consistency"
+      - "Created/updated manually via /document guidelines command"
+
+  - name: "guideline_compliance (in plan.yaml)"
+    description: "Validation tracking section added to plan.yaml during /build"
+    properties:
+      - name: "strict_validations"
+        type: "array"
+        required: true
+        description: "Results of strict enforcement guideline checks"
+        schema:
+          guideline: "string (guideline name)"
+          status: "✓ PASS | ✗ FAIL"
+          checked_files: "array of strings"
+          violation: "object (if FAIL)"
+
+      - name: "recommended_validations"
+        type: "array"
+        required: true
+        description: "Results of recommended guideline checks"
+        schema:
+          guideline: "string"
+          status: "✓ PASS | ⚠ DEVIATION"
+          deviation: "object (if DEVIATION - includes rationale)"
+
+architectural_decisions:
+  - pattern: "Three-Phase Implementation Strategy"
+    description: "Phase 1: Core structure with /document creation. Phase 2: Validation in /build with strict/recommended enforcement. Phase 3: Auto-evolution via /complete with pattern detection."
+    rationale: "Incremental delivery enables early value (manual guideline creation) while building toward intelligent automation. Each phase is independently valuable and testable."
+
+  - pattern: "Enforcement Level Hierarchy"
+    description: "Guidelines tagged as strict (MUST follow, build fails), recommended (SHOULD follow, warns), or reference (context only, no validation)"
+    rationale: "Enables flexibility while ensuring critical conventions are enforced. Prevents over-specification that would burden developers. Recommended level allows teams to gradually adopt patterns."
+
+  - pattern: "Minimal Examples Plus References"
+    description: "Guidelines include essential code snippets (1-2 per pattern) plus reference_files array pointing to real implementations in codebase"
+    rationale: "Avoids context window bloat from verbose examples while providing actionable guidance. Reference files allow AI to read full implementations when needed during /build."
+
+  - pattern: "Pattern Detection Thresholds"
+    description: "Auto-update triggers when pattern appears in 5+ files with 95%+ consistency. User confirmation required before adding to _guidelines.yaml"
+    rationale: "High thresholds prevent false positives from accidental similarities. User confirmation ensures intentional conventions are captured, not implementation accidents."
+
+  - pattern: "Validation as Code Review Simulation"
+    description: "/build validates code against guidelines similar to PR review - flags violations, suggests fixes, requires resolution for strict enforcement"
+    rationale: "Mimics human code review process that developers understand. Provides educational feedback, not just binary pass/fail. Builds quality into implementation phase."
+
+tldr:
+  - "_guidelines.yaml is 'Project DNA' file capturing tribal knowledge, conventions, and hard-won patterns for AI-assisted consistency"
+  - "Three-phase implementation: Phase 1 (core structure + /document creation), Phase 2 (validation in /build), Phase 3 (auto-evolution via /complete)"
+  - "Enforcement levels (strict/recommended/reference) balance flexibility with quality gates - strict fails build, recommended warns"
+  - "Minimal examples plus reference_files array strategy avoids context window bloat while providing actionable guidance"
+  - "Integration across workflow: /document creates/updates, /spec loads for context, /build validates compliance, /complete detects new patterns"
+  - "Pattern detection uses 5+ file occurrences with 95%+ consistency threshold to trigger auto-update suggestions with user confirmation"
+  - "Validation simulates code review with specific line references, correction guidance, and deviation logging for non-compliance"

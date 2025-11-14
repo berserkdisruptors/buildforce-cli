@@ -1,0 +1,185 @@
+# Buildforce CLI Project Guidelines
+# Version: 0.0.33
+# This file captures conventions, standards, and coding patterns for the Buildforce CLI project.
+# AI agents use these guidelines when implementing features to maintain consistency.
+
+version: "0.0.33"
+last_updated: "2025-11-12"
+
+# =============================================================================
+# ARCHITECTURAL PATTERNS
+# =============================================================================
+
+architectural_patterns:
+  - pattern: "Template-Only Slash Commands"
+    description: |
+      All slash commands are implemented as markdown templates in src/templates/commands/,
+      NOT as TypeScript code. The CLI infrastructure reads these templates and passes them
+      to Claude AI agents for execution. This keeps the CLI thin and puts all logic in
+      AI-interpretable instructions.
+    enforcement: strict
+    examples:
+      - file: "src/templates/commands/spec.md"
+        snippet: |
+          # /spec command template
+          User input: $ARGUMENTS
+          **Your task**: Create structured spec...
+    violations:
+      - "Adding command logic to TypeScript CLI code instead of templates"
+      - "Creating command handlers in src/commands/ directory"
+    reference_files:
+      - "src/templates/commands/spec.md"
+      - "src/templates/commands/build.md"
+      - "src/templates/commands/document.md"
+      - "src/templates/commands/complete.md"
+
+  - pattern: "Context Repository Pattern"
+    description: |
+      Project knowledge lives in .buildforce/context/ as YAML files. Each context file
+      captures a specific aspect of the project (glossary, API patterns, architecture).
+      Context files are registered in _index.yaml with descriptive tags for discovery.
+      This creates a "living documentation" system that evolves with the project.
+    enforcement: recommended
+    examples:
+      - file: ".buildforce/context/_glossary.yaml"
+        snippet: |
+          version: "0.0.33"
+          terms:
+            - term: "spec"
+              definition: "Structured YAML file capturing WHAT needs to be built"
+    reference_files:
+      - ".buildforce/context/_index.yaml"
+      - ".buildforce/context/_glossary.yaml"
+
+# =============================================================================
+# CODE CONVENTIONS
+# =============================================================================
+
+code_conventions:
+  - convention: "Bash Script Context Loading"
+    description: |
+      All bash scripts in .buildforce/scripts/bash/ must be called from the current
+      working directory (project root), never from nested directories. Scripts use
+      relative paths from project root. This ensures consistent behavior regardless
+      of where buildforce is invoked.
+    enforcement: strict
+    template: |
+      # Good - called from project root
+      .buildforce/scripts/bash/get-spec-paths.sh --json
+
+      # Bad - assumes nested directory context
+      cd .buildforce/scripts && bash ./get-spec-paths.sh
+    reference_files:
+      - ".buildforce/scripts/bash/get-spec-paths.sh"
+      - ".buildforce/scripts/bash/create-spec-files.sh"
+
+  - convention: "Error Handling in Templates"
+    description: |
+      Slash command templates must include error handling instructions for AI agents.
+      Use "NEVER proceed if script fails" pattern with actionable user guidance.
+      This prevents silent failures when prerequisites are missing.
+    enforcement: recommended
+    template: |
+      Run `.buildforce/scripts/bash/get-spec-paths.sh --json` FROM CURRENT WORKING DIRECTORY.
+      **NEVER proceed** if script fails - display error, explain .buildforce directory not found,
+      suggest: 1) check if in buildforce root directory, 2) run `buildforce init .` if needed.
+    reference_files:
+      - "src/templates/commands/build.md"
+      - "src/templates/commands/complete.md"
+
+# =============================================================================
+# NAMING CONVENTIONS
+# =============================================================================
+
+naming_conventions:
+  files:
+    - "kebab-case for context files: _glossary.yaml, _api-patterns.yaml, _guidelines.yaml"
+    - "kebab-case with prefix for templates: plan-template.yaml, spec-template.yaml"
+    - "Descriptive names over abbreviations: get-spec-paths.sh vs get-paths.sh"
+
+  variables:
+    - "UPPER_SNAKE_CASE for bash script variables: SPEC_DIR, BUILDFORCE_ROOT, FEATURE_DIR"
+    - "camelCase for TypeScript: specId, featurePath, lastUpdated"
+
+  constants:
+    - "Semantic versioning in version fields: 0.0.33 (major.minor.patch)"
+
+# =============================================================================
+# TESTING STANDARDS
+# =============================================================================
+
+testing_standards:
+  - standard: "Manual Workflow Testing"
+    description: |
+      Since slash commands are templates interpreted by AI, automated unit tests
+      have limited value. Primary testing strategy is end-to-end workflow testing:
+      run actual commands and verify output files match expected structure.
+    enforcement: recommended
+    example: |
+      # Test /spec workflow
+      1. Run /spec for new feature
+      2. Verify spec.yaml created with correct schema
+      3. Check plan.yaml contains all required sections
+      4. Validate YAML syntax with yamllint
+    reference_files:
+      - "src/templates/plan-template.yaml (validation section)"
+
+# =============================================================================
+# DEPENDENCY RULES
+# =============================================================================
+
+dependency_rules:
+  - rule: "Template-Only Changes Preferred"
+    description: |
+      When implementing new features, prefer modifying markdown templates over
+      adding TypeScript dependencies. This keeps the CLI lightweight and reduces
+      installation size. Only add npm packages when template-based solution is
+      not feasible.
+    enforcement: recommended
+    layers:
+      - "templates (markdown instructions for AI)"
+      - "CLI infrastructure (TypeScript, minimal logic)"
+      - "external dependencies (npm packages, avoid when possible)"
+
+# =============================================================================
+# PROJECT QUIRKS
+# =============================================================================
+
+project_quirks:
+  - quirk: "buildforce.json replaces .current-spec"
+    description: |
+      The CLI previously tracked current spec using .current-spec file. This has been
+      migrated to buildforce.json for better structure and extensibility. Legacy code
+      may still reference .current-spec in comments/docs, but all new code must use
+      buildforce.json state tracking.
+    migration_guide: |
+      When updating old templates or docs, replace references to .current-spec with
+      buildforce.json. The migration is complete, but historical context helps explain
+      why both terms appear in discussions.
+    reference_files:
+      - "buildforce.json (current state tracking)"
+
+  - quirk: "Minimal Example Strategy"
+    description: |
+      Context files and templates use 5-10 line code snippets instead of verbose
+      examples. Full implementations are referenced via reference_files arrays.
+      This prevents context window bloat while providing actionable guidance.
+      AI agents can read reference files on-demand during /build if they need
+      detailed examples.
+    reference_files:
+      - ".buildforce/templates/guidelines-template.yaml"
+
+# =============================================================================
+# NOTES
+# =============================================================================
+
+# This _guidelines.yaml demonstrates:
+# 1. Minimal examples (5-10 lines) that show pattern without bloat
+# 2. reference_files arrays pointing to real implementations
+# 3. Enforcement levels: strict for critical patterns, recommended for best practices
+# 4. Project quirks with historical context explaining "why we do it this way"
+#
+# As Buildforce CLI evolves, new patterns will be added via:
+# - /document guidelines (manual creation from conversation)
+# - /complete auto-detection (pattern analysis after implementation)
+# - /document scan guidelines (bootstrap from existing codebase)
