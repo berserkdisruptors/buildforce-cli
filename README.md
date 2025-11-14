@@ -318,55 +318,6 @@ npm link
 5. **Test locally** - `npm link` and test your changes
 6. **Submit PR** - Describe your changes and link related issues
 
-### Commit Conventions
-
-We use [Conventional Commits](https://www.conventionalcommits.org/) for clear commit history and automated release notes generation.
-
-**Commit Format:**
-```
-<type>: <description>
-```
-
-**Allowed Types:**
-- `feat`: New feature
-- `fix`: Bug fix
-- `docs`: Documentation changes
-- `style`: Code formatting (no logic change)
-- `refactor`: Code restructuring (no behavior change)
-- `perf`: Performance improvements
-- `test`: Adding or updating tests
-- `build`: Build system or dependencies
-- `ci`: CI/CD configuration
-- `chore`: Maintenance tasks
-- `revert`: Revert previous commit
-
-**Examples:**
-```bash
-feat: add user authentication
-fix: resolve memory leak in upload handler
-docs: update installation instructions
-```
-
-**Interactive Commits (Recommended):**
-Use commitizen for guided commit message creation:
-```bash
-npm run commit
-```
-
-### Branch Naming Conventions
-
-Branch names must follow this pattern: `<type>/<description>`
-
-**Examples:**
-```
-feat/add-user-auth
-fix/memory-leak
-docs/update-readme
-chore/update-dependencies
-```
-
-**Protected branches** (no prefix required): `main`, `staging`, `dev`
-
 ---
 
 ## Support & Community
