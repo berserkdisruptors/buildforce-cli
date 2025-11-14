@@ -1,0 +1,89 @@
+version: "0.0.27"
+id: "update-package-json-version-20250107000000-research"
+created: "2025-11-07"
+last_updated: "2025-11-07"
+
+summary: |
+  Researched npm publish workflows and version management patterns to understand how to update package.json
+  version field during releases. Analyzed existing release.yml workflow that updates template files with
+  versions and npm-publish.yml workflow that currently updates package.json in-memory only. Goal is to
+  align both workflows to use same version source and persist package.json version to git.
+
+key_findings:
+  - "Release workflow uses custom bash script (update-template-versions.sh) to version template files and commits changes with [skip ci]"
+  - "NPM publish workflow already updates package.json using 'npm version --no-git-tag-version' but only in CI memory, not persisted to git"
+  - "Both workflows extract version from release tag but package.json in repository stays at 0.0.1"
+  - "Template versioning follows pre-commit strategy: calculate version → update files → commit → tag → release"
+  - "npm version command is the standard tool for programmatically updating package.json and package-lock.json"
+  - "The --no-git-tag-version flag prevents npm version from creating git tags/commits"
+
+file_paths:
+  primary:
+    - path: ".github/workflows/release.yml"
+      relevance: "Main release workflow that calculates version and updates templates"
+    - path: ".github/workflows/npm-publish.yml"
+      relevance: "NPM publish workflow that currently updates package.json in-memory only"
+    - path: ".github/workflows/scripts/get-next-version.sh"
+      relevance: "Script that calculates next unused version from git tags with increment-until-unused logic"
+    - path: ".github/workflows/scripts/update-template-versions.sh"
+      relevance: "Script that updates template files with version, demonstrates pre-commit pattern"
+    - path: "package.json"
+      relevance: "NPM package manifest with hardcoded version 0.0.1"
+
+  secondary:
+    - path: ".buildforce/context/template-versioning.yml"
+      relevance: "Context documentation for existing template versioning feature"
+
+mermaid_diagrams:
+  - title: "Current vs Desired Workflow Architecture"
+    description: "Shows how version flows through release and npm-publish workflows"
+    diagram: |
+      ```mermaid
+      graph TD
+          A[Push to main] --> B[Release Workflow]
+          B --> C[Get Next Version from Git Tags]
+          C --> D[Update Template Versions]
+          D --> E[Commit Templates with skip ci]
+          E --> F[Create GitHub Release with Tag]
+
+          F --> G[NPM Publish Workflow]
+          G --> H[Extract Version from Release Tag]
+          H --> I[npm version X.Y.Z --no-git-tag-version]
+          I --> J[Update package.json in memory]
+          J --> K[npm run build]
+          K --> L[npm publish]
+
+          style I fill:#90EE90
+          style J fill:#FFD700
+          style D fill:#87CEEB
+      ```
+
+architectural_decisions:
+  - pattern: "Pre-commit version bump strategy"
+    description: "Update version in source files before creating release tag"
+    rationale: "Ensures tagged commits contain versioned files, provides clean git history, and makes version persistent in repository"
+
+  - pattern: "Single source of truth for versions"
+    description: "All version numbers derive from git tags via get-next-version.sh"
+    rationale: "Prevents version drift, ensures consistency across templates and package.json, enables increment-until-unused collision handling"
+
+  - pattern: "npm version command for package.json updates"
+    description: "Use official npm tooling instead of manual JSON manipulation"
+    rationale: "Updates both package.json and package-lock.json atomically, follows npm best practices, handles edge cases"
+
+external_references:
+  - title: "npm version command documentation"
+    url: "https://docs.npmjs.com/cli/commands/npm-version"
+    relevance: "Official documentation for --no-git-tag-version flag and version update behavior"
+
+  - title: "Stack Overflow: Update package.json version automatically"
+    url: "https://stackoverflow.com/questions/13059991/update-package-json-version-automatically"
+    relevance: "Community best practices for automating version updates in CI/CD"
+
+tldr:
+  - "npm-publish workflow already updates package.json but only in-memory, not persisted to git"
+  - "Release workflow should update both templates AND package.json using pre-commit strategy"
+  - "Use 'npm version $VERSION --no-git-tag-version' to update package.json programmatically"
+  - "Commit step must include package.json and package-lock.json in addition to templates"
+  - "NPM publish workflow can skip version update since package.json will already be correct"
+  - "Both workflows will use same version from get-next-version.sh ensuring consistency"

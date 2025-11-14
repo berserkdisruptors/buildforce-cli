@@ -45,13 +45,18 @@ jobs:
           VERSION="${{ steps.get_tag.outputs.new_version }}"
           VERSION_NO_V="${VERSION#v}"
           .github/workflows/scripts/update-template-versions.sh "$VERSION_NO_V"
+      - name: Update package.json version
+        run: |
+          VERSION="${{ steps.get_tag.outputs.new_version }}"
+          VERSION_NO_V="${VERSION#v}"
+          npm version "$VERSION_NO_V" --no-git-tag-version --allow-same-version
       - name: Commit version bump
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add src/templates/
+          git add src/templates/ package.json package-lock.json
           if git diff --cached --quiet; then
-            echo "No template changes to commit"
+            echo "No version changes to commit"
           else
             git commit -m "chore: bump version to ${{ steps.get_tag.outputs.new_version }} [skip ci]"
             git push origin HEAD:main

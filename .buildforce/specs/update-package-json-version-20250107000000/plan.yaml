@@ -1,0 +1,245 @@
+version: "0.0.27"
+# Plan Template for /build Agent Execution
+# This template is optimized for AI agent consumption during /build commands
+# It provides checkbox-based progress tracking, deviation logging, and spec traceability
+
+id: update-package-json-version-20250107000000-plan
+name: "Implementation Plan for Update package.json Version in Release Workflow"
+spec_id: "update-package-json-version-20250107000000"
+type: implementation-plan
+status: draft
+created: "2025-11-07"
+last_updated: "2025-11-07"
+
+# ARCHITECTURE OVERVIEW
+# Describe the high-level implementation approach and key technical decisions.
+
+approach: |
+  Follow the existing pre-commit version bump pattern used for templates. Add a new step to
+  release.yml workflow that runs npm version command after template versioning, using the same
+  version calculated by get-next-version.sh. Modify the commit step to include package.json
+  and package-lock.json files. Simplify npm-publish.yml workflow by replacing the version
+  update logic with a verification step that confirms package.json already has correct version.
+
+technology_stack:
+  - npm version command for atomic package.json and package-lock.json updates
+  - GitHub Actions workflow steps for orchestration
+  - Bash shell scripting for version string manipulation
+  - git commands for committing and pushing version changes
+
+decisions:
+  - decision: "Use npm version --no-git-tag-version instead of manual JSON manipulation"
+    rationale: "Official npm tooling ensures both package.json and package-lock.json are updated atomically with proper formatting. The --no-git-tag-version flag prevents npm from creating git commits/tags, allowing workflow to control git operations."
+
+  - decision: "Add package.json update immediately after template versioning step"
+    rationale: "Keeps both updates close together in workflow, uses same VERSION_NO_V variable, and allows single commit for all version changes (templates + package files)."
+
+  - decision: "Keep verification step in npm-publish.yml instead of removing version update entirely"
+    rationale: "Provides safety check in case release workflow fails to update package.json. If versions mismatch, workflow can fall back to updating version before publishing."
+
+  - decision: "Add --allow-same-version flag to npm version command"
+    rationale: "Prevents npm version from failing if version is already set to target value, useful for workflow re-runs and testing scenarios."
+
+# FILE STRUCTURE
+# List all files to be created or modified during implementation
+
+files_to_create: []
+
+files_to_modify:
+  - path: ".github/workflows/release.yml"
+    change_type: "edit"
+    description: "Add package.json version update step after template versioning (line ~47), modify commit step to include package.json and package-lock.json files (line ~52)"
+
+  - path: ".github/workflows/npm-publish.yml"
+    change_type: "edit"
+    description: "Replace version update step with verification step that checks if package.json version matches release tag, only updates if mismatch detected (line ~45-46)"
+
+# IMPLEMENTATION PHASES
+# Break down the implementation into logical phases with checkbox-based task tracking
+# Use [ ] for pending tasks and [x] for completed tasks
+# Each task should link back to spec requirements via spec_refs
+
+phase_1:
+  name: "Update Release Workflow"
+  description: |
+    Modify release.yml workflow to update package.json version using npm version command
+    and commit the changes along with templates. This phase implements the core version
+    persistence requirement.
+
+  tasks:
+    - [x] Add package.json version update step after "Update template versions" step in release.yml
+      spec_refs: [FR1, FR2, NFR1]
+      files: [.github/workflows/release.yml]
+      notes: "Insert new step between lines 42-47. Use npm version with --no-git-tag-version and --allow-same-version flags. Extract VERSION_NO_V from new_version output same way template step does."
+
+    - [x] Modify "Commit version bump" step to include package.json and package-lock.json in git add
+      spec_refs: [FR3, FR4]
+      files: [.github/workflows/release.yml]
+      notes: "Update line 52 from 'git add src/templates/' to 'git add src/templates/ package.json package-lock.json'. Commit message already includes version and [skip ci] flag."
+
+  validation:
+    - [x] All phase_1 tasks completed
+    - [x] Workflow YAML syntax is valid (no indentation errors)
+    - [x] Step ordering is correct (get version → update templates → update package.json → commit all)
+    - [x] Spec requirements covered: [FR1, FR2, FR3, FR4, NFR1]
+
+phase_2:
+  name: "Update NPM Publish Workflow"
+  description: |
+    Simplify npm-publish.yml workflow by replacing version update logic with verification
+    step. Since package.json will already have correct version from release workflow, we
+    only need to verify and handle edge cases.
+
+  tasks:
+    - [x] Replace "Update package.json version" step with verification step in npm-publish.yml
+      spec_refs: [FR5, FR6, NFR2]
+      files: [.github/workflows/npm-publish.yml]
+      notes: "Replace lines 45-46. New step should: (1) Extract version from package.json using node -p, (2) Compare with release tag version, (3) If mismatch, log warning and run npm version, (4) If match, log success message and continue."
+
+  validation:
+    - [x] All phase_2 tasks completed
+    - [x] Workflow YAML syntax is valid
+    - [x] Verification logic handles both match and mismatch scenarios
+    - [x] Spec requirements covered: [FR5, FR6, NFR2]
+
+phase_3:
+  name: "Testing and Validation"
+  description: |
+    Test the complete workflow end-to-end by triggering a release and verifying that
+    package.json version is correctly updated, committed, and used for npm publish.
+
+  tasks:
+    - [ ] Trigger release workflow manually or via push to main
+      spec_refs: [AC1, AC2, AC3, AC5]
+      files: []
+      notes: "Use workflow_dispatch or make a commit to trigger release.yml. Monitor workflow execution in GitHub Actions."
+
+    - [ ] Verify package.json and package-lock.json are updated in git history
+      spec_refs: [AC1, AC2, AC6]
+      files: []
+      notes: "Check git log for version bump commit. Confirm commit message includes version and [skip ci]. Use git show to verify package.json and package-lock.json changes."
+
+    - [ ] Verify npm-publish workflow uses correct version without modification
+      spec_refs: [AC4, AC5]
+      files: []
+      notes: "Check npm-publish workflow logs. Verify verification step logs 'version matches' message and doesn't run npm version command."
+
+  validation:
+    - [ ] All phase_3 tasks completed
+    - [ ] Release workflow completes successfully with package.json updated
+    - [ ] NPM publish workflow completes successfully without version modification
+    - [ ] Spec requirements covered: [AC1, AC2, AC3, AC4, AC5, AC6]
+
+# DEVIATION LOG
+# The /build agent populates this section when implementation deviates from the original plan
+# Format: phase → task → original plan → actual implementation → reason for deviation
+
+deviations: []
+
+# TESTING GUIDANCE
+# Structured guidance for testing the implementation
+
+testing:
+  automated_tests:
+    - test_file: "N/A - GitHub Actions workflows"
+      what: "Workflow execution and file updates"
+      command: "Trigger release.yml via workflow_dispatch or git push"
+
+  manual_tests:
+    - scenario: "Complete release and publish cycle"
+      steps: |
+        1. Make a change to trigger release workflow (or use workflow_dispatch)
+        2. Monitor release.yml execution in GitHub Actions
+        3. Verify "Update package.json version" step runs successfully
+        4. Verify "Commit version bump" step commits package.json and package-lock.json
+        5. Check git history: git log --oneline -5
+        6. Inspect version bump commit: git show HEAD (should show package.json changes)
+        7. Wait for npm-publish.yml to trigger automatically
+        8. Monitor npm-publish.yml execution
+        9. Verify verification step logs "version matches"
+        10. Confirm npm publish completes successfully
+
+    - scenario: "Verify version consistency across artifacts"
+      steps: |
+        1. After release completes, check package.json version in repository
+        2. Compare with latest git tag (should match without 'v' prefix)
+        3. Check template files in src/templates/ for version field
+        4. Confirm all versions match (templates, package.json, git tag)
+        5. Check published package on npm registry
+        6. Verify published version matches repository version
+
+# VALIDATION CRITERIA
+# Define success metrics and track spec requirement coverage
+
+success_metrics:
+  - "package.json version in repository matches latest git tag (without v prefix)"
+  - "Git history shows version bump commits with both templates and package.json changes"
+  - "npm-publish workflow completes without modifying package.json version"
+  - "No workflow errors or failures during release and publish cycle"
+  - "All version artifacts (templates, package.json, tags, npm registry) are consistent"
+
+spec_coverage:
+  - FR1: "✅ Phase 1: Task 1 - Add npm version step to release.yml"
+  - FR2: "✅ Phase 1: Task 1 - Use version from get-next-version.sh"
+  - FR3: "✅ Phase 1: Task 2 - Commit package.json and package-lock.json"
+  - FR4: "✅ Phase 1: Task 2 - Commit message with version and [skip ci]"
+  - FR5: "✅ Phase 2: Task 1 - Add verification step to npm-publish.yml"
+  - FR6: "✅ Phase 2: Task 1 - Use same version from get-next-version.sh"
+  - NFR1: "✅ Phase 1: Task 1 - Atomic update via npm version"
+  - NFR2: "✅ Phase 2: Task 1 - Graceful error handling in verification"
+  - NFR3: "✅ All phases - Maintain backward compatibility"
+  - NFR4: "✅ Phase 1 - Follow template versioning pattern"
+  - AC1: "⏳ Phase 3: Task 2 - Verify package.json version matches tag"
+  - AC2: "⏳ Phase 3: Task 2 - Verify package-lock.json updated"
+  - AC3: "⏳ Phase 3: Task 2 - Verify commit message format"
+  - AC4: "⏳ Phase 3: Task 3 - Verify npm publish without modification"
+  - AC5: "⏳ Phase 3: Tasks 1-3 - Verify workflows complete successfully"
+  - AC6: "⏳ Phase 3: Task 2 - Inspect git history for version commits"
+
+# PROGRESS SUMMARY
+# Track overall progress and identify next steps
+
+overall_progress:
+  phase_1: "2/2 tasks completed"
+  phase_2: "1/1 tasks completed"
+  phase_3: "0/3 tasks completed"
+
+current_status: |
+  Phase 1 and Phase 2 implementation completed. Modified release.yml to update package.json
+  version using npm version command and commit changes with templates. Updated npm-publish.yml
+  to verify version instead of updating it. Ready for testing and validation.
+
+next_immediate_steps:
+  - "Test the workflow changes by triggering a release"
+  - "Verify package.json and package-lock.json are committed to git"
+  - "Confirm npm-publish workflow uses existing version without modification"
+
+# RISKS & CONSIDERATIONS
+# Document potential risks and mitigation strategies
+
+risks:
+  - risk: "npm version command fails if package.json is malformed or has syntax errors"
+    mitigation: "Add error handling in workflow step. Log npm version output for debugging. Use --allow-same-version flag to handle edge cases where version is already set."
+
+  - risk: "Merge conflicts if package.json is modified between version calculation and commit"
+    mitigation: "Unlikely in automated workflow context. If occurs, workflow will fail and require manual resolution. Git add command will detect conflicts."
+
+  - risk: "Workflow loop if [skip ci] flag is not properly formatted or respected"
+    mitigation: "Follow exact format used in template versioning step. Test with workflow_dispatch to verify [skip ci] prevents re-triggering."
+
+  - risk: "npm-publish workflow fails if package.json version doesn't match release tag due to release workflow failure"
+    mitigation: "Verification step handles mismatch by updating version as fallback. Logs warning to alert team of release workflow issue."
+
+# NOTES
+# Capture lessons learned and future enhancement ideas
+
+lessons_learned:
+  - "Following existing template versioning pattern ensures consistency and reduces implementation risk"
+  - "Using npm version command instead of manual JSON manipulation provides atomic updates and proper formatting"
+  - "Verification step in npm-publish provides safety net for edge cases and workflow failures"
+
+future_enhancements:
+  - "Add validation to ensure package.json version matches templates before publishing"
+  - "Create script to verify all version artifacts are in sync (templates, package.json, tags)"
+  - "Add workflow notification on version mismatch between release and npm-publish"
+  - "Consider versioning other package files (pyproject.toml) in same commit for multi-language support"
