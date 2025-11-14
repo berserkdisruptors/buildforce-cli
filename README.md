@@ -313,7 +313,7 @@ npm link
 
 1. **Check existing issues** - [View open issues](https://github.com/berserkdisruptors/buildforce-cli/issues)
 2. **Create an issue** - Describe the problem or feature request
-3. **Fork & branch** - Create a feature branch
+3. **Fork & branch** - Create a feature branch following our naming convention
 4. **Use Buildforce for development** - Follow the structured workflow
 5. **Test locally** - `npm link` and test your changes
 6. **Submit PR** - Describe your changes and link related issues

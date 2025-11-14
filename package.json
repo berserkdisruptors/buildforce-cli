@@ -17,6 +17,8 @@
     "dev": "tsx src/cli.ts",
     "start": "node dist/cli.js",
     "test": "echo \"Error: no test specified\" && exit 1",
+    "prepare": "husky",
+    "commit": "cz",
     "prepublishOnly": "npm run build",
     "create-release-packages": ".github/workflows/scripts/create-release-packages.sh v0.0.100"
   },
@@ -61,11 +63,16 @@
     "which": "^4.0.0"
   },
   "devDependencies": {
+    "@commitlint/cli": "^20.1.0",
+    "@commitlint/config-conventional": "^20.0.0",
     "@types/adm-zip": "^0.5.7",
     "@types/figlet": "^1.7.0",
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^20.11.19",
     "@types/which": "^3.0.3",
+    "commitizen": "^4.3.1",
+    "cz-conventional-changelog": "^3.3.0",
+    "husky": "^9.1.7",
     "tsx": "^4.7.1",
     "typescript": "^5.3.3"
   },

@@ -1,0 +1,153 @@
+version: "0.0.32"
+id: conventional-commits-enforcement-20251106000000
+name: "Conventional Commits Enforcement with Branch Naming Validation"
+type: feature
+status: draft
+created: "2025-11-06"
+last_updated: "2025-11-06"
+
+summary: |
+  Implement conventional commits enforcement using commitlint and husky with dual-layer validation
+  (local git hooks + GitHub Actions), branch naming validation, and commitizen for improved developer
+  experience. Protects existing release automation that depends on commit types for categorized release notes.
+
+# INTENT / PROBLEM STATEMENT
+
+problem: |
+  Buildforce CLI already uses Conventional Commits informally, and the release workflow depends on commit
+  types (feat:, fix:, docs:, etc.) for automated categorized release note generation. However, there is no
+  enforcement mechanism to validate commit messages or branch names. This creates risk that:
+  - New contributors may not follow the convention, breaking release note automation
+  - Typos or inconsistent formatting will cause commits to be miscategorized or ignored
+  - Release workflow fragility increases as project grows and contributors increase
+  - Branch naming inconsistencies reduce visual clarity and prevent automation triggers
+
+motivation: |
+  Enforce conventional commits and branch naming to protect existing release infrastructure, ensure
+  consistent git history, enable automated versioning (SemVer), improve collaboration through standardized
+  conventions, and provide better developer experience with interactive commit message creation. This is
+  a defensive feature to safeguard critical automation already in place.
+
+# GOALS
+
+primary_goals:
+  - Enforce conventional commits specification using commitlint to protect release note generation
+  - Validate branch naming conventions matching commit type prefixes (feat/, fix/, chore/, etc.)
+  - Implement dual-layer enforcement: local git hooks (fast feedback) + GitHub Actions (cannot bypass)
+  - Provide commitizen for guided interactive commit message creation to improve DX
+
+secondary_goals:
+  - Document commit and branch naming conventions for contributors in README or CONTRIBUTING guide
+  - Ensure enforcement works across all development workflows (CLI commits, IDE commits, web UI PRs)
+  - Maintain backward compatibility with existing commit history (no retroactive validation)
+  - Configure tooling to align with project's existing TypeScript/ESM setup (NodeNext modules)
+
+# REQUIREMENTS
+
+functional_requirements:
+  - FR1: Install commitlint, husky, and commitizen as devDependencies with appropriate versions
+  - FR2: Create commitlint.config.js with @commitlint/config-conventional extending standard rules
+  - FR3: Configure commitlint to recognize 11 commit types (feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert)
+  - FR4: Initialize husky and create .husky/commit-msg hook to run commitlint on commit messages
+  - FR5: Create .husky/pre-push hook to validate branch names against regex pattern
+  - FR6: Configure commitizen with cz-conventional-changelog adapter for interactive commit prompts
+  - FR7: Add npm scripts for commitizen (e.g., "commit" script running cz)
+  - FR8: Create GitHub Actions workflow (.github/workflows/branch-naming.yml) to validate PR branch names
+  - FR9: Ensure husky hooks are executable and committed to repository (not in .gitignore)
+  - FR10: Validate that commitlint config works with TypeScript project using NodeNext modules
+
+non_functional_requirements:
+  - NFR1: Git hooks must execute quickly (< 1 second) to avoid degrading commit/push performance
+  - NFR2: Error messages from commitlint and branch validation must be clear, actionable, and include examples
+  - NFR3: Commitizen interactive prompts must support all 11 commit types with helpful descriptions
+  - NFR4: Configuration files must use ES modules syntax compatible with TypeScript project (export default)
+  - NFR5: Husky hooks must work across different development environments (macOS, Linux, Windows with Git Bash)
+  - NFR6: GitHub Actions workflow must provide clear PR check status with pass/fail indication
+
+# SCOPE
+
+in_scope:
+  - Install and configure commitlint with @commitlint/config-conventional
+  - Setup husky v9+ with commit-msg and pre-push hooks
+  - Configure commitizen with cz-conventional-changelog adapter
+  - Create commitlint.config.js with custom rules matching project's commit types
+  - Create .husky/commit-msg hook calling commitlint
+  - Create .husky/pre-push hook validating branch names
+  - Create GitHub Actions workflow for PR branch name validation
+  - Add npm scripts: "prepare" for husky, "commit" for commitizen
+  - Update package.json with new devDependencies
+  - Test enforcement on sample commits and branches
+  - Document commit conventions and commitizen usage in README
+
+out_of_scope:
+  - Retroactive validation of existing commit history (enforcement is forward-looking only)
+  - Automated commit message generation or AI-powered commit suggestions
+  - Linting commit message body content beyond header validation
+  - Enforcing conventional commits in commit body or footer sections
+  - Creating custom commitizen adapters beyond cz-conventional-changelog
+  - Adding commitlint to CI/CD for non-PR commits (only branch naming validated in CI)
+  - Automatic version bumping or CHANGELOG generation (future enhancement)
+  - Pre-commit hooks for code linting or formatting (separate concern)
+
+# DESIGN PRINCIPLES
+
+design_principles:
+  - "Fast feedback: Local validation before remote - developers should know commit fails immediately"
+  - "Cannot bypass: GitHub Actions provides safety net for commits made without running local hooks"
+  - "Developer-friendly: Commitizen lowers barrier for contributors unfamiliar with Conventional Commits"
+  - "Align with existing patterns: Use same commit types already in generate-release-notes.sh"
+  - "Clear error messages: Failed commits should show examples of valid formats, not just reject"
+  - "Minimal friction: Hooks run quickly and only validate what's necessary"
+
+# ACCEPTANCE CRITERIA
+
+acceptance_criteria:
+  - AC1: Running `git commit -m "bad message"` is rejected by commit-msg hook with clear error message
+  - AC2: Running `git commit -m "feat: add new feature"` is accepted by commit-msg hook
+  - AC3: Running `git push` on branch "random-name" is rejected by pre-push hook with error message
+  - AC4: Running `git push` on branch "feat/new-feature" is accepted by pre-push hook
+  - AC5: Running `npm run commit` launches commitizen interactive prompt with 11 commit type options
+  - AC6: GitHub Actions workflow fails PR with invalid branch name (e.g., "update-readme")
+  - AC7: GitHub Actions workflow passes PR with valid branch name (e.g., "docs/update-readme")
+  - AC8: commitlint recognizes all 11 commit types (feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert)
+  - AC9: Husky hooks are committed in .husky/ directory and executable (chmod +x)
+  - AC10: package.json contains "prepare": "husky" script for automatic husky installation
+  - AC11: Error messages include examples like "Example: feat: add user authentication"
+  - AC12: Branch validation allows protected branches (main, staging, dev) without prefix requirement
+
+# ASSUMPTIONS & DEPENDENCIES
+
+assumptions:
+  - Project uses npm as package manager (not yarn or pnpm)
+  - Developers have Git version 2.9+ supporting core.hooksPath for husky
+  - Contributors will run `npm install` which triggers husky setup via "prepare" script
+  - GitHub Actions have permissions to read PR metadata (github.head_ref)
+  - Existing release workflow (generate-release-notes.sh) continues to work without changes
+
+dependencies:
+  internal:
+    - release-workflow: "generate-release-notes.sh depends on commit types - must remain aligned"
+    - package.json: "Scripts section needs 'prepare' and 'commit' scripts added"
+    - .gitignore: "Must not ignore .husky/ directory or hooks won't be committed"
+
+  external:
+    - "@commitlint/cli": "^18.0.0 or latest - Core commitlint CLI"
+    - "@commitlint/config-conventional": "^18.0.0 or latest - Conventional Commits preset"
+    - "husky": "^9.0.0 or latest - Git hooks manager"
+    - "commitizen": "^4.3.0 or latest - Interactive commit CLI"
+    - "cz-conventional-changelog": "^3.3.0 or latest - Commitizen adapter for Conventional Commits"
+
+# OPEN QUESTIONS
+
+open_questions: []
+
+# NOTES
+
+notes: |
+  - The 11 commit types to enforce match those in .github/workflows/scripts/generate-release-notes.sh
+  - commitlint.config.js should use ES module syntax (export default) to align with TypeScript NodeNext
+  - Husky 9+ no longer requires husky install command - uses "prepare" script instead
+  - Branch naming pattern: ^(main|staging|dev)$|^(feat|fix|chore|docs|refactor|perf|test|ci|build|revert|hotfix)/.+$
+  - Commitizen provides better UX for contributors but doesn't replace commitlint validation
+  - GitHub Actions only validates branch naming on PRs, not individual commits (local hooks handle commits)
+  - Consider adding helpful links in error messages pointing to Conventional Commits docs

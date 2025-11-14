@@ -1,0 +1,17 @@
+#!/usr/bin/env sh
+
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+PATTERN="^(main|staging|dev)$|^(feat|fix|chore|docs|refactor|perf|test|ci|build|revert|hotfix)/.+$"
+
+if ! echo "$BRANCH" | grep -qE "$PATTERN"; then
+  echo "❌ Branch name '$BRANCH' does not follow naming convention!"
+  echo ""
+  echo "Allowed patterns:"
+  echo "  - Protected: main, staging, dev"
+  echo "  - Feature branches: feat/description"
+  echo "  - Bug fixes: fix/description"
+  echo "  - Others: chore/, docs/, refactor/, perf/, test/, ci/, build/, revert/, hotfix/"
+  echo ""
+  echo "Example: feat/add-conventional-commits"
+  exit 1
+fi

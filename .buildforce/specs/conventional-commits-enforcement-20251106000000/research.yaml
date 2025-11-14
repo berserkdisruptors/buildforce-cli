@@ -1,0 +1,340 @@
+version: "0.0.32"
+id: "conventional-commits-enforcement-20251106000000-research"
+created: "2025-11-06"
+last_updated: "2025-11-06"
+
+summary: |
+  Research conducted on implementing conventional commits enforcement and branch naming validation for Buildforce CLI.
+  Analysis revealed the project already follows conventional commits informally, with release automation dependent on commit
+  types for categorized changelogs. Investigated commitlint, husky, commitizen, and validation strategies for both local
+  and CI/CD enforcement to protect existing release infrastructure.
+
+key_findings:
+  - "Buildforce CLI already uses conventional commits informally (feat:, fix:, docs:, chore:, refactor:, etc.)"
+  - "Release workflow (.github/workflows/release.yml) depends on commit types for automated categorized release notes"
+  - "generate-release-notes.sh script recognizes 10 commit types: feat, fix, docs, refactor, test, perf, style, build, ci, chore"
+  - "Branch naming already follows consistent pattern: feat/, fix/, chore/, refactor/ prefixes"
+  - "No existing commit or branch validation - enforcement needed to protect release automation"
+  - "TypeScript project using NodeNext modules, Commander.js CLI framework, npm package manager"
+  - "Project supports 11 AI coding assistants with template distribution via GitHub Releases"
+
+file_paths:
+  primary:
+    - path: "package.json"
+      relevance: "Package metadata, dependencies, scripts - need to add commitlint, husky, commitizen as devDependencies"
+    - path: ".github/workflows/release.yml"
+      relevance: "Release automation workflow - depends on conventional commits for categorized release notes"
+    - path: ".github/workflows/scripts/generate-release-notes.sh"
+      relevance: "Script that parses commit types (feat, fix, docs, etc.) to categorize release notes with emojis"
+    - path: "tsconfig.json"
+      relevance: "TypeScript configuration - ES2022, NodeNext modules - commitlint config should use .js with export default"
+    - path: ".gitignore"
+      relevance: "Git ignore patterns - ensure husky hooks are committed, not ignored"
+
+  secondary:
+    - path: "src/cli.ts"
+      relevance: "CLI entry point using Commander.js - reference for understanding project structure"
+    - path: "README.md"
+      relevance: "Main documentation - will need updates for contributor guidelines on commit conventions"
+    - path: ".buildforce/context/_index.yaml"
+      relevance: "Context repository index - shows project's context-driven architecture"
+
+mermaid_diagrams:
+  - title: "Current Release Workflow (Informal Conventions)"
+    description: "Shows current state where commits are not validated, release notes depend on manual convention following"
+    diagram: |
+      ```mermaid
+      sequenceDiagram
+          participant Dev as Developer
+          participant Git as Git
+          participant CI as GitHub Actions
+          participant Rel as Release
+
+          Dev->>Git: git commit -m "feat: new feature"
+          Note over Dev,Git: No validation ⚠️
+          Git->>Git: Commit accepted
+          Dev->>Git: git push
+          Git->>CI: Trigger release workflow
+          CI->>CI: generate-release-notes.sh
+          Note over CI: Parses commit types<br/>feat, fix, docs, etc.
+          CI->>Rel: Create release with<br/>categorized changelog
+          Note over Rel: ✅ Works if commits<br/>follow convention
+      ```
+
+  - title: "Proposed Enforcement Architecture"
+    description: "Shows dual-layer enforcement with local husky hooks and remote GitHub Actions validation"
+    diagram: |
+      ```mermaid
+      sequenceDiagram
+          participant Dev as Developer
+          participant Hook as Husky Hook
+          participant Git as Git
+          participant CI as GitHub Actions
+          participant Rel as Release
+
+          Dev->>Hook: git commit -m "bad message"
+          Hook->>Hook: commitlint validates
+          Hook-->>Dev: ❌ Rejected: Invalid format
+
+          Dev->>Hook: git commit -m "feat: new feature"
+          Hook->>Hook: commitlint validates
+          Hook-->>Dev: ✅ Approved
+          Hook->>Git: Commit accepted
+
+          Dev->>Hook: git push (branch: random-name)
+          Hook->>Hook: validate-branch-name
+          Hook-->>Dev: ❌ Rejected: Invalid branch name
+
+          Dev->>Hook: git push (branch: feat/new-feature)
+          Hook->>Hook: validate-branch-name
+          Hook-->>Dev: ✅ Approved
+          Hook->>Git: Push accepted
+
+          Git->>CI: Trigger release workflow
+          CI->>CI: generate-release-notes.sh
+          Note over CI: All commits guaranteed<br/>to follow convention
+          CI->>Rel: Create release with<br/>perfect categorization
+      ```
+
+  - title: "Implementation Flow"
+    description: "Step-by-step implementation sequence for adding enforcement tooling"
+    diagram: |
+      ```mermaid
+      flowchart TD
+          A[Install Dependencies] --> B[Configure commitlint]
+          B --> C[Setup Husky]
+          C --> D[Add commit-msg Hook]
+          D --> E[Add pre-push Hook for Branch Naming]
+          E --> F[Setup Commitizen]
+          F --> G[Create GitHub Actions Workflow]
+          G --> H[Test Enforcement]
+          H --> I[Document for Contributors]
+      ```
+
+data_models:
+  - name: "CommitlintConfig"
+    description: "Configuration structure for commitlint.config.js"
+    properties:
+      - name: "extends"
+        type: "string[]"
+        required: true
+        description: "Base configurations to inherit (e.g., '@commitlint/config-conventional')"
+
+      - name: "rules"
+        type: "object"
+        required: false
+        description: "Custom rules overriding defaults - each rule has [level, applicable, value] tuple"
+
+      - name: "ignores"
+        type: "Array<(commit: string) => boolean>"
+        required: false
+        description: "Functions to determine which commits to ignore"
+
+      - name: "helpUrl"
+        type: "string"
+        required: false
+        description: "URL to documentation for contributors"
+
+    relationships:
+      - "Used by .husky/commit-msg hook to validate commit messages"
+      - "References @commitlint/config-conventional package for standard Conventional Commits rules"
+
+  - name: "BranchNamingPattern"
+    description: "Regex pattern and configuration for branch naming validation"
+    properties:
+      - name: "pattern"
+        type: "string (regex)"
+        required: true
+        description: "Regex pattern: ^(main|staging|dev)$|^(feat|fix|chore|docs|refactor|perf|test|ci|build|revert|hotfix)/.+$"
+
+      - name: "allowedPrefixes"
+        type: "string[]"
+        required: true
+        description: "Valid branch prefixes: feat, fix, chore, docs, refactor, perf, test, ci, build, revert, hotfix"
+
+      - name: "protectedBranches"
+        type: "string[]"
+        required: true
+        description: "Branches exempt from pattern: main, staging, dev"
+
+    relationships:
+      - "Used by .husky/pre-push hook to validate branch names"
+      - "Referenced in GitHub Actions workflow for PR validation"
+
+code_snippets:
+  - title: "commitlint.config.js Configuration"
+    language: "javascript"
+    description: "Recommended commitlint configuration aligned with project's existing commit types"
+    code: |
+      export default {
+        extends: ['@commitlint/config-conventional'],
+        rules: {
+          'type-enum': [
+            2,
+            'always',
+            [
+              'feat',     // New feature
+              'fix',      // Bug fix
+              'docs',     // Documentation
+              'style',    // Formatting
+              'refactor', // Code restructuring
+              'perf',     // Performance
+              'test',     // Tests
+              'build',    // Build system
+              'ci',       // CI/CD
+              'chore',    // Maintenance
+              'revert'    // Revert commit
+            ]
+          ],
+          'subject-case': [2, 'always', 'sentence-case'],
+          'header-max-length': [2, 'always', 100]
+        }
+      };
+
+  - title: "Husky pre-push Hook for Branch Naming"
+    language: "bash"
+    description: "Git hook to validate branch names before push"
+    code: |
+      #!/usr/bin/env sh
+      . "$(dirname -- "$0")/_/husky.sh"
+
+      BRANCH=$(git rev-parse --abbrev-ref HEAD)
+      PATTERN="^(main|staging|dev)$|^(feat|fix|chore|docs|refactor|perf|test|ci|build|revert|hotfix)/.+$"
+
+      if ! echo "$BRANCH" | grep -qE "$PATTERN"; then
+        echo "❌ Branch name '$BRANCH' does not follow naming convention!"
+        echo ""
+        echo "Allowed patterns:"
+        echo "  - Protected: main, staging, dev"
+        echo "  - Feature branches: feat/description"
+        echo "  - Bug fixes: fix/description"
+        echo "  - Others: chore/, docs/, refactor/, perf/, test/, ci/, build/, revert/, hotfix/"
+        echo ""
+        echo "Example: feat/add-conventional-commits"
+        exit 1
+      fi
+
+  - title: "GitHub Actions Branch Naming Validation"
+    language: "yaml"
+    description: "CI/CD workflow to validate branch names on pull requests"
+    code: |
+      name: Branch Naming Convention
+
+      on:
+        pull_request:
+          types: [opened, edited, synchronize, reopened]
+
+      jobs:
+        check-branch-name:
+          runs-on: ubuntu-latest
+          steps:
+            - name: Check branch name
+              run: |
+                BRANCH="${{ github.head_ref }}"
+                PATTERN="^(feat|fix|chore|docs|refactor|perf|test|ci|build|revert|hotfix)/.+$"
+
+                if ! echo "$BRANCH" | grep -qE "$PATTERN"; then
+                  echo "❌ Branch name '$BRANCH' does not follow naming convention!"
+                  echo ""
+                  echo "Allowed patterns: feat/, fix/, chore/, docs/, refactor/, perf/, test/, ci/, build/, revert/, hotfix/"
+                  exit 1
+                fi
+
+                echo "✅ Branch name '$BRANCH' is valid"
+
+  - title: "Commitizen Configuration (.czrc)"
+    language: "json"
+    description: "Commitizen configuration for interactive commit message creation"
+    code: |
+      {
+        "path": "cz-conventional-changelog",
+        "types": {
+          "feat": {
+            "description": "A new feature",
+            "title": "Features"
+          },
+          "fix": {
+            "description": "A bug fix",
+            "title": "Bug Fixes"
+          },
+          "docs": {
+            "description": "Documentation only changes",
+            "title": "Documentation"
+          },
+          "style": {
+            "description": "Changes that do not affect the meaning of the code",
+            "title": "Styles"
+          },
+          "refactor": {
+            "description": "A code change that neither fixes a bug nor adds a feature",
+            "title": "Code Refactoring"
+          },
+          "perf": {
+            "description": "A code change that improves performance",
+            "title": "Performance Improvements"
+          },
+          "test": {
+            "description": "Adding missing tests or correcting existing tests",
+            "title": "Tests"
+          },
+          "build": {
+            "description": "Changes that affect the build system or external dependencies",
+            "title": "Builds"
+          },
+          "ci": {
+            "description": "Changes to our CI configuration files and scripts",
+            "title": "Continuous Integrations"
+          },
+          "chore": {
+            "description": "Other changes that don't modify src or test files",
+            "title": "Chores"
+          },
+          "revert": {
+            "description": "Reverts a previous commit",
+            "title": "Reverts"
+          }
+        }
+      }
+
+architectural_decisions:
+  - pattern: "Dual-layer enforcement (local + remote)"
+    description: "Combine Husky git hooks for local validation with GitHub Actions for remote enforcement"
+    rationale: "Local hooks provide fast feedback during development, while CI checks act as safety net that cannot be bypassed. Protects release automation from non-conforming commits regardless of developer workflow."
+
+  - pattern: "commitlint with @commitlint/config-conventional"
+    description: "Use standard Conventional Commits specification via commitlint"
+    rationale: "Industry-standard tool with TypeScript support, extensible rules, and alignment with existing commit types used in generate-release-notes.sh. Minimal configuration overhead."
+
+  - pattern: "Commitizen for developer experience"
+    description: "Add commitizen CLI for interactive guided commit message creation"
+    rationale: "Lowers adoption barrier for new contributors unfamiliar with Conventional Commits. Provides clear prompts and validation before commit, reducing rejected commits."
+
+  - pattern: "Branch naming regex pattern enforcement"
+    description: "Use regex pattern with type prefixes matching commit types (feat/, fix/, chore/, etc.)"
+    rationale: "Maintains consistency between branch names and commit types. Visual clarity in branch lists, enables automation triggers, prevents arbitrary branch names like 'test123'."
+
+external_references:
+  - title: "Conventional Commits Specification v1.0.0"
+    url: "https://www.conventionalcommits.org/en/v1.0.0/"
+    relevance: "Official spec defining commit message format: <type>[scope]: <description>. Foundation for commitlint rules and release automation."
+
+  - title: "commitlint Documentation"
+    url: "https://commitlint.js.org"
+    relevance: "Configuration reference for commit message linting, rules customization, and CI/CD integration patterns."
+
+  - title: "Husky Git Hooks Documentation"
+    url: "https://typicode.github.io/husky/"
+    relevance: "Modern git hooks tool for Node.js projects. Setup instructions for commit-msg and pre-push hooks."
+
+  - title: "Commitizen CLI"
+    url: "https://github.com/commitizen/cz-cli"
+    relevance: "Interactive CLI for guided commit message creation. Adapter: cz-conventional-changelog for Conventional Commits."
+
+tldr:
+  - "Buildforce already uses Conventional Commits informally; enforcement needed to protect release automation"
+  - "Release workflow depends on commit types (feat, fix, docs, etc.) for categorized release notes generation"
+  - "Implementation: commitlint + husky (local hooks) + GitHub Actions (remote validation) + commitizen (UX)"
+  - "Branch naming already consistent (feat/, fix/, chore/); add validation to prevent deviations"
+  - "Commit types to enforce: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert"
+  - "Dual enforcement layer: local git hooks (fast feedback) + CI checks (cannot bypass)"
+  - "TypeScript project using NodeNext modules - commitlint config should use .js with export default"

@@ -343,3 +343,22 @@ contexts:
         workflow-enhancement,
       ]
     related_context: [cli-architecture, plan-template, upgrade-command]
+
+  - id: commit-enforcement
+    file: commit-enforcement.yaml
+    type: feature
+    description: "Commit message and branch naming enforcement using commitlint, husky, and GitHub Actions"
+    tags:
+      [
+        commit-enforcement,
+        conventional-commits,
+        commitlint,
+        husky,
+        commitizen,
+        git-hooks,
+        branch-naming,
+        github-actions,
+        contribution-standards,
+        developer-experience,
+      ]
+    related_context: [readme-documentation, cli-architecture]
