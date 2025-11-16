@@ -40,4 +40,80 @@ $ARGUMENTS
 
 7. **Iterative Refinement**: Expect multiple `/buildforce.build` iterations. Each time `/buildforce.build` is called, determine if this is the first implementation or a subsequent refinement based on $ARGUMENTS. Track deviations across all iterations. Ensure each iteration converges toward the user's desired outcome based on their feedback.
 
+8. **Guideline Compliance Validation** (AI Agent Self-Check):
+
+   After completing implementation but before final validation, check code against project guidelines:
+
+   **Load Guidelines**:
+
+   - Check if `.buildforce/context/_guidelines.yaml` exists
+   - If missing: Skip validation and proceed to final validation
+   - If exists: Read and parse all guideline categories
+
+   **IMPORTANT Context**: These guidelines are for AI agent education, NOT linting rules for human developers. You are validating YOUR OWN generated code against project conventions to maintain consistency.
+
+   **Validate Strict Enforcement Guidelines**:
+   For each guideline with `enforcement: strict`:
+
+   1. **Analyze implemented code** against the guideline pattern
+   2. **Check for violations** in files you created or modified
+   3. **Fail immediately on violations**: Any violation of a strict guideline fails the build immediately
+   4. **Record results** in plan.yaml `guideline_compliance.strict_validations`:
+      ```yaml
+      - guideline: "Repository Pattern"
+        status: "✓ PASS" # or "✗ FAIL"
+        checked_files:
+          [src/services/UserService.ts, src/services/PostService.ts]
+        violation: # Only if FAIL
+          file: "src/services/UserService.ts"
+          line: 45
+          issue: "Direct Prisma call violates Repository Pattern guideline (strict enforcement)"
+          fix: "Use UserRepository.findById(id) instead of prisma.user.findUnique()"
+      ```
+   5. **If violations found**:
+      - Report all violations with file/line/issue/fix details
+      - **HALT build immediately** - do not proceed to testing
+      - User must fix violations or downgrade guideline to 'recommended' before continuing
+
+   **Check Recommended Enforcement Guidelines**:
+   For each guideline with `enforcement: recommended`:
+
+   1. **Analyze implemented code** for deviations from pattern
+   2. **DO NOT fail build** for recommended deviations
+   3. **Log deviations** in plan.yaml `guideline_compliance.recommended_validations`:
+      ```yaml
+      - guideline: "Error Handling Pattern"
+        status: "✓ PASS" # or "⚠ DEVIATION"
+        checked_files: [src/services/UserService.ts]
+        deviation: # Only if DEVIATION
+          original: "Use try-catch with specific error types"
+          actual: "Used generic error handling with single catch block"
+          reason: "Legacy code integration required generic error boundary for compatibility"
+      ```
+   4. **Continue with build** - recommended guidelines are advisory only
+
+   **Reference Guidelines** (`enforcement: reference`):
+
+   - These are informational only - no validation required
+   - Agent should be aware of them when making implementation decisions
+   - No compliance tracking needed
+
+   **Validation Output Format**:
+
+   When presenting validation results, use clear formatting:
+
+   ```
+   ## Guideline Compliance Check
+
+   ✓ PASS: Repository Pattern (strict) - 3 files checked
+   ✗ FAIL: Database Transaction Flow (strict) - Violation in src/services/OrderService.ts:67
+      Issue: Missing explicit transaction commit before external API call
+      Fix: Add await transaction.commit() before line 67, or wrap API call in transaction
+
+   ⚠ DEVIATION: Error Handling Pattern (recommended) - src/utils/parser.ts:23
+      Reason: Generic catch block used for backward compatibility with legacy system
+   ```
+
+   **Performance Consideration**: Keep validation focused on modified files only. Do not scan entire codebase unless guideline explicitly requires it.
+
 Context: {$ARGUMENTS}
