@@ -71,7 +71,7 @@ The text the user typed after `/buildforce.plan` in the triggering message **is*
       - **DO NOT OVER-CONDENSE**: Preserve information-rich elements - /buildforce.build needs comprehensive context
 
    4. **Create research.yaml**:
-      - Write to `.buildforce/specs/{FOLDER_NAME}/research.yaml`
+      - Write to `.buildforce/sessions/{FOLDER_NAME}/research.yaml`
       - Set id = "{FOLDER_NAME}-research"
       - Follow template structure but omit sections with no content (e.g., no diagrams if research was conceptual)
       - Ensure materialized research is condensed but information-rich
@@ -93,7 +93,7 @@ The text the user typed after `/buildforce.plan` in the triggering message **is*
 
    - Load `.buildforce/templates/spec-template.yaml` from the current working directory to understand structure and fields
    - **Read research.yaml if it exists** (from Step 2c materialization):
-     - Path: `.buildforce/specs/{FOLDER_NAME}/research.yaml`
+     - Path: `.buildforce/sessions/{FOLDER_NAME}/research.yaml`
      - If exists, use research findings to inform spec.yaml population:
        - Extract key requirements from research key_findings
        - Reference architectural_decisions when defining scope and design principles
@@ -127,9 +127,9 @@ The text the user typed after `/buildforce.plan` in the triggering message **is*
    **Step 3a: Load existing artifacts and research context**:
 
    - Read folder name from `.buildforce/buildforce.json` (`currentSpec` field)
-   - Load both existing spec.yaml and plan.yaml from `.buildforce/specs/{folder-name}/`
+   - Load both existing spec.yaml and plan.yaml from `.buildforce/sessions/{folder-name}/`
    - **Read research.yaml if it exists**:
-     - Path: `.buildforce/specs/{folder-name}/research.yaml`
+     - Path: `.buildforce/sessions/{folder-name}/research.yaml`
      - If exists, load research findings to maintain context consistency
      - Use research context when analyzing update requirements
      - This ensures updates align with prior research findings
@@ -152,7 +152,7 @@ The text the user typed after `/buildforce.plan` in the triggering message **is*
       - Read `.buildforce/templates/research-template.yaml` for structure guidance
 
    3. **Intelligent merge with existing research.yaml**:
-      - Read existing `.buildforce/specs/{folder-name}/research.yaml`
+      - Read existing `.buildforce/sessions/{folder-name}/research.yaml`
       - Compare new conversation content with existing research
       - **Append new findings** with update metadata:
         ```yaml

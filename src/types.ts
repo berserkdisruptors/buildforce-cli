@@ -51,7 +51,7 @@ export interface InitOptions {
 }
 
 export interface BuildforceConfig {
-  specsFolder: string;
+  sessionsFolder: string;
   framework: string;
   aiAssistant?: string;
   scriptType?: string;

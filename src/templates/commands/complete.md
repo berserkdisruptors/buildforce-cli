@@ -25,7 +25,7 @@ $ARGUMENTS
 
    Load the spec and plan files from the active spec folder:
 
-   - Construct spec directory path: `.buildforce/specs/{folder-name}/` where folder-name comes from `buildforce.json` `currentSpec` field
+   - Construct spec directory path: `.buildforce/sessions/{folder-name}/` where folder-name comes from `buildforce.json` `currentSpec` field
    - Read `spec.yaml` from spec directory
    - Read `plan.yaml` from spec directory if it exists
    - Read `research.yaml` from spec directory if it exist
@@ -244,7 +244,7 @@ Provide a concise report to the user:
 
 ```
 1. Read buildforce.json currentSpec → "20250123150000-add-auth"
-2. Load spec.yaml and plan.yaml from .buildforce/specs/20250123150000-add-auth/
+2. Load spec.yaml and plan.yaml from .buildforce/sessions/20250123150000-add-auth/
 3. Analyze: Introduced new authentication module
 4. Check _index.yaml: No existing "authentication" context
 5. Generate filename: "authentication.yaml"

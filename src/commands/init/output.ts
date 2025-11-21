@@ -68,8 +68,8 @@ export function displayNextSteps(
       ".buildforce/context/"
     )} - Accumulated project context from completed specs`,
     `  ${MINT_COLOR(
-      ".buildforce/specs/"
-    )}   - Active and historical spec directories`,
+      ".buildforce/sessions/"
+    )}  - Active and historical spec directories`,
     "",
     `Each workflow iteration creates a spec folder:`,
     `  ${chalk.gray(
