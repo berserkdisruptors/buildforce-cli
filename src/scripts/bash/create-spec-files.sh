@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Create a new spec folder with spec.yaml and plan.yaml files for /buildforce.plan command
 
 set -e
 

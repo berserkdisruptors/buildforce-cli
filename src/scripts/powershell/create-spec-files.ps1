@@ -1,5 +1,5 @@
 #!/usr/bin/env pwsh
-# Create a new spec folder with spec.yaml and plan.yaml files
+# Create a new spec folder with spec.yaml and plan.yaml files for /buildforce.plan command
 [CmdletBinding()]
 param(
     [switch]$Json,

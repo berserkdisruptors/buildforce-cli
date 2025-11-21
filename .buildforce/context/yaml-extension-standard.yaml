@@ -36,7 +36,7 @@ files:
   secondary:
     - src/templates/commands/build.md
     - src/templates/commands/complete.md
-    - src/templates/commands/spec.md
+    - src/templates/commands/plan.md
     - src/templates/commands/research.md
     - src/templates/commands/document.md
     - README.md

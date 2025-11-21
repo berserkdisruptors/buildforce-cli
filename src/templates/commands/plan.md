@@ -1,6 +1,6 @@
 ---
 version: "0.0.35"
-description: Create or update a structured specification YAML file that captures WHAT needs to be built.
+description: Create or update a structured specification (spec.yaml) and implementation plan (plan.yaml) that capture WHAT needs to be built and HOW to build it.
 scripts:
   sh: src/scripts/bash/create-spec-files.sh --folder-name "{FOLDER_NAME}" --json
   ps: src/scripts/powershell/create-spec-files.ps1 -FolderName "{FOLDER_NAME}" -Json
@@ -12,7 +12,7 @@ User input:
 
 $ARGUMENTS
 
-The text the user typed after `/buildforce.spec` in the triggering message **is** the feature description. Assume you always have it available in this conversation even if `{ARGS}` appears literally below. Do not ask the user to repeat it unless they provided an empty command.
+The text the user typed after `/buildforce.plan` in the triggering message **is** the feature description. Assume you always have it available in this conversation even if `{ARGS}` appears literally below. Do not ask the user to repeat it unless they provided an empty command.
 
 ## Workflow Steps
 
@@ -52,7 +52,7 @@ The text the user typed after `/buildforce.spec` in the triggering message **is*
         - Explicit `/research` command output with findings, diagrams, data models
         - User discussions about architecture, patterns, or technical exploration
         - File path discoveries, codebase analysis, or external references
-      - If NO research context exists (user went straight to `/spec`): **SKIP to Step 2d** - don't create empty research.yaml
+      - If NO research context exists (user went straight to `/buildforce.plan`): **SKIP to Step 2d** - don't create empty research.yaml
       - If research context EXISTS: **PROCEED with materialization**
 
    2. **Read template structure**:
@@ -343,4 +343,4 @@ The text the user typed after `/buildforce.spec` in the triggering message **is*
 
    **For UPDATE mode**: Summarize changes made to spec.yaml and/or plan.yaml, present updated condensed plan summary if plan changed, and suggest: "Ready to code? Run `/buildforce.build` to start implementation."
 
-   **IMPORTANT**: Every subsequent `/buildforce.spec` invocation updates BOTH files based on intelligent routing of the user's input content. Raw user input with explicit `/buildforce.spec` invocation might also intent to update BOTH so decide accordingly.
+   **IMPORTANT**: Every subsequent `/buildforce.plan` invocation updates BOTH files based on intelligent routing of the user's input content. Raw user input with explicit `/buildforce.plan` invocation might also intent to update BOTH so decide accordingly.

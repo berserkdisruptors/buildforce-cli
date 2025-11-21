@@ -41,7 +41,7 @@ files:
     - src/templates/spec-template.yaml
     - src/templates/plan-template.yaml
     - src/templates/research-template.yml
-    - src/templates/commands/spec.md
+    - src/templates/commands/plan.md
     - src/templates/commands/plan.md
     - src/templates/commands/build.md
     - src/templates/commands/complete.md

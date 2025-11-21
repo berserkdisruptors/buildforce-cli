@@ -128,7 +128,7 @@ export function displayNextSteps(
   );
   stepsLines.push(
     "   " +
-      MINT_COLOR("/buildforce.spec") +
+      MINT_COLOR("/buildforce.plan") +
       "     - Materialize your intent into a structured specification and plan"
   );
   stepsLines.push(

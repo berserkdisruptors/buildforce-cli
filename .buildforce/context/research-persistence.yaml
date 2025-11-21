@@ -7,13 +7,13 @@ last_updated: 2025-11-03
 
 summary: |
   Conversation-based research materialization system that enables agents to create structured
-  research.yaml artifacts from conversation history during /spec execution, supporting consumption
+  research.yaml artifacts from conversation history during /plan execution, supporting consumption
   by /build and /complete commands for context-aware operation.
 
 responsibilities:
   - Enable agents to materialize conversation history into structured research.yaml artifacts
   - Preserve diagrams, data models, and code snippets during materialization
-  - Enable /spec, /build, /complete commands to consume research context
+  - Enable /plan, /build, /complete commands to consume research context
   - Maintain flexible YAML structure adapting to research content type
 
 dependencies:
@@ -29,7 +29,7 @@ files:
   primary:
     - src/templates/research-template.yaml
     - src/templates/commands/research.md
-    - src/templates/commands/spec.md
+    - src/templates/commands/plan.md
   secondary:
     - src/templates/commands/build.md
     - src/templates/commands/complete.md
@@ -37,7 +37,7 @@ files:
 
 design_decisions:
   - decision: "Conversation-based materialization (removed cache accumulation)"
-    rationale: "Prioritizes user experience over theoretical edge cases. Cache accumulation required explicit file write permissions at each /research invocation, creating significant UX friction. Conversation history provides sufficient context for materialization during /spec."
+    rationale: "Prioritizes user experience over theoretical edge cases. Cache accumulation required explicit file write permissions at each /research invocation, creating significant UX friction. Conversation history provides sufficient context for materialization during /plan."
 
   - decision: "Intelligent materialization preserving diagrams, models, snippets"
     rationale: "Balances condensation with information richness. Mermaid diagrams, data models, code snippets are essential for /build context - preserve verbatim. Condense prose, merge TLDR bullets."
@@ -59,7 +59,7 @@ architecture_patterns:
     3. Research findings remain in conversation history (no file persistence)
 
   materialization_workflow: |
-    /spec command workflow (when research context exists):
+    /plan command workflow (when research context exists):
     1. Agent materializes conversation history into research.yaml (optional, agent-driven)
     2. Read .buildforce/templates/research-template.yaml for structure guidance
     3. Intelligent materialization from conversation:
@@ -74,7 +74,7 @@ architecture_patterns:
        - Reference architectural_decisions in design principles
 
   consumption_workflow: |
-    /spec command:
+    /plan command:
     - Can read existing research.yaml to maintain context consistency during updates
 
     /build command:
@@ -131,11 +131,11 @@ materialized_format: |
 evolution:
   - version: "1.0"
     date: "2025-10-28"
-    changes: "Initial implementation of research persistence with three-stage pipeline (accumulation, materialization, cleanup). Added cache format with session metadata, flexible research.yaml template, and consumption logic in /spec, /build, /complete commands."
+    changes: "Initial implementation of research persistence with three-stage pipeline (accumulation, materialization, cleanup). Added cache format with session metadata, flexible research.yaml template, and consumption logic in /plan, /build, /complete commands."
 
   - version: "2.0"
     date: "2025-11-03"
-    changes: "Removed cache accumulation mechanism to prioritize user experience. Eliminated .research-cache.md file operations that required explicit permissions at each /research invocation. Simplified to conversation-based materialization where agents create research.yaml from conversation history during /spec. Removed cache cleanup from /complete. Template-only changes with no TypeScript modifications."
+    changes: "Removed cache accumulation mechanism to prioritize user experience. Eliminated .research-cache.md file operations that required explicit permissions at each /research invocation. Simplified to conversation-based materialization where agents create research.yaml from conversation history during /plan. Removed cache cleanup from /complete. Template-only changes with no TypeScript modifications."
 
 related_specs:
   - research-persistence-intelligent-20251027213207

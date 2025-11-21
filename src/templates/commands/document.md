@@ -88,7 +88,7 @@ First, determine which mode to use based on $ARGUMENTS:
    - **CREATE mode**: "Created _guidelines.yaml with [N] guidelines across [M] categories"
    - **UPDATE mode**: "Updated _guidelines.yaml - Added [N] new guidelines: [list names]"
    - List all guidelines added/updated with enforcement levels
-   - Remind user: "These guidelines will be enforced during /build (strict) and referenced during /spec (all levels)"
+   - Remind user: "These guidelines will be enforced during /build (strict) and referenced during /buildforce.plan (all levels)"
 
 ---
 

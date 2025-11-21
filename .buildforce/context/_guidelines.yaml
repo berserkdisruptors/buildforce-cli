@@ -19,16 +19,16 @@ architectural_patterns:
       AI-interpretable instructions.
     enforcement: strict
     examples:
-      - file: "src/templates/commands/spec.md"
+      - file: "src/templates/commands/plan.md"
         snippet: |
-          # /spec command template
+          # /plan command template
           User input: $ARGUMENTS
-          **Your task**: Create structured spec...
+          **Your task**: Create structured plan...
     violations:
       - "Adding command logic to TypeScript CLI code instead of templates"
       - "Creating command handlers in src/commands/ directory"
     reference_files:
-      - "src/templates/commands/spec.md"
+      - "src/templates/commands/plan.md"
       - "src/templates/commands/build.md"
       - "src/templates/commands/document.md"
       - "src/templates/commands/complete.md"
@@ -116,8 +116,8 @@ testing_standards:
       run actual commands and verify output files match expected structure.
     enforcement: recommended
     example: |
-      # Test /spec workflow
-      1. Run /spec for new feature
+      # Test /plan workflow
+      1. Run /plan for new feature
       2. Verify spec.yaml created with correct schema
       3. Check plan.yaml contains all required sections
       4. Validate YAML syntax with yamllint

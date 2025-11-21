@@ -10,7 +10,7 @@
 #   - Create via: /document guidelines
 #   - Update via: /document guidelines (intelligent merge of new patterns)
 #   - Bootstrap via: /document scan guidelines (analyze codebase for existing patterns)
-#   - Referenced by: /spec (planning context), /build (validation), /complete (auto-evolution)
+#   - Referenced by: /buildforce.plan (planning context), /buildforce.build (validation), /buildforce.complete (auto-evolution)
 #
 # ENFORCEMENT LEVELS:
 #   - strict: MUST follow. Build fails on violations. Use for critical conventions.

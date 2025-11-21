@@ -34,7 +34,7 @@ files:
     - src/scripts/bash/create-spec-files.sh
     - src/scripts/bash/clear-spec-state.sh
     - .buildforce/scripts/bash/clear-spec-state.sh
-    - src/templates/commands/spec.md
+    - src/templates/commands/plan.md
     - src/templates/commands/research.md
     - src/templates/commands/complete.md
     - src/commands/init/setup.ts

@@ -85,7 +85,7 @@ Open your AI assistant (Claude Code, Cursor, etc.) in any existing project and r
 ```
 /research the architecture and structure of this codebase
 
-/spec Update README.md to fix any inconsistencies with actual project structure and features
+/buildforce.plan Update README.md to fix any inconsistencies with actual project structure and features
 
 /build
 
@@ -109,7 +109,7 @@ Buildforce uses slash commands inside AI assistant conversations to orchestrate 
                               │           │
     /research ────────────────┘           │
          ↓                                │
-    /spec (creates spec and plan files)   |
+    /buildforce.plan (creates spec/plan)  |
          ↓                                │
     /build (follows the plan and builds)  │
          ↓                                │
@@ -119,7 +119,7 @@ Buildforce uses slash commands inside AI assistant conversations to orchestrate 
 **What happens at each command:**
 
 - `/research`: Searches `.buildforce/context/` for accumulated knowledge, explores codebase patterns and search web if needed
-- `/spec`: Materializes user intent into structured requirements (functional, non-functional, acceptance criteria) saved as `spec.yaml` and actionable plan saved as `plan.yaml`. Loads `_guidelines.yaml` as highest-priority context for convention-aware planning
+- `/buildforce.plan`: Materializes user intent into structured requirements (functional, non-functional, acceptance criteria) saved as `spec.yaml` and actionable plan saved as `plan.yaml`. Loads `_guidelines.yaml` as highest-priority context for convention-aware planning
 - `/build`: Executes plan phases sequentially, updates progress, logs deviations from the plan on multiple iterations. Validates code compliance against strict/recommended guidelines if `_guidelines.yaml` exists
 - `/complete`: Validates all requirements met, generates context files from spec+plan+implementation, updates context repository. Can auto-detect and suggest new guideline patterns
 - `/document`: Standalone utility for documenting existing code without full spec-driven cycle. Use `/document guidelines` to capture project conventions
@@ -129,13 +129,13 @@ Buildforce uses slash commands inside AI assistant conversations to orchestrate 
 1. **Basic workflow** (recommended for simple updates):
 
    ```
-   /spec → /build
+   /buildforce.plan → /build
    ```
 
 2. **Full workflow** (recommended for new features and bug fixes):
 
    ```
-   /research → /spec → /build → /complete
+   /research → /buildforce.plan → /build → /complete
    ```
 
 3. **Documentation workflow** (manual context contribution):
@@ -146,10 +146,10 @@ Buildforce uses slash commands inside AI assistant conversations to orchestrate 
 
 4. **Guidelines workflow** (capture and enforce conventions):
    ```
-   /document guidelines → /spec [feature] → /build → /complete
+   /document guidelines → /buildforce.plan [feature] → /build → /complete
    ```
 
-The key insight: Buildforce isn't just about individual commands. It's about how commands feed context forward (research informs spec, spec guides plan, plan drives build, build enriches context). This orchestration prevents context loss and creates knowledge that compounds over time. Guidelines add convention enforcement—capture patterns with `/document guidelines`, and `/build` validates compliance automatically.
+The key insight: Buildforce isn't just about individual commands. It's about how commands feed context forward (research informs planning, planning guides build, build enriches context). This orchestration prevents context loss and creates knowledge that compounds over time. Guidelines add convention enforcement—capture patterns with `/document guidelines`, and `/build` validates compliance automatically.
 
 ## Commands
 
@@ -177,35 +177,35 @@ The key insight: Buildforce isn't just about individual commands. It's about how
 
 Searches your project's accumulated context repository first, then explores your codebase and fetches current information from the web when needed. Produces a structured report with file paths, architecture diagrams, data models, and actionable recommendations. Research findings persist in conversation history and can be materialized into structured files during spec creation, ensuring your specifications are always informed by existing patterns and current best practices.
 
-**Pro tip**: Run `/research` before `/spec` to ensure specifications are informed by existing patterns and current best practices. Research output stays in context window to guide requirement identification.
+**Pro tip**: Run `/research` before `/buildforce.plan` to ensure specifications are informed by existing patterns and current best practices. Research output stays in context window to guide requirement identification.
 
 ---
 
-### /spec - Define Requirements
+### /buildforce.plan - Define Requirements & Plan
 
-**Purpose**: Materialize user intent into structured specification defining WHAT needs to be built.
+**Purpose**: Materialize user intent into structured specification defining WHAT needs to be built and HOW to build it.
 
 **Usage:**
 
 ```
-/spec <feature-description>
+/buildforce.plan <feature-description>
 ```
 
 **Examples:**
 
 ```
-/spec Add JWT-based authentication with email/password login and token refresh
+/buildforce.plan Add JWT-based authentication with email/password login and token refresh
 
-/spec Fix pagination bug where last page returns empty results
+/buildforce.plan Fix pagination bug where last page returns empty results
 
-/spec Refactor user service to use repository pattern with dependency injection
+/buildforce.plan Refactor user service to use repository pattern with dependency injection
 ```
 
 **What it does:**
 
 Converts your feature description into a structured specification with clear requirements, acceptance criteria, and scope boundaries. Creates both a `spec.yaml` (defining WHAT to build) and `plan.yaml` (defining HOW to build it) in a timestamped folder. If you've done research beforehand, it intelligently materializes those findings into a structured file. When requirements are unclear, it asks clarifying questions to ensure everyone's aligned before implementation begins.
 
-**Pro tip**: Run `/spec` multiple times to refine requirements. UPDATE mode loads existing spec and allows iteration without losing previous work.
+**Pro tip**: Run `/buildforce.plan` multiple times to refine requirements and plan. UPDATE mode loads existing spec and plan, allowing iteration without losing previous work.
 
 ---
 
@@ -301,7 +301,7 @@ Bootstrap initial guidelines by analyzing existing codebase patterns (scan mode)
 - **recommended**: Logs warnings only (use for best practices)
 - **reference**: Context only, no validation (use for informational patterns)
 
-Guidelines are loaded during `/spec` (as planning context), validated during `/build` (code compliance check), and can auto-evolve via `/complete` (pattern detection).
+Guidelines are loaded during `/buildforce.plan` (as planning context), validated during `/build` (code compliance check), and can auto-evolve via `/complete` (pattern detection).
 
 ---
 
@@ -315,7 +315,7 @@ But if you prefer some of the other supported agents, please give it a try and s
 
 **How configuration works:**
 
-Buildforce installs slash command files (research.md, spec.md, build.md, complete.md, document.md) into your chosen assistant's configuration folder during initialization. Commands become available in your AI chat via `/research`, `/spec`, etc. All templates and scripts are copied to `.buildforce/` in your project directory. You can switch assistants later by manually copying command files between folders.
+Buildforce installs slash command files (research.md, plan.md, build.md, complete.md, document.md) into your chosen assistant's configuration folder during initialization. Commands become available in your AI chat via `/research`, `/buildforce.plan`, etc. All templates and scripts are copied to `.buildforce/` in your project directory. You can switch assistants later by manually copying command files between folders.
 
 ---
 

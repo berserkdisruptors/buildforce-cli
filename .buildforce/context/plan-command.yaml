@@ -1,14 +1,15 @@
-id: spec-command
-name: "Spec Command Template"
+id: plan-command
+name: "Plan Command Template"
 type: feature
 status: production
 created: 2025-01-23
-last_updated: 2025-10-29
+last_updated: 2025-11-21
 
 summary: |
   Template-based slash command that guides AI agents through creating or updating structured
-  specification files. Uses buildforce.json state tracking to determine CREATE vs UPDATE mode.
-  Delegates semantic-slug-first folder naming to agents in CREATE flow only.
+  specification and plan files. Uses buildforce.json state tracking to determine CREATE vs UPDATE mode.
+  Delegates semantic-slug-first folder naming to agents in CREATE flow only. Creates both spec.yaml
+  (WHAT to build) and plan.yaml (HOW to build).
 
 responsibilities:
   - Guide agents through spec creation workflow with 7 structured steps
@@ -31,22 +32,22 @@ dependencies:
 
 files:
   primary:
-    - src/templates/commands/spec.md
+    - src/templates/commands/plan.md
   secondary:
     - src/scripts/bash/create-spec-files.sh
     - src/scripts/powershell/create-spec-files.ps1
     - src/templates/spec-template.yaml
 
 command_signature:
-  syntax: "/spec [feature-description]"
+  syntax: "/plan [feature-description]"
   arguments:
     - name: "feature-description"
       type: "string"
       required: false
-      description: "Brief description of the feature to spec (can be provided in follow-up)"
+      description: "Brief description of the feature to plan (can be provided in follow-up)"
   examples:
-    - "/spec Add JWT authentication with refresh tokens"
-    - "/spec Refactor error handling middleware"
+    - "/plan Add JWT authentication with refresh tokens"
+    - "/plan Refactor error handling middleware"
 
 design_decisions:
   - decision: "Use buildforce.json currentSpec field for CREATE vs UPDATE determination"
@@ -109,6 +110,10 @@ evolution:
     date: "2025-10-29"
     changes: "Migrated state tracking from .current-spec to buildforce.json. Updated CREATE/UPDATE mode determination to read currentSpec field from buildforce.json instead of plain text file. Template references updated accordingly. Enables structured configuration with future extensibility."
 
+  - version: "9.0"
+    date: "2025-11-21"
+    changes: "Renamed command from /buildforce.spec to /buildforce.plan for semantic clarity. Command name now reflects dual purpose of creating both spec.yaml (WHAT) and plan.yaml (HOW). Updated all internal references, README.md documentation, CLI output, and context files. Command template file renamed from spec.md to plan.md. Context file renamed from spec-command.yaml to plan-command.yaml. Script names (create-spec-files.sh) remain unchanged as internal implementation details."
+
 related_specs:
   - redesign-spec-context-20250107120000
   - swap-timestamp-slug-order-20251024093000
@@ -117,9 +122,10 @@ related_specs:
   - add-spec-summary-output-20251024000000
   - add-template-verification-20251024142000
   - migrate-currentspec-to-json-20251029000000
+  - rename-spec-to-plan-20251121000000
 
 notes: |
-  The /spec command follows a 7-step workflow:
+  The /buildforce.plan command follows a 7-step workflow:
   1. Determine CREATE vs UPDATE mode (check buildforce.json currentSpec field)
   2. For CREATE: Generate folder name, run script, populate spec
   3. For UPDATE: Load existing spec, merge new information

@@ -18,7 +18,7 @@ $ARGUMENTS
    Check if there's an active spec to complete:
 
    - Read `.buildforce/buildforce.json` file from current working directory and parse the `currentSpec` field
-   - If file doesn't exist or `currentSpec` is null/empty: **ERROR** - Reply that there is no active spec and user must run `/buildforce.spec` first
+   - If file doesn't exist or `currentSpec` is null/empty: **ERROR** - Reply that there is no active spec and user must run `/buildforce.plan` first
    - If `currentSpec` field has a value (folder name): **PROCEED** - Extract folder name and continue
 
 2. **Load Spec Artifacts**:

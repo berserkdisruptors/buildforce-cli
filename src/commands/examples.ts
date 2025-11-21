@@ -21,7 +21,7 @@ export const WORKFLOWS: Record<string, Workflow> = {
   basic: {
     id: "basic",
     name: "Basic Workflow",
-    commandSequence: ["/spec", "/build"],
+    commandSequence: ["/plan", "/build"],
     description:
       "Streamlined workflow that goes directly from specification to implementation, skipping research and completion steps",
     useCase:
@@ -30,7 +30,7 @@ export const WORKFLOWS: Record<string, Workflow> = {
   full: {
     id: "full",
     name: "Full Workflow",
-    commandSequence: ["/research", "/spec", "/build", "/complete"],
+    commandSequence: ["/research", "/plan", "/build", "/complete"],
     description:
       "Context-aware workflow that accumulates research, materializes it into structured specs & warms up the context window, executes implementation with context consumption, and enriches the knowledge repository upon completion",
     useCase:

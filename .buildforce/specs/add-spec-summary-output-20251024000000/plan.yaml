@@ -3,7 +3,7 @@
 # It provides checkbox-based progress tracking, deviation logging, and spec traceability
 
 id: add-spec-summary-output-plan
-name: "Implementation Plan for Add Spec Summary to /spec Command Output"
+name: "Implementation Plan for Add Spec Summary to /plan Command Output"
 spec_id: "add-spec-summary-output-20251024000000"
 type: implementation-plan
 status: draft
@@ -14,7 +14,7 @@ last_updated: "2025-10-24"
 # Describe the high-level implementation approach and key technical decisions.
 
 approach: |
-  This is a template modification task - we'll update the /spec command template (src/templates/commands/spec.md) to include a new spec summary section in the final output (Step 6: Report completion).
+  This is a template modification task - we'll update the /plan command template (src/templates/commands/spec.md) to include a new spec summary section in the final output (Step 6: Report completion).
 
   The implementation approach is straightforward:
   1. Analyze the current "Report completion" section to understand the existing plan summary format
@@ -26,7 +26,7 @@ approach: |
   This is a template-only change - no code execution, no scripts, just markdown template modification.
 
 technology_stack:
-  - Markdown templates: For defining the /spec command workflow and output format
+  - Markdown templates: For defining the /plan command workflow and output format
   - YAML spec structure: Understanding spec.yaml structure to extract summary information
 
 decisions:
@@ -51,7 +51,7 @@ decisions:
 files_to_create: []
 
 files_to_modify:
-  - path: "src/templates/commands/spec.md"
+  - path: "src/templates/commands/plan.md"
     change_type: "edit"
     description: "Add spec summary template to Step 6 (Report completion) section, before the existing plan summary template"
 
@@ -63,7 +63,7 @@ files_to_modify:
 phase_1:
   name: "Analyze Current Template Structure"
   description: |
-    Read and understand the current /spec command template, particularly the "Report completion" section (Step 6) where the plan summary is defined. Identify the exact location where the spec summary should be inserted.
+    Read and understand the current /plan command template, particularly the "Report completion" section (Step 6) where the plan summary is defined. Identify the exact location where the spec summary should be inserted.
 
   tasks:
     - [x] Read src/templates/commands/spec.md to understand current workflow

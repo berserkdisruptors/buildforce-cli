@@ -55,7 +55,7 @@ version: "1.0"
 #       - Bidirectional relationships recommended for discoverability
 #         (if A references B, B should reference A)
 #
-#     Example: [plan-template, iterate-plan-command, spec-command]
+#     Example: [plan-template, iterate-plan-command, plan-command]
 #
 # ============================================================================
 
@@ -68,7 +68,7 @@ contexts:
     related_context:
       [
         research-slash-command,
-        spec-command,
+        plan-command,
         build-command,
         complete-command,
         document-command,
@@ -96,7 +96,7 @@ contexts:
         workflow-enhancement,
         script-execution,
       ]
-    related_context: [slash-commands, plan-template, spec-command]
+    related_context: [slash-commands, plan-template, plan-command]
 
   - id: plan-template
     file: plan-template.yaml
@@ -113,7 +113,7 @@ contexts:
         spec-traceability,
         workflow-enhancement,
       ]
-    related_context: [build-command, spec-command, slash-commands]
+    related_context: [build-command, plan-command, slash-commands]
 
   - id: document-command
     file: document-command.yaml
@@ -161,14 +161,14 @@ contexts:
       ]
     related_context: [cli-architecture, slash-commands]
 
-  - id: spec-command
-    file: spec-command.yaml
+  - id: plan-command
+    file: plan-command.yaml
     type: feature
-    description: "Template-based /spec command for creating/updating specifications with state-based CREATE vs UPDATE logic"
+    description: "Template-based /buildforce.plan command for creating/updating specifications and plans with state-based CREATE vs UPDATE logic"
     tags:
       [
         slash-command,
-        spec,
+        plan,
         template-only,
         state-tracking,
         timestamp-naming,
@@ -191,7 +191,7 @@ contexts:
         intelligent-merge,
         workflow-core,
       ]
-    related_context: [slash-commands, spec-command, document-command]
+    related_context: [slash-commands, plan-command, document-command]
 
   - id: upgrade-command
     file: upgrade-command.yaml
@@ -212,7 +212,7 @@ contexts:
       [
         slash-commands,
         cli-architecture,
-        spec-command,
+        plan-command,
         complete-command,
         local-artifact-resolution,
       ]
@@ -238,7 +238,7 @@ contexts:
         slash-commands,
         document-command,
         research-slash-command,
-        spec-command,
+        plan-command,
         plan-template,
         upgrade-command,
         local-artifact-resolution,
@@ -258,7 +258,7 @@ contexts:
         template-only,
       ]
     related_context:
-      [research-slash-command, spec-command, build-command, complete-command]
+      [research-slash-command, plan-command, build-command, complete-command]
 
   - id: local-artifact-resolution
     file: local-artifact-resolution.yaml
@@ -307,7 +307,7 @@ contexts:
     related_context:
       [
         cli-architecture,
-        spec-command,
+        plan-command,
         build-command,
         complete-command,
         document-command,
@@ -327,7 +327,7 @@ contexts:
         workflow-foundation,
       ]
     related_context:
-      [spec-command, research-persistence, complete-command, cli-architecture]
+      [plan-command, research-persistence, complete-command, cli-architecture]
 
   - id: template-versioning
     file: template-versioning.yml
@@ -380,7 +380,7 @@ contexts:
     related_context:
       [
         document-command,
-        spec-command,
+        plan-command,
         build-command,
         complete-command,
         plan-template,

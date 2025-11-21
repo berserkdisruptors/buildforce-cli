@@ -14,7 +14,7 @@ responsibilities:
   - Search .buildforce/context/_index.yaml for accumulated project knowledge
   - Determine appropriate research strategy based on query analysis
   - Produce structured reports with file paths, diagrams, and data models
-  - Guide users toward next workflow step (/spec)
+  - Guide users toward next workflow step (/plan)
 
 dependencies:
   internal:
@@ -71,7 +71,7 @@ key_guidelines:
 
   - name: "Research Persistence"
     priority: 7
-    description: "After completing research, persist COMPLETE output to .research-cache.md with session metadata for intelligent materialization during /spec execution. Internal operation between content generation and summary presentation."
+    description: "After completing research, persist COMPLETE output to .research-cache.md with session metadata for intelligent materialization during /plan execution. Internal operation between content generation and summary presentation."
 
   - name: "TLDR Section"
     priority: 8
@@ -156,7 +156,7 @@ evolution:
 
   - version: "2.0"
     date: "2025-10-28"
-    changes: "Added research persistence section. Command now appends COMPLETE output to .research-cache.md with session metadata (timestamp, type=research_command) for intelligent materialization by /spec command. Template increased from 29 to 65 lines. Includes cache format specification and state checking (.current-spec) to determine if cache should accumulate."
+    changes: "Added research persistence section. Command now appends COMPLETE output to .research-cache.md with session metadata (timestamp, type=research_command) for intelligent materialization by /plan command. Template increased from 29 to 65 lines. Includes cache format specification and state checking (.current-spec) to determine if cache should accumulate."
 
   - version: "2.1"
     date: "2025-11-03"
@@ -168,7 +168,7 @@ related_specs:
   - reorder-research-workflow-20251103143500
 
 notes: |
-  Most important command in the workflow—sets foundation for /spec, /plan, /build.
+  Most important command in the workflow—sets foundation for /plan, /build.
   Instruction template (68 lines as of v2.1) that enhances user queries without teaching HOW to research.
   Build agents already know how to research; this command adds workflow-specific context.
   Masterpiece feature: .buildforce/context/_index.yaml as primary knowledge source.
@@ -176,7 +176,7 @@ notes: |
   v1.1 enhancement: TLDR section addresses dual-audience design pattern—comprehensive details for build agents,
   scannable summary for users. Could be applied to other verbose command outputs.
   
-  v2.0 enhancement: Research persistence ensures findings are preserved for /spec materialization.
+  v2.0 enhancement: Research persistence ensures findings are preserved for /plan materialization.
   
   v2.1 enhancement: Workflow reordering (Step 7: persistence, Step 8: TLDR, Step 9: Next Steps) ensures
   user-facing summary remains visible without scrolling. Research persistence happens silently between

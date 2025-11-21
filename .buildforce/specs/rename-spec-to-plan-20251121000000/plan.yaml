@@ -1,0 +1,395 @@
+version: "0.0.35"
+id: rename-spec-to-plan-20251121000000-plan
+name: "Implementation Plan for Rename /buildforce.spec to /buildforce.plan"
+spec_id: "rename-spec-to-plan-20251121000000"
+type: implementation-plan
+status: draft
+created: "2025-11-21"
+last_updated: "2025-11-21"
+
+# ARCHITECTURE OVERVIEW
+
+approach: |
+  This is a systematic renaming operation across multiple file types. The approach follows a phased strategy:
+  1. Rename primary command template file (spec.md → plan.md)
+  2. Update all command template references to use /buildforce.plan
+  3. Complete documentation updates (README.md, CLI output)
+  4. Update context files to reflect the new command name
+  5. Ensure internal consistency across scripts and error messages
+
+  The key principle is maintaining zero disruption: existing spec folders, scripts, and state tracking
+  remain unchanged. Only the user-facing command name changes from /buildforce.spec to /buildforce.plan.
+
+technology_stack:
+  - Markdown templates (command definitions)
+  - YAML context files (documentation)
+  - TypeScript (CLI output)
+  - Bash/PowerShell scripts (folder creation - unchanged)
+
+decisions:
+  - decision: "Keep spec.yaml and plan.yaml filenames unchanged"
+    rationale: "These are well-established internal file names that represent distinct concepts (WHAT vs HOW). Changing them would require migration scripts and break existing projects. The command name /buildforce.plan can create both files."
+
+  - decision: "Keep script names as create-spec-files.sh/.ps1"
+    rationale: "Script names are internal implementation details not exposed to users. Renaming would add complexity without user-facing value. Scripts remain responsible for creating spec folders containing both spec.yaml and plan.yaml."
+
+  - decision: "Rename context file spec-command.yaml to plan-command.yaml"
+    rationale: "Context files document user-facing features. Since the command is renamed to /buildforce.plan, the context file should match for consistency and discoverability."
+
+  - decision: "Update README.md to use /buildforce.plan throughout"
+    rationale: "This completes the incomplete /spec → /buildforce.spec transition and immediately adopts the new /buildforce.plan naming. Avoids releasing documentation with deprecated command names."
+
+# FILE STRUCTURE
+
+files_to_create:
+  - src/templates/commands/plan.md (renamed from spec.md)
+  - .buildforce/context/plan-command.yaml (renamed from spec-command.yaml)
+
+files_to_modify:
+  - path: "src/templates/commands/spec.md"
+    change_type: "rename"
+    description: "Rename to plan.md, update internal /buildforce.spec references to /buildforce.plan"
+
+  - path: "src/templates/commands/research.md"
+    change_type: "edit"
+    description: "Update /buildforce.spec reference to /buildforce.plan in output guidance"
+
+  - path: "src/templates/commands/build.md"
+    change_type: "edit"
+    description: "Update /buildforce.spec references to /buildforce.plan"
+
+  - path: "src/templates/commands/complete.md"
+    change_type: "edit"
+    description: "Update /buildforce.spec reference to /buildforce.plan in error messages"
+
+  - path: "src/templates/commands/document.md"
+    change_type: "edit"
+    description: "Check for any /buildforce.spec references and update if present"
+
+  - path: "README.md"
+    change_type: "edit"
+    description: "Replace ALL /spec and /buildforce.spec references with /buildforce.plan"
+
+  - path: "src/commands/init/output.ts"
+    change_type: "edit"
+    description: "Update /buildforce.spec to /buildforce.plan in workflow examples (line 131)"
+
+  - path: ".buildforce/context/spec-command.yaml"
+    change_type: "rename"
+    description: "Rename to plan-command.yaml, update id, references, and evolution history"
+
+  - path: ".buildforce/context/cli-architecture.yaml"
+    change_type: "edit"
+    description: "Update references from /buildforce.spec to /buildforce.plan"
+
+  - path: ".buildforce/context/slash-commands.yaml"
+    change_type: "edit"
+    description: "Update command workflow section to reference /buildforce.plan"
+
+  - path: ".buildforce/context/_index.yaml"
+    change_type: "edit"
+    description: "Update spec-command entry to plan-command with new file reference"
+
+  - path: "src/scripts/bash/create-spec-files.sh"
+    change_type: "edit"
+    description: "Update comments to mention plan command (script name remains unchanged)"
+
+  - path: "src/scripts/powershell/create-spec-files.ps1"
+    change_type: "edit"
+    description: "Update comments to mention plan command (script name remains unchanged)"
+
+# IMPLEMENTATION PHASES
+
+phase_1:
+  name: "Rename Command Template and Update Internal References"
+  description: |
+    Rename the primary command template file from spec.md to plan.md and update all
+    internal command references within command templates. This is the core change that
+    affects the user-facing command name.
+
+  tasks:
+    - [x] Rename src/templates/commands/spec.md to plan.md
+      spec_refs: [FR1]
+      files: [src/templates/commands/spec.md]
+      notes: "Git mv to preserve history"
+
+    - [x] Update plan.md (formerly spec.md) internal references from /buildforce.spec to /buildforce.plan
+      spec_refs: [FR2]
+      files: [src/templates/commands/plan.md]
+      notes: "Update lines 15, 346 and frontmatter description"
+
+    - [x] Update research.md references to /buildforce.plan
+      spec_refs: [FR2]
+      files: [src/templates/commands/research.md]
+      notes: "Line 20 references /buildforce.spec in output guidance"
+
+    - [x] Update build.md references to /buildforce.plan
+      spec_refs: [FR2]
+      files: [src/templates/commands/build.md]
+      notes: "No references found - verified clean"
+
+    - [x] Update complete.md references to /buildforce.plan
+      spec_refs: [FR2]
+      files: [src/templates/commands/complete.md]
+      notes: "Line 21 error message references /buildforce.spec"
+
+    - [x] Update document.md if it contains /buildforce.spec references
+      spec_refs: [FR2]
+      files: [src/templates/commands/document.md]
+      notes: "Verify no references exist - confirmed clean"
+
+  validation:
+    - [x] All phase_1 tasks completed
+    - [x] grep -r "buildforce\.spec" src/templates/commands/ returns no results
+    - [x] plan.md exists and spec.md is removed
+    - [x] Spec requirements covered: [FR1, FR2]
+
+phase_2:
+  name: "Update Documentation and CLI Output"
+  description: |
+    Update user-facing documentation (README.md) and CLI output to use /buildforce.plan.
+    This completes the incomplete /spec → /buildforce.spec transition by going directly
+    to /buildforce.plan.
+
+  tasks:
+    - [x] Update README.md - Replace all /spec references with /buildforce.plan
+      spec_refs: [FR3]
+      files: [README.md]
+      notes: "Updated all workflow diagrams, command listings, and examples"
+
+    - [x] Update README.md - Ensure /buildforce.spec references become /buildforce.plan
+      spec_refs: [FR3]
+      files: [README.md]
+      notes: "Completed transition - all references now use /buildforce.plan"
+
+    - [x] Update CLI output in src/commands/init/output.ts
+      spec_refs: [FR4]
+      files: [src/commands/init/output.ts]
+      notes: "Line 131: Updated MINT_COLOR('/buildforce.spec') to '/buildforce.plan'"
+
+    - [x] Update command frontmatter descriptions to mention dual purpose
+      spec_refs: [FR5]
+      files: [src/templates/commands/plan.md]
+      notes: "Updated frontmatter description to clarify dual purpose (spec.yaml + plan.yaml)"
+
+    - [x] Update CLI banner and help text to reference /buildforce.plan
+      spec_refs: [FR9]
+      files: [src/cli.ts, src/lib/interactive.ts]
+      notes: "No references found in banner/help text - verified clean"
+
+  validation:
+    - [x] All phase_2 tasks completed
+    - [x] README.md contains no /spec or /buildforce.spec references
+    - [x] CLI output displays /buildforce.plan in examples
+    - [x] CLI banner and help text reference /buildforce.plan
+    - [x] Spec requirements covered: [FR3, FR4, FR5, FR9]
+
+phase_3:
+  name: "Update Context Files and Internal Documentation"
+  description: |
+    Rename and update context files that document the spec/plan command. Update the
+    context index to reflect the new command name.
+
+  tasks:
+    - [x] Rename .buildforce/context/spec-command.yaml to plan-command.yaml
+      spec_refs: [FR8]
+      files: [.buildforce/context/spec-command.yaml]
+      notes: "Git mv completed - history preserved"
+
+    - [x] Update plan-command.yaml: id field from spec-command to plan-command
+      spec_refs: [FR8]
+      files: [.buildforce/context/plan-command.yaml]
+      notes: "Updated id, name, summary, and last_updated date"
+
+    - [x] Update plan-command.yaml: Add evolution entry documenting this rename
+      spec_refs: [FR8]
+      files: [.buildforce/context/plan-command.yaml]
+      notes: "Added v9.0 evolution entry with complete rename details and related spec reference"
+
+    - [x] Update cli-architecture.yaml references to /buildforce.plan
+      spec_refs: [FR8]
+      files: [.buildforce/context/cli-architecture.yaml]
+      notes: "Updated invocation patterns and decision rationale examples"
+
+    - [x] Update slash-commands.yaml workflow section
+      spec_refs: [FR8]
+      files: [.buildforce/context/slash-commands.yaml]
+      notes: "Updated command name, file reference, and compression notes"
+
+    - [x] Update .buildforce/context/_index.yaml entry for spec-command → plan-command
+      spec_refs: [FR8]
+      files: [.buildforce/context/_index.yaml]
+      notes: "Global replace of spec-command → plan-command including all related_context references"
+
+  validation:
+    - [x] All phase_3 tasks completed
+    - [x] plan-command.yaml exists and spec-command.yaml is removed
+    - [x] _index.yaml references plan-command.yaml correctly
+    - [x] All context files use /buildforce.plan consistently
+    - [x] Spec requirements covered: [FR8]
+
+phase_4:
+  name: "Update Script Comments (Optional Enhancement)"
+  description: |
+    Update comments in create-spec-files scripts to mention the plan command.
+    Script names remain unchanged as they are internal implementation details.
+
+  tasks:
+    - [x] Update create-spec-files.sh comments to reference plan command
+      spec_refs: [FR6]
+      files: [src/scripts/bash/create-spec-files.sh]
+      notes: "Added header comment referencing /buildforce.plan command"
+
+    - [x] Update create-spec-files.ps1 comments to reference plan command
+      spec_refs: [FR6]
+      files: [src/scripts/powershell/create-spec-files.ps1]
+      notes: "Updated existing comment to reference /buildforce.plan command"
+
+  validation:
+    - [x] All phase_4 tasks completed
+    - [x] Script functionality unchanged (NFR3)
+    - [x] Script names unchanged (create-spec-files.sh/.ps1)
+    - [x] Spec requirements covered: [FR6]
+
+# DEVIATION LOG
+
+deviations:
+  - original: "Complete all four phases as planned - no additional work expected"
+    actual: "Added cleanup phase to update remaining /spec references in templates and scripts"
+    reason: "User identified 6 remaining /spec command references that were missed in initial implementation: research-template.yaml line 29, guidelines-template.yaml line 13, plan.md line 55, get-spec-paths.ps1 line 67, get-spec-paths.sh line 82. These were legacy references from the incomplete /spec → /buildforce.spec transition that needed updating to /buildforce.plan."
+    files_affected:
+      - "src/templates/research-template.yaml"
+      - "src/templates/guidelines-template.yaml"
+      - "src/templates/commands/plan.md"
+      - "src/scripts/powershell/get-spec-paths.ps1"
+      - "src/scripts/bash/get-spec-paths.sh"
+
+# GUIDELINE COMPLIANCE
+
+guideline_compliance:
+  strict_validations:
+    - guideline: "Template-Only Slash Commands"
+      status: "✓ PASS"
+      checked_files:
+        - "src/templates/commands/plan.md"
+        - "src/templates/research-template.yaml"
+        - "src/templates/guidelines-template.yaml"
+      notes: "All changes in markdown/YAML templates only. Updated command references from /spec to /buildforce.plan in templates. No TypeScript command logic added. Scripts maintain error message clarity with updated command references."
+
+  recommended_validations:
+    - guideline: "Context Repository Pattern"
+      status: "✓ PASS"
+      checked_files: [.buildforce/context/plan-command.yaml, .buildforce/context/_index.yaml, .buildforce/context/cli-architecture.yaml]
+      notes: "Updated context files with rename documentation, evolution history, and index references"
+
+    - guideline: "Error Handling in Templates"
+      status: "✓ PASS"
+      checked_files:
+        - "src/scripts/bash/get-spec-paths.sh"
+        - "src/scripts/powershell/get-spec-paths.ps1"
+      notes: "Updated error messages in get-spec-paths scripts to reference /buildforce.plan instead of /spec, maintaining actionable user guidance pattern"
+
+# TESTING GUIDANCE
+
+testing:
+  automated_tests:
+    - test_file: "Manual verification (no unit tests for markdown/YAML)"
+      what: "Verify renamed files exist and old files are removed"
+      command: "ls -la src/templates/commands/ && ls -la .buildforce/context/"
+
+  manual_tests:
+    - scenario: "Verify /buildforce.plan command works in Claude Code"
+      steps: |
+        1. Ensure templates are deployed to .claude/commands/ as buildforce.plan.md
+        2. In Claude Code, type: /buildforce.plan Add a new feature
+        3. Verify command executes and creates spec.yaml + plan.yaml
+        4. Verify no references to old /spec or /buildforce.spec command names
+
+    - scenario: "Verify documentation consistency"
+      steps: |
+        1. Read README.md - all examples should use /buildforce.plan
+        2. Run buildforce init test-project - CLI output should show /buildforce.plan
+        3. Check that no legacy /spec or /buildforce.spec references exist
+        4. Verify context files use /buildforce.plan consistently
+
+# VALIDATION CRITERIA
+
+success_metrics:
+  - "Zero occurrences of /buildforce.spec in command templates"
+  - "Zero occurrences of /spec in README.md (except in historical notes)"
+  - "All context files reference /buildforce.plan"
+  - "Existing spec folders continue to work (NFR1 validated)"
+
+spec_coverage:
+  - FR1: "⏳ Phase 1: Task 1 (Rename spec.md to plan.md)"
+  - FR2: "⏳ Phase 1: Tasks 2-6 (Update internal references)"
+  - FR3: "⏳ Phase 2: Tasks 1-2 (Update README.md)"
+  - FR4: "⏳ Phase 2: Task 3 (Update CLI output)"
+  - FR5: "⏳ Phase 2: Task 4 (Update frontmatter descriptions)"
+  - FR6: "⏳ Phase 4: Tasks 1-2 (Update script comments)"
+  - FR7: "✓ COVERED (Design decision - no implementation needed)"
+  - FR8: "⏳ Phase 3: All tasks (Rename and update context files)"
+  - FR9: "⏳ Phase 2: Task 5 (Update CLI banner and help text)"
+  - NFR1: "✓ VALIDATED (No changes to folder structure or state tracking)"
+  - NFR2: "✓ VALIDATED (buildforce.json unchanged)"
+  - NFR3: "✓ VALIDATED (Scripts unchanged, only comments updated)"
+  - NFR4: "⏳ Phase 2: Task 4 (Frontmatter clarification)"
+  - NFR5: "✓ VALIDATED (Zero-disruption design)"
+
+# PROGRESS SUMMARY
+
+overall_progress:
+  phase_1: "6/6 tasks completed"
+  phase_2: "5/5 tasks completed"
+  phase_3: "6/6 tasks completed"
+  phase_4: "2/2 tasks completed"
+
+current_status: |
+  Implementation complete with additional cleanup iteration. All five phases executed successfully:
+  ✓ Phase 1: Command template renamed (spec.md → plan.md), all internal references updated
+  ✓ Phase 2: README.md updated, CLI output updated, frontmatter clarified
+  ✓ Phase 3: Context files renamed and updated (spec-command.yaml → plan-command.yaml)
+  ✓ Phase 4: Script comments updated to reference /buildforce.plan
+  ✓ Phase 5 (Additional): Cleaned up 6 remaining legacy /spec references in templates and scripts
+
+  One deviation logged: Additional cleanup phase required for missed /spec references.
+  All guideline compliance checks passed. Ready for validation and testing.
+
+next_immediate_steps:
+  - "Run comprehensive verification tests"
+  - "Verify no legacy /spec or /buildforce.spec references remain (COMPLETED)"
+  - "Test command deployment with buildforce init"
+
+# RISKS & CONSIDERATIONS
+
+risks:
+  - risk: "Breaking existing workflows if references are missed"
+    mitigation: "Comprehensive grep search for all /buildforce.spec and /spec references after implementation"
+
+  - risk: "Confusion for users familiar with /buildforce.spec"
+    mitigation: "Update README.md and CLI output immediately to use new naming. Clear documentation explains the rename rationale."
+
+  - risk: "Context file rename might break cross-references"
+    mitigation: "Update _index.yaml atomically with file rename. Verify all related_context references."
+
+  - risk: "Template deployment to agent folders might fail"
+    mitigation: "Test that buildforce init correctly deploys buildforce.plan.md to agent command folders"
+
+# NOTES
+
+general_notes:
+  - "This is a non-breaking change - existing spec folders and state tracking unchanged"
+  - "The rename provides semantic clarity: /buildforce.plan creates both spec.yaml and plan.yaml"
+  - "Completes the incomplete /spec → /buildforce.spec transition from previous work"
+  - "Follow Template-Only Slash Commands guideline (strict) - all changes in markdown templates"
+  - "Context Repository Pattern (recommended) - update all context files for consistency"
+
+lessons_learned:
+  - "Previous transitions left incomplete references in documentation"
+  - "Comprehensive search required to find all command references"
+  - "Script names can remain unchanged as internal implementation details"
+
+future_enhancements:
+  - "Consider adding migration guide for projects with custom integrations"
+  - "Explore adding /buildforce.spec → /buildforce.plan redirect message for smoother transition"
+  - "Update template versioning to reflect command name changes"
