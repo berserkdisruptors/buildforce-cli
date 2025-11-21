@@ -385,3 +385,22 @@ contexts:
         complete-command,
         plan-template,
       ]
+
+  - id: command-naming-standard
+    file: command-naming-standard.yaml
+    type: pattern
+    description: "Slash command naming convention using /buildforce.* prefix for namespace isolation"
+    tags:
+      [
+        pattern,
+        naming-convention,
+        slash-commands,
+        namespace-isolation,
+        documentation-consistency,
+      ]
+    related_context:
+      [
+        slash-commands,
+        readme-documentation,
+        cli-architecture,
+      ]

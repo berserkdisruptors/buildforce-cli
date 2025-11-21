@@ -79,7 +79,7 @@ key_guidelines:
 
   - name: "Next Steps"
     priority: 9
-    description: "Suggest next action after research (e.g., 'Ready to define the spec?')"
+    description: "Suggest next action after research (e.g., 'Ready to plan?')"
 
 research_strategies:
   project_context:

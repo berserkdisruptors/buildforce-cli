@@ -7,7 +7,7 @@ User input:
 
 $ARGUMENTS
 
-**Context**: The user is invoking `/document` to create or update context files in `.buildforce/context/` for functionality that already exists in the codebase. ($ARGUMENTS) contains the topic or module to document.
+**Context**: The user is invoking `/buildforce.document` to create or update context files in `.buildforce/context/` for functionality that already exists in the codebase. ($ARGUMENTS) contains the topic or module to document.
 
 **Your task**: Document the existing functionality by analyzing conversation history, generating or updating context files following the schema structure, updating the context index, and maintaining cross-references with related contexts.
 
@@ -26,7 +26,7 @@ First, determine which mode to use based on $ARGUMENTS:
 **Purpose**: Create or update `.buildforce/context/_guidelines.yaml` to capture project conventions, coding standards, and architectural patterns that AI agents should follow during implementation.
 
 **When to use**:
-- User explicitly invokes `/document guidelines`
+- User explicitly invokes `/buildforce.document guidelines`
 - Conversation discusses project conventions, patterns, or standards
 - Team wants to capture tribal knowledge for AI-assisted consistency
 
@@ -88,7 +88,7 @@ First, determine which mode to use based on $ARGUMENTS:
    - **CREATE mode**: "Created _guidelines.yaml with [N] guidelines across [M] categories"
    - **UPDATE mode**: "Updated _guidelines.yaml - Added [N] new guidelines: [list names]"
    - List all guidelines added/updated with enforcement levels
-   - Remind user: "These guidelines will be enforced during /build (strict) and referenced during /buildforce.plan (all levels)"
+   - Remind user: "These guidelines will be enforced during /buildforce.build (strict) and referenced during /buildforce.plan (all levels)"
 
 ---
 
@@ -96,7 +96,7 @@ First, determine which mode to use based on $ARGUMENTS:
 
 **Purpose**: Bootstrap initial `_guidelines.yaml` by analyzing the entire codebase for consistent patterns. Useful for projects adopting guidelines after significant development.
 
-**When to use**: User invokes `/document scan guidelines`
+**When to use**: User invokes `/buildforce.document scan guidelines`
 
 ### Scan Mode Steps
 
@@ -137,7 +137,7 @@ First, determine which mode to use based on $ARGUMENTS:
 4. **Present Summary**:
    - "Analyzed codebase and detected [N] consistent patterns"
    - If confirmed: "Created _guidelines.yaml with [M] guidelines from detected patterns"
-   - If declined: "Pattern analysis complete. Run `/document scan guidelines` again to retry, or `/document guidelines` to manually add conventions."
+   - If declined: "Pattern analysis complete. Run `/buildforce.document scan guidelines` again to retry, or `/buildforce.document guidelines` to manually add conventions."
 
 ---
 
@@ -167,7 +167,7 @@ Before proceeding with standard documentation, verify sufficient context exists:
      - If existing context file covers the same component → **UPDATE** that file (do not create duplicate)
      - If existing file is >500 lines → Note for summary: consider decomposing into smaller focused files
      - If this represents new component not yet documented → **CREATE** new file
-   - **Multiple components**: One `/document` invocation may affect multiple contexts → update/create multiple files
+   - **Multiple components**: One `/buildforce.document` invocation may affect multiple contexts → update/create multiple files
 
 2. **Generate Context Filenames** (for new files only):
 

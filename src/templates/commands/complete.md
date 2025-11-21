@@ -7,7 +7,7 @@ User input:
 
 $ARGUMENTS
 
-**Context**: The user is invoking `/complete` to finalize the current spec. ($ARGUMENTS) contains optional completion notes or confirmations.
+**Context**: The user is invoking `/buildforce.complete` to finalize the current spec. ($ARGUMENTS) contains optional completion notes or confirmations.
 
 **Your task**: Complete the spec by creating comprehensive context files, updating the context repository, validating that all requirements have been met, and clearing the spec state.
 
@@ -198,7 +198,7 @@ $ARGUMENTS
 
    - **If user declines (n or no)**:
      1. Skip auto-update
-     2. Optionally mention: "You can manually add these patterns later via `/document guidelines`"
+     2. Optionally mention: "You can manually add these patterns later via `/buildforce.document guidelines`"
      3. Continue to next step
 
    - **CRITICAL**: Never auto-update without explicit user confirmation. This builds trust and prevents accidental convention capture.
@@ -206,7 +206,7 @@ $ARGUMENTS
    **Pattern Detection Performance**:
    - Keep analysis focused on modified files from current spec only
    - Do not scan entire codebase (too expensive)
-   - If pattern detection takes >10 seconds, skip and mention: "Pattern detection skipped due to complexity - use `/document scan guidelines` for full codebase analysis"
+   - If pattern detection takes >10 seconds, skip and mention: "Pattern detection skipped due to complexity - use `/buildforce.document scan guidelines` for full codebase analysis"
 
 9. **Clear Spec State**:
 

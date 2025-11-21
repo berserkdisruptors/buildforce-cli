@@ -7,7 +7,7 @@ User input:
 
 $ARGUMENTS
 
-**Context**: The user is invoking `/research` to prepare the context window for a spec-driven development session. The text after `/research` is their research query.
+**Context**: The user is invoking `/buildforce.research` to prepare the context window for a spec-driven development session. The text after `/buildforce.research` is their research query.
 
 **Your task**: Answer the user's query ($ARGUMENTS) by gathering relevant information from the codebase, web sources, or your general knowledge.
 
@@ -27,4 +27,4 @@ $ARGUMENTS
 
 7. **TLDR section**: Condense findings into 3-7 bullet points (using `-`) highlighting only the most important discoveries. Exclude code snippets, Mermaid diagrams, and extensive file path lists. Include key architectural patterns, critical decisions, or constraints, with references to detailed sections (e.g., "See Codebase Findings for file paths"). Focus on what the user needs to know to proceed.
 
-8. **Next steps**: Suggest the logical next action (e.g., "Ready to define the spec?" or "Would you like to explore anything else?").
+8. **Next steps**: Suggest the logical next action (e.g., "Ready to plan?" or "Would you like to explore anything else?").

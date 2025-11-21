@@ -21,7 +21,7 @@ export const WORKFLOWS: Record<string, Workflow> = {
   basic: {
     id: "basic",
     name: "Basic Workflow",
-    commandSequence: ["/plan", "/build"],
+    commandSequence: ["/buildforce.plan", "/buildforce.build"],
     description:
       "Streamlined workflow that goes directly from specification to implementation, skipping research and completion steps",
     useCase:
@@ -30,7 +30,7 @@ export const WORKFLOWS: Record<string, Workflow> = {
   full: {
     id: "full",
     name: "Full Workflow",
-    commandSequence: ["/research", "/plan", "/build", "/complete"],
+    commandSequence: ["/buildforce.research", "/buildforce.plan", "/buildforce.build", "/buildforce.complete"],
     description:
       "Context-aware workflow that accumulates research, materializes it into structured specs & warms up the context window, executes implementation with context consumption, and enriches the knowledge repository upon completion",
     useCase:
@@ -39,7 +39,7 @@ export const WORKFLOWS: Record<string, Workflow> = {
   documentation: {
     id: "documentation",
     name: "Documentation Workflow",
-    commandSequence: ["/research [topic]", "/document [module]"],
+    commandSequence: ["/buildforce.research [topic]", "/buildforce.document [module]"],
     description:
       "Standalone utility workflow that gathers context via research and materializes it directly into searchable context files, bypassing the spec-driven development cycle",
     useCase:

@@ -49,7 +49,7 @@ The text the user typed after `/buildforce.plan` in the triggering message **is*
    1. **Assess conversation for research context**:
 
       - Review conversation history for research-related content:
-        - Explicit `/research` command output with findings, diagrams, data models
+        - Explicit `/buildforce.research` command output with findings, diagrams, data models
         - User discussions about architecture, patterns, or technical exploration
         - File path discoveries, codebase analysis, or external references
       - If NO research context exists (user went straight to `/buildforce.plan`): **SKIP to Step 2d** - don't create empty research.yaml
@@ -141,7 +141,7 @@ The text the user typed after `/buildforce.plan` in the triggering message **is*
    1. **Assess conversation for new research context**:
 
       - Review recent conversation history for new research-related content:
-        - New `/research` command output since spec creation
+        - New `/buildforce.research` command output since spec creation
         - Additional user discussions about architecture or technical exploration
         - New file path discoveries, codebase analysis, or external references
       - If NO new research context: **SKIP to Step 3c** - keep existing research.yaml as-is
