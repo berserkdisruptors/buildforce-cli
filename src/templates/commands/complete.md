@@ -227,7 +227,6 @@ Provide a concise report to the user:
 - **If patterns were detected and added**: Report guideline additions (e.g., "Added 2 new guidelines to _guidelines.yaml: Repository Pattern (recommended), Error Handling Pattern (recommended)")
 - Confirmation that all spec requirements were implemented
 - Brief summary of what was achieved with this spec (1-2 sentences)
-- **ALWAYS request user confirmation** that the completion is satisfactory
 
 ## Behavior Rules
 
