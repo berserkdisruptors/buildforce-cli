@@ -206,7 +206,7 @@ Searches your project's accumulated context repository first, then explores your
 
 Converts your feature description into a structured specification with clear requirements, acceptance criteria, and scope boundaries. Creates both a `spec.yaml` (defining WHAT to build) and `plan.yaml` (defining HOW to build it) in a timestamped folder. If you've done research beforehand, it intelligently materializes those findings into a structured file. When requirements are unclear, it asks clarifying questions to ensure everyone's aligned before implementation begins.
 
-**Pro tip**: Run `/buildforce.plan` multiple times to refine requirements and plan. UPDATE mode loads existing artifacts, allowing iteration and intentional compaction without losing previous work.
+**Pro tip**: Run `/buildforce.plan` multiple times to refine requirements. Since artifacts are persisted, you can perform **intentional compaction**: clear your context window or start a fresh session, then run `/buildforce.plan` again to resume with a clean slate.
 
 ---
 
@@ -234,7 +234,7 @@ Converts your feature description into a structured specification with clear req
 
 Executes your implementation following the spec and plan, checking off tasks as work progresses and logging any deviations from the original approach. Validates the work against both requirements and plan steps, runs tests, and provides clear guidance on what still needs verification. Supports iterative refinement—you can run it multiple times with feedback to converge on the right solution while maintaining full transparency about what changed and why.
 
-**Pro tip**: Don't try to do everything in one `/buildforce.build`. Run it, review output, then run `/buildforce.build [refinement instructions]` to iterate. Deviation log tracks entire journey from first attempt to final implementation.
+**Pro tip**: If you iterated a couple of times on the build step and your context window is already getting above 40-50% full, perform **intentional compaction** before iterating more or completing your sessions. Since progress is tracked in `plan.yaml`, you can start a fresh session and pick up exactly where you left off with a clean context window on every turn.
 
 ---
 
