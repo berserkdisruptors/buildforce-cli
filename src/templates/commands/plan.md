@@ -2,7 +2,7 @@
 version: "0.0.35"
 description: Create or update a structured specification (spec.yaml) and implementation plan (plan.yaml) that capture WHAT needs to be built and HOW to build it.
 scripts:
-  sh: src/scripts/bash/create-spec-files.sh --folder-name "{FOLDER_NAME}" --json
+  sh: bash src/scripts/bash/create-spec-files.sh --folder-name "{FOLDER_NAME}" --json
   ps: src/scripts/powershell/create-spec-files.ps1 -FolderName "{FOLDER_NAME}" -Json
 ---
 

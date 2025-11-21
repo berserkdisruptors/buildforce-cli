@@ -2,7 +2,7 @@
 version: "0.0.35"
 description: Build the code changes required for the current spec following the plan, with progress tracking, deviation logging, and iterative refinement.
 scripts:
-  sh: src/scripts/bash/get-spec-paths.sh --json
+  sh: bash src/scripts/bash/get-spec-paths.sh --json
   ps: src/scripts/powershell/get-spec-paths.ps1 -Json
 ---
 

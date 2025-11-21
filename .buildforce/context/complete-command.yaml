@@ -85,7 +85,7 @@ evolution:
 
   - version: "4.0"
     date: "2025-10-29"
-    changes: "Migrated state tracking from .current-spec to buildforce.json. Updated Step 1 (Verify Active Spec) to read currentSpec field from buildforce.json. Updated Step 8 (Clear Spec State) to call clear-spec-state.sh script which sets currentSpec to null. Examples updated to reference buildforce.json throughout."
+    changes: "Migrated state tracking from .current-spec to buildforce.json. Updated Step 1 (Verify Active Spec) to read currentSpec field from buildforce.json. Updated Step 8 (Clear Spec State) sets currentSpec in buildforce.json to null. Examples updated to reference buildforce.json throughout."
 
 related_specs:
   - redesign-spec-context-20250107120000
@@ -101,7 +101,7 @@ notes: |
   5. Create/update context files (use _schema.yaml, intelligent merge)
   6. Update context index (_index.yaml with new entries + description)
   7. Validate implementation (cross-check spec requirements)
-  8. Clear spec state (run clear-spec-state.sh to set currentSpec to null)
+  8. Clear spec state (set currentSpec in buildforce.json to null)
   9. Present completion summary (files created/updated, achievements)
 
   Context filename rules:
