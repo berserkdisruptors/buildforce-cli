@@ -3,13 +3,13 @@
 # This file serves as "Project DNA" - capturing conventions, standards, and coding patterns
 # that AI agents should follow when implementing features.
 #
-# IMPORTANT: These guidelines are for AI agent education during /build, NOT linting rules
+# IMPORTANT: These guidelines are for AI agent education during /buildforce.build, NOT linting rules
 # for human developers. The AI agent validates its own generated code against these patterns.
 #
 # USAGE:
-#   - Create via: /document guidelines
-#   - Update via: /document guidelines (intelligent merge of new patterns)
-#   - Bootstrap via: /document scan guidelines (analyze codebase for existing patterns)
+#   - Create via: /buildforce.document guidelines
+#   - Update via: /buildforce.document guidelines (intelligent merge of new patterns)
+#   - Bootstrap via: /buildforce.document scan guidelines (analyze codebase for existing patterns)
 #   - Referenced by: /buildforce.plan (planning context), /buildforce.build (validation), /buildforce.complete (auto-evolution)
 #
 # ENFORCEMENT LEVELS:
@@ -226,9 +226,9 @@ project_quirks:
 # =============================================================================
 
 # ADDING NEW GUIDELINES:
-#   1. Manual: Run /document guidelines and describe the convention in conversation
-#   2. Auto: /complete detects patterns (5+ files, 95%+ consistency) and suggests additions
-#   3. Scan: Run /document scan guidelines to bootstrap from existing codebase
+#   1. Manual: Run /buildforce.document guidelines and describe the convention in conversation
+#   2. Auto: /buildforce.complete detects patterns (5+ files, 95%+ consistency) and suggests additions
+#   3. Scan: Run /buildforce.document scan guidelines to bootstrap from existing codebase
 #
 # ENFORCEMENT STRATEGY:
 #   - Start new guidelines as 'recommended' to gather feedback
@@ -239,7 +239,7 @@ project_quirks:
 #
 # CONFLICT RESOLUTION:
 #   - If guidelines conflict, first guideline in category takes precedence
-#   - /document detects potential conflicts and prompts before adding
+#   - /buildforce.document detects potential conflicts and prompts before adding
 #   - Resolve conflicts manually by editing this file
 #
 # MAINTENANCE:

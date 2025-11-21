@@ -11,7 +11,7 @@ version: "0.0.35"
 # PRESERVATION STRATEGY:
 # The goal is INTELLIGENT CONDENSATION - not verbatim copy, not excessive summarization.
 #
-# PRESERVE (Essential for /build context):
+# PRESERVE (Essential for /buildforce.build context):
 #   - Mermaid diagrams (architecture flows, component relationships) → Copy verbatim
 #   - Data models (properties, types, relationships) → Preserve structure details
 #   - Code snippets (examples, patterns, suggested implementations) → Keep complete code

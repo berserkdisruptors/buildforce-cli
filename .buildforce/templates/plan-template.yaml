@@ -1,6 +1,6 @@
 version: "0.0.35"
-# Plan Template for /build Agent Execution
-# This template is optimized for AI agent consumption during /build commands
+# Plan Template for /buildforce.build Agent Execution
+# This template is optimized for AI agent consumption during /buildforce.build commands
 # It provides checkbox-based progress tracking, deviation logging, and spec traceability
 
 id: [FEATURE_NUM]-[feature-name]-plan
@@ -86,7 +86,7 @@ phase_2:
     - [ ] Spec requirements covered: [FR4, NFR1]
 
 # DEVIATION LOG
-# The /build agent populates this section when implementation deviates from the original plan
+# The /buildforce.build agent populates this section when implementation deviates from the original plan
 # Format: phase → task → original plan → actual implementation → reason for deviation
 
 deviations:
@@ -99,7 +99,7 @@ deviations:
 
 # GUIDELINE COMPLIANCE
 # Track validation results for strict and recommended enforcement levels
-# This section is populated during /build when .buildforce/context/_guidelines.yaml exists
+# This section is populated during /buildforce.build when .buildforce/context/_guidelines.yaml exists
 # Guidelines are for AI agent education - agents validate their own generated code against project conventions
 
 guideline_compliance:
@@ -163,7 +163,7 @@ overall_progress:
 
 current_status: |
   [Current implementation status and what has been completed so far.
-  The /build agent updates this after each task or phase completion.]
+  The /buildforce.build agent updates this after each task or phase completion.]
 
 next_immediate_steps:
   - "[Next action to take]"
@@ -183,7 +183,7 @@ risks:
 # Capture lessons learned and future enhancement ideas
 
 general_notes:
-  - "Guideline compliance is checked during /build execution if .buildforce/context/_guidelines.yaml exists"
+  - "Guideline compliance is checked during /buildforce.build execution if .buildforce/context/_guidelines.yaml exists"
   - "Strict enforcement guidelines will fail the build if violated"
   - "Recommended guidelines log warnings but allow build to continue"
   - "See guideline_compliance section above for validation results"
