@@ -3,7 +3,7 @@ id: rename-specs-to-sessions-20251121160000-plan
 name: "Implementation Plan for Rename .buildforce/specs to .buildforce/sessions"
 spec_id: "rename-specs-to-sessions-20251121160000"
 type: implementation-plan
-status: draft
+status: completed
 created: "2025-11-21"
 last_updated: "2025-11-21"
 

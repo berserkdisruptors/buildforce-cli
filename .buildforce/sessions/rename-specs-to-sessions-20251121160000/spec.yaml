@@ -2,7 +2,7 @@ version: "0.0.35"
 id: rename-specs-to-sessions-20251121160000
 name: "Rename .buildforce/specs to .buildforce/sessions"
 type: feature
-status: draft
+status: completed
 created: "2025-11-21"
 last_updated: "2025-11-21"
 

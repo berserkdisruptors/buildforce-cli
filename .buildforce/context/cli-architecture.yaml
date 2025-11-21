@@ -3,7 +3,7 @@ name: Buildforce CLI Architecture
 type: module
 status: production
 created: 2025-10-27
-last_updated: 2025-01-22
+last_updated: 2025-11-21
 
 summary: |
   Comprehensive architecture of the Buildforce CLI tool - a Node.js-based command-line
@@ -114,8 +114,8 @@ design_decisions:
   - decision: "Persist configuration in buildforce.json during init"
     rationale: "Enables upgrade command to auto-detect project settings (AI assistant, script type) without re-prompting users. Single source of truth for project configuration."
 
-  - decision: "Upgrade command preserves user content (.buildforce/context/ and .buildforce/specs/)"
-    rationale: "User-created content represents significant investment and must never be modified during upgrades. Only system files (templates, scripts, commands) are updated."
+  - decision: "Upgrade command preserves user content (.buildforce/context/ and .buildforce/sessions/)"
+    rationale: "User-created content represents significant investment and must never be modified during upgrades. Only system files (templates, scripts, commands) are updated. The sessions folder (formerly specs) stores development session artifacts including spec.yaml, plan.yaml, and research.yaml files."
 
   - decision: "Support local artifact resolution via --local flag"
     rationale: "Enables offline workflows, local testing during development, and faster iteration cycles. Developers can test locally-built artifacts without publishing to GitHub Releases."
@@ -210,9 +210,10 @@ architecture_patterns:
 
     Template Structure:
     - .buildforce/context/ - Context management system
+    - .buildforce/sessions/ - Development session artifacts (spec.yaml, plan.yaml, research.yaml)
     - .buildforce/scripts/ - Automation scripts
     - .buildforce/templates/ - Local templates
-    - buildforce.json - Project configuration with aiAssistant, scriptType, version
+    - buildforce.json - Project configuration with aiAssistant, scriptType, version, sessionsFolder
     - Agent folders (.claude/, .github/, etc.) - Agent-specific files with commands nested in buildforce/ subdirectory
 
     Extraction Flow:
@@ -358,8 +359,8 @@ workflow_integration: |
 
   6. Upgrade System:
      - buildforce upgrade - Update templates to latest version
-     - Preserves user content (.buildforce/context/, .buildforce/specs/)
-     - Auto-detects configuration from buildforce.json
+     - Preserves user content (.buildforce/context/, .buildforce/sessions/)
+     - Auto-detects configuration from buildforce.json (including sessionsFolder field)
      - Supports dry-run and override flags
 
   This creates a complete Spec-Driven Development workflow where AI assistants have:
@@ -406,6 +407,10 @@ evolution:
     date: "2025-11-04"
     changes: "Reverted to prefix-based command naming: all BuildForce commands now use buildforce. prefix in flat directory structure (e.g., .claude/commands/buildforce.spec.md). Modified generate_commands() function to remove buildforce/ subdirectory creation and output commands with prefix-based naming (buildforce.$name.$ext). Updated all command template files to use /buildforce.* invocation pattern (dot notation instead of colon). Verified across all 11 agents × 2 script variants (22 combinations). Flat structure simplifies discovery while maintaining namespace isolation."
 
+  - version: "1.8"
+    date: "2025-11-21"
+    changes: "Renamed folder structure from .buildforce/specs to .buildforce/sessions to better reflect its purpose as session-based development tracking. Updated BuildforceConfig interface field from specsFolder to sessionsFolder. Modified all scripts (bash and PowerShell), command templates (plan.md, complete.md), and user-facing output to reference new path. Variable names updated for consistency (SPECS_DIR→SESSIONS_DIR, $specsDir→$sessionsDir). This terminology change aligns with the ephemeral, workflow-oriented nature of development sessions."
+
 related_specs:
   - "standardize-cli-title-display-20250130220000"
   - "standardize-color-scheme-mint-20251031011544"
@@ -413,6 +418,7 @@ related_specs:
   - "nest-commands-buildforce-folder-20251030085832"
   - "revert-to-prefix-naming-20251104000000"
   - "cleanup-spec-kit-references-20250122143052"
+  - "rename-specs-to-sessions-20251121160000"
 
 notes: |
   Key architectural strengths:
