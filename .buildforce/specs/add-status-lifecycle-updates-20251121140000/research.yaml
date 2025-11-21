@@ -1,0 +1,171 @@
+version: "0.0.35"
+id: "add-status-lifecycle-updates-20251121140000-research"
+created: "2025-11-21"
+last_updated: "2025-11-21"
+
+summary: |
+  Investigation into missing status field updates in /buildforce.build and /buildforce.complete commands.
+  Research identified two gaps in status lifecycle management: build command doesn't update draft→in-progress,
+  and complete command doesn't update in-progress→completed.
+
+key_findings:
+  - "Complete command template (src/templates/commands/complete.md) has 10-step workflow but lacks any instruction to update status field in spec.yaml and plan.yaml"
+  - "Build command template (src/templates/commands/build.md) has 8 guidelines including 'Progress Tracking' but only refers to task checkboxes, not top-level status metadata"
+  - "Valid status values are: draft (default), in-progress, completed - confirmed from codebase analysis"
+  - "Examples exist showing status: completed (e.g., plan-template-20250103120000) proving this field should be updated"
+  - "Root cause: Template compression in v2.0 focused on checkbox tracking but overlooked metadata status field management"
+  - "Both complete-command.yaml and build-command.yaml context files lack status management in their responsibilities lists"
+
+file_paths:
+  primary:
+    - path: "src/templates/commands/complete.md"
+      relevance: "Complete command template - needs new step to update status to completed"
+    - path: "src/templates/commands/build.md"
+      relevance: "Build command template - needs instruction in guideline #1 or #2 to update status to in-progress"
+    - path: ".buildforce/context/complete-command.yaml"
+      relevance: "Complete command context documentation - needs status management added to responsibilities"
+    - path: ".buildforce/context/build-command.yaml"
+      relevance: "Build command context documentation - needs status management added to responsibilities"
+
+  secondary:
+    - path: "src/templates/spec-template.yaml"
+      relevance: "Defines status: draft as default value (line 5)"
+    - path: "src/templates/plan-template.yaml"
+      relevance: "Defines status: draft as default value (line 10)"
+    - path: ".buildforce/context/state-tracking.yaml"
+      relevance: "Documents buildforce.json state management - may need update to clarify full lifecycle"
+
+mermaid_diagrams:
+  - title: "Status Lifecycle - Current vs Expected"
+    description: "Shows the gap between current behavior (stays draft) and expected behavior (transitions through lifecycle)"
+    diagram: |
+      ```mermaid
+      graph LR
+          A[/buildforce.plan creates spec] --> B[status: draft]
+          B --> C[/buildforce.build starts]
+          C -.Missing Update.-> D[status: in-progress]
+          D --> E[/buildforce.build iterations]
+          E --> F[/buildforce.complete runs]
+          F -.Missing Update.-> G[status: completed]
+
+          B --> H[CURRENT: stays draft]
+          H --> I[CURRENT: stays draft]
+
+          style D fill:#ff6b6b,stroke:#c92a2a,stroke-width:2px
+          style G fill:#ff6b6b,stroke:#c92a2a,stroke-width:2px
+          style H fill:#ffd43b,stroke:#fab005,stroke-width:2px
+          style I fill:#ffd43b,stroke:#fab005,stroke-width:2px
+      ```
+
+  - title: "Complete Command Workflow Architecture"
+    description: "10-step workflow showing where status update step is missing"
+    diagram: |
+      ```mermaid
+      graph TD
+          A[User runs /buildforce.complete] --> B[Complete Template Loaded]
+          B --> C[Step 1: Verify Active Spec]
+          C --> D[Read buildforce.json currentSpec]
+          D --> E[Step 2: Load spec.yaml & plan.yaml]
+          E --> F[Step 3-7: Context File Operations]
+          F --> G[Step 8: Pattern Detection]
+          G --> H[Step 9: Clear currentSpec]
+          H --> I[Step 10: Present Summary]
+          I --> J[Complete]
+
+          E -.Missing Step.-> K[Update status: draft → completed]
+          K -.Should happen.-> F
+
+          style K fill:#ff6b6b,stroke:#c92a2a,stroke-width:2px
+          style E fill:#ffd43b,stroke:#fab005,stroke-width:2px
+          style H fill:#51cf66,stroke:#2f9e44,stroke-width:2px
+      ```
+
+data_models:
+  - name: "spec.yaml metadata"
+    description: "Metadata fields in spec.yaml files"
+    properties:
+      - name: "version"
+        type: "string"
+        required: true
+        description: "Template version (e.g., '0.0.35')"
+
+      - name: "id"
+        type: "string"
+        required: true
+        description: "Folder name (slug-timestamp format)"
+
+      - name: "name"
+        type: "string"
+        required: true
+        description: "Human-readable feature name"
+
+      - name: "type"
+        type: "string"
+        required: true
+        description: "Usually 'feature'"
+
+      - name: "status"
+        type: "enum: draft | in-progress | completed"
+        required: true
+        description: "Lifecycle status - CURRENTLY NOT UPDATED BY COMMANDS"
+
+      - name: "created"
+        type: "string (YYYY-MM-DD)"
+        required: true
+        description: "Creation date"
+
+      - name: "last_updated"
+        type: "string (YYYY-MM-DD)"
+        required: true
+        description: "Last modification date - SHOULD UPDATE WITH STATUS"
+
+    relationships:
+      - "plan.yaml has identical metadata structure with spec_id linkage"
+
+  - name: "buildforce.json"
+    description: "State tracking file for active spec management"
+    properties:
+      - name: "currentSpec"
+        type: "string | null"
+        required: true
+        description: "Folder name of active spec, null when no active spec"
+
+      - name: "specsFolder"
+        type: "string"
+        required: true
+        description: "Path to specs directory"
+
+      - name: "framework"
+        type: "string"
+        required: true
+        description: "Framework identifier"
+
+      - name: "version"
+        type: "string"
+        required: true
+        description: "Buildforce version"
+
+    relationships:
+      - "currentSpec cleared by /buildforce.complete (Step 9)"
+      - "Separate from spec.yaml/plan.yaml status field"
+
+architectural_decisions:
+  - pattern: "Template-based AI agent instructions"
+    description: "Both build.md and complete.md use markdown templates that expand to agent prompts"
+    rationale: "Allows versioning and updating of agent behavior without code changes. Status updates need to be added to these templates, not scripts."
+
+  - pattern: "Separation of concerns: buildforce.json vs spec/plan status"
+    description: "buildforce.json tracks active spec pointer (currentSpec), while spec.yaml/plan.yaml track document lifecycle (status field)"
+    rationale: "Different concerns: currentSpec is session state (cleared on complete), status is document metadata (permanent lifecycle tracking)"
+
+  - pattern: "User request: Keep it simple, incorporate into existing steps"
+    description: "Avoid adding new phases or complex logic - integrate status updates into existing workflow steps"
+    rationale: "Minimizes template verbosity and maintains clear workflow structure"
+
+tldr:
+  - "Two status update gaps found: /buildforce.build doesn't update draft→in-progress, /buildforce.complete doesn't update in-progress→completed"
+  - "Build command's 'Progress Tracking' guideline only refers to task checkboxes, not top-level status metadata"
+  - "Complete command has 10 steps but none update the status field in spec.yaml and plan.yaml"
+  - "Valid status values: draft (default), in-progress, completed"
+  - "Fix should integrate into existing steps/guidelines per user request - avoid adding new phases"
+  - "Both template files (build.md, complete.md) and context files (build-command.yaml, complete-command.yaml) need updates"

@@ -1,83 +1,129 @@
 version: "0.0.35"
-id: [FOLDER_NAME]
-name: "[Feature Name]"
+id: add-status-lifecycle-updates-20251121140000
+name: "Add Status Lifecycle Updates to Build and Complete Commands"
 type: feature
-status: draft
-created: "[YYYY-MM-DD]"
-last_updated: "[YYYY-MM-DD]"
+status: completed
+created: "2025-11-21"
+last_updated: "2025-11-21"
 
 summary: |
-  [Brief 1-3 sentence description of what this feature does]
+  Add status field lifecycle management to /buildforce.build and /buildforce.complete commands so spec.yaml
+  and plan.yaml status fields properly transition from draft → in-progress → completed throughout the workflow.
 
 # INTENT / PROBLEM STATEMENT
 
 problem: |
-  [Describe the problem this feature solves. What pain points exist? What are the current limitations?]
+  The /buildforce.build and /buildforce.complete commands do not update the status field in spec.yaml and
+  plan.yaml files. Specs remain with status: draft even after build starts and completion finishes. This
+  creates visibility gaps where you cannot distinguish between planned, active, and completed specs by
+  reading the files. Archive integrity is compromised as historical specs don't show completion status.
 
 motivation: |
-  [Why is this feature needed? What value does it provide? What will be possible after implementation?]
+  Proper status lifecycle management provides clear visibility into spec states without checking buildforce.json.
+  Status field should follow the natural workflow: draft (created by /plan) → in-progress (when /build starts) →
+  completed (when /complete finalizes). This enables tools/scripts to query spec status accurately and maintains
+  proper archive documentation showing which specs were completed vs abandoned.
 
 # GOALS
 
 primary_goals:
-  - [Primary goal 1]
-  - [Primary goal 2]
+  - Add status field update to /buildforce.build command (draft → in-progress)
+  - Add status field update to /buildforce.complete command (in-progress → completed)
+  - Update both spec.yaml and plan.yaml files consistently
+  - Integrate status updates into existing workflow steps/guidelines (keep it simple)
 
 secondary_goals:
-  - [Secondary goal 1]
-  - [Secondary goal 2]
+  - Update context documentation for both commands to include status management responsibilities
+  - Ensure last_updated field is also updated when status changes
+  - Document status lifecycle in state-tracking.yaml if needed
 
 # REQUIREMENTS
 
 functional_requirements:
-  - FR1: [Specific functional requirement - must be testable]
-  - FR2: [Another functional requirement]
+  - FR1: /buildforce.build command must update status field in spec.yaml from "draft" to "in-progress" after loading artifacts
+  - FR2: /buildforce.build command must update status field in plan.yaml from "draft" to "in-progress" after loading artifacts
+  - FR3: /buildforce.build command must update last_updated field to current date when updating status
+  - FR4: /buildforce.build command must only update status on first invocation (check if already "in-progress" to support iterations)
+  - FR5: /buildforce.complete command must update status field in spec.yaml from "in-progress" or "draft" to "completed"
+  - FR6: /buildforce.complete command must update status field in plan.yaml from "in-progress" or "draft" to "completed"
+  - FR7: /buildforce.complete command must update last_updated field to current date when updating status
+  - FR8: Status updates must be integrated into existing guidelines/steps (build: guideline #1 or #2, complete: step 2 or new step before step 9)
+  - FR9: Update .buildforce/context/build-command.yaml responsibilities to include status management
+  - FR10: Update .buildforce/context/complete-command.yaml responsibilities to include status management
 
 non_functional_requirements:
-  - NFR1: [Performance, security, scalability, compatibility, or accessibility requirement]
-  - NFR2: [Another non-functional requirement]
+  - NFR1: Status updates must not add significant verbosity to templates (keep user's "simple" requirement)
+  - NFR2: Status transitions must preserve all other metadata fields in spec.yaml and plan.yaml
+  - NFR3: Template changes must maintain backward compatibility with existing specs
+  - NFR4: Instructions must be clear enough for AI agents to execute without ambiguity
 
 # SCOPE
 
 in_scope:
-  - [What will be changed/added/removed]
-  - [Another in-scope item]
+  - Updating src/templates/commands/build.md to add status update instruction
+  - Updating src/templates/commands/complete.md to add status update instruction
+  - Updating .buildforce/context/build-command.yaml responsibilities section
+  - Updating .buildforce/context/complete-command.yaml responsibilities section
+  - Updating both spec.yaml and plan.yaml files consistently in each command
 
 out_of_scope:
-  - [What will NOT be changed - important for preventing scope creep]
-  - [Another out-of-scope item]
+  - Adding new workflow phases or steps (integrate into existing structure)
+  - Changing buildforce.json structure or currentSpec behavior
+  - Updating status field retroactively for existing historical specs
+  - Adding status validation or status-based logic to other commands
+  - Creating automated scripts for status updates (template instructions only)
 
 # DESIGN PRINCIPLES
 
 design_principles:
-  - "[Guiding principle 1]"
-  - "[Guiding principle 2]"
+  - "Keep it simple: Integrate into existing steps/guidelines rather than adding new phases"
+  - "Consistency: Update both spec.yaml and plan.yaml status fields together"
+  - "Lifecycle clarity: draft → in-progress → completed follows natural workflow progression"
+  - "Minimal verbosity: Add concise instructions without bloating templates"
 
 # ACCEPTANCE CRITERIA
 
 acceptance_criteria:
-  - AC1: [Specific, measurable criterion for success]
-  - AC2: [Another acceptance criterion]
+  - AC1: Build command template instructs agent to update status to "in-progress" after loading spec/plan (integrated into guideline #1 or #2)
+  - AC2: Build command only updates status if current value is "draft" (supports multiple iterations)
+  - AC3: Complete command template instructs agent to update status to "completed" (integrated into existing step or new step before step 9)
+  - AC4: Both commands update last_updated field along with status field
+  - AC5: Both commands update spec.yaml and plan.yaml consistently (same status value)
+  - AC6: build-command.yaml context file lists status management in responsibilities
+  - AC7: complete-command.yaml context file lists status management in responsibilities
+  - AC8: Template changes do not exceed 3-5 lines of additions per file (keep simple)
 
 # ASSUMPTIONS & DEPENDENCIES
 
 assumptions:
-  - [What we assume to be true]
-  - [Another assumption]
+  - Valid status values are: "draft", "in-progress", "completed" (confirmed from codebase analysis)
+  - AI agents can perform YAML field updates using Edit tool
+  - Status field exists in all spec.yaml and plan.yaml files (created from templates)
+  - User wants minimal changes integrated into existing workflow (not new phases)
 
 dependencies:
   internal:
-    - [module-name]: "[Description of relationship]"
-  external:
-    - [package-name]: "[version or description]"
+    - build-command: "Template that needs status update instruction added"
+    - complete-command: "Template that needs status update instruction added"
+    - state-tracking: "May need clarification that status field is separate from buildforce.json currentSpec"
+  external: []
 
 # OPEN QUESTIONS
 
-open_questions:
-  - [Question that needs clarification or decision]
-  - [Another open question]
+open_questions: []
 
 # NOTES
 
 notes: |
-  [Additional context, future considerations, or important details]
+  Research identified this gap during investigation of complete command workflow. The issue affects both
+  build and complete commands, but root cause differs:
+  - Build command v2.0 compression focused on checkbox tracking, overlooked metadata status field
+  - Complete command's 10-step workflow never included status field management
+
+  User explicitly requested: "Keep it simple, try to incorporate in existing guidelines/steps if possible"
+
+  Implementation approach:
+  - Build: Extend guideline #1 (Script Execution & Context Loading) to include status update after loading
+  - Complete: Add concise instruction in Step 2 (Load Spec Artifacts) or new Step 8.5 before clearing state
+
+  Both template files and context documentation need updates to capture this responsibility.

@@ -31,6 +31,7 @@ $ARGUMENTS
    - Read `research.yaml` from spec directory if it exist
    - Parse key metadata: spec id, name, requirements, dependencies, files modified
    - Understand what was specified, planned, and implemented
+   - **Status Update**: Update the `status` field in both `spec.yaml` and `plan.yaml` to "completed" and set `last_updated` to today's date (YYYY-MM-DD format)
 
 3. **Analyze Context Requirements**:
 

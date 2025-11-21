@@ -28,6 +28,8 @@ $ARGUMENTS
 
    If research.yaml exists, use it to inform implementation decisions - it contains valuable context that may not be fully captured in spec.yaml or plan.yaml. **NEVER proceed** without spec.yaml and plan.yaml loaded (research.yaml is optional but recommended).
 
+   **Status Update**: After loading spec.yaml and plan.yaml, if the `status` field in both files is "draft", update it to "in-progress" and set `last_updated` to today's date (YYYY-MM-DD format). If status is already "in-progress", skip this update (supports multiple build iterations).
+
 2. **Progress Tracking**: Update the status of each task in the plan as you progress - each task has a checkbox, so make sure to check it on completion.
 
 3. **Follow the Plan**: Execute implementation steps sequentially as specified in the plan. Parse $ARGUMENTS for iteration-specific instructions (e.g., "change library X to Y", "fix edge case Z"). Reference specific file paths when creating or modifying code. Keep progress updates concise but informative.

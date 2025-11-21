@@ -3,43 +3,62 @@ version: "0.0.35"
 # This template is optimized for AI agent consumption during /buildforce.build commands
 # It provides checkbox-based progress tracking, deviation logging, and spec traceability
 
-id: [FEATURE_NUM]-[feature-name]-plan
-name: "Implementation Plan for [Feature Name]"
-spec_id: "[FEATURE_NUM]-[feature-name]"
+id: add-status-lifecycle-updates-20251121140000-plan
+name: "Implementation Plan for Add Status Lifecycle Updates to Build and Complete Commands"
+spec_id: "add-status-lifecycle-updates-20251121140000"
 type: implementation-plan
-status: draft
-created: "[YYYY-MM-DD]"
-last_updated: "[YYYY-MM-DD]"
+status: completed
+created: "2025-11-21"
+last_updated: "2025-11-21"
 
 # ARCHITECTURE OVERVIEW
 # Describe the high-level implementation approach and key technical decisions.
 
 approach: |
-  [Describe the high-level approach to implementing this feature. What is the overall strategy?
-  How will the pieces fit together? What patterns or methodologies will be followed?]
+  This is a template documentation enhancement task requiring minimal, targeted edits to existing command
+  templates and context files. The approach is to integrate status update instructions into existing workflow
+  steps/guidelines without adding new phases. Build command gets status update in guideline #1 (after loading
+  artifacts), complete command gets status update in Step 2 or new minimal step before Step 9. Both context
+  documentation files get updated responsibilities lists.
 
 technology_stack:
-  - [Technology/library 1 and its purpose]
-  - [Technology/library 2 and its purpose]
+  - YAML editing for spec.yaml and plan.yaml status field updates
+  - Markdown template editing for build.md and complete.md
 
 decisions:
-  - decision: "[Decision statement]"
-    rationale: "[Why this decision was made. What alternatives were considered?]"
+  - decision: "Integrate into existing steps/guidelines rather than adding new workflow phases"
+    rationale: "User explicitly requested 'keep it simple' - avoid adding verbosity. Build has 8 guidelines (extend #1), complete has 10 steps (extend Step 2 or add minimal step before Step 9). Maintains template conciseness."
 
-  - decision: "[Another decision]"
-    rationale: "[Rationale for this decision]"
+  - decision: "Build command updates status only if current value is 'draft'"
+    rationale: "Supports multiple /buildforce.build iterations without overwriting status. First invocation transitions draft→in-progress, subsequent iterations skip status update."
+
+  - decision: "Complete command accepts either 'draft' or 'in-progress' as current status"
+    rationale: "Handles edge case where user runs /buildforce.complete without running /buildforce.build. Both transition to 'completed' for consistency."
+
+  - decision: "Update last_updated field along with status field"
+    rationale: "Maintains metadata consistency - status change is a document modification that should update last_updated timestamp."
 
 # FILE STRUCTURE
 # List all files to be created or modified during implementation
 
-files_to_create:
-  - [path/to/new/file.ext]
-  - [path/to/another/file.ext]
+files_to_create: []
 
 files_to_modify:
-  - path: "[path/to/existing/file.ext]"
-    change_type: "[edit|rewrite|refactor]"
-    description: "[What changes will be made]"
+  - path: "src/templates/commands/build.md"
+    change_type: "edit"
+    description: "Extend guideline #1 to add status update instruction after loading spec.yaml and plan.yaml (2-3 lines)"
+
+  - path: "src/templates/commands/complete.md"
+    change_type: "edit"
+    description: "Add status update instruction in Step 2 or new concise step before Step 9 (2-3 lines)"
+
+  - path: ".buildforce/context/build-command.yaml"
+    change_type: "edit"
+    description: "Add status management to responsibilities list"
+
+  - path: ".buildforce/context/complete-command.yaml"
+    change_type: "edit"
+    description: "Add status management to responsibilities list"
 
 # IMPLEMENTATION PHASES
 # Break down the implementation into logical phases with checkbox-based task tracking
@@ -47,55 +66,67 @@ files_to_modify:
 # Each task should link back to spec requirements via spec_refs
 
 phase_1:
-  name: "[Phase Name]"
+  name: "Update Build Command Template"
   description: |
-    [Describe what this phase accomplishes and why it comes first]
+    Add status update instruction to build.md template integrated into guideline #1.
+    Keep changes minimal (2-3 lines) per user request.
 
   tasks:
-    - [ ] [Specific task description]
-      spec_refs: [FR1, FR2]
-      files: [path/to/file1.ext, path/to/file2.ext]
-      notes: ""
-
-    - [ ] [Another task]
-      spec_refs: [FR3]
-      files: [path/to/file3.ext]
-      notes: ""
+    - [x] Extend guideline #1 in build.md to include status update after loading artifacts
+      spec_refs: [FR1, FR2, FR3, FR4, AC1, AC2, AC4, AC5, NFR1]
+      files: [src/templates/commands/build.md]
+      notes: "Add instruction: After loading spec/plan, if status is 'draft', update both files to 'in-progress' and set last_updated to today. Integrate into existing guideline to avoid verbosity."
 
   validation:
-    - [ ] All phase_1 tasks completed
-    - [ ] Code compiles without errors
-    - [ ] Relevant tests pass
-    - [ ] Spec requirements covered: [FR1, FR2, FR3]
+    - [x] All phase_1 tasks completed
+    - [x] Template addition is 2-3 lines maximum
+    - [x] Instruction integrated into guideline #1 (Script Execution & Context Loading)
+    - [x] Spec requirements covered: [FR1, FR2, FR3, FR4]
 
 phase_2:
-  name: "[Phase Name]"
+  name: "Update Complete Command Template"
   description: |
-    [Describe what this phase accomplishes]
+    Add status update instruction to complete.md template integrated into Step 2 or new minimal step.
+    Keep changes minimal (2-3 lines) per user request.
 
   tasks:
-    - [ ] [Task description]
-      spec_refs: [FR4, NFR1]
-      files: [path/to/file4.ext]
-      notes: ""
+    - [x] Add status update instruction in complete.md (Step 2 or new step before Step 9)
+      spec_refs: [FR5, FR6, FR7, AC3, AC4, AC5, NFR1]
+      files: [src/templates/commands/complete.md]
+      notes: "Add instruction: Update both spec.yaml and plan.yaml status to 'completed' and last_updated to today. Integrate into Step 2 or add minimal step 8.5 before clearing state."
 
   validation:
-    - [ ] All phase_2 tasks completed
-    - [ ] Code compiles without errors
-    - [ ] Relevant tests pass
-    - [ ] Spec requirements covered: [FR4, NFR1]
+    - [x] All phase_2 tasks completed
+    - [x] Template addition is 2-3 lines maximum
+    - [x] Instruction clear and unambiguous for agents
+    - [x] Spec requirements covered: [FR5, FR6, FR7]
+
+phase_3:
+  name: "Update Context Documentation"
+  description: |
+    Update responsibilities sections in both command context files to include status management.
+
+  tasks:
+    - [x] Add status management to build-command.yaml responsibilities
+      spec_refs: [FR9, AC6]
+      files: [.buildforce/context/build-command.yaml]
+      notes: "Add: 'Update spec.yaml and plan.yaml status to in-progress on first build invocation'"
+
+    - [x] Add status management to complete-command.yaml responsibilities
+      spec_refs: [FR10, AC7]
+      files: [.buildforce/context/complete-command.yaml]
+      notes: "Add: 'Update spec.yaml and plan.yaml status to completed and last_updated field'"
+
+  validation:
+    - [x] All phase_3 tasks completed
+    - [x] Both context files updated with status management responsibilities
+    - [x] Spec requirements covered: [FR9, FR10]
 
 # DEVIATION LOG
 # The /buildforce.build agent populates this section when implementation deviates from the original plan
 # Format: phase → task → original plan → actual implementation → reason for deviation
 
-deviations:
-  # Example format (remove when using):
-  # - phase: "phase_1"
-  #   task: "Create API endpoint"
-  #   original: "Use Express.js middleware"
-  #   actual: "Used Fastify plugin system"
-  #   reason: "Fastify provides better TypeScript support and performance for this use case"
+deviations: []
 
 # GUIDELINE COMPLIANCE
 # Track validation results for strict and recommended enforcement levels
@@ -103,96 +134,122 @@ deviations:
 # Guidelines are for AI agent education - agents validate their own generated code against project conventions
 
 guideline_compliance:
-  strict_validations:
-    # Example format (remove when using):
-    # - guideline: "Repository Pattern"
-    #   status: "✓ PASS"  # or "✗ FAIL"
-    #   checked_files: [src/services/UserService.ts, src/services/PostService.ts]
-    #   violation:  # Only present if status is FAIL
-    #     file: "src/services/UserService.ts"
-    #     line: 45
-    #     issue: "Direct Prisma call violates Repository Pattern guideline (strict enforcement)"
-    #     fix: "Use UserRepository.findById(id) instead of prisma.user.findUnique()"
-
-  recommended_validations:
-    # Example format (remove when using):
-    # - guideline: "Error Handling Pattern"
-    #   status: "✓ PASS"  # or "⚠ DEVIATION"
-    #   checked_files: [src/services/UserService.ts]
-    #   deviation:  # Only present if status is DEVIATION
-    #     original: "Use try-catch with specific error types"
-    #     actual: "Used generic error handling with single catch block"
-    #     reason: "Legacy code integration required generic error boundary for compatibility"
+  strict_validations: []
+  recommended_validations: []
+  summary: "No code implementation - documentation/template changes only. Guideline compliance not applicable."
 
 # TESTING GUIDANCE
 # Structured guidance for testing the implementation
 
 testing:
   automated_tests:
-    - test_file: "[path/to/test.ts]"
-      what: "[What functionality to test]"
-      command: "[Test command to run]"
+    - test_file: "N/A"
+      what: "No automated tests - template and documentation changes only"
+      command: "N/A"
 
   manual_tests:
-    - scenario: "[Test scenario description]"
+    - scenario: "Test build command status update"
       steps: |
-        [Step-by-step instructions for manual testing]
+        1. Create new spec with /buildforce.plan
+        2. Verify spec.yaml and plan.yaml have status: draft
+        3. Run /buildforce.build
+        4. Verify both files updated to status: in-progress
+        5. Verify last_updated field updated to current date
+        6. Run /buildforce.build again (iteration)
+        7. Verify status remains in-progress (no duplicate update)
+
+    - scenario: "Test complete command status update"
+      steps: |
+        1. With spec in-progress state from previous test
+        2. Run /buildforce.complete
+        3. Verify spec.yaml and plan.yaml updated to status: completed
+        4. Verify last_updated field updated to current date
+        5. Check that currentSpec in buildforce.json is null
+
+    - scenario: "Test complete without build (edge case)"
+      steps: |
+        1. Create new spec with /buildforce.plan (status: draft)
+        2. Run /buildforce.complete directly (skip /buildforce.build)
+        3. Verify both files transition draft → completed
+        4. Verify last_updated field updated
 
 # VALIDATION CRITERIA
 # Define success metrics and track spec requirement coverage
 
 success_metrics:
-  - "[Measurable success criterion 1]"
-  - "[Measurable success criterion 2]"
+  - "Build command template extended by 2-3 lines with status update instruction"
+  - "Complete command template extended by 2-3 lines with status update instruction"
+  - "Both context documentation files updated with status management responsibilities"
+  - "Manual testing confirms status transitions: draft → in-progress → completed"
 
 spec_coverage:
   # Auto-track which spec requirements are implemented in which tasks
   # Format: requirement_id: status + location
-  - FR1: "⏳ Phase 1: Task 1"
-  - FR2: "⏳ Phase 1: Task 1"
-  - FR3: "⏳ Phase 1: Task 2"
-  - FR4: "⏳ Phase 2: Task 1"
-  - NFR1: "⏳ Phase 2: Task 1"
+  - FR1: "✅ Phase 1: Task 1"
+  - FR2: "✅ Phase 1: Task 1"
+  - FR3: "✅ Phase 1: Task 1"
+  - FR4: "✅ Phase 1: Task 1"
+  - FR5: "✅ Phase 2: Task 1"
+  - FR6: "✅ Phase 2: Task 1"
+  - FR7: "✅ Phase 2: Task 1"
+  - FR8: "✅ Phase 1: Task 1, Phase 2: Task 1"
+  - FR9: "✅ Phase 3: Task 1"
+  - FR10: "✅ Phase 3: Task 2"
+  - NFR1: "✅ All phases (minimal verbosity)"
+  - NFR2: "✅ All phases (preserve metadata)"
+  - NFR3: "✅ All phases (backward compatible)"
+  - NFR4: "✅ All phases (clear instructions)"
 
 # PROGRESS SUMMARY
 # Track overall progress and identify next steps
 
 overall_progress:
-  phase_1: "0/2 tasks completed"
-  phase_2: "0/1 tasks completed"
+  phase_1: "1/1 tasks completed"
+  phase_2: "1/1 tasks completed"
+  phase_3: "2/2 tasks completed"
 
 current_status: |
-  [Current implementation status and what has been completed so far.
-  The /buildforce.build agent updates this after each task or phase completion.]
+  ✅ Implementation complete! All 3 phases finished successfully.
+  - Build command template updated with status management
+  - Complete command template updated with status management
+  - Both context documentation files updated with status management responsibilities
 
 next_immediate_steps:
-  - "[Next action to take]"
-  - "[Another next action]"
+  - "Manual testing to verify status transitions work correctly"
+  - "Validate template changes maintain backward compatibility"
 
 # RISKS & CONSIDERATIONS
 # Document potential risks and mitigation strategies
 
 risks:
-  - risk: "[Potential risk or challenge]"
-    mitigation: "[How this risk will be addressed]"
+  - risk: "Template changes might add too much verbosity (violate user's 'keep it simple' request)"
+    mitigation: "Strict limit of 2-3 lines per template. Integrate into existing steps rather than adding new sections. Review final line count to ensure AC8 (≤3-5 lines) is met."
 
-  - risk: "[Another risk]"
-    mitigation: "[Mitigation strategy]"
+  - risk: "Agent might not understand conditional status update logic (build: only if draft)"
+    mitigation: "Use clear conditional phrasing: 'If status field is draft, update to in-progress'. Test instruction clarity during manual validation."
+
+  - risk: "Breaking backward compatibility with existing specs that don't have status field"
+    mitigation: "All specs created from templates have status field. No retroactive updates planned (out of scope). Templates preserve all existing fields."
+
+  - risk: "Inconsistent status updates between spec.yaml and plan.yaml"
+    mitigation: "Explicit instruction to update BOTH files together in same operation. Include in acceptance criteria (AC5)."
 
 # NOTES
 # Capture lessons learned and future enhancement ideas
 
 general_notes:
-  - "Guideline compliance is checked during /buildforce.build execution if .buildforce/context/_guidelines.yaml exists"
-  - "Strict enforcement guidelines will fail the build if violated"
-  - "Recommended guidelines log warnings but allow build to continue"
-  - "See guideline_compliance section above for validation results"
-  - "Guidelines are for AI agent education - agents validate their own generated code against project conventions"
+  - "This is a documentation-only task - no code changes required"
+  - "User explicitly requested 'keep it simple' and 'incorporate into existing steps'"
+  - "Research identified two separate gaps (build and complete) with same root cause (metadata oversight during template compression)"
+  - "Status field lifecycle: draft (plan) → in-progress (build) → completed (complete)"
+  - "buildforce.json currentSpec is separate from spec.yaml/plan.yaml status field"
 
 lessons_learned:
-  - "[Lesson or insight from planning/implementation]"
-  - "[Another lesson]"
+  - "Template compression can overlook metadata management when focus is on workflow execution"
+  - "Status field provides important archive integrity separate from session state (buildforce.json)"
+  - "Minimal, integrated changes are more maintainable than adding new workflow phases"
 
 future_enhancements:
-  - "[Potential future improvement]"
-  - "[Another enhancement idea]"
+  - "Consider adding status validation to /buildforce.plan (warn if trying to create spec when currentSpec exists)"
+  - "Add status field to context file schema for consistency"
+  - "Create automated validation script to check status field correctness across all specs"
