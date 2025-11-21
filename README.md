@@ -25,7 +25,13 @@ Instead of re-explaining architectural decisions every time you start a new feat
 
 ## Why context-first?
 
-AI agents start fresh with each session and reverse engineer the codebase on-demand. Buildforce inverts this by loading accumulated context first by searching your context repository before you define requirements. This context-warming approach ensures specs are informed by past decisions, plans reference existing patterns, and implementations remain consistent. Context persists in version-controlled YAML files alongside your code, so your project's knowledge base grows smarter with every feature you complete. Context-first means less time explaining, more time building.
+AI agents start fresh with each session and reverse engineer the codebase on-demand. Buildforce inverts this by loading accumulated context first by searching your context repository before you define requirements.
+
+This context-warming approach ensures specs are informed by past decisions, plans reference existing patterns, and implementations remain consistent.
+
+Context persists in version-controlled YAML files alongside your code, so your project's context repository grows smarter with every feature you complete.
+
+Context-first means less time explaining, more time building.
 
 ## What Makes It Different
 
@@ -299,23 +305,13 @@ Guidelines are loaded during `/spec` (as planning context), validated during `/b
 
 ---
 
-## Supported AI Assistants
+## Supported AI Agents
 
-Buildforce works with 11 AI coding assistants:
+Buildforce works with 11 AI coding agents: Claude Code, Cursor, Codex CLI, Gemini CLI, GitHub Copilot, Windsurf, Kilo Code, Roo Code and Auggie CLI. 
 
-| AI Assistant   | Configuration Folder  | Installation Command |
-| -------------- | --------------------- | -------------------- |
-| Claude Code    | `.claude/commands/`   | `--ai claude`        |
-| GitHub Copilot | `.github/commands/`   | `--ai copilot`       |
-| Cursor         | `.cursor/commands/`   | `--ai cursor`        |
-| Gemini CLI     | `.gemini/commands/`   | `--ai gemini`        |
-| Qwen Code      | `.qwen/commands/`     | `--ai qwen`          |
-| opencode       | `.opencode/commands/` | `--ai opencode`      |
-| Codex CLI      | `.codex/commands/`    | `--ai codex`         |
-| Windsurf       | `.windsurf/commands/` | `--ai windsurf`      |
-| Kilo Code      | `.kilocode/commands/` | `--ai kilocode`      |
-| Auggie CLI     | `.augment/commands/`  | `--ai auggie`        |
-| Roo Code       | `.roo/commands/`      | `--ai roo`           |
+However, at the moment, not all of them are fully tested. That's why we recommend using **Claude Code** or **Cursor** if you are just getting started. 
+
+But if you prefer some of the other supported agents, please give it a try and submit an issue if you see something that doesn't work as expected. Open a new issue if you want to add a new agent to the list.
 
 **How configuration works:**
 
@@ -353,7 +349,6 @@ npm link
 - **Website**: [https://buildforce.dev](https://buildforce.dev) - Learn more about Buildforce
 - **GitHub Repository**: [https://github.com/berserkdisruptors/buildforce-cli](https://github.com/berserkdisruptors/buildforce-cli)
 - **npm Package**: [https://www.npmjs.com/package/@buildforce/cli](https://www.npmjs.com/package/@buildforce/cli)
-- **Discord**: [Join our community](https://discord.gg/9RdYyqYB) - Get help, share workflows, and connect with other users
 - **GitHub Issues**: [Report bugs or request features](https://github.com/berserkdisruptors/buildforce-cli/issues)
 - **Discussions**: [Ask questions or share ideas](https://github.com/berserkdisruptors/buildforce-cli/discussions)
 
