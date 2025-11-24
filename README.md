@@ -6,7 +6,7 @@
   <img src=".github/assets/logo.png" alt="BuildForce CLI Logo" width="250"/>
 </picture>
 
-**Context-First Spec-Driven Development framework**
+**Consistent, reliable and efficient framework for AI-assisted engineering**
 
 [![npm version](https://img.shields.io/npm/v/@buildforce/cli)](https://www.npmjs.com/package/@buildforce/cli)
 [![npm downloads](https://img.shields.io/npm/dm/@buildforce/cli)](https://www.npmjs.com/package/@buildforce/cli)
@@ -17,15 +17,22 @@
 
 ---
 
-Buildforce is a **context-first framework for Spec-Driven Development** that works through CLI initialization and slash commands for AI coding agents.
+Buildforce brings **engineering discipline to AI-assisted development** through CLI initialization and slash commands for AI coding agents.
 
-It materializes user intent into structured specifications, generates implementation plans, and tracks execution with full traceability. By creating a persistent **context repository** that accumulates important context across sessions, it enables AI agents to learn from past decisions and maintain consistency across features.
+It materializes user intent into structured specifications, generates actionable plans, and tracks execution with full traceability. By creating a persistent **context repository** that accumulates important context across sessions, it enables AI agents to make reliable decisions and maintain architectural consistency as your project grows.
 
-Instead of re-explaining architectural decisions every time you start a new feature, Buildforce preserves them within your repository where they're searchable and reusable.
+Instead of re-explaining architectural decisions every time you start a new feature, Buildforce preserves them within your repository where they are automatically referenced by your AI agent.
 
-## Why context-first?
+## Why Buildforce?
 
-AI agents start fresh with each session and reverse engineer the codebase on-demand. Buildforce inverts this by loading accumulated context first by searching your context repository before you define requirements. This context-warming approach ensures specs are informed by past decisions, plans reference existing patterns, and implementations remain consistent. Context persists in version-controlled YAML files alongside your code, so your project's knowledge base grows smarter with every feature you complete. Context-first means less time explaining, more time building.
+AI agents typically start fresh with each session, often leading to inconsistent implementations or "amnesic" behavior where past decisions are forgotten. Buildforce solves this by anchoring your AI assistant to your project's accumulated history.
+
+This approach ensures:
+- **Consistency**: New features align with existing patterns and architecture.
+- **Reliability**: Requirements are captured and validated before code is written.
+- **Efficiency**: Less time spent re-explaining context, more time building.
+
+Context persists in version-controlled YAML files alongside your code, so your project's context repository grows smarter with every feature you complete.
 
 ## What Makes It Different
 
@@ -34,7 +41,7 @@ AI agents start fresh with each session and reverse engineer the codebase on-dem
 | Context lost after each session               | Context persists in `.buildforce/context/`                                            |
 | No workflow structure                         | Flexible but structured workflows                                                     |
 | Requirements exist only in conversation       | User intent captured in `spec.yaml` with acceptance criteria                          |
-| Plans exist only in specific modes            | The captured spec is automatically converted into a plan that the user can iterate on |
+| Plans exist only in specific modes            | The captured intent is automatically converted into a plan for iteration       |
 | Implementation deviations go untracked        | Deviations logged with rationale (Original → Actual → Reason)                         |
 | Architectural decisions forgotten             | Decisions preserved, searchable, and enforced via `_guidelines.yaml`                  |
 | Knowledge lives in individual developer heads | Shared context repository for team-wide knowledge                                     |
@@ -77,16 +84,16 @@ npx @buildforce/cli init .
 Open your AI assistant (Claude Code, Cursor, etc.) in any existing project and run:
 
 ```
-/research the architecture and structure of this codebase
+/buildforce.research the architecture and structure of this codebase
 
-/spec Update README.md to fix any inconsistencies with actual project structure and features
+/buildforce.plan Update README.md to fix any inconsistencies with actual project structure and features
 
-/build
+/buildforce.build
 
-/complete
+/buildforce.complete
 ```
 
-This workflow works on any codebase! Buildforce will analyze your project, identify README inconsistencies, and fix them systematically. Context from `/research` informs your spec. Spec requirements guide the plan. Build executes with deviation tracking. Completion validates everything and saves knowledge to your context repository for future work.
+This workflow works on any codebase! Buildforce will analyze your project, identify inconsistencies, and fix them systematically. Context from `/buildforce.research` informs your spec. Spec requirements guide the plan. Build executes with deviation tracking. Completion validates everything and saves knowledge to your context repository for future work.
 
 ## How It Works
 
@@ -101,190 +108,190 @@ Buildforce uses slash commands inside AI assistant conversations to orchestrate 
                               ↓           ↑
                         reads │           │ writes
                               │           │
-    /research ────────────────┘           │
+    /buildforce.research ─────┘           │
          ↓                                │
-    /spec (creates spec and plan files)   |
+    /buildforce.plan (creates artifacts)  |
          ↓                                │
-    /build (follows the plan and builds)  │
+    /buildforce.build (implements plan)   │
          ↓                                │
-    /complete ────────────────────────────┘
+    /buildforce.complete ─────────────────┘
 ```
 
 **What happens at each command:**
 
-- `/research`: Searches `.buildforce/context/` for accumulated knowledge, explores codebase patterns and search web if needed
-- `/spec`: Materializes user intent into structured requirements (functional, non-functional, acceptance criteria) saved as `spec.yaml` and actionable plan saved as `plan.yaml`. Loads `_guidelines.yaml` as highest-priority context for convention-aware planning
-- `/build`: Executes plan phases sequentially, updates progress, logs deviations from the plan on multiple iterations. Validates code compliance against strict/recommended guidelines if `_guidelines.yaml` exists
-- `/complete`: Validates all requirements met, generates context files from spec+plan+implementation, updates context repository. Can auto-detect and suggest new guideline patterns
-- `/document`: Standalone utility for documenting existing code without full spec-driven cycle. Use `/document guidelines` to capture project conventions
+- `/buildforce.research`: Searches `.buildforce/context/` for accumulated knowledge, explores codebase patterns, and fetches external info if needed.
+- `/buildforce.plan`: Materializes user intent into structured requirements (functional, non-functional, acceptance criteria) saved as `spec.yaml` and actionable plan saved as `plan.yaml`. Loads `_guidelines.yaml` as highest-priority context.
+- `/buildforce.build`: Executes plan phases sequentially, updates progress, and logs deviations from the plan. Validates code compliance against guidelines if `_guidelines.yaml` exists.
+- `/buildforce.complete`: Validates that all requirements are met, generates context files from the work done, and updates the context repository.
+- `/buildforce.document`: Standalone utility for documenting existing code. Use `/buildforce.document guidelines` to capture project conventions.
 
 **Three workflow scenarios:**
 
 1. **Basic workflow** (recommended for simple updates):
 
    ```
-   /spec → /build
+   /buildforce.plan → /buildforce.build
    ```
 
 2. **Full workflow** (recommended for new features and bug fixes):
 
    ```
-   /research → /spec → /build → /complete
+   /buildforce.research → /buildforce.plan → /buildforce.build → /buildforce.complete
    ```
 
 3. **Documentation workflow** (manual context contribution):
 
    ```
-   /research [topic] → /document [module]
+   /buildforce.research [topic] → /buildforce.document [module]
    ```
 
 4. **Guidelines workflow** (capture and enforce conventions):
    ```
-   /document guidelines → /spec [feature] → /build → /complete
+   /buildforce.document guidelines → /buildforce.plan [feature] → /buildforce.build → /buildforce.complete
    ```
 
-The key insight: Buildforce isn't just about individual commands. It's about how commands feed context forward (research informs spec, spec guides plan, plan drives build, build enriches context). This orchestration prevents context loss and creates knowledge that compounds over time. Guidelines add convention enforcement—capture patterns with `/document guidelines`, and `/build` validates compliance automatically.
+The key insight: Buildforce isn't just about individual commands. It's about how commands feed context forward (research informs planning, planning guides build, build enriches context). This orchestration prevents context loss and creates knowledge that compounds over time.
 
 ## Commands
 
-### /research - Gather Context
+### /buildforce.research - Gather Context
 
-**Purpose**: Search accumulated project context, explore codebase patterns, and fetch current information to inform spec creation.
+**Purpose**: Search accumulated project context, explore codebase patterns, and fetch current information.
 
 **Usage:**
 
 ```
-/research <your-query>
+/buildforce.research <your-query>
 ```
 
 **Examples:**
 
 ```
-/research authentication patterns in this codebase
+/buildforce.research authentication patterns in this codebase
 
-/research current best practices for error handling in Express.js 2025
+/buildforce.research current best practices for error handling in Express.js 2025
 
-/research how pagination is implemented in our API
+/buildforce.research how pagination is implemented in our API
 ```
 
 **What it does:**
 
-Searches your project's accumulated context repository first, then explores your codebase and fetches current information from the web when needed. Produces a structured report with file paths, architecture diagrams, data models, and actionable recommendations. Research findings persist in conversation history and can be materialized into structured files during spec creation, ensuring your specifications are always informed by existing patterns and current best practices.
+Searches your project's accumulated context repository first, then explores your codebase and fetches current information from the web when needed. Produces a structured report with file paths, architecture diagrams, data models, and actionable recommendations. Research findings persist in conversation history and can be materialized into structured artifacts during planning, ensuring your work is always informed by existing patterns and best practices.
 
-**Pro tip**: Run `/research` before `/spec` to ensure specifications are informed by existing patterns and current best practices. Research output stays in context window to guide requirement identification.
+**Pro tip**: Run `/buildforce.research` before `/buildforce.plan` to ensure plans are informed by existing patterns.
 
 ---
 
-### /spec - Define Requirements
+### /buildforce.plan - Define Requirements & Plan
 
-**Purpose**: Materialize user intent into structured specification defining WHAT needs to be built.
+**Purpose**: Materialize user intent into a structured specification defining WHAT needs to be built and HOW to build it.
 
 **Usage:**
 
 ```
-/spec <feature-description>
+/buildforce.plan <feature-description>
 ```
 
 **Examples:**
 
 ```
-/spec Add JWT-based authentication with email/password login and token refresh
+/buildforce.plan Add JWT-based authentication with email/password login and token refresh
 
-/spec Fix pagination bug where last page returns empty results
+/buildforce.plan Fix pagination bug where last page returns empty results
 
-/spec Refactor user service to use repository pattern with dependency injection
+/buildforce.plan Refactor user service to use repository pattern with dependency injection
 ```
 
 **What it does:**
 
 Converts your feature description into a structured specification with clear requirements, acceptance criteria, and scope boundaries. Creates both a `spec.yaml` (defining WHAT to build) and `plan.yaml` (defining HOW to build it) in a timestamped folder. If you've done research beforehand, it intelligently materializes those findings into a structured file. When requirements are unclear, it asks clarifying questions to ensure everyone's aligned before implementation begins.
 
-**Pro tip**: Run `/spec` multiple times to refine requirements. UPDATE mode loads existing spec and allows iteration without losing previous work.
+**Pro tip**: Run `/buildforce.plan` multiple times to refine requirements. Since artifacts are persisted, you can perform **intentional compaction**: clear your context window or start a fresh session, then run `/buildforce.plan` again to resume with a clean slate.
 
 ---
 
-### /build - Execute Implementation
+### /buildforce.build - Execute Implementation
 
-**Purpose**: Execute implementation following spec and plan, with progress tracking and deviation logging.
+**Purpose**: Execute implementation following the established plan, with progress tracking and deviation logging.
 
 **Usage:**
 
 ```
-/build [optional-iteration-instructions]
+/buildforce.build [optional-iteration-instructions]
 ```
 
 **Examples:**
 
 ```
-/build
+/buildforce.build
 
-/build Change axios to fetch for HTTP requests
+/buildforce.build Change axios to fetch for HTTP requests
 
-/build Add validation for empty email field
+/buildforce.build Add validation for empty email field
 ```
 
 **What it does:**
 
 Executes your implementation following the spec and plan, checking off tasks as work progresses and logging any deviations from the original approach. Validates the work against both requirements and plan steps, runs tests, and provides clear guidance on what still needs verification. Supports iterative refinement—you can run it multiple times with feedback to converge on the right solution while maintaining full transparency about what changed and why.
 
-**Pro tip**: Don't try to do everything in one `/build`. Run it, review output, then run `/build [refinement instructions]` to iterate. Deviation log tracks entire journey from first attempt to final implementation.
+**Pro tip**: If you iterated a couple of times on the build step and your context window is already getting above 40-50% full, perform **intentional compaction** before iterating more or completing your sessions. Since progress is tracked in `plan.yaml`, you can start a fresh session and pick up exactly where you left off with a clean context window on every turn.
 
 ---
 
-### /complete - Finalize and Validate
+### /buildforce.complete - Finalize and Validate
 
-**Purpose**: Finalize feature by validating requirements, generating context files, and clearing spec state.
+**Purpose**: Finalize feature by validating requirements, generating context files, and clearing active session state.
 
 **Usage:**
 
 ```
-/complete [optional-final-notes]
+/buildforce.complete [optional-final-notes]
 ```
 
 **What it does:**
 
-Validates that all spec requirements are met, reviews the deviation log, and generates a comprehensive completion report. Captures the knowledge from your feature (design decisions, key files, implementation choices) into structured context files that live in your project's context repository. Updates cross-references and clears the active spec state. Requires your explicit confirmation before finalizing—once complete, this feature's knowledge becomes searchable for future work.
+Validates that all requirements are met, reviews the deviation log, and generates a comprehensive completion report. Captures the knowledge from your feature (design decisions, key files, implementation choices) into structured context files that live in your project's context repository. Updates cross-references and clears the active session state. Once complete, this feature's knowledge becomes searchable for future work.
 
-**Pro tip**: Don't rush to `/complete`. Validate thoroughly first. Once complete, the feature knowledge enters your context repository and will inform future `/research` queries.
+**Pro tip**: Don't rush to `/buildforce.complete`. Validate thoroughly first. Once complete, the feature knowledge enters your context repository and will inform future `/buildforce.research` queries.
 
 ---
 
-### /document - Create Context Files
+### /buildforce.document - Create Context Files
 
-**Purpose**: Document existing functionality without full spec-driven workflow.
+**Purpose**: Document existing functionality without a full workflow cycle.
 
 **Usage:**
 
 ```
-/document <topic-or-module>
+/buildforce.document <topic-or-module>
 ```
 
 **Examples:**
 
 ```
-/document authentication module
+/buildforce.document authentication module
 
-/document error handling patterns
+/buildforce.document error handling patterns
 
-/document database connection pooling strategy
+/buildforce.document database connection pooling strategy
 ```
 
 **What it does:**
 
-Creates or updates structured context files in your project's knowledge repository by analyzing conversation history. Works independently of the spec-driven workflow—perfect for documenting existing code, architectural patterns, or legacy components. Intelligently determines whether to create new files or update existing ones, automatically resolves naming conflicts, and maintains cross-references between related contexts. If your conversation lacks sufficient context, it prompts you to gather more information first.
+Creates or updates structured context files in your project's knowledge repository by analyzing conversation history. Works independently of the main workflow—perfect for documenting existing code, architectural patterns, or legacy components. Intelligently determines whether to create new files or update existing ones, automatically resolves naming conflicts, and maintains cross-references.
 
-**Pro tip**: Prepare context window first (read files, discuss architecture) before running `/document`. The command analyzes conversation history to extract documentation, so richer context produces better results. Natural complement to `/research`: research reads context, document writes context.
+**Pro tip**: Prepare context window first (read files, discuss architecture) before running `/buildforce.document`. The command analyzes conversation history to extract documentation.
 
-**Guidelines Mode**: Capture project-wide conventions and coding standards using `/document guidelines`. Creates or updates `_guidelines.yaml` with architectural patterns, naming conventions, and code standards that AI agents enforce during `/build`. Three workflows available:
-
-```
-/document guidelines
-```
-
-Creates or updates guidelines from conversation (manual mode). Discuss conventions in chat, then run command to capture them as structured guidelines.
+**Guidelines Mode**: Capture project-wide conventions and coding standards using `/buildforce.document guidelines`. Creates or updates `_guidelines.yaml` with architectural patterns, naming conventions, and code standards that AI agents enforce during `/buildforce.build`. Three workflows available:
 
 ```
-/document scan guidelines
+/buildforce.document guidelines
+```
+
+Creates or updates guidelines from conversation (manual mode). Discuss conventions in chat, then run command to capture them.
+
+```
+/buildforce.document scan guidelines
 ```
 
 Bootstrap initial guidelines by analyzing existing codebase patterns (scan mode). Detects consistent patterns across 5+ files with 95%+ consistency.
@@ -295,31 +302,21 @@ Bootstrap initial guidelines by analyzing existing codebase patterns (scan mode)
 - **recommended**: Logs warnings only (use for best practices)
 - **reference**: Context only, no validation (use for informational patterns)
 
-Guidelines are loaded during `/spec` (as planning context), validated during `/build` (code compliance check), and can auto-evolve via `/complete` (pattern detection).
+Guidelines are loaded during `/buildforce.plan` (as planning context), validated during `/buildforce.build` (code compliance check), and can auto-evolve via `/buildforce.complete` (pattern detection).
 
 ---
 
-## Supported AI Assistants
+## Supported AI Agents
 
-Buildforce works with 11 AI coding assistants:
+Buildforce works with 11 AI coding agents: Claude Code, Cursor, Codex CLI, Gemini CLI, GitHub Copilot, Windsurf, Kilo Code, Roo Code and Auggie CLI. 
 
-| AI Assistant   | Configuration Folder  | Installation Command |
-| -------------- | --------------------- | -------------------- |
-| Claude Code    | `.claude/commands/`   | `--ai claude`        |
-| GitHub Copilot | `.github/commands/`   | `--ai copilot`       |
-| Cursor         | `.cursor/commands/`   | `--ai cursor`        |
-| Gemini CLI     | `.gemini/commands/`   | `--ai gemini`        |
-| Qwen Code      | `.qwen/commands/`     | `--ai qwen`          |
-| opencode       | `.opencode/commands/` | `--ai opencode`      |
-| Codex CLI      | `.codex/commands/`    | `--ai codex`         |
-| Windsurf       | `.windsurf/commands/` | `--ai windsurf`      |
-| Kilo Code      | `.kilocode/commands/` | `--ai kilocode`      |
-| Auggie CLI     | `.augment/commands/`  | `--ai auggie`        |
-| Roo Code       | `.roo/commands/`      | `--ai roo`           |
+However, at the moment, not all of them are fully tested. That's why we recommend using **Claude Code** or **Cursor** if you are just getting started. 
+
+But if you prefer some of the other supported agents, please give it a try and submit an issue if you see something that doesn't work as expected. Open a new issue if you want to add a new agent to the list.
 
 **How configuration works:**
 
-Buildforce installs slash command files (research.md, spec.md, build.md, complete.md, document.md) into your chosen assistant's configuration folder during initialization. Commands become available in your AI chat via `/research`, `/spec`, etc. All templates and scripts are copied to `.buildforce/` in your project directory. You can switch assistants later by manually copying command files between folders.
+Buildforce installs slash command files (research.md, plan.md, build.md, complete.md, document.md) into your chosen assistant's configuration folder during initialization. Commands become available in your AI chat via `/buildforce.research`, `/buildforce.plan`, etc. All templates and scripts are copied to `.buildforce/` in your project directory. You can switch assistants later by manually copying command files between folders.
 
 ---
 
@@ -353,7 +350,6 @@ npm link
 - **Website**: [https://buildforce.dev](https://buildforce.dev) - Learn more about Buildforce
 - **GitHub Repository**: [https://github.com/berserkdisruptors/buildforce-cli](https://github.com/berserkdisruptors/buildforce-cli)
 - **npm Package**: [https://www.npmjs.com/package/@buildforce/cli](https://www.npmjs.com/package/@buildforce/cli)
-- **Discord**: [Join our community](https://discord.gg/9RdYyqYB) - Get help, share workflows, and connect with other users
 - **GitHub Issues**: [Report bugs or request features](https://github.com/berserkdisruptors/buildforce-cli/issues)
 - **Discussions**: [Ask questions or share ideas](https://github.com/berserkdisruptors/buildforce-cli/discussions)
 

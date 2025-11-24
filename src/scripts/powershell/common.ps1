@@ -165,13 +165,13 @@ function Get-CurrentBranch {
     
     # For non-git repos, try to find the latest feature directory
     $buildforceRoot = Get-BuildforceRoot
-    $specsDir = Join-Path $buildforceRoot ".buildforce/specs"
+    $sessionsDir = Join-Path $buildforceRoot ".buildforce/sessions"
     
-    if (Test-Path $specsDir) {
+    if (Test-Path $sessionsDir) {
         $latestFeature = ""
         $highest = 0
         
-        Get-ChildItem -Path $specsDir -Directory | ForEach-Object {
+        Get-ChildItem -Path $sessionsDir -Directory | ForEach-Object {
             if ($_.Name -match '^(\d{3})-') {
                 $num = [int]$matches[1]
                 if ($num -gt $highest) {
@@ -221,7 +221,7 @@ function Test-FeatureBranch {
 
 function Get-FeatureDir {
     param([string]$BuildforceRoot, [string]$Branch)
-    Join-Path $BuildforceRoot ".buildforce/specs/$Branch"
+    Join-Path $BuildforceRoot ".buildforce/sessions/$Branch"
 }
 
 function Get-SpecPaths {
@@ -230,7 +230,7 @@ function Get-SpecPaths {
     $specDir = ""
 
     if ($specFolder) {
-        $specDir = Join-Path $buildforceRoot ".buildforce/specs/$specFolder"
+        $specDir = Join-Path $buildforceRoot ".buildforce/sessions/$specFolder"
     }
 
     [PSCustomObject]@{

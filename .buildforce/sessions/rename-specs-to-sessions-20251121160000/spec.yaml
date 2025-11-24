@@ -1,0 +1,120 @@
+version: "0.0.35"
+id: rename-specs-to-sessions-20251121160000
+name: "Rename .buildforce/specs to .buildforce/sessions"
+type: feature
+status: completed
+created: "2025-11-21"
+last_updated: "2025-11-21"
+
+summary: |
+  Rename the `.buildforce/specs` folder to `.buildforce/sessions` throughout the codebase to better reflect its purpose as session-based development tracking, and rename the unused `specsFolder` config field to `sessionsFolder`.
+
+# INTENT / PROBLEM STATEMENT
+
+problem: |
+  The current folder name `.buildforce/specs` suggests it only stores specification files, but it actually stores complete development sessions (spec.yaml, plan.yaml, research.yaml).
+  The term "sessions" better captures the ephemeral, workflow-oriented nature of these folders.
+  Additionally, the `specsFolder` field in BuildforceConfig is defined but never used, creating confusion.
+
+motivation: |
+  Renaming to "sessions" provides clearer semantics that align with the spec-driven development workflow philosophy.
+  Each folder represents a full development session with research, planning, and implementation tracking.
+  This change improves code clarity and sets the foundation for future session-based features.
+  Since there are no active users yet, this is the ideal time to make this breaking change.
+
+# GOALS
+
+primary_goals:
+  - Replace all references to `.buildforce/specs` with `.buildforce/sessions` across the codebase
+  - Rename `specsFolder` to `sessionsFolder` in BuildforceConfig interface and related code
+  - Ensure all scripts (bash and PowerShell) use the new folder name
+  - Update all command templates to reference the new folder path
+  - Update user-facing documentation and output messages
+
+secondary_goals:
+  - Maintain consistency across all platforms (Unix/Linux/macOS via bash, Windows via PowerShell)
+  - Ensure no broken references remain after the rename
+
+# REQUIREMENTS
+
+functional_requirements:
+  - FR1: All hardcoded `.buildforce/specs` string literals must be replaced with `.buildforce/sessions` in TypeScript source files
+  - FR2: All hardcoded `.buildforce/specs` paths in bash scripts must be updated to `.buildforce/sessions`
+  - FR3: All hardcoded `.buildforce/specs` paths in PowerShell scripts must be updated to `.buildforce/sessions`
+  - FR4: All references to `.buildforce/specs` in command templates (plan.md, complete.md) must be updated to `.buildforce/sessions`
+  - FR5: The `specsFolder` field in BuildforceConfig interface must be renamed to `sessionsFolder`
+  - FR6: All usages of `specsFolder` variable names must be renamed to `sessionsFolder` for consistency
+  - FR7: User-facing output messages displaying the folder path must show `.buildforce/sessions/`
+  - FR8: Documentation (README.md) must be updated to reflect the new folder name
+
+non_functional_requirements:
+  - NFR1: All changes must be applied atomically to prevent inconsistent state
+  - NFR2: The rename must not break existing functionality or workflows
+  - NFR3: Variable and field names should follow existing naming conventions (camelCase for TS, snake_case for bash)
+  - NFR4: Comments and documentation must be updated alongside code changes
+
+# SCOPE
+
+in_scope:
+  - Renaming all `.buildforce/specs` references to `.buildforce/sessions` in 11 identified files
+  - Renaming `specsFolder` to `sessionsFolder` in TypeScript interfaces and configuration utilities
+  - Updating bash scripts: create-spec-files.sh, common.sh
+  - Updating PowerShell scripts: create-spec-files.ps1, common.ps1
+  - Updating command templates: plan.md, complete.md
+  - Updating TypeScript source: config.ts, types.ts, init/output.ts
+  - Updating documentation: README.md
+  - Renaming related variables (e.g., SPECS_DIR → SESSIONS_DIR, specsDir → sessionsDir)
+
+out_of_scope:
+  - Migration logic for existing user projects (no active users exist)
+  - Backward compatibility layer for old folder names
+  - Renaming the actual .buildforce/specs folder in this repo (will happen naturally on next workflow run)
+  - Changes to files in .buildforce/context/ (these reference the pattern, not the literal path)
+
+# DESIGN PRINCIPLES
+
+design_principles:
+  - "Search and replace with precision - use exact string matching to avoid false positives"
+  - "Maintain symmetry between bash and PowerShell implementations"
+  - "Update all related variable names for consistency (not just path literals)"
+  - "Preserve code structure and formatting during replacements"
+
+# ACCEPTANCE CRITERIA
+
+acceptance_criteria:
+  - AC1: No occurrences of `specsFolder` remain in TypeScript source files (should be `sessionsFolder`)
+  - AC2: No occurrences of `.buildforce/specs` remain in bash scripts (should be `.buildforce/sessions`)
+  - AC3: No occurrences of `.buildforce/specs` remain in PowerShell scripts (should be `.buildforce/sessions`)
+  - AC4: Command templates reference `.buildforce/sessions` in all path instructions
+  - AC5: User-facing messages display `.buildforce/sessions/` instead of `.buildforce/specs/`
+  - AC6: README.md mentions sessions folder instead of specs folder
+  - AC7: Variable names follow conventions: sessionsDir (TS/PS), SESSIONS_DIR (bash)
+  - AC8: All changes compile without errors and existing workflows continue to function
+
+# ASSUMPTIONS & DEPENDENCIES
+
+assumptions:
+  - No active users exist who would have .buildforce/specs folders in their projects
+  - Migration logic is not required
+  - The literal folder in this repository (.buildforce/specs/) does not need to be renamed as part of this change
+  - All identified files in research are the complete set of references
+
+dependencies:
+  internal:
+    - bash scripts: "create-spec-files.sh and common.sh must be updated together for path consistency"
+    - PowerShell scripts: "create-spec-files.ps1 and common.ps1 must be updated together"
+    - templates: "plan.md and complete.md reference the folder in AI agent instructions"
+    - config utilities: "types.ts defines interface, config.ts provides default value"
+  external: []
+
+# OPEN QUESTIONS
+
+open_questions: []
+
+# NOTES
+
+notes: |
+  This is a breaking change but safe to implement now since there are no active users.
+  The research identified 11 files with ~25+ total occurrences.
+  The change improves semantic clarity and aligns with the session-based development workflow philosophy.
+  Future work could wire up the sessionsFolder config field to actually be used instead of hardcoded paths.

@@ -3,7 +3,7 @@ name: "Iterate and Complete /build Slash Command"
 type: feature
 status: completed
 created: 2025-10-08
-last_updated: 2025-10-28
+last_updated: 2025-11-21
 
 summary: |
   Compressed and refined the /build slash command from 116 lines to 29 lines (75% reduction),
@@ -25,6 +25,7 @@ responsibilities:
   - Remove HOW-TO instructions and code examples (trust agent execution knowledge)
   - Ensure dual validation: spec requirements AND plan adherence
   - Provide testing guidance instead of user confirmation request
+  - Update spec.yaml and plan.yaml status to "in-progress" on first build invocation (if currently "draft")
 
 dependencies:
   internal:
@@ -148,11 +149,15 @@ evolution:
   - version: "3.0"
     date: "2025-10-28"
     changes: "Added research persistence integration. Updated guideline 1 (Script Execution & Context Loading) to load research.yaml alongside spec.yaml and plan.yaml. Template increased from 29 to 41 lines. research.yaml provides implementation context: file paths, mermaid diagrams, data models, code snippets, architectural decisions, TLDR."
+  - version: "4.0"
+    date: "2025-11-21"
+    changes: "Added status lifecycle management. Extended guideline #1 to update status field from draft→in-progress and last_updated field after loading spec/plan artifacts. Update only occurs if status is draft (supports multiple build iterations). Template increased from 41 to 43 lines (2-line addition)."
 
 related_specs:
   - "build-command-20250102120000"
   - "slash-commands-20250101120000 (context for 5-command workflow)"
   - "research-persistence-intelligent-20251027213207"
+  - "add-status-lifecycle-updates-20251121140000"
 
 notes: |
   Compact instruction template (29 lines) that enhances build agent execution without teaching HOW.

@@ -3,7 +3,7 @@ name: "Comprehensive README Documentation for Buildforce CLI"
 type: feature
 status: production
 created: 2025-10-10
-last_updated: 2025-11-14
+last_updated: 2025-11-21
 
 summary: |
   Developer-focused README featuring simplified, user-perspective slash command documentation.
@@ -18,7 +18,7 @@ responsibilities:
   - Provide installation instructions for npm, npx, and git clone on all platforms
   - Document quick start workflow from project initialization to first feature completion
   - Reference all CLI command options and flags (--ai, --script, --here, --force, etc.)
-  - Document all 5 slash commands (/research, /spec, /build, /complete, /document) with simplified user-perspective descriptions
+  - Document all 5 slash commands (/buildforce.research, /buildforce.plan, /buildforce.build, /buildforce.complete, /buildforce.document) with simplified user-perspective descriptions
   - Document /document guidelines mode for capturing project conventions with enforcement levels
   - Visualize workflow with Mermaid diagram showing 4-command core + 1 utility command
   - List all 11 supported AI assistants with configuration folders
@@ -78,7 +78,7 @@ design_decisions:
     rationale: "Auth example from v2 requires specific tech stack. New example works on ANY codebase - analyze architecture, fix README inconsistencies. Low-risk, immediately valuable, demonstrates full cycle."
 
   - decision: "Remove /plan command from core workflow visualization"
-    rationale: "/spec automatically generates plan.yaml. Showing /plan separately implies it's a required manual step, which confuses users. Workflow is: /research → /spec (creates artifacts) → /build → /complete."
+    rationale: "/buildforce.plan automatically generates plan.yaml. Showing /plan separately implies it's a required manual step, which confuses users. Workflow is: /buildforce.research → /buildforce.plan (creates artifacts) → /buildforce.build → /buildforce.complete."
 
   - decision: "Keep total length 600-800 lines with 70%+ technical content"
     rationale: "fd README ~400 lines, fzf ~200, ripgrep ~300. 600-800 allows comprehensive inline docs while staying focused. Technical depth (code blocks, tables, examples) over prose builds developer trust."
@@ -94,17 +94,22 @@ evolution:
 
   - version: "3.1"
     date: "2025-11-03"
-    changes: "Simplified slash command documentation (lines 127-257) focusing on user perspective and trust-building. Reduced command docs from 429 lines to 130 lines (62% reduction, 213 lines removed). Transformed technical 'What it does' sections (8-10 numbered steps) into 2-4 sentence outcome-focused descriptions. Removed all 8 YAML file structure examples. Removed all 5 'Key features' sections. Maintained Purpose, Usage, Examples (1-3 per command), and Pro tips. Structure now: Purpose → Usage → Examples → What it does → Pro tip. All 5 commands (/research, /spec, /build, /complete, /document) follow identical simplified structure. Documentation now emphasizes outcomes over implementation details while maintaining 100% accuracy. Zero deviations from plan."
+    changes: "Simplified slash command documentation (lines 127-257) focusing on user perspective and trust-building. Reduced command docs from 429 lines to 130 lines (62% reduction, 213 lines removed). Transformed technical 'What it does' sections (8-10 numbered steps) into 2-4 sentence outcome-focused descriptions. Removed all 8 YAML file structure examples. Removed all 5 'Key features' sections. Maintained Purpose, Usage, Examples (1-3 per command), and Pro tips. Structure now: Purpose → Usage → Examples → What it does → Pro tip. All 5 commands (/research, /plan, /build, /complete, /document) follow identical simplified structure. Documentation now emphasizes outcomes over implementation details while maintaining 100% accuracy. Zero deviations from plan."
 
   - version: "3.2"
     date: "2025-11-14"
-    changes: "Added guidelines feature documentation to README (Phase 4 of guidelines system implementation). Enhanced /document command section with Guidelines Mode subsection explaining /document guidelines and /document scan guidelines workflows. Documented three enforcement levels (strict/recommended/reference) with usage guidance. Updated 'What Makes It Different' comparison table to highlight convention enforcement ('Decisions preserved, searchable, and enforced via _guidelines.yaml'). Enhanced workflow bullet points for /spec, /build, /complete, /document to explain guidelines integration. Added new workflow scenario #4 for guidelines capture and enforcement. Total additions: ~25 lines. Maintains consistent tone and formatting with existing v3.1 structure. Zero deviations from plan."
+    changes: "Added guidelines feature documentation to README (Phase 4 of guidelines system implementation). Enhanced /document command section with Guidelines Mode subsection explaining /document guidelines and /document scan guidelines workflows. Documented three enforcement levels (strict/recommended/reference) with usage guidance. Updated 'What Makes It Different' comparison table to highlight convention enforcement ('Decisions preserved, searchable, and enforced via _guidelines.yaml'). Enhanced workflow bullet points for /plan, /build, /complete, /document to explain guidelines integration. Added new workflow scenario #4 for guidelines capture and enforcement. Total additions: ~25 lines. Maintains consistent tone and formatting with existing v3.1 structure. Zero deviations from plan."
+
+  - version: "3.3"
+    date: "2025-11-21"
+    changes: "Updated all slash command references throughout README to use standardized /buildforce.* prefix format. Changed workflow visualization from /research → /plan → /build → /complete to /buildforce.research → /buildforce.plan → /buildforce.build → /buildforce.complete. Updated 'Your First Workflow' example, command bullet points, workflow scenarios, command section headers, and configuration description. Total changes: 8 sections updated for naming consistency. Maintains v3.1 user-perspective structure. Zero deviations from plan."
 
 related_specs:
   - "now-update-readme-20250106120000 (spec.yaml and plan.yaml)"
   - "readme-v3-developer-focused-20250130000000 (spec.yaml and plan.yaml)"
   - "simplify-slash-cmd-docs-20251103140000 (spec.yaml and plan.yaml)"
   - "implement-guidelines-system-20251112000000 (spec.yaml and plan.yaml - Phase 4)"
+  - "fix-command-naming-inconsistencies-20251121120000 (spec.yaml and plan.yaml)"
 
 notes: |
   README evolution: v1 comprehensive → v2 minimal → v3 developer-focused → v3.1 simplified user-perspective.

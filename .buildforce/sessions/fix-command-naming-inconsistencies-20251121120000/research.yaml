@@ -1,0 +1,182 @@
+version: "0.0.35"
+id: "fix-command-naming-inconsistencies-20251121120000-research"
+created: "2025-11-21"
+last_updated: "2025-11-21"
+
+summary: |
+  Comprehensive audit of slash command references across the Buildforce CLI codebase to identify
+  inconsistencies between old unprefixed format (/plan, /build, etc.) and new prefixed format
+  (/buildforce.plan, /buildforce.build, etc.). Research revealed incomplete transition from legacy
+  naming to the standardized buildforce.* namespace pattern, with 11 files containing outdated
+  references that need updating.
+
+key_findings:
+  - "Current standard uses /buildforce.* prefix (e.g., /buildforce.plan, /buildforce.build, /buildforce.complete, /buildforce.document, /buildforce.research) per cli-architecture.yaml:269"
+  - "Active spec (rename-spec-to-plan-20251121000000) documents ongoing transition from /buildforce.spec → /buildforce.plan, also notes incomplete /spec → /buildforce.spec transition"
+  - "11 files contain old unprefixed command references requiring updates, excluding .buildforce/ folder per user request"
+  - "Historical spec folders in .buildforce/specs/ contain old references but should remain unchanged as archive artifacts"
+  - "User-facing files (src/commands/examples.ts, README.md) are highest priority due to direct impact on user experience"
+  - "Template files and command documentation contain mixed old/new references creating confusion"
+
+file_paths:
+  primary:
+    - path: "src/commands/examples.ts"
+      relevance: "Lines 24, 33 - User-facing CLI output showing workflow examples with old command format"
+
+    - path: "README.md"
+      relevance: "Lines 90, 114, 123, 132, 138, 149, 152, 212 - Primary documentation with multiple old command references"
+
+    - path: "src/templates/commands/build.md"
+      relevance: "Line 13 - Command template context description using old /build reference"
+
+    - path: "src/templates/commands/complete.md"
+      relevance: "Line 10 - Command template context description using old /complete reference"
+
+    - path: "src/templates/commands/document.md"
+      relevance: "Line 91 - Mixed old and new references (/build, /buildforce.plan)"
+
+    - path: "src/templates/commands/research.md"
+      relevance: "Line 10 - Command template context description using old /research reference"
+
+  secondary:
+    - path: "src/templates/plan-template.yaml"
+      relevance: "Lines 2, 3, 89, 102, 166, 186 - Template comments referencing /build command"
+
+    - path: "src/templates/guidelines-template.yaml"
+      relevance: "Lines 6, 10, 11, 12, 230 - Template documentation with /document, /complete, /build references"
+
+    - path: "src/templates/research-template.yaml"
+      relevance: "Lines 14, 29 - Mixed references to /build and /buildforce.plan"
+
+mermaid_diagrams:
+  - title: "Command Naming Inconsistency Architecture"
+    description: "Shows current inconsistent state with mixed old/new references vs target consistent state"
+    diagram: |
+      ```mermaid
+      graph TB
+          subgraph "Current State (Inconsistent)"
+              A[User Documentation<br/>README.md] --> B{Command References}
+              B -->|OLD| C["/plan, /build, /complete"]
+              B -->|NEW| D["/buildforce.plan, /buildforce.build"]
+
+              E[CLI Code<br/>examples.ts] --> F{Command Arrays}
+              F -->|OLD| G["/plan", "/build"]
+
+              H[Templates<br/>*.yaml, *.md] --> I{Command Mentions}
+              I -->|OLD| J["/build", "/document"]
+              I -->|NEW| K["/buildforce.build"]
+
+              L[Context Files<br/>.buildforce/context/] --> M{Documentation}
+              M -->|MIXED| N["Some /plan, some /buildforce.plan"]
+          end
+
+          subgraph "Target State (Consistent)"
+              O[All References] --> P["/buildforce.research"]
+              O --> Q["/buildforce.plan"]
+              O --> R["/buildforce.build"]
+              O --> S["/buildforce.complete"]
+              O --> T["/buildforce.document"]
+          end
+
+          style C fill:#ff6b6b
+          style G fill:#ff6b6b
+          style J fill:#ff6b6b
+          style N fill:#ffd93d
+          style P fill:#51cf66
+          style Q fill:#51cf66
+          style R fill:#51cf66
+          style S fill:#51cf66
+          style T fill:#51cf66
+      ```
+
+data_models:
+  - name: "CommandReference"
+    description: "Represents slash command reference patterns across the codebase"
+    properties:
+      - name: "format"
+        type: "enum: old | new | mixed"
+        required: true
+        description: "Whether reference uses old unprefixed, new prefixed, or mixed formats"
+
+      - name: "oldFormat"
+        type: "array<string>"
+        required: false
+        description: "Old command patterns: /plan, /spec, /build, /complete, /document, /research"
+
+      - name: "newFormat"
+        type: "array<string>"
+        required: true
+        description: "Standard command patterns: /buildforce.plan, /buildforce.build, /buildforce.complete, /buildforce.document, /buildforce.research"
+
+      - name: "severity"
+        type: "enum: high | medium | low"
+        required: true
+        description: "Priority level based on user impact"
+
+      - name: "filePath"
+        type: "string"
+        required: true
+        description: "Absolute path to file containing reference"
+
+      - name: "lineNumbers"
+        type: "array<number>"
+        required: true
+        description: "Specific line numbers with old references"
+
+    relationships:
+      - "CommandReference instances map to FilePriority categories"
+      - "High severity references in user-facing files require immediate updates"
+      - "Historical spec folders maintain old references as archive artifacts"
+
+  - name: "FilePriority"
+    description: "Categorization of files by update priority"
+    properties:
+      - name: "priority"
+        type: "enum: high | medium | low | archive"
+        required: true
+        description: "Update priority level"
+
+      - name: "category"
+        type: "enum: userFacing | templates | contextDocs | historicalSpecs"
+        required: true
+        description: "File category determining priority"
+
+      - name: "reason"
+        type: "string"
+        required: true
+        description: "Rationale for priority assignment"
+
+architectural_decisions:
+  - pattern: "Namespace Isolation with buildforce. Prefix"
+    description: "All slash commands use /buildforce.* prefix to prevent collision with user-defined commands or other tools. Dot notation is intuitive and widely recognized in CLI systems."
+    rationale: "Provides namespace isolation without subdirectory nesting. Flat structure simplifies discovery while preventing naming conflicts. Documented in cli-architecture.yaml:136"
+
+  - pattern: "Historical Specs as Immutable Archives"
+    description: "Completed spec folders in .buildforce/specs/ preserve original command references for historical accuracy, even if those references use old formats"
+    rationale: "Specs are point-in-time snapshots documenting work as it was done. Updating historical references would compromise archive integrity and create confusion about what commands were actually used"
+
+  - pattern: "Template-Only Command Implementation"
+    description: "Slash commands implemented as markdown templates (src/templates/commands/*.md) rather than TypeScript code, following Template-Only Slash Commands pattern from _guidelines.yaml"
+    rationale: "Keeps CLI thin, puts logic in AI-interpretable instructions. Updates to command behavior require only template modifications, not code changes"
+
+external_references:
+  - title: "CLI Architecture Context File"
+    url: ".buildforce/context/cli-architecture.yaml"
+    relevance: "Documents buildforce.* namespace pattern (line 136), invocation patterns (line 269), and multi-agent support"
+
+  - title: "Rename Spec to Plan Active Spec"
+    url: ".buildforce/specs/rename-spec-to-plan-20251121000000/"
+    relevance: "Documents ongoing /buildforce.spec → /buildforce.plan transition and notes incomplete /spec → /buildforce.spec migration"
+
+  - title: "Slash Commands Context File"
+    url: ".buildforce/context/slash-commands.yaml"
+    relevance: "Core workflow documentation showing current command naming (lines 51, 61, 75, 86) with /buildforce.* prefix"
+
+tldr:
+  - "11 files outside .buildforce/ contain old unprefixed command references requiring updates to /buildforce.* format"
+  - "Highest priority: src/commands/examples.ts (lines 24, 33) and README.md - direct user-facing impact"
+  - "Current standard is /buildforce.research, /buildforce.plan, /buildforce.build, /buildforce.complete, /buildforce.document"
+  - "Historical spec folders in .buildforce/specs/ should remain unchanged as archive artifacts"
+  - "Template files (*.yaml, *.md) contain mixed references needing standardization"
+  - "Namespace isolation via buildforce. prefix prevents command name collisions per cli-architecture.yaml"
+  - "See file_paths section for complete list with specific line numbers"

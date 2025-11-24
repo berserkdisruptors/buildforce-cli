@@ -3,7 +3,7 @@ name: Buildforce CLI Architecture
 type: module
 status: production
 created: 2025-10-27
-last_updated: 2025-01-22
+last_updated: 2025-11-21
 
 summary: |
   Comprehensive architecture of the Buildforce CLI tool - a Node.js-based command-line
@@ -114,8 +114,8 @@ design_decisions:
   - decision: "Persist configuration in buildforce.json during init"
     rationale: "Enables upgrade command to auto-detect project settings (AI assistant, script type) without re-prompting users. Single source of truth for project configuration."
 
-  - decision: "Upgrade command preserves user content (.buildforce/context/ and .buildforce/specs/)"
-    rationale: "User-created content represents significant investment and must never be modified during upgrades. Only system files (templates, scripts, commands) are updated."
+  - decision: "Upgrade command preserves user content (.buildforce/context/ and .buildforce/sessions/)"
+    rationale: "User-created content represents significant investment and must never be modified during upgrades. Only system files (templates, scripts, commands) are updated. The sessions folder (formerly specs) stores development session artifacts including spec.yaml, plan.yaml, and research.yaml files."
 
   - decision: "Support local artifact resolution via --local flag"
     rationale: "Enables offline workflows, local testing during development, and faster iteration cycles. Developers can test locally-built artifacts without publishing to GitHub Releases."
@@ -133,7 +133,7 @@ design_decisions:
     rationale: "Provides namespace isolation to prevent collision with user-defined custom commands. All 11 agents deploy commands to {agent-folder}/commands/buildforce/ (or prompts/buildforce/ for Copilot), improving discoverability and following common organizational patterns. Users can easily distinguish BuildForce commands from their own."
   
   - decision: "Prefix BuildForce commands with buildforce. in flat directory"
-    rationale: "Provides namespace isolation without subdirectory nesting. All 11 agents deploy commands with buildforce. prefix (e.g., buildforce.spec.md) to {agent-folder}/commands/ (or prompts/ for Copilot). Flat structure simplifies discovery while preventing collision with user-defined commands. Dot notation in invocation (/buildforce.spec) is intuitive and widely recognized in CLI systems."
+    rationale: "Provides namespace isolation without subdirectory nesting. All 11 agents deploy commands with buildforce. prefix (e.g., buildforce.plan.md) to {agent-folder}/commands/ (or prompts/ for Copilot). Flat structure simplifies discovery while preventing collision with user-defined commands. Dot notation in invocation (/buildforce.plan) is intuitive and widely recognized in CLI systems."
 
 architecture_patterns:
   entry_point: |
@@ -210,9 +210,10 @@ architecture_patterns:
 
     Template Structure:
     - .buildforce/context/ - Context management system
+    - .buildforce/sessions/ - Development session artifacts (spec.yaml, plan.yaml, research.yaml)
     - .buildforce/scripts/ - Automation scripts
     - .buildforce/templates/ - Local templates
-    - buildforce.json - Project configuration with aiAssistant, scriptType, version
+    - buildforce.json - Project configuration with aiAssistant, scriptType, version, sessionsFolder
     - Agent folders (.claude/, .github/, etc.) - Agent-specific files with commands nested in buildforce/ subdirectory
 
     Extraction Flow:
@@ -266,7 +267,7 @@ architecture_patterns:
     - Format varies by agent: .md (Claude, Cursor), .toml (Gemini, Qwen), .prompt.md (Copilot)
     - 5 slash commands deployed: research, spec, build, complete, document
     - Namespace isolation via filename prefix prevents collision with user-defined commands
-    - Invocation pattern: /buildforce.spec, /buildforce.research, /buildforce.build, etc.
+    - Invocation pattern: /buildforce.plan, /buildforce.research, /buildforce.build, etc.
 
     Detection Mechanism:
     - Uses which(tool) to find executables in PATH
@@ -335,8 +336,7 @@ workflow_integration: |
 
   1. Slash Command Prompts:
      - /research - Context gathering from .buildforce/context/_index.yaml
-     - /spec - Requirements specification with spec-template.yaml
-     - /plan - Implementation planning with plan-template.yaml
+     - /buildforce.plan - Requirements specification and planning with spec-template.yaml and plan-template.yaml
      - /build - Execution with progress tracking
      - /document - Context file creation/updates
      - /complete - Finalization and validation
@@ -359,8 +359,8 @@ workflow_integration: |
 
   6. Upgrade System:
      - buildforce upgrade - Update templates to latest version
-     - Preserves user content (.buildforce/context/, .buildforce/specs/)
-     - Auto-detects configuration from buildforce.json
+     - Preserves user content (.buildforce/context/, .buildforce/sessions/)
+     - Auto-detects configuration from buildforce.json (including sessionsFolder field)
      - Supports dry-run and override flags
 
   This creates a complete Spec-Driven Development workflow where AI assistants have:
@@ -408,8 +408,8 @@ evolution:
     changes: "Reverted to prefix-based command naming: all BuildForce commands now use buildforce. prefix in flat directory structure (e.g., .claude/commands/buildforce.spec.md). Modified generate_commands() function to remove buildforce/ subdirectory creation and output commands with prefix-based naming (buildforce.$name.$ext). Updated all command template files to use /buildforce.* invocation pattern (dot notation instead of colon). Verified across all 11 agents × 2 script variants (22 combinations). Flat structure simplifies discovery while maintaining namespace isolation."
 
   - version: "1.8"
-    date: "2025-01-22"
-    changes: "Cleaned up legacy spec-kit references: fixed critical bug in PowerShell error message (changed '/specify' to '/spec'), removed dead code (SPECIFY_FEATURE environment variable check), updated branding consistency (git commit messages, warning labels, temp directory prefixes now use 'Buildforce' branding). All changes maintain existing functionality with no breaking changes."
+    date: "2025-11-21"
+    changes: "Renamed folder structure from .buildforce/specs to .buildforce/sessions to better reflect its purpose as session-based development tracking. Updated BuildforceConfig interface field from specsFolder to sessionsFolder. Modified all scripts (bash and PowerShell), command templates (plan.md, complete.md), and user-facing output to reference new path. Variable names updated for consistency (SPECS_DIR→SESSIONS_DIR, $specsDir→$sessionsDir). This terminology change aligns with the ephemeral, workflow-oriented nature of development sessions."
 
 related_specs:
   - "standardize-cli-title-display-20250130220000"
@@ -418,6 +418,7 @@ related_specs:
   - "nest-commands-buildforce-folder-20251030085832"
   - "revert-to-prefix-naming-20251104000000"
   - "cleanup-spec-kit-references-20250122143052"
+  - "rename-specs-to-sessions-20251121160000"
 
 notes: |
   Key architectural strengths:
@@ -431,8 +432,6 @@ notes: |
   - Shared box utility component ensures consistent visual styling across all commands
 
   Branding consistency:
-  - All references use "Buildforce" branding (no legacy spec-kit references)
-  - Error messages consistently reference correct commands (/spec, not /specify)
   - PowerShell and bash implementations maintain consistent error message wording
   - Dead code removed to reduce maintenance overhead
 

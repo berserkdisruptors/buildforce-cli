@@ -1,5 +1,5 @@
 #!/usr/bin/env pwsh
-# Create a new spec folder with spec.yaml and plan.yaml files
+# Create a new spec folder with spec.yaml and plan.yaml files for /buildforce.plan command
 [CmdletBinding()]
 param(
     [switch]$Json,
@@ -49,12 +49,12 @@ try {
 
 Set-Location $buildforceRoot
 
-$specsDir = Join-Path $buildforceRoot '.buildforce/specs'
+$sessionsDir = Join-Path $buildforceRoot '.buildforce/sessions'
 $templatesDir = Join-Path $buildforceRoot '.buildforce/templates'
-New-Item -ItemType Directory -Path $specsDir -Force | Out-Null
+New-Item -ItemType Directory -Path $sessionsDir -Force | Out-Null
 
 # Create new spec folder
-$featureDir = Join-Path $specsDir $FolderName
+$featureDir = Join-Path $sessionsDir $FolderName
 
 # Check if folder already exists
 if (Test-Path $featureDir) {

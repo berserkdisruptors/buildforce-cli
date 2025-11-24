@@ -1,0 +1,138 @@
+version: "0.0.35"
+id: fix-command-naming-inconsistencies-20251121120000
+name: "Fix Slash Command Naming Inconsistencies"
+type: feature
+status: draft
+created: "2025-11-21"
+last_updated: "2025-11-21"
+
+summary: |
+  Update all slash command references in user-facing files, templates, and documentation outside
+  the .buildforce/ folder to use the standardized /buildforce.* prefix format. This ensures
+  consistent command naming across the codebase and prevents user confusion.
+
+# INTENT / PROBLEM STATEMENT
+
+problem: |
+  The codebase contains inconsistent slash command references with a mix of old unprefixed format
+  (/plan, /build, /complete, /document, /research) and new prefixed format (/buildforce.plan,
+  /buildforce.build, etc.). Research identified 11 files outside .buildforce/ with old references,
+  causing confusion for users who see incorrect command syntax in documentation and CLI output.
+  This inconsistency resulted from incomplete transitions during previous command renames.
+
+motivation: |
+  Standardizing all command references to the /buildforce.* prefix format will eliminate user
+  confusion, ensure documentation accuracy, and maintain the namespace isolation pattern that
+  prevents command name collisions. The buildforce. prefix is documented as the official standard
+  in cli-architecture.yaml and should be consistently applied across all user-facing content.
+
+# GOALS
+
+primary_goals:
+  - Update all old unprefixed command references to /buildforce.* format in files outside .buildforce/
+  - Ensure README.md and src/commands/examples.ts show correct command syntax to users
+  - Maintain consistency across all template files and command documentation
+
+secondary_goals:
+  - Document the standard command naming convention for future reference
+  - Prevent similar inconsistencies in future command updates
+  - Preserve historical spec folders as archive artifacts
+
+# REQUIREMENTS
+
+functional_requirements:
+  - FR1: Update src/commands/examples.ts lines 24 and 33 to use /buildforce.* command format in workflow arrays
+  - FR2: Update README.md to replace all old command references (/plan, /build, /complete, /document, /research) with /buildforce.* equivalents
+  - FR3: Update src/templates/commands/build.md line 13 context description to use /buildforce.build
+  - FR4: Update src/templates/commands/complete.md line 10 context description to use /buildforce.complete
+  - FR5: Update src/templates/commands/document.md line 91 to use /buildforce.build and /buildforce.plan consistently
+  - FR6: Update src/templates/commands/research.md line 10 context description to use /buildforce.research
+  - FR7: Update src/templates/plan-template.yaml comments (lines 2, 3, 89, 102, 166, 186) to use /buildforce.build
+  - FR8: Update src/templates/guidelines-template.yaml comments to use /buildforce.* format throughout
+  - FR9: Update src/templates/research-template.yaml comments (lines 14, 29) to use /buildforce.build and /buildforce.plan
+  - FR10: Exclude all files within .buildforce/ folder from updates per user request
+  - FR11: Verify all five core commands are consistently referenced: /buildforce.research, /buildforce.plan, /buildforce.build, /buildforce.complete, /buildforce.document
+
+non_functional_requirements:
+  - NFR1: Changes must not affect command functionality or behavior
+  - NFR2: Updates must maintain original file structure and formatting
+  - NFR3: Historical spec folders in .buildforce/specs/ must remain unchanged as archive artifacts
+  - NFR4: All changes must be backward compatible (no breaking changes to command invocation)
+
+# SCOPE
+
+in_scope:
+  - Updating command references in src/commands/examples.ts
+  - Updating command references in README.md
+  - Updating command references in all src/templates/ files (commands/*.md, *.yaml)
+  - Ensuring consistency across all five core commands (/buildforce.research, /buildforce.plan, /buildforce.build, /buildforce.complete, /buildforce.document)
+
+out_of_scope:
+  - Files within .buildforce/ folder (excluded per user request)
+  - Historical spec folders in .buildforce/specs/ (archive artifacts)
+  - Renaming command template files (already follow buildforce.*.md pattern)
+  - Changing command invocation behavior or functionality
+  - Updating context documentation files in .buildforce/context/
+
+# DESIGN PRINCIPLES
+
+design_principles:
+  - "Namespace isolation: All commands use /buildforce.* prefix to prevent name collisions"
+  - "Consistency: All user-facing references use identical command format"
+  - "Historical preservation: Archive artifacts remain unchanged for accuracy"
+  - "Documentation-first: Ensure users see correct command syntax in all interactions"
+
+# ACCEPTANCE CRITERIA
+
+acceptance_criteria:
+  - AC1: src/commands/examples.ts workflow arrays use /buildforce.plan, /buildforce.build, /buildforce.complete, /buildforce.research, /buildforce.document
+  - AC2: README.md contains zero old unprefixed command references; all examples use /buildforce.* format
+  - AC3: All src/templates/commands/*.md files reference commands with /buildforce.* prefix in context descriptions
+  - AC4: All src/templates/*.yaml files use /buildforce.* format in comments and documentation
+  - AC5: No files outside .buildforce/ contain old unprefixed command references (/plan, /build, etc.)
+  - AC6: Files within .buildforce/ folder remain unmodified
+  - AC7: Historical spec folders in .buildforce/specs/ remain unchanged
+  - AC8: All five core commands referenced consistently: /buildforce.research, /buildforce.plan, /buildforce.build, /buildforce.complete, /buildforce.document
+
+# ASSUMPTIONS & DEPENDENCIES
+
+assumptions:
+  - The /buildforce.* prefix is the established standard per cli-architecture.yaml:269
+  - Command template files already follow buildforce.*.md naming pattern
+  - Historical spec folders should preserve original command references for archive accuracy
+  - User request to exclude .buildforce/ folder includes all subdirectories and files
+
+dependencies:
+  internal:
+    - cli-architecture: "Defines buildforce.* namespace pattern and invocation conventions"
+    - slash-commands: "Core command definitions and workflow documentation"
+  external:
+    - None
+
+# OPEN QUESTIONS
+
+open_questions: []
+
+# RESOLVED QUESTIONS
+
+resolved_questions:
+  - question: "Should files in .buildforce/ folder be updated?"
+    answer: "No - user explicitly requested to exclude .buildforce/ folder from updates"
+
+  - question: "Should historical spec folders be updated?"
+    answer: "No - historical specs are archive artifacts and should remain unchanged"
+
+  - question: "Should we update only user-facing files or all files outside .buildforce/?"
+    answer: "Update all files outside .buildforce/ including templates and documentation for complete consistency"
+
+# NOTES
+
+notes: |
+  This fix addresses technical debt from incomplete command rename transitions. The research phase
+  identified the scope and severity of inconsistencies. Priority is on user-facing files (README.md,
+  examples.ts) which directly impact user experience, followed by templates which guide AI agent
+  behavior. The buildforce.* namespace pattern is documented in cli-architecture.yaml and provides
+  protection against command name collisions across 11 different AI assistant platforms.
+
+  Historical spec folders contain references to old command names because they document work as it
+  was performed. Updating these would compromise archive integrity and historical accuracy.

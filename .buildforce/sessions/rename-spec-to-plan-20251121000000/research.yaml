@@ -1,0 +1,198 @@
+version: "0.0.35"
+id: "rename-spec-to-plan-20251121000000-research"
+created: "2025-11-21"
+last_updated: "2025-11-21"
+
+summary: |
+  Comprehensive analysis of all locations where /buildforce.spec (formerly /spec) is used across the codebase.
+  Research revealed command templates, scripts, documentation, context files, and identified gaps from the /spec to
+  /buildforce.spec transition, particularly in README.md.
+
+key_findings:
+  - "Primary command template at src/templates/commands/spec.md (347 lines) contains references to /buildforce.spec"
+  - "Command was renamed from /spec to /buildforce.spec for namespace isolation using prefix-based flat directory structure"
+  - "Scripts create-spec-files.sh/.ps1 handle folder creation with semantic-slug-timestamp naming pattern"
+  - "State tracking migrated from .current-spec file to buildforce.json currentSpec field"
+  - "README.md contains legacy /spec references that were never updated to /buildforce.spec"
+  - "Documentation gap: README still shows /spec in workflow examples (lines 88, 122, 185-203)"
+
+file_paths:
+  primary:
+    - path: "src/templates/commands/spec.md"
+      relevance: "Main spec command template (347 lines) - references /buildforce.spec at lines 15, 346"
+    - path: "src/templates/commands/research.md"
+      relevance: "References /buildforce.spec in output guidance at line 20"
+    - path: "src/templates/commands/build.md"
+      relevance: "References spec command in workflow"
+    - path: "src/templates/commands/complete.md"
+      relevance: "References /buildforce.spec in error messages at line 21"
+    - path: "README.md"
+      relevance: "User-facing documentation with LEGACY /spec references (needs update)"
+    - path: "src/commands/init/output.ts"
+      relevance: "CLI initialization output at line 131 - CORRECTLY uses /buildforce.spec"
+
+  secondary:
+    - path: "src/scripts/bash/create-spec-files.sh"
+      relevance: "Creates spec folder structure with semantic-slug-timestamp validation"
+    - path: "src/scripts/powershell/create-spec-files.ps1"
+      relevance: "PowerShell equivalent of folder creation script"
+    - path: "src/scripts/bash/get-spec-paths.sh"
+      relevance: "Retrieves spec paths for build command"
+    - path: "src/scripts/powershell/get-spec-paths.ps1"
+      relevance: "PowerShell equivalent for path retrieval"
+    - path: "src/scripts/powershell/common.ps1"
+      relevance: "Common functions for spec state management"
+    - path: ".buildforce/context/spec-command.yaml"
+      relevance: "Comprehensive context documentation (8 versions of evolution)"
+    - path: ".buildforce/context/cli-architecture.yaml"
+      relevance: "Architecture decisions about prefix naming (v1.4, dated 2025-11-04)"
+    - path: ".buildforce/context/slash-commands.yaml"
+      relevance: "Slash command system overview"
+
+mermaid_diagrams:
+  - title: "Command Execution Flow"
+    description: "Shows the architecture of /buildforce.spec command execution from user invocation through scripts to context system"
+    diagram: |
+      ```mermaid
+      graph TB
+          User[User Types: /buildforce.spec]
+
+          subgraph "Command Execution"
+              Template[src/templates/commands/spec.md]
+              Template --> Mode{Mode Detection}
+              Mode -->|CREATE| CreateFlow[CREATE Flow]
+              Mode -->|UPDATE| UpdateFlow[UPDATE Flow]
+          end
+
+          subgraph "CREATE Flow"
+              CreateFlow --> GenFolder[Generate Folder Name<br/>semantic-slug-timestamp]
+              GenFolder --> RunScript[Run create-spec-files script]
+              RunScript --> CreateFiles[Create spec.yaml + plan.yaml]
+              CreateFiles --> UpdateState[Update buildforce.json]
+          end
+
+          subgraph "UPDATE Flow"
+              UpdateFlow --> LoadState[Read buildforce.json]
+              LoadState --> LoadFiles[Load existing spec.yaml + plan.yaml]
+              LoadFiles --> UpdateFiles[Update files intelligently]
+          end
+
+          subgraph "Scripts"
+              BashScript[create-spec-files.sh]
+              PSScript[create-spec-files.ps1]
+              Common[common.ps1/sh]
+          end
+
+          subgraph "Context System"
+              Index[_index.yaml]
+              SpecContext[spec-command.yaml]
+              CLIArch[cli-architecture.yaml]
+          end
+
+          User --> Template
+          RunScript --> BashScript
+          RunScript --> PSScript
+          BashScript --> Common
+          PSScript --> Common
+          Template -.references.-> SpecContext
+          SpecContext -.documented in.-> Index
+
+          style User fill:#D3FFCA
+          style Template fill:#FFE5B4
+          style CreateFiles fill:#B4E5FF
+          style UpdateFiles fill:#B4E5FF
+      ```
+
+data_models:
+  - name: "Command Invocation Pattern"
+    description: "Structure of how the spec command is invoked"
+    properties:
+      - name: "command"
+        type: "string"
+        required: true
+        description: "Command name: /buildforce.spec"
+      - name: "aliases"
+        type: "array"
+        required: false
+        description: "Former names: [/spec]"
+      - name: "invocation_pattern"
+        type: "string"
+        required: true
+        description: "Full pattern: /buildforce.spec <feature-description>"
+      - name: "namespace"
+        type: "string"
+        required: true
+        description: "Namespace prefix: buildforce."
+      - name: "prefix_style"
+        type: "boolean"
+        required: true
+        description: "Uses prefix-based naming (not nested directory)"
+    relationships:
+      - "Part of buildforce.* namespace family"
+      - "Shares namespace with /buildforce.research, /buildforce.build, etc."
+
+  - name: "Folder Naming Convention"
+    description: "Semantic-slug-timestamp format for spec folders"
+    properties:
+      - name: "format"
+        type: "string"
+        required: true
+        description: "{semantic-slug}-{timestamp}"
+      - name: "semantic_slug"
+        type: "object"
+        required: true
+        description: "Pattern: ^[a-z][a-z0-9-]*$, max 35 chars, kebab-case, 3-5 words"
+      - name: "timestamp"
+        type: "string"
+        required: true
+        description: "Format: YYYYMMDDHHmmss (14 digits, UTC)"
+      - name: "combined_max_length"
+        type: "number"
+        required: true
+        description: "50 characters total"
+      - name: "example"
+        type: "string"
+        required: false
+        description: "add-auth-jwt-20250122143052"
+    relationships:
+      - "Validated by create-spec-files.sh/.ps1 scripts"
+
+  - name: "Spec State Management"
+    description: "State tracking in buildforce.json"
+    properties:
+      - name: "state_file"
+        type: "string"
+        required: true
+        description: ".buildforce/buildforce.json"
+      - name: "state_field"
+        type: "string"
+        required: true
+        description: "currentSpec"
+      - name: "values"
+        type: "string | null"
+        required: true
+        description: "null = No active spec (CREATE mode); <folder-name> = Active spec (UPDATE mode)"
+    relationships:
+      - "Migrated from .current-spec file to buildforce.json (v8.0)"
+
+architectural_decisions:
+  - pattern: "Prefix-based Naming Convention"
+    description: "All BuildForce commands use buildforce. prefix in flat directory structure (e.g., buildforce.spec.md)"
+    rationale: "Provides namespace isolation without subdirectory nesting. Flat structure simplifies discovery while preventing collision with user-defined commands. Dot notation in invocation (/buildforce.spec) is intuitive and widely recognized in CLI systems."
+
+  - pattern: "Semantic-first Folder Naming"
+    description: "Format reversed from {timestamp}-{slug} to {slug}-{timestamp}"
+    rationale: "Prioritizes semantic information for better discoverability and IDE autocomplete support. Timestamp suffix maintains uniqueness while emphasizing human-readable semantic content."
+
+  - pattern: "State Tracking Migration"
+    description: "Migrated from .current-spec file to buildforce.json currentSpec field"
+    rationale: "Structured configuration enables future extensibility. Single source of truth for project configuration with type-safe JSON format."
+
+tldr:
+  - "Primary command template at src/templates/commands/spec.md (347 lines)"
+  - "Renamed from /spec to /buildforce.spec for namespace isolation (prefix-based flat structure)"
+  - "Scripts (create-spec-files.sh/.ps1) handle folder creation with semantic-slug-timestamp naming"
+  - "State tracking uses buildforce.json currentSpec field (migrated from .current-spec)"
+  - "README.md contains LEGACY /spec references that need updating to /buildforce.spec"
+  - "Context system fully documented in spec-command.yaml, cli-architecture.yaml, slash-commands.yaml"
+  - "All 30+ specs in .buildforce/specs/ reference the command pattern"

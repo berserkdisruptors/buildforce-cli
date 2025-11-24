@@ -80,32 +80,17 @@ workflows_supported:
   - id: "basic"
     name: "Basic"
     description: "Simple workflow for straightforward features"
-    command_sequence: ["/spec", "/build", "/complete"]
+    command_sequence: ["/plan", "/build", "/complete"]
   
   - id: "full"
     name: "Full"
     description: "Complete workflow with research for complex features"
-    command_sequence: ["/research", "/spec", "/build", "/complete"]
+    command_sequence: ["/research", "/plan", "/build", "/complete"]
   
   - id: "documentation"
     name: "Documentation"
     description: "Workflow focused on documentation generation"
-    command_sequence: ["/spec", "/build", "/document"]
-  
-  - id: "context-centering"
-    name: "Context Centering"
-    description: "Start with documentation, then research improvements"
-    command_sequence: ["/document", "/research", "/spec"]
-  
-  - id: "contribute-existing"
-    name: "Contribute to Existing Spec"
-    description: "Iteratively refine existing specifications"
-    command_sequence: ["/spec", "/build", "/spec", "...", "/complete"]
-  
-  - id: "research-during-build"
-    name: "Research During Build"
-    description: "Run research while actively building without interrupting workflow"
-    command_sequence: ["/build", "/research [topic]", "/build (continue)"]
+    command_sequence: ["/plan", "/build", "/document"]
 
 architecture_flow: |
   Examples Command Flow:

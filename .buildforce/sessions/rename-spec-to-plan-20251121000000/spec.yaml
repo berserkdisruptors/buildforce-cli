@@ -1,0 +1,147 @@
+version: "0.0.35"
+id: rename-spec-to-plan-20251121000000
+name: "Rename /buildforce.spec to /buildforce.plan"
+type: feature
+status: draft
+created: "2025-11-21"
+last_updated: "2025-11-21"
+
+summary: |
+  Rename the /buildforce.spec slash command to /buildforce.plan across all templates, scripts, documentation,
+  and context files. Additionally, complete the transition from /spec to /buildforce.spec by updating missed
+  references in README.md and other documentation.
+
+# INTENT / PROBLEM STATEMENT
+
+problem: |
+  The /buildforce.spec command name creates confusion because it generates both a spec.yaml (WHAT to build)
+  AND a plan.yaml (HOW to build). The command name only references "spec" but doesn't indicate that it also
+  handles planning. Additionally, the previous transition from /spec to /buildforce.spec left some references
+  incomplete, particularly in README.md which still contains legacy /spec references instead of /buildforce.spec.
+
+motivation: |
+  Renaming to /buildforce.plan better reflects the command's dual purpose of creating both specifications and
+  implementation plans. The term "plan" encompasses both the WHAT (requirements) and HOW (implementation approach),
+  providing clearer semantics. Completing the missed updates from the /spec → /buildforce.spec transition ensures
+  documentation consistency and prevents user confusion.
+
+# GOALS
+
+primary_goals:
+  - Rename all references from /buildforce.spec to /buildforce.plan across the codebase
+  - Complete the transition from /spec to /buildforce.spec in documentation
+  - Update README.md to use /buildforce.plan consistently
+  - Ensure no breaking changes to existing spec folders or state tracking
+
+secondary_goals:
+  - Update context files to reflect the new command name
+  - Maintain backward compatibility during transition period
+  - Update CLI output messages to reference /buildforce.plan
+
+# REQUIREMENTS
+
+functional_requirements:
+  - FR1: Rename src/templates/commands/spec.md to plan.md
+  - FR2: Update all internal command references from /buildforce.spec to /buildforce.plan
+  - FR3: Update README.md to replace legacy /spec references with /buildforce.plan
+  - FR4: Update CLI output in src/commands/init/output.ts to reference /buildforce.plan
+  - FR5: Update command template frontmatter descriptions to reflect dual purpose (spec + plan creation)
+  - FR6: Update script comments to use "plan" terminology (keep script names unchanged)
+  - FR7: Keep spec.yaml and plan.yaml filenames unchanged (only command name changes)
+  - FR8: Rename spec-command.yaml to plan-command.yaml and update all context files
+  - FR9: Update CLI banner and help text to reference /buildforce.plan
+
+non_functional_requirements:
+  - NFR1: All existing spec folders continue to work without modification
+  - NFR2: buildforce.json currentSpec field remains unchanged (tracks folder names, not command names)
+  - NFR3: No changes to script functionality (create-spec-files.sh/.ps1)
+  - NFR4: Documentation must clearly explain that /buildforce.plan creates both spec.yaml and plan.yaml
+  - NFR5: Transition should be transparent to users with no data migration required
+
+# SCOPE
+
+in_scope:
+  - Renaming command template file: spec.md → plan.md
+  - Updating all /buildforce.spec references to /buildforce.plan in templates
+  - Completing /spec → /buildforce.plan transition in README.md
+  - Updating CLI output messages
+  - Updating context documentation files
+  - Updating command invocation patterns in all templates
+
+out_of_scope:
+  - Renaming spec.yaml and plan.yaml files (these names are established conventions)
+  - Changing folder naming convention (semantic-slug-timestamp remains)
+  - Modifying create-spec-files.sh/.ps1 script names (internal implementation detail)
+  - Providing backward compatibility aliases (clean transition)
+  - Updating historical spec folder names in .buildforce/specs/
+
+# DESIGN PRINCIPLES
+
+design_principles:
+  - "Command name should reflect its full functionality (creates both spec and plan)"
+  - "Maintain internal file naming conventions (spec.yaml, plan.yaml) for clarity"
+  - "Complete documentation consistency from previous incomplete transition"
+  - "Zero-disruption migration for existing projects"
+
+# ACCEPTANCE CRITERIA
+
+acceptance_criteria:
+  - AC1: Command template renamed from spec.md to plan.md with all references updated
+  - AC2: README.md contains no legacy /spec references; all examples use /buildforce.plan
+  - AC3: CLI output (init/output.ts) displays /buildforce.plan in workflow examples
+  - AC4: All command templates reference /buildforce.plan consistently
+  - AC5: Context files (spec-command.yaml → plan-command.yaml) reflect new command name
+  - AC6: Script comments and error messages use "plan" terminology where appropriate
+  - AC7: Documentation clearly explains that /buildforce.plan creates both spec.yaml and plan.yaml
+  - AC8: Existing projects with active specs continue to function without modification
+
+# ASSUMPTIONS & DEPENDENCIES
+
+assumptions:
+  - The spec.yaml and plan.yaml filenames are well-established and should not change
+  - Users understand that "plan" encompasses both requirements (WHAT) and implementation (HOW)
+  - The buildforce. namespace prefix remains unchanged
+  - Script names (create-spec-files.sh) are internal implementation details
+
+dependencies:
+  internal:
+    - command-templates: "All slash command templates reference /buildforce.spec"
+    - cli-output: "CLI initialization output displays command examples"
+    - context-system: "Context files document the spec command architecture"
+    - readme: "Primary user-facing documentation with workflow examples"
+  external:
+    - None
+
+# OPEN QUESTIONS
+
+open_questions: []
+
+# RESOLVED QUESTIONS
+
+resolved_questions:
+  - question: "Should we rename spec-command.yaml context file to plan-command.yaml for consistency?"
+    answer: "Yes - Rename to plan-command.yaml to maintain consistency with the command name"
+
+  - question: "Should script names (create-spec-files.sh) be renamed to create-plan-files.sh or kept as-is?"
+    answer: "Keep script names unchanged - They are internal implementation details not exposed to users"
+
+  - question: "Should we add a deprecation notice for old /spec references in a migration guide?"
+    answer: "No - Documentation update is sufficient for this transition"
+
+  - question: "Should we update the CLI banner/help text to reference /buildforce.plan instead of /buildforce.spec?"
+    answer: "Yes - Update CLI banner and help text to reference /buildforce.plan"
+
+# NOTES
+
+notes: |
+  This is primarily a naming/refactoring change with minimal functional impact. The command's behavior
+  remains identical - it still creates both spec.yaml and plan.yaml files. The rename better communicates
+  this dual purpose to users.
+
+  Historical context:
+  - Original command: /spec
+  - First rename: /spec → /buildforce.spec (namespace isolation)
+  - This change: /buildforce.spec → /buildforce.plan (semantic clarity)
+
+  The transition from /spec to /buildforce.spec was incomplete, leaving legacy references in README.md.
+  This spec addresses both the rename to /buildforce.plan AND completes the previous incomplete transition.

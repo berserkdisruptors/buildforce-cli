@@ -7,7 +7,7 @@ User input:
 
 $ARGUMENTS
 
-**Context**: The user is invoking `/complete` to finalize the current spec. ($ARGUMENTS) contains optional completion notes or confirmations.
+**Context**: The user is invoking `/buildforce.complete` to finalize the current spec. ($ARGUMENTS) contains optional completion notes or confirmations.
 
 **Your task**: Complete the spec by creating comprehensive context files, updating the context repository, validating that all requirements have been met, and clearing the spec state.
 
@@ -18,19 +18,20 @@ $ARGUMENTS
    Check if there's an active spec to complete:
 
    - Read `.buildforce/buildforce.json` file from current working directory and parse the `currentSpec` field
-   - If file doesn't exist or `currentSpec` is null/empty: **ERROR** - Reply that there is no active spec and user must run `/buildforce.spec` first
+   - If file doesn't exist or `currentSpec` is null/empty: **ERROR** - Reply that there is no active spec and user must run `/buildforce.plan` first
    - If `currentSpec` field has a value (folder name): **PROCEED** - Extract folder name and continue
 
 2. **Load Spec Artifacts**:
 
    Load the spec and plan files from the active spec folder:
 
-   - Construct spec directory path: `.buildforce/specs/{folder-name}/` where folder-name comes from `buildforce.json` `currentSpec` field
+   - Construct spec directory path: `.buildforce/sessions/{folder-name}/` where folder-name comes from `buildforce.json` `currentSpec` field
    - Read `spec.yaml` from spec directory
    - Read `plan.yaml` from spec directory if it exists
    - Read `research.yaml` from spec directory if it exist
    - Parse key metadata: spec id, name, requirements, dependencies, files modified
    - Understand what was specified, planned, and implemented
+   - **Status Update**: Update the `status` field in both `spec.yaml` and `plan.yaml` to "completed" and set `last_updated` to today's date (YYYY-MM-DD format)
 
 3. **Analyze Context Requirements**:
 
@@ -198,7 +199,7 @@ $ARGUMENTS
 
    - **If user declines (n or no)**:
      1. Skip auto-update
-     2. Optionally mention: "You can manually add these patterns later via `/document guidelines`"
+     2. Optionally mention: "You can manually add these patterns later via `/buildforce.document guidelines`"
      3. Continue to next step
 
    - **CRITICAL**: Never auto-update without explicit user confirmation. This builds trust and prevents accidental convention capture.
@@ -206,7 +207,7 @@ $ARGUMENTS
    **Pattern Detection Performance**:
    - Keep analysis focused on modified files from current spec only
    - Do not scan entire codebase (too expensive)
-   - If pattern detection takes >10 seconds, skip and mention: "Pattern detection skipped due to complexity - use `/document scan guidelines` for full codebase analysis"
+   - If pattern detection takes >10 seconds, skip and mention: "Pattern detection skipped due to complexity - use `/buildforce.document scan guidelines` for full codebase analysis"
 
 9. **Clear Spec State**:
 
@@ -226,7 +227,6 @@ Provide a concise report to the user:
 - **If patterns were detected and added**: Report guideline additions (e.g., "Added 2 new guidelines to _guidelines.yaml: Repository Pattern (recommended), Error Handling Pattern (recommended)")
 - Confirmation that all spec requirements were implemented
 - Brief summary of what was achieved with this spec (1-2 sentences)
-- **ALWAYS request user confirmation** that the completion is satisfactory
 
 ## Behavior Rules
 
@@ -243,7 +243,7 @@ Provide a concise report to the user:
 
 ```
 1. Read buildforce.json currentSpec → "20250123150000-add-auth"
-2. Load spec.yaml and plan.yaml from .buildforce/specs/20250123150000-add-auth/
+2. Load spec.yaml and plan.yaml from .buildforce/sessions/20250123150000-add-auth/
 3. Analyze: Introduced new authentication module
 4. Check _index.yaml: No existing "authentication" context
 5. Generate filename: "authentication.yaml"

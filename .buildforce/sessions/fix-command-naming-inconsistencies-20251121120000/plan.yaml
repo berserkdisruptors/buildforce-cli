@@ -1,0 +1,338 @@
+version: "0.0.35"
+# Plan Template for /buildforce.build Agent Execution
+# This template is optimized for AI agent consumption during /buildforce.build commands
+# It provides checkbox-based progress tracking, deviation logging, and spec traceability
+
+id: fix-command-naming-inconsistencies-20251121120000-plan
+name: "Implementation Plan for Fix Slash Command Naming Inconsistencies"
+spec_id: "fix-command-naming-inconsistencies-20251121120000"
+type: implementation-plan
+status: draft
+created: "2025-11-21"
+last_updated: "2025-11-21"
+
+# ARCHITECTURE OVERVIEW
+# Describe the high-level implementation approach and key technical decisions.
+
+approach: |
+  This is a documentation and code comment update task requiring systematic find-and-replace
+  operations across multiple file types. The approach is to process files in priority order:
+  user-facing first (examples.ts, README.md), then templates (commands/*.md, *.yaml).
+  Each file will be read, specific old command references identified by line number from research,
+  and replaced with /buildforce.* equivalents. No functional code changes are required.
+
+technology_stack:
+  - Text editing tools for find-and-replace operations
+  - YAML and Markdown syntax preservation during updates
+  - TypeScript array literal updates in examples.ts
+
+decisions:
+  - decision: "Process files in priority order (user-facing → templates)"
+    rationale: "Ensures highest-impact user-facing content is updated first. If interrupted, at least critical documentation will be consistent"
+
+  - decision: "Use exact line-number targeting from research findings"
+    rationale: "Research phase identified specific lines needing updates. Precise targeting prevents unnecessary changes and maintains context"
+
+  - decision: "Preserve all formatting, indentation, and surrounding content"
+    rationale: "Changes are documentation-only; must not affect readability or introduce formatting inconsistencies"
+
+  - decision: "Verify .buildforce/ folder exclusion throughout"
+    rationale: "User explicitly requested no changes to .buildforce/ folder. Must respect this constraint"
+
+# FILE STRUCTURE
+# List all files to be created or modified during implementation
+
+files_to_create: []
+
+files_to_modify:
+  - path: "src/commands/examples.ts"
+    change_type: "edit"
+    description: "Update workflow commandSequence arrays (lines 24, 33) to use /buildforce.* format"
+
+  - path: "README.md"
+    change_type: "edit"
+    description: "Replace all old command references throughout file with /buildforce.* equivalents"
+
+  - path: "src/templates/commands/build.md"
+    change_type: "edit"
+    description: "Update context description (line 13) to use /buildforce.build"
+
+  - path: "src/templates/commands/complete.md"
+    change_type: "edit"
+    description: "Update context description (line 10) to use /buildforce.complete"
+
+  - path: "src/templates/commands/document.md"
+    change_type: "edit"
+    description: "Update line 91 to use /buildforce.build and /buildforce.plan consistently"
+
+  - path: "src/templates/commands/research.md"
+    change_type: "edit"
+    description: "Update context description (line 10) to use /buildforce.research"
+
+  - path: "src/templates/plan-template.yaml"
+    change_type: "edit"
+    description: "Update comments (lines 2, 3, 89, 102, 166, 186) to use /buildforce.build"
+
+  - path: "src/templates/guidelines-template.yaml"
+    change_type: "edit"
+    description: "Update comments throughout to use /buildforce.* format"
+
+  - path: "src/templates/research-template.yaml"
+    change_type: "edit"
+    description: "Update comments (lines 14, 29) to use /buildforce.build and /buildforce.plan"
+
+# IMPLEMENTATION PHASES
+# Break down the implementation into logical phases with checkbox-based task tracking
+# Use [ ] for pending tasks and [x] for completed tasks
+# Each task should link back to spec requirements via spec_refs
+
+phase_1:
+  name: "Update User-Facing Files"
+  description: |
+    Update the highest-priority user-facing files that directly impact user experience.
+    These files show command syntax to users, so accuracy is critical.
+
+  tasks:
+    - [x] Update src/commands/examples.ts workflow arrays (lines 24, 33)
+      spec_refs: [FR1, AC1]
+      files: [src/commands/examples.ts]
+      notes: "Change /plan → /buildforce.plan, /build → /buildforce.build, /complete → /buildforce.complete, /research → /buildforce.research, /document → /buildforce.document"
+
+    - [x] Update README.md to replace all old command references
+      spec_refs: [FR2, AC2]
+      files: [README.md]
+      notes: "Systematically find and replace /plan, /build, /complete, /document, /research with /buildforce.* equivalents throughout the file"
+
+  validation:
+    - [x] All phase_1 tasks completed
+    - [x] src/commands/examples.ts compiles without errors
+    - [x] README.md markdown syntax is valid
+    - [x] Spec requirements covered: [FR1, FR2]
+
+phase_2:
+  name: "Update Command Template Files"
+  description: |
+    Update context descriptions in command template markdown files. These templates guide
+    AI agent behavior, so consistent command references are important.
+
+  tasks:
+    - [x] Update src/templates/commands/build.md line 13
+      spec_refs: [FR3, AC3]
+      files: [src/templates/commands/build.md]
+      notes: "Change /build → /buildforce.build in context description"
+
+    - [x] Update src/templates/commands/complete.md line 10
+      spec_refs: [FR4, AC3]
+      files: [src/templates/commands/complete.md]
+      notes: "Change /complete → /buildforce.complete in context description"
+
+    - [x] Update src/templates/commands/document.md line 91
+      spec_refs: [FR5, AC3]
+      files: [src/templates/commands/document.md]
+      notes: "Ensure /buildforce.build and /buildforce.plan are used consistently"
+
+    - [x] Update src/templates/commands/research.md line 10
+      spec_refs: [FR6, AC3]
+      files: [src/templates/commands/research.md]
+      notes: "Change /research → /buildforce.research in context description"
+
+  validation:
+    - [x] All phase_2 tasks completed
+    - [x] All markdown files have valid syntax
+    - [x] Context descriptions use correct command format
+    - [x] Spec requirements covered: [FR3, FR4, FR5, FR6]
+
+phase_3:
+  name: "Update Template YAML Comments"
+  description: |
+    Update comments in YAML template files to use consistent command naming.
+    These are documentation comments that help developers understand template usage.
+
+  tasks:
+    - [x] Update src/templates/plan-template.yaml comments
+      spec_refs: [FR7, AC4]
+      files: [src/templates/plan-template.yaml]
+      notes: "Update lines 2, 3, 89, 102, 166, 186 to use /buildforce.build"
+
+    - [x] Update src/templates/guidelines-template.yaml comments
+      spec_refs: [FR8, AC4]
+      files: [src/templates/guidelines-template.yaml]
+      notes: "Find and replace old command references with /buildforce.* format throughout"
+
+    - [x] Update src/templates/research-template.yaml comments
+      spec_refs: [FR9, AC4]
+      files: [src/templates/research-template.yaml]
+      notes: "Update lines 14, 29 to use /buildforce.build and /buildforce.plan"
+
+  validation:
+    - [x] All phase_3 tasks completed
+    - [x] All YAML files have valid syntax
+    - [x] Comments use consistent /buildforce.* format
+    - [x] Spec requirements covered: [FR7, FR8, FR9]
+
+phase_4:
+  name: "Final Verification"
+  description: |
+    Verify all requirements are met and no unintended changes were made to excluded files.
+
+  tasks:
+    - [x] Verify no files in .buildforce/ folder were modified
+      spec_refs: [FR10, AC6]
+      files: []
+      notes: "Check git status to ensure .buildforce/ folder files are untouched"
+
+    - [x] Verify all five core commands are consistently referenced
+      spec_refs: [FR11, AC8]
+      files: []
+      notes: "Search codebase (excluding .buildforce/) for any remaining old command references"
+
+    - [x] Run final acceptance criteria checks
+      spec_refs: [AC1, AC2, AC3, AC4, AC5, AC7, AC8]
+      files: []
+      notes: "Systematically verify each acceptance criterion is satisfied"
+
+  validation:
+    - [x] All phase_4 tasks completed
+    - [x] No files in .buildforce/ were modified (AC6)
+    - [x] Historical spec folders remain unchanged (AC7)
+    - [x] All acceptance criteria verified (AC1-AC8)
+
+# DEVIATION LOG
+# The /buildforce.build agent populates this section when implementation deviates from the original plan
+# Format: phase → task → original plan → actual implementation → reason for deviation
+
+deviations: []
+
+# GUIDELINE COMPLIANCE
+# Track validation results for strict and recommended enforcement levels
+# This section is populated during /buildforce.build when .buildforce/context/_guidelines.yaml exists
+# Guidelines are for AI agent education - agents validate their own generated code against project conventions
+
+guideline_compliance:
+  strict_validations:
+    - guideline: "Template-Only Slash Commands"
+      status: "✓ PASS"
+      checked_files: []
+      note: "No functional code changes - documentation updates only"
+
+    - guideline: "Script Execution from Project Root"
+      status: "✓ PASS"
+      checked_files: []
+      note: "No script execution logic modified"
+
+  recommended_validations: []
+
+  summary: "All strict guidelines pass. This is a documentation-only change with no functional code modifications."
+
+# TESTING GUIDANCE
+# Structured guidance for testing the implementation
+
+testing:
+  automated_tests:
+    - test_file: "N/A"
+      what: "No automated tests for documentation updates"
+      command: "N/A"
+
+  manual_tests:
+    - scenario: "Verify examples.ts shows correct commands"
+      steps: |
+        1. Run `buildforce examples` CLI command
+        2. Verify displayed workflows show /buildforce.plan, /buildforce.build, etc.
+        3. Confirm no old unprefixed commands appear
+
+    - scenario: "Verify README.md accuracy"
+      steps: |
+        1. Open README.md in viewer or GitHub
+        2. Search for "/plan", "/build", "/complete", "/document", "/research"
+        3. Confirm only /buildforce.* format appears (excluding historical context)
+
+    - scenario: "Verify template consistency"
+      steps: |
+        1. Grep for old command patterns: grep -r "\/plan\|\/build\|\/complete" src/templates/
+        2. Verify only /buildforce.* format appears
+        3. Check that context is preserved and formatting unchanged
+
+    - scenario: "Verify .buildforce/ exclusion"
+      steps: |
+        1. Run: git status
+        2. Verify no files under .buildforce/ appear as modified
+        3. Confirm historical spec folders remain unchanged
+
+# VALIDATION CRITERIA
+# Define success metrics and track spec requirement coverage
+
+success_metrics:
+  - "All 9 files outside .buildforce/ updated with consistent /buildforce.* command references"
+  - "Zero old unprefixed command references remain in src/ and README.md"
+  - "No files in .buildforce/ folder modified (verified via git status)"
+  - "All command template files use consistent format in context descriptions"
+
+spec_coverage:
+  # Auto-track which spec requirements are implemented in which tasks
+  # Format: requirement_id: status + location
+  - FR1: "⏳ Phase 1: Task 1"
+  - FR2: "⏳ Phase 1: Task 2"
+  - FR3: "⏳ Phase 2: Task 1"
+  - FR4: "⏳ Phase 2: Task 2"
+  - FR5: "⏳ Phase 2: Task 3"
+  - FR6: "⏳ Phase 2: Task 4"
+  - FR7: "⏳ Phase 3: Task 1"
+  - FR8: "⏳ Phase 3: Task 2"
+  - FR9: "⏳ Phase 3: Task 3"
+  - FR10: "⏳ Phase 4: Task 1"
+  - FR11: "⏳ Phase 4: Task 2"
+  - NFR1: "⏳ All phases (no functional changes)"
+  - NFR2: "⏳ All phases (preserve formatting)"
+  - NFR3: "⏳ Phase 4: Task 1 (verify exclusion)"
+  - NFR4: "⏳ All phases (backward compatible)"
+
+# PROGRESS SUMMARY
+# Track overall progress and identify next steps
+
+overall_progress:
+  phase_1: "2/2 tasks completed"
+  phase_2: "4/4 tasks completed"
+  phase_3: "3/3 tasks completed"
+  phase_4: "3/3 tasks completed"
+
+current_status: |
+  ✅ Implementation complete! All 9 files outside .buildforce/ have been updated with consistent /buildforce.* command references.
+  TypeScript compilation successful. No old unprefixed command references remain in user-facing files.
+
+next_immediate_steps:
+  - "Run /buildforce.complete to finalize and create context files"
+
+# RISKS & CONSIDERATIONS
+# Document potential risks and mitigation strategies
+
+risks:
+  - risk: "Accidentally modifying files in .buildforce/ folder"
+    mitigation: "Use git status after each phase to verify only intended files modified. Double-check file paths before making changes"
+
+  - risk: "Breaking markdown or YAML syntax during updates"
+    mitigation: "Preserve exact formatting and indentation. Use validation tools (markdown linter, yamllint) after changes"
+
+  - risk: "Missing some old command references due to regex variations"
+    mitigation: "Use multiple search patterns (with/without backticks, quotes, etc.) and verify with final grep sweep"
+
+  - risk: "Introducing inconsistencies by using wrong command format"
+    mitigation: "Reference spec FR11 for canonical list of five commands. Double-check each replacement uses correct /buildforce.* format"
+
+# NOTES
+# Capture lessons learned and future enhancement ideas
+
+general_notes:
+  - "This is a documentation-only update with no functional code changes"
+  - "Research phase provided exact line numbers for targeted updates"
+  - "User explicitly excluded .buildforce/ folder from changes"
+  - "Historical spec folders are archive artifacts and should not be modified"
+
+lessons_learned:
+  - "Incomplete command rename transitions create technical debt that requires systematic cleanup"
+  - "User-facing documentation (README, CLI output) should be highest priority for consistency"
+  - "Grep-based research effectively identifies inconsistencies across large codebases"
+
+future_enhancements:
+  - "Consider automated linting rule to prevent future command naming inconsistencies"
+  - "Add validation step to CI/CD that checks for old command format in new PRs"
+  - "Create documentation standard that explicitly lists canonical command names"

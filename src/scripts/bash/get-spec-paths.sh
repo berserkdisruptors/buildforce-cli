@@ -79,7 +79,7 @@ fi
 # Validate required directories and files
 if [[ ! -d "$SPEC_DIR" ]]; then
     echo "ERROR: Spec directory not found: $SPEC_DIR" >&2
-    echo "Run /spec first to create the spec folder." >&2
+    echo "Run /buildforce.plan first to create the spec folder." >&2
     exit 1
 fi
 

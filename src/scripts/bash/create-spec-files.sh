@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Create a new spec folder with spec.yaml and plan.yaml files for /buildforce.plan command
 
 set -e
 
@@ -61,12 +62,12 @@ BUILDFORCE_ROOT=$(get_buildforce_root) || exit 1
 
 cd "$BUILDFORCE_ROOT"
 
-SPECS_DIR=".buildforce/specs"
+SESSIONS_DIR=".buildforce/sessions"
 TEMPLATES_DIR=".buildforce/templates"
-mkdir -p "$SPECS_DIR"
+mkdir -p "$SESSIONS_DIR"
 
 # Create new spec folder
-FEATURE_DIR="$SPECS_DIR/$FOLDER_NAME"
+FEATURE_DIR="$SESSIONS_DIR/$FOLDER_NAME"
 
 # Check if folder already exists
 if [ -d "$FEATURE_DIR" ]; then

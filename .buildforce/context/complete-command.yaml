@@ -3,7 +3,7 @@ name: "Complete Command Template"
 type: feature
 status: production
 created: 2025-01-23
-last_updated: 2025-10-29
+last_updated: 2025-11-21
 
 summary: |
   Template-only slash command that guides AI agents through finalizing specs by creating
@@ -13,6 +13,7 @@ summary: |
 responsibilities:
   - Verify active spec exists via buildforce.json currentSpec field
   - Load spec.yaml and plan.yaml artifacts for analysis
+  - Update spec.yaml and plan.yaml status to completed and last_updated field
   - Proactively search _index.yaml to determine context file updates vs creation
   - Generate semantic filenames for new context files (kebab-case, no prefixes)
   - Create new context files using _schema.yaml template structure
@@ -85,12 +86,17 @@ evolution:
 
   - version: "4.0"
     date: "2025-10-29"
-    changes: "Migrated state tracking from .current-spec to buildforce.json. Updated Step 1 (Verify Active Spec) to read currentSpec field from buildforce.json. Updated Step 8 (Clear Spec State) to call clear-spec-state.sh script which sets currentSpec to null. Examples updated to reference buildforce.json throughout."
+    changes: "Migrated state tracking from .current-spec to buildforce.json. Updated Step 1 (Verify Active Spec) to read currentSpec field from buildforce.json. Updated Step 8 (Clear Spec State) sets currentSpec in buildforce.json to null. Examples updated to reference buildforce.json throughout."
+
+  - version: "5.0"
+    date: "2025-11-21"
+    changes: "Added status lifecycle management. Updated Step 2 (Load Spec Artifacts) to update status field to completed and last_updated field after loading spec/plan artifacts. Ensures proper status transitions throughout workflow: draft→in-progress→completed. Template increased from 198 to 199 lines (1-line addition)."
 
 related_specs:
   - redesign-spec-context-20250107120000
   - research-persistence-intelligent-20251027213207
   - migrate-currentspec-to-json-20251029000000
+  - add-status-lifecycle-updates-20251121140000
 
 notes: |
   The /complete command follows a 9-step workflow:
@@ -101,7 +107,7 @@ notes: |
   5. Create/update context files (use _schema.yaml, intelligent merge)
   6. Update context index (_index.yaml with new entries + description)
   7. Validate implementation (cross-check spec requirements)
-  8. Clear spec state (run clear-spec-state.sh to set currentSpec to null)
+  8. Clear spec state (set currentSpec in buildforce.json to null)
   9. Present completion summary (files created/updated, achievements)
 
   Context filename rules:

@@ -3,7 +3,7 @@ name: "State Tracking System"
 type: feature
 status: production
 created: 2025-10-29
-last_updated: 2025-10-29
+last_updated: 2025-11-21
 
 summary: |
   JSON-based state tracking system using buildforce.json to manage active spec sessions,
@@ -32,9 +32,7 @@ files:
     - .buildforce/scripts/bash/common.sh
   secondary:
     - src/scripts/bash/create-spec-files.sh
-    - src/scripts/bash/clear-spec-state.sh
-    - .buildforce/scripts/bash/clear-spec-state.sh
-    - src/templates/commands/spec.md
+    - src/templates/commands/plan.md
     - src/templates/commands/research.md
     - src/templates/commands/complete.md
     - src/commands/init/setup.ts
@@ -84,14 +82,19 @@ evolution:
     date: "2025-10-29"
     changes: "Initial implementation - migrated from .current-spec to buildforce.json with JSON merge logic"
 
+  - version: "1.1"
+    date: "2025-11-21"
+    changes: "Renamed sessionsFolder field in BuildforceConfig interface (previously specsFolder). Updated all references to use .buildforce/sessions instead of .buildforce/specs. This terminology change reflects the session-based nature of development workflows."
+
 related_specs:
   - migrate-currentspec-to-json-20251029000000
+  - rename-specs-to-sessions-20251121160000
 
 notes: |
   This migration establishes foundation for future buildforce.json enhancements:
   - Project metadata (name, author, description)
   - Feature flags or configuration options
-  - Custom spec directory paths
+  - Custom spec directory paths via sessionsFolder field (currently unused, paths are hardcoded)
   - Agent-specific settings
 
   Critical implementation detail: set_current_spec() and clear_current_spec() must preserve

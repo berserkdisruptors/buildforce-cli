@@ -2,7 +2,7 @@
 version: "0.0.35"
 description: Build the code changes required for the current spec following the plan, with progress tracking, deviation logging, and iterative refinement.
 scripts:
-  sh: src/scripts/bash/get-spec-paths.sh --json
+  sh: bash src/scripts/bash/get-spec-paths.sh --json
   ps: src/scripts/powershell/get-spec-paths.ps1 -Json
 ---
 
@@ -10,7 +10,7 @@ User input:
 
 $ARGUMENTS
 
-**Context**: The user is invoking `/build` to execute implementation. `($ARGUMENTS)` contains iteration-specific instructions or feedback.
+**Context**: The user is invoking `/buildforce.build` to execute implementation. `($ARGUMENTS)` contains iteration-specific instructions or feedback.
 
 **Your task**: Implement the feature by following the spec and plan, tracking progress, logging deviations, validating against requirements, and providing testing guidance.
 
@@ -27,6 +27,8 @@ $ARGUMENTS
    - **TLDR** condensing key research findings for quick reference
 
    If research.yaml exists, use it to inform implementation decisions - it contains valuable context that may not be fully captured in spec.yaml or plan.yaml. **NEVER proceed** without spec.yaml and plan.yaml loaded (research.yaml is optional but recommended).
+
+   **Status Update**: After loading spec.yaml and plan.yaml, if the `status` field in both files is "draft", update it to "in-progress" and set `last_updated` to today's date (YYYY-MM-DD format). If status is already "in-progress", skip this update (supports multiple build iterations).
 
 2. **Progress Tracking**: Update the status of each task in the plan as you progress - each task has a checkbox, so make sure to check it on completion.
 

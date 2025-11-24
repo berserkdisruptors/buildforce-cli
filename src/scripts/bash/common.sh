@@ -113,7 +113,7 @@ get_spec_paths() {
     local spec_dir=""
 
     if [ -n "$spec_folder" ]; then
-        spec_dir="$buildforce_root/.buildforce/specs/$spec_folder"
+        spec_dir="$buildforce_root/.buildforce/sessions/$spec_folder"
     fi
 
     cat <<EOF

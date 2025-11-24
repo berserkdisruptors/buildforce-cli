@@ -64,7 +64,7 @@ if ($PathsOnly) {
 # Validate required directories and files
 if (-not (Test-Path $paths.SPEC_DIR -PathType Container)) {
     Write-Output "ERROR: Spec directory not found: $($paths.SPEC_DIR)"
-    Write-Output "Run /spec first to create the feature structure."
+    Write-Output "Run /buildforce.plan first to create the feature structure."
     exit 1
 }
 

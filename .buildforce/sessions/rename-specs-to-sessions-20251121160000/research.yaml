@@ -1,0 +1,162 @@
+version: "0.0.35"
+id: "rename-specs-to-sessions-20251121160000-research"
+created: "2025-11-21"
+last_updated: "2025-11-21"
+
+summary: |
+  Comprehensive codebase analysis to identify all references to `.buildforce/specs` folder for renaming to `.buildforce/sessions`.
+  Research covered TypeScript sources, bash/PowerShell scripts, markdown templates, configuration utilities, and documentation.
+  Found 11 files with ~25+ total occurrences of hardcoded paths, with no centralized configuration abstraction currently in use.
+
+key_findings:
+  - "The path `.buildforce/specs` is hardcoded in 11 different files across scripts, templates, commands, and utilities"
+  - "The `specsFolder` config field in BuildforceConfig interface exists but is NOT actually used by any code - all paths are hardcoded"
+  - "Both Bash and PowerShell scripts must be updated independently (no shared abstraction)"
+  - "Command templates (plan.md, complete.md) contain multiple references that guide AI agents on where to read/write spec files"
+  - "No migration/upgrade logic exists - would need to handle existing `.buildforce/specs` folders in user projects (NOT REQUIRED - no active users)"
+  - "User-facing documentation and output messages also reference the folder name"
+
+file_paths:
+  primary:
+    - path: "src/utils/config.ts"
+      relevance: "Default configuration value (line 10) - defines specsFolder but unused"
+    - path: "src/types.ts"
+      relevance: "BuildforceConfig interface (line 54) - type definition for specsFolder field"
+    - path: "src/scripts/bash/create-spec-files.sh"
+      relevance: "Creates spec folder structure (line 65: SPECS_DIR hardcoded)"
+    - path: "src/scripts/bash/common.sh"
+      relevance: "Helper function for spec paths (line 116: hardcoded path in get_spec_paths)"
+    - path: "src/scripts/powershell/create-spec-files.ps1"
+      relevance: "Windows equivalent for creating spec folders (line 52: hardcoded path)"
+    - path: "src/scripts/powershell/common.ps1"
+      relevance: "PowerShell helpers (lines 168, 224, 233: multiple path references)"
+    - path: "src/templates/commands/plan.md"
+      relevance: "AI agent instructions (lines 74, 96, 130, 132, 155: references to specs folder)"
+    - path: "src/templates/commands/complete.md"
+      relevance: "AI agent instructions (lines 28, 247: spec directory path construction)"
+    - path: "src/commands/init/output.ts"
+      relevance: "User-facing output message (line 71: displays .buildforce/specs/ in setup info)"
+
+  secondary:
+    - path: "README.md"
+      relevance: "Documentation with minimal reference to specs folder context"
+    - path: "src/commands/examples.ts"
+      relevance: "Workflow examples - may contain indirect references"
+
+mermaid_diagrams:
+  - title: "Architecture Overview - Spec Folder Usage"
+    description: "Shows how different components interact with the .buildforce/specs folder"
+    diagram: |
+      ```mermaid
+      graph TD
+          A[User runs /buildforce.plan] --> B[plan.md template]
+          B --> C[create-spec-files script]
+          C --> D[common.sh / common.ps1]
+          D --> E[Creates .buildforce/specs/folder-name/]
+          E --> F[spec.yaml + plan.yaml]
+          
+          G[User runs /buildforce.build] --> H[Reads from specs folder]
+          H --> E
+          
+          I[User runs /buildforce.complete] --> J[complete.md template]
+          J --> E
+          J --> K[Clears currentSpec state]
+          
+          L[buildforce.json] --> M[currentSpec field]
+          M --> D
+          
+          N[config.ts + types.ts] -.->|specsFolder field<br/>NOT USED| E
+          
+          style E fill:#f9f,stroke:#333,stroke-width:4px
+          style N fill:#ff9,stroke:#333,stroke-width:2px,stroke-dasharray: 5 5
+      ```
+
+data_models:
+  - name: "BuildforceConfig"
+    description: "Configuration interface in src/types.ts"
+    properties:
+      - name: "specsFolder"
+        type: "string"
+        required: true
+        description: "Default value './specs' - CURRENTLY UNUSED, needs to be renamed to sessionsFolder"
+      
+      - name: "framework"
+        type: "string"
+        required: true
+        description: "Framework identifier, default 'buildforce'"
+      
+      - name: "aiAssistant"
+        type: "string"
+        required: false
+        description: "Selected AI assistant"
+      
+      - name: "scriptType"
+        type: "string"
+        required: false
+        description: "Script type (sh or ps)"
+      
+      - name: "version"
+        type: "string"
+        required: false
+        description: "CLI version"
+    
+    relationships:
+      - "Used by getDefaultConfig() in src/utils/config.ts"
+      - "Saved/read by saveBuildforceConfig() and readBuildforceConfig()"
+      - "specsFolder field is defined but not consumed anywhere in codebase"
+
+code_snippets:
+  - title: "Current specsFolder Definition (UNUSED)"
+    language: "typescript"
+    description: "Default config in src/utils/config.ts - field exists but hardcoded paths used everywhere"
+    code: |
+      export function getDefaultConfig(): BuildforceConfig {
+        return {
+          specsFolder: "./specs",  // UNUSED - needs rename to sessionsFolder
+          framework: "buildforce",
+        };
+      }
+
+  - title: "Hardcoded Path Pattern in Bash"
+    language: "bash"
+    description: "Example from src/scripts/bash/create-spec-files.sh"
+    code: |
+      SPECS_DIR=".buildforce/specs"  # Line 65 - needs change to .buildforce/sessions
+      TEMPLATES_DIR=".buildforce/templates"
+      mkdir -p "$SPECS_DIR"
+      
+      FEATURE_DIR="$SPECS_DIR/$FOLDER_NAME"
+
+  - title: "Hardcoded Path Pattern in PowerShell"
+    language: "powershell"
+    description: "Example from src/scripts/powershell/common.ps1"
+    code: |
+      $specsDir = Join-Path $buildforceRoot ".buildforce/specs"  # Needs change
+      
+      if (Test-Path $specsDir) {
+        Get-ChildItem -Path $specsDir -Directory | ForEach-Object {
+          # Process spec folders
+        }
+      }
+
+architectural_decisions:
+  - pattern: "No Centralized Configuration Usage"
+    description: "All paths are hardcoded literals instead of reading from BuildforceConfig.specsFolder field"
+    rationale: "Field exists in config but was never wired up - all code uses hardcoded '.buildforce/specs' string literals"
+
+  - pattern: "Cross-Platform Script Duplication"
+    description: "Bash and PowerShell scripts have independent implementations with duplicate path references"
+    rationale: "No shared abstraction layer - changes must be applied to both script sets independently"
+
+  - pattern: "Template-Embedded Paths"
+    description: "AI agent command templates contain hardcoded path instructions"
+    rationale: "Templates guide agents on where to read/write files - must be updated for new folder name"
+
+tldr:
+  - "11 files require updates to rename `.buildforce/specs` → `.buildforce/sessions`"
+  - "`specsFolder` config field exists but is UNUSED - all paths are hardcoded literals"
+  - "Both Bash and PowerShell scripts need independent updates (no shared code)"
+  - "Command templates (plan.md, complete.md) embed path instructions for AI agents"
+  - "No migration logic required - no active users yet"
+  - "Rename `specsFolder` → `sessionsFolder` in BuildforceConfig interface for consistency"
+

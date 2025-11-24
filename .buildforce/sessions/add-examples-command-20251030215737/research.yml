@@ -83,7 +83,7 @@ data_models:
       - name: "command"
         type: "string"
         required: true
-        description: "Command name (e.g., '/research', '/spec')"
+        description: "Command name (e.g., '/research', '/plan')"
       - name: "examples"
         type: "Array<{query: string, context?: string}>"
         required: true

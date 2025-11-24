@@ -1,5 +1,9 @@
 ---
-description: Create or update a structured specification YAML file that captures WHAT needs to be built.
+version: "0.0.35"
+description: Create or update a structured specification (spec.yaml) and implementation plan (plan.yaml) that capture WHAT needs to be built and HOW to build it.
+scripts:
+  sh: bash src/scripts/bash/create-spec-files.sh --folder-name "{FOLDER_NAME}" --json
+  ps: src/scripts/powershell/create-spec-files.ps1 -FolderName "{FOLDER_NAME}" -Json
 ---
 
 The user input to you can be provided directly by the agent or as a command argument - you **MUST** consider it before proceeding with the prompt (if not empty).
@@ -8,7 +12,7 @@ User input:
 
 $ARGUMENTS
 
-The text the user typed after `/buildforce:spec` in the triggering message **is** the feature description. Assume you always have it available in this conversation even if `$ARGUMENTS` appears literally below. Do not ask the user to repeat it unless they provided an empty command.
+The text the user typed after `/buildforce.plan` in the triggering message **is** the feature description. Assume you always have it available in this conversation even if `{ARGS}` appears literally below. Do not ask the user to repeat it unless they provided an empty command.
 
 ## Workflow Steps
 
@@ -35,7 +39,7 @@ The text the user typed after `/buildforce:spec` in the triggering message **is*
 
    **Step 2b: Run script to create folder and files**:
 
-   - Run `.buildforce/scripts/bash/create-spec-files.sh --folder-name "{FOLDER_NAME}" --json` from current working directory with generated FOLDER_NAME and parse JSON output for FOLDER_NAME, SPEC_FILE, PLAN_FILE, SPEC_DIR
+   - Run `{SCRIPT}` from current working directory with generated FOLDER_NAME and parse JSON output for FOLDER_NAME, SPEC_FILE, PLAN_FILE, SPEC_DIR
    - The script creates both spec.yaml and plan.yaml files from templates
 
    **Step 2c: Materialize research.yaml from conversation history** (if research context exists):
@@ -45,10 +49,10 @@ The text the user typed after `/buildforce:spec` in the triggering message **is*
    1. **Assess conversation for research context**:
 
       - Review conversation history for research-related content:
-        - Explicit `/research` command output with findings, diagrams, data models
+        - Explicit `/buildforce.research` command output with findings, diagrams, data models
         - User discussions about architecture, patterns, or technical exploration
         - File path discoveries, codebase analysis, or external references
-      - If NO research context exists (user went straight to `/spec`): **SKIP to Step 2d** - don't create empty research.yaml
+      - If NO research context exists (user went straight to `/buildforce.plan`): **SKIP to Step 2d** - don't create empty research.yaml
       - If research context EXISTS: **PROCEED with materialization**
 
    2. **Read template structure**:
@@ -59,26 +63,37 @@ The text the user typed after `/buildforce:spec` in the triggering message **is*
 
    3. **Intelligent materialization from conversation** (CRITICAL - preserve information richness):
 
-      - **PRESERVE VERBATIM**: Mermaid diagrams, data models, code snippets - these are essential for /buildforce:build
+      - **PRESERVE VERBATIM**: Mermaid diagrams, data models, code snippets - these are essential for /buildforce.build
       - **PRESERVE WITH CONTEXT**: File paths (with relevance notes), architectural decisions (with rationale)
       - **CONDENSE INTELLIGENTLY**: Research summary prose (2-4 sentences), project context (key points only)
       - **MERGE**: TLDR bullets from research discussions into unified tldr section
       - **DO NOT TRUNCATE**: Diagrams, models, code snippets must be complete
-      - **DO NOT OVER-CONDENSE**: Preserve information-rich elements - /buildforce:build needs comprehensive context
+      - **DO NOT OVER-CONDENSE**: Preserve information-rich elements - /buildforce.build needs comprehensive context
 
    4. **Create research.yaml**:
-      - Write to `.buildforce/specs/{FOLDER_NAME}/research.yaml`
+      - Write to `.buildforce/sessions/{FOLDER_NAME}/research.yaml`
       - Set id = "{FOLDER_NAME}-research"
       - Follow template structure but omit sections with no content (e.g., no diagrams if research was conceptual)
       - Ensure materialized research is condensed but information-rich
 
-   **Step 2d: Populate both spec.yaml and plan.yaml**:
+   **Step 2d: Load project guidelines** (if available):
+
+   Guidelines provide project-specific conventions that must be followed during implementation.
+
+   - Check if `.buildforce/context/_guidelines.yaml` exists
+   - If exists, read and parse guidelines:
+     - Treat as HIGHEST PRIORITY context for plan generation
+     - Reference specific guidelines when making technical decisions
+     - Consider enforcement levels: strict (MUST follow), recommended (SHOULD follow), reference (context only)
+   - If missing, continue without guidelines (backward compatible)
+
+   **Step 2e: Populate both spec.yaml and plan.yaml**:
 
    **For spec.yaml (WHAT to build)**:
 
    - Load `.buildforce/templates/spec-template.yaml` from the current working directory to understand structure and fields
    - **Read research.yaml if it exists** (from Step 2c materialization):
-     - Path: `.buildforce/specs/{FOLDER_NAME}/research.yaml`
+     - Path: `.buildforce/sessions/{FOLDER_NAME}/research.yaml`
      - If exists, use research findings to inform spec.yaml population:
        - Extract key requirements from research key_findings
        - Reference architectural_decisions when defining scope and design principles
@@ -94,8 +109,13 @@ The text the user typed after `/buildforce:spec` in the triggering message **is*
 
    **For plan.yaml (HOW to build)**:
 
-   - Load `.buildforce/templates/plan-template.yaml` to understand structure
+   - Load `src/templates/plan-template.yaml` to understand structure
    - Populate with architecture, technical decisions, implementation phases, tasks (HOW content)
+   - **If _guidelines.yaml was loaded**: Reference specific guidelines in your plan:
+     - In `decisions` section: Cite relevant architectural patterns or code conventions
+     - In `technology_stack`: Align with dependency_rules if present
+     - In phase task `notes`: Call out strict enforcement guidelines that must be followed
+     - Example: "Phase 1 tasks must follow Repository Pattern guideline (strict enforcement)"
    - Set spec_id = "{FOLDER_NAME}", link tasks to spec requirements via spec_refs
    - Include technology choices, design patterns, file structure, testing strategy
    - Focus on HOW to implement the requirements from spec.yaml
@@ -107,9 +127,9 @@ The text the user typed after `/buildforce:spec` in the triggering message **is*
    **Step 3a: Load existing artifacts and research context**:
 
    - Read folder name from `.buildforce/buildforce.json` (`currentSpec` field)
-   - Load both existing spec.yaml and plan.yaml from `.buildforce/specs/{folder-name}/`
+   - Load both existing spec.yaml and plan.yaml from `.buildforce/sessions/{folder-name}/`
    - **Read research.yaml if it exists**:
-     - Path: `.buildforce/specs/{folder-name}/research.yaml`
+     - Path: `.buildforce/sessions/{folder-name}/research.yaml`
      - If exists, load research findings to maintain context consistency
      - Use research context when analyzing update requirements
      - This ensures updates align with prior research findings
@@ -121,7 +141,7 @@ The text the user typed after `/buildforce:spec` in the triggering message **is*
    1. **Assess conversation for new research context**:
 
       - Review recent conversation history for new research-related content:
-        - New `/research` command output since spec creation
+        - New `/buildforce.research` command output since spec creation
         - Additional user discussions about architecture or technical exploration
         - New file path discoveries, codebase analysis, or external references
       - If NO new research context: **SKIP to Step 3c** - keep existing research.yaml as-is
@@ -132,7 +152,7 @@ The text the user typed after `/buildforce:spec` in the triggering message **is*
       - Read `.buildforce/templates/research-template.yaml` for structure guidance
 
    3. **Intelligent merge with existing research.yaml**:
-      - Read existing `.buildforce/specs/{folder-name}/research.yaml`
+      - Read existing `.buildforce/sessions/{folder-name}/research.yaml`
       - Compare new conversation content with existing research
       - **Append new findings** with update metadata:
         ```yaml
@@ -146,7 +166,18 @@ The text the user typed after `/buildforce:spec` in the triggering message **is*
       - Update `last_updated` field
       - Write updated research.yaml back to spec folder
 
-   **Step 3c: Intelligent routing** - Determine which file(s) to update based on user input:
+   **Step 3c: Load project guidelines** (if available):
+
+   Guidelines provide project-specific conventions that must be followed during implementation.
+
+   - Check if `.buildforce/context/_guidelines.yaml` exists
+   - If exists, read and parse guidelines:
+     - Treat as HIGHEST PRIORITY context when updating plans
+     - Reference specific guidelines when making technical decisions
+     - Consider enforcement levels when updating plan.yaml
+   - If missing, continue without guidelines (backward compatible)
+
+   **Step 3d: Intelligent routing** - Determine which file(s) to update based on user input:
 
    - Analyze $ARGUMENTS to determine content type:
      - **Requirements/scope/goals** → Update spec.yaml only
@@ -308,8 +339,8 @@ The text the user typed after `/buildforce:spec` in the triggering message **is*
    **Risks:** [One sentence summary of main risks]
    ```
 
-   Then suggest: **"Ready to code? Run `/buildforce:build` to start implementation."**
+   Then suggest: **"Ready to code? Run `/buildforce.build` to start implementation."**
 
-   **For UPDATE mode**: Summarize changes made to spec.yaml and/or plan.yaml, present updated condensed plan summary if plan changed, and suggest: "Ready to code? Run `/buildforce:build` to start implementation."
+   **For UPDATE mode**: Summarize changes made to spec.yaml and/or plan.yaml, present updated condensed plan summary if plan changed, and suggest: "Ready to code? Run `/buildforce.build` to start implementation."
 
-   **IMPORTANT**: Every subsequent `/buildforce:spec` invocation updates BOTH files based on intelligent routing of the user's input content. Raw user input with explicit `/buildforce:spec` invocation might also intent to update BOTH so decide accordingly.
+   **IMPORTANT**: Every subsequent `/buildforce.plan` invocation updates BOTH files based on intelligent routing of the user's input content. Raw user input with explicit `/buildforce.plan` invocation might also intent to update BOTH so decide accordingly.

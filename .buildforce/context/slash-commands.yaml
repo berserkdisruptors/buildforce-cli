@@ -29,7 +29,7 @@ dependencies:
 files:
   primary:
     - src/templates/commands/research.md
-    - src/templates/commands/spec.md
+    - src/templates/commands/plan.md
     - src/templates/commands/build.md
     - src/templates/commands/complete.md
     - src/templates/commands/document.md
@@ -48,7 +48,7 @@ workflow:
         - "Produces Mermaid diagrams for codebase queries"
         - "Explicit file path lists (saves manual @ references)"
 
-    - command: "/spec"
+    - command: "/buildforce.plan"
       purpose: "Materialize user intent into specification (WHAT) and plan (HOW)"
       input: "User intent (the concrete incremental change)"
       output: "Spec (WHAT) and Plan (HOW) with requirements, scope, decisions, phases"
@@ -139,8 +139,7 @@ notes: |
 
   Compression achievements (v2.1):
   - /research: 27 lines (68% reduction) - 7 guidelines ✅
-  - /spec: 97 lines (iterated with structured workflow) ✅
-  - /plan: 40 lines (74.5% reduction) - 7 guidelines ✅
+  - /buildforce.plan: 347 lines (iterated with structured workflow) ✅
   - /build: 32 lines (75% reduction) - 7 guidelines ✅
   - /complete: 44 lines (iterated with structured workflow) ✅
   - /document: 29 lines - 7 guidelines ✅ (new utility command)

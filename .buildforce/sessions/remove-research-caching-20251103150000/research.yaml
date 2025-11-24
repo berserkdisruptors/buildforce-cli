@@ -121,7 +121,7 @@ data_models:
   - name: "BuildforceState"
     description: "State tracking in buildforce.json"
     properties:
-      - name: "specsFolder"
+      - name: "sessionsFolder"
         type: "string"
         required: true
         description: "Path to specs directory (default: './specs')"
