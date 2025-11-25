@@ -3,7 +3,7 @@ name: "State Tracking System"
 type: feature
 status: production
 created: 2025-10-29
-last_updated: 2025-11-21
+last_updated: 2025-11-25
 
 summary: |
   JSON-based state tracking system using buildforce.json to manage active spec sessions,
@@ -86,9 +86,14 @@ evolution:
     date: "2025-11-21"
     changes: "Renamed sessionsFolder field in BuildforceConfig interface (previously specsFolder). Updated all references to use .buildforce/sessions instead of .buildforce/specs. This terminology change reflects the session-based nature of development workflows."
 
+  - version: "1.2"
+    date: "2025-11-25"
+    changes: "Renamed currentSpec to currentSession throughout codebase for terminology consistency. Updated BuildforceConfig interface in src/types.ts, renamed bash functions (get_current_spec → get_current_session, set_current_spec → set_current_session, clear_current_spec → clear_current_session) in common.sh, renamed PowerShell functions (Get-CurrentSpec → Get-CurrentSession, Set-CurrentSpec → Set-CurrentSession, Clear-CurrentSpec → Clear-CurrentSession) in common.ps1, and updated all JSON field references in scripts and templates. This completes the specs→sessions terminology migration started in v1.1."
+
 related_specs:
   - migrate-currentspec-to-json-20251029000000
   - rename-specs-to-sessions-20251121160000
+  - add-cli-session-management-20251125000000
 
 notes: |
   This migration establishes foundation for future buildforce.json enhancements:
