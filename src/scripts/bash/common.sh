@@ -30,8 +30,8 @@ EOF
     return 1
 }
 
-# Get current spec from buildforce.json
-get_current_spec() {
+# Get current session from buildforce.json
+get_current_session() {
     local json_file="$1/.buildforce/buildforce.json"
 
     # Return empty if file doesn't exist
@@ -39,40 +39,40 @@ get_current_spec() {
         return 0
     fi
 
-    # Parse currentSpec field from JSON
+    # Parse currentSession field from JSON
     # This uses native bash instead of requiring jq
     local content=$(cat "$json_file" 2>/dev/null || echo "")
 
-    # Extract currentSpec value (handles null and string values)
-    local spec=$(echo "$content" | grep -o '"currentSpec"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*"currentSpec"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+    # Extract currentSession value (handles null and string values)
+    local session=$(echo "$content" | grep -o '"currentSession"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*"currentSession"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
 
-    # Return the spec value (empty if null or not found)
-    if [[ -n "$spec" ]]; then
-        echo "$spec"
+    # Return the session value (empty if null or not found)
+    if [[ -n "$session" ]]; then
+        echo "$session"
     fi
 }
 
-# Set current spec in buildforce.json
-set_current_spec() {
+# Set current session in buildforce.json
+set_current_session() {
     local json_file="$1/.buildforce/buildforce.json"
-    local spec_value="$2"
+    local session_value="$2"
     local temp_file="${json_file}.tmp"
 
     # Read existing JSON if file exists
     if [[ -f "$json_file" ]]; then
         local existing_content=$(cat "$json_file" 2>/dev/null || echo "{}")
 
-        # Check if currentSpec field already exists
-        if echo "$existing_content" | grep -q '"currentSpec"'; then
-            # Replace existing currentSpec value
-            local json_content=$(echo "$existing_content" | sed 's/"currentSpec"[[:space:]]*:[[:space:]]*"[^"]*"/"currentSpec":"'"$spec_value"'"/' | sed 's/"currentSpec"[[:space:]]*:[[:space:]]*null/"currentSpec":"'"$spec_value"'"/')
+        # Check if currentSession field already exists
+        if echo "$existing_content" | grep -q '"currentSession"'; then
+            # Replace existing currentSession value
+            local json_content=$(echo "$existing_content" | sed 's/"currentSession"[[:space:]]*:[[:space:]]*"[^"]*"/"currentSession":"'"$session_value"'"/' | sed 's/"currentSession"[[:space:]]*:[[:space:]]*null/"currentSession":"'"$session_value"'"/')
         else
-            # Add currentSpec field before closing brace
-            local json_content=$(echo "$existing_content" | sed 's/}$/,"currentSpec":"'"$spec_value"'"}/' | sed 's/{,/{/')
+            # Add currentSession field before closing brace
+            local json_content=$(echo "$existing_content" | sed 's/}$/,"currentSession":"'"$session_value"'"}/' | sed 's/{,/{/')
         fi
     else
-        # Create new JSON with currentSpec only
-        local json_content="{\"currentSpec\":\"${spec_value}\"}"
+        # Create new JSON with currentSession only
+        local json_content="{\"currentSession\":\"${session_value}\"}"
     fi
 
     # Atomic write: write to temp file first, then move
@@ -80,8 +80,8 @@ set_current_spec() {
     mv "$temp_file" "$json_file"
 }
 
-# Clear current spec in buildforce.json (set to null)
-clear_current_spec() {
+# Clear current session in buildforce.json (set to null)
+clear_current_session() {
     local json_file="$1/.buildforce/buildforce.json"
     local temp_file="${json_file}.tmp"
 
@@ -89,17 +89,17 @@ clear_current_spec() {
     if [[ -f "$json_file" ]]; then
         local existing_content=$(cat "$json_file" 2>/dev/null || echo "{}")
 
-        # Check if currentSpec field already exists
-        if echo "$existing_content" | grep -q '"currentSpec"'; then
-            # Replace existing currentSpec value with null
-            local json_content=$(echo "$existing_content" | sed 's/"currentSpec"[[:space:]]*:[[:space:]]*"[^"]*"/"currentSpec":null/' | sed 's/"currentSpec"[[:space:]]*:[[:space:]]*null/"currentSpec":null/')
+        # Check if currentSession field already exists
+        if echo "$existing_content" | grep -q '"currentSession"'; then
+            # Replace existing currentSession value with null
+            local json_content=$(echo "$existing_content" | sed 's/"currentSession"[[:space:]]*:[[:space:]]*"[^"]*"/"currentSession":null/' | sed 's/"currentSession"[[:space:]]*:[[:space:]]*null/"currentSession":null/')
         else
-            # Add currentSpec field as null before closing brace
-            local json_content=$(echo "$existing_content" | sed 's/}$/,"currentSpec":null}/' | sed 's/{,/{/')
+            # Add currentSession field as null before closing brace
+            local json_content=$(echo "$existing_content" | sed 's/}$/,"currentSession":null}/' | sed 's/{,/{/')
         fi
     else
-        # Create new JSON with currentSpec null
-        local json_content="{\"currentSpec\":null}"
+        # Create new JSON with currentSession null
+        local json_content="{\"currentSession\":null}"
     fi
 
     # Atomic write: write to temp file first, then move
@@ -109,7 +109,7 @@ clear_current_spec() {
 
 get_spec_paths() {
     local buildforce_root=$(get_buildforce_root) || return 1
-    local spec_folder=$(get_current_spec "$buildforce_root")
+    local spec_folder=$(get_current_session "$buildforce_root")
     local spec_dir=""
 
     if [ -n "$spec_folder" ]; then

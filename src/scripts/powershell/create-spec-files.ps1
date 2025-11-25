@@ -82,11 +82,11 @@ if (Test-Path $planTemplate) {
     New-Item -ItemType File -Path $planFile -Force | Out-Null
 }
 
-# Update state file to track current spec across sessions
-Set-CurrentSpec $buildforceRoot $FolderName
+# Update state file to track current session across sessions
+Set-CurrentSession $buildforceRoot $FolderName
 
-# Set CURRENT_SPEC environment variable for session tracking
-$env:CURRENT_SPEC = $FolderName
+# Set CURRENT_SESSION environment variable for session tracking
+$env:CURRENT_SESSION = $FolderName
 
 if ($Json) {
     @{
@@ -100,5 +100,5 @@ if ($Json) {
     Write-Host "SPEC_FILE: $specFile"
     Write-Host "PLAN_FILE: $planFile"
     Write-Host "SPEC_DIR: $featureDir"
-    Write-Host "CURRENT_SPEC environment variable set to: $FolderName"
+    Write-Host "CURRENT_SESSION environment variable set to: $FolderName"
 }

@@ -18,9 +18,9 @@ The text the user typed after `/buildforce.plan` in the triggering message **is*
 
 1. **Determine CREATE vs UPDATE mode**:
 
-   - Read `.buildforce/buildforce.json` file from current working directory and parse the `currentSpec` field
-   - If file exists and `currentSpec` field has a value (non-empty folder name): **UPDATE mode** - Load existing spec and plan from that folder
-   - If file doesn't exist or `currentSpec` is null/empty: **CREATE mode** - Generate new folder name and create new spec and plan
+   - Read `.buildforce/buildforce.json` file from current working directory and parse the `currentSession` field
+   - If file exists and `currentSession` field has a value (non-empty folder name): **UPDATE mode** - Load existing spec and plan from that folder
+   - If file doesn't exist or `currentSession` is null/empty: **CREATE mode** - Generate new folder name and create new spec and plan
 
 2. **For CREATE mode (new spec)**:
 
@@ -126,7 +126,7 @@ The text the user typed after `/buildforce.plan` in the triggering message **is*
 
    **Step 3a: Load existing artifacts and research context**:
 
-   - Read folder name from `.buildforce/buildforce.json` (`currentSpec` field)
+   - Read folder name from `.buildforce/buildforce.json` (`currentSession` field)
    - Load both existing spec.yaml and plan.yaml from `.buildforce/sessions/{folder-name}/`
    - **Read research.yaml if it exists**:
      - Path: `.buildforce/sessions/{folder-name}/research.yaml`
