@@ -189,8 +189,8 @@ program
     'Name for your new project directory (optional if using --here, or use "." for current directory)'
   )
   .option(
-    "--ai <assistant>",
-    "AI assistant to use: claude, gemini, copilot, cursor, qwen, opencode, codex, windsurf, kilocode, auggie, or roo"
+    "--ai <assistant...>",
+    "AI assistant(s) to use (can specify multiple): claude, gemini, copilot, cursor, qwen, opencode, codex, windsurf, kilocode, auggie, or roo"
   )
   .option("--script <type>", "Script type to use: sh or ps")
   .option(
@@ -250,8 +250,8 @@ program
     "Upgrade project templates, commands, and scripts to the latest version"
   )
   .option(
-    "--ai <assistant>",
-    "Override AI assistant (claude, gemini, copilot, cursor, qwen, opencode, codex, windsurf, kilocode, auggie, roo)"
+    "--ai <assistant...>",
+    "Override or add AI assistant(s) (can specify multiple): claude, gemini, copilot, cursor, qwen, opencode, codex, windsurf, kilocode, auggie, roo"
   )
   .option("--script <type>", "Override script type (sh or ps)")
   .option("--dry-run", "Preview changes without applying them")

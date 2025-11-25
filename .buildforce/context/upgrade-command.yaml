@@ -3,7 +3,7 @@ name: Upgrade Command
 type: feature
 status: production
 created: 2025-10-28
-last_updated: 2025-10-28
+last_updated: 2025-11-25
 
 summary: |
   Slash command for upgrading existing Buildforce projects to the latest templates, scripts,
@@ -16,6 +16,8 @@ responsibilities:
   - Preserve user-created content (.buildforce/context/ and .buildforce/specs/)
   - Auto-detect AI assistant and script type from buildforce.json configuration
   - Support configuration overrides via --ai and --script flags
+  - Provide interactive AI assistant selection prompts matching init command experience
+  - Pre-select existing AI assistants as defaults in interactive prompts
   - Support local artifact loading via --local flag for offline/testing workflows
   - Provide dry-run mode to preview changes before applying
   - Display upgrade progress with clear status indicators
@@ -110,8 +112,8 @@ design_decisions:
   - decision: "Add --dry-run flag for preview mode"
     rationale: "Standard CLI pattern. Allows users to see what would change before committing to upgrade, reducing anxiety about overwriting files."
 
-  - decision: "Prompt for missing configuration in backward compatibility mode"
-    rationale: "Projects initialized before this feature lack aiAssistant/scriptType in buildforce.json. Interactive prompts collect missing values and update configuration."
+  - decision: "Always prompt for AI assistant selection unless --ai flag provided"
+    rationale: "Matches init command behavior and provides consistent UX. Users can modify their AI assistant selection during upgrade without CLI flags or manual config editing. Pre-selecting existing configuration reduces friction while allowing easy modification."
 
   - decision: "Add --local flag for local artifact support"
     rationale: "Enables offline workflows, local testing, and faster iteration during development. Reuses local artifact resolution infrastructure for consistency with init command."
@@ -128,9 +130,10 @@ architecture_flow: |
   2. Configuration Detection (index.ts):
      - Read buildforce.json configuration
      - Extract aiAssistant and scriptType fields
-     - Handle missing fields (backward compatibility)
-     - Apply override flags (--ai, --script) if provided
-     - Prompt user for missing configuration interactively
+     - If --ai flag provided: merge with existing config and skip prompt
+     - Otherwise: always prompt for AI assistant selection with interactive checkbox interface
+     - Pre-select existing config?.aiAssistants as defaults in prompt
+     - Show context-aware messaging ("Modify your AI assistant(s) (current: claude):" vs "No AI assistant found")
      - Update buildforce.json with selections
 
   3. Template Download (execution.ts):
@@ -247,9 +250,14 @@ evolution:
     date: "2025-10-28"
     changes: "Added --local flag for local artifact support, enabling offline workflows and faster local testing iterations"
 
+  - version: "1.2"
+    date: "2025-11-25"
+    changes: "Added interactive AI assistant selection prompts matching init command behavior. Upgrade now always prompts for AI selection (unless --ai flag provided), pre-selecting existing configuration as defaults. Updated README documentation with upgrade command section explaining interactive behavior and all CLI options."
+
 related_specs:
   - add-upgrade-command-20251027000000
   - add-local-flag-init-upgrade-20251028143052
+  - upgrade-ai-prompt-20251125143052
 
 notes: |
   The upgrade command is a critical feature for maintaining Buildforce projects over time.

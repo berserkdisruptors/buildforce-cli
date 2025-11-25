@@ -53,7 +53,7 @@ export interface InitOptions {
 export interface BuildforceConfig {
   sessionsFolder: string;
   framework: string;
-  aiAssistant?: string;
+  aiAssistants?: string[];
   scriptType?: string;
   version?: string;
 }

@@ -1,4 +1,4 @@
-import { select } from '@inquirer/prompts';
+import { select, checkbox } from '@inquirer/prompts';
 import chalk from 'chalk';
 import figlet from 'figlet';
 import { TAGLINE, MINT_COLOR, INQUIRER_THEME } from '../constants.js';
@@ -26,6 +26,37 @@ export async function selectWithArrows(
   });
 
   return answer;
+}
+
+/**
+ * Interactive multi-selection using checkboxes
+ * Uses @inquirer/prompts checkbox for multi-select UI with spacebar selection
+ */
+export async function selectMultipleWithCheckboxes(
+  options: Record<string, string>,
+  promptText: string = 'Select options (use spacebar to select, enter to confirm)',
+  defaultKeys?: string[]
+): Promise<string[]> {
+  // Green color for option keys to match CLI help output
+  const choices = Object.entries(options).map(([key, description]) => ({
+    name: `${MINT_COLOR(key)} ${chalk.dim(`(${description})`)}`,
+    value: key,
+    checked: defaultKeys?.includes(key) ?? false,
+  }));
+
+  const answers = await checkbox({
+    message: promptText,
+    choices,
+    theme: INQUIRER_THEME,
+    validate: (selected) => {
+      if (selected.length === 0) {
+        return 'At least one option must be selected';
+      }
+      return true;
+    },
+  });
+
+  return answers;
 }
 
 /**
