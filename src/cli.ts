@@ -6,6 +6,7 @@ import { initCommand } from "./commands/init/index.js";
 import { upgradeCommand } from "./commands/upgrade/index.js";
 import { checkCommand } from "./commands/check.js";
 import { examplesCommand } from "./commands/examples.js";
+import { sessionCommand } from "./commands/session/index.js";
 import { generateBanner } from "./lib/interactive.js";
 import { MINT_COLOR } from "./constants.js";
 import { createBox } from "./utils/box.js";
@@ -15,7 +16,7 @@ const program = new Command();
 program
   .name("buildforce")
   .usage("[command] [options]")
-  .description("Context-First Spec-Driven Development framework")
+  .description("Consistent, reliable and efficient framework for AI-assisted engineering")
   .version("1.0.0")
   .enablePositionalOptions();
 
@@ -286,6 +287,13 @@ program
   .description("View workflow examples interactively")
   .action(async () => {
     await examplesCommand();
+  });
+
+program
+  .command("session")
+  .description("Interactively switch between active development sessions")
+  .action(async () => {
+    await sessionCommand();
   });
 
 program.parse(process.argv);
