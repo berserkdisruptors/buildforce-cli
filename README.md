@@ -306,6 +306,45 @@ Guidelines are loaded during `/buildforce.plan` (as planning context), validated
 
 ---
 
+## Session Management
+
+Buildforce supports managing multiple development sessions simultaneously. Each session tracks a distinct feature or task with its own spec, plan, and research artifacts. Use the `buildforce session` CLI command to switch between active sessions:
+
+```bash
+buildforce session
+```
+
+**What it does:**
+
+Opens an interactive picker displaying all active development sessions (draft or in-progress status). Navigate with arrow keys, press Enter to switch to the selected session. The currently active session is marked with a green indicator.
+
+**Example workflow:**
+
+```bash
+# Start multiple features
+/buildforce.plan Add user authentication with JWT
+
+# Switch to work on something else
+/buildforce.plan Implement caching layer for API responses
+
+# Switch back to first feature
+buildforce session
+# (Select "Add user authentication with JWT" from picker)
+
+/buildforce.build
+# Continues work on authentication feature
+```
+
+**When to use:**
+
+- You need to pause one feature to handle urgent work on another
+- You're maintaining multiple features in parallel (development, bugfix, refactor)
+- You want to resume work on a previously paused session
+
+**Note:** Only sessions with status `draft` or `in-progress` appear in the picker. Completed sessions are automatically filtered out.
+
+---
+
 ## Supported AI Agents
 
 Buildforce works with 11 AI coding agents: Claude Code, Cursor, Codex CLI, Gemini CLI, GitHub Copilot, Windsurf, Kilo Code, Roo Code and Auggie CLI. 

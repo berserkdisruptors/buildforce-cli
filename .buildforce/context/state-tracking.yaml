@@ -8,10 +8,10 @@ last_updated: 2025-11-21
 summary: |
   JSON-based state tracking system using buildforce.json to manage active spec sessions,
   replacing the legacy .current-spec plain text file. Provides structured configuration
-  with currentSpec field for tracking active spec-driven development sessions.
+  with currentSession field for tracking active spec-driven development sessions.
 
 responsibilities:
-  - Track active spec folder name via currentSpec field in buildforce.json
+  - Track active spec folder name via currentSession field in buildforce.json
   - Preserve existing buildforce.json fields (agent, script, version) when updating state
   - Enable CREATE vs UPDATE mode determination for /spec command
   - Control research cache accumulation based on active spec presence
@@ -20,9 +20,9 @@ responsibilities:
 
 dependencies:
   internal:
-    - spec-command: "Reads currentSpec to determine CREATE vs UPDATE mode"
-    - research-persistence: "Checks currentSpec to control cache accumulation"
-    - complete-command: "Reads and clears currentSpec on spec finalization"
+    - spec-command: "Reads currentSession to determine CREATE vs UPDATE mode"
+    - research-persistence: "Checks currentSession to control cache accumulation"
+    - complete-command: "Reads and clears currentSession on spec finalization"
     - cli-architecture: "Init command creates buildforce.json with initial configuration"
   external: []
 
@@ -40,17 +40,17 @@ files:
 
 interfaces:
   exports:
-    - name: "get_current_spec"
+    - name: "get_current_session"
       signature: "(buildforce_root: string) => string"
-      description: "Reads currentSpec field from buildforce.json, returns empty if null or missing"
+      description: "Reads currentSession field from buildforce.json, returns empty if null or missing"
 
-    - name: "set_current_spec"
-      signature: "(buildforce_root: string, spec_value: string) => void"
-      description: "Updates currentSpec field in buildforce.json, preserving all other fields"
+    - name: "set_current_session"
+      signature: "(buildforce_root: string, session_value: string) => void"
+      description: "Updates currentSession field in buildforce.json, preserving all other fields"
 
-    - name: "clear_current_spec"
+    - name: "clear_current_session"
       signature: "(buildforce_root: string) => void"
-      description: "Sets currentSpec to null in buildforce.json, preserving all other fields"
+      description: "Sets currentSession to null in buildforce.json, preserving all other fields"
 
 design_decisions:
   - decision: "Use buildforce.json instead of .current-spec plain text file"
@@ -59,10 +59,10 @@ design_decisions:
   - decision: "Store buildforce.json at .buildforce/buildforce.json"
     rationale: "Maintains consistency with existing .buildforce directory structure where all buildforce metadata resides"
 
-  - decision: "Preserve existing JSON fields when updating currentSpec"
+  - decision: "Preserve existing JSON fields when updating currentSession"
     rationale: "Init creates buildforce.json with agent, script, and version fields. State functions must merge changes rather than overwrite to prevent configuration loss"
 
-  - decision: "Clear currentSpec by setting to null rather than deleting file"
+  - decision: "Clear currentSession by setting to null rather than deleting file"
     rationale: "Preserves buildforce.json file for other configuration fields and avoids recreating file on every spec creation"
 
   - decision: "Use native bash string manipulation for JSON operations"
@@ -97,7 +97,7 @@ notes: |
   - Custom spec directory paths via sessionsFolder field (currently unused, paths are hardcoded)
   - Agent-specific settings
 
-  Critical implementation detail: set_current_spec() and clear_current_spec() must preserve
+  Critical implementation detail: set_current_session() and clear_current_session() must preserve
   all existing fields in buildforce.json. Init creates the file with agent, script, and version
   fields that must not be lost when updating state.
 
