@@ -8,7 +8,7 @@ import { checkCommand } from "./commands/check.js";
 import { examplesCommand } from "./commands/examples.js";
 import { sessionCommand } from "./commands/session/index.js";
 import { generateBanner } from "./lib/interactive.js";
-import { MINT_COLOR } from "./constants.js";
+import { MINT_COLOR, TAGLINE } from "./constants.js";
 import { createBox } from "./utils/box.js";
 
 const program = new Command();
@@ -16,7 +16,7 @@ const program = new Command();
 program
   .name("buildforce")
   .usage("[command] [options]")
-  .description("Consistent, reliable and efficient framework for AI-assisted engineering")
+  .description(TAGLINE)
   .version("1.0.0")
   .enablePositionalOptions();
 
