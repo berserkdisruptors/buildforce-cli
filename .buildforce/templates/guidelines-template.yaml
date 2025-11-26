@@ -22,7 +22,7 @@
 #   full implementations in codebase. This prevents context window bloat while providing
 #   actionable guidance.
 
-version: "0.0.35"
+version: "0.0.36"
 last_updated: "YYYY-MM-DD"
 
 # =============================================================================

@@ -1,0 +1,86 @@
+version: "0.0.36"
+id: "rename-create-spec-to-session-20251126000000-research"
+created: "2025-11-26"
+last_updated: "2025-11-26"
+
+summary: |
+  Comprehensive analysis of the consequences of renaming create-spec-files.sh/ps1 to create-session-files.sh/ps1.
+  Research identified 20 file references (2 critical script invocations, 3 context docs, 15+ historical archives)
+  and revealed an intentional design decision to keep script names stable as "internal implementation details"
+  during previous terminology migrations.
+
+key_findings:
+  - "Script referenced in 20 files total: 2 critical (plan.md template), 2 script files (bash + PowerShell), 3 context documentation files, ~15 historical session archives"
+  - "No TypeScript/JavaScript code dependencies found - scripts are only invoked via slash command templates"
+  - "Previous rename from /buildforce.spec to /buildforce.plan (v9.0) intentionally preserved script names as 'internal implementation details'"
+  - "Partial terminology migration exists: folders renamed to .buildforce/sessions/, state field renamed to currentSession, but scripts kept as create-spec-files.*"
+  - "Breaking change requires updates to: plan.md template (lines 5-6), both bash/PowerShell scripts, and 3 context files"
+  - "No GitHub Actions workflows or test files reference the scripts"
+
+file_paths:
+  primary:
+    - path: "src/templates/commands/plan.md"
+      relevance: "Critical dependency - lines 5-6 invoke scripts with hardcoded paths in scripts section"
+
+    - path: "src/scripts/bash/create-spec-files.sh"
+      relevance: "Bash script to be renamed - creates session folders, copies templates, updates buildforce.json"
+
+    - path: "src/scripts/powershell/create-spec-files.ps1"
+      relevance: "PowerShell script to be renamed - cross-platform equivalent with hardcoded usage strings"
+
+    - path: ".buildforce/context/plan-command.yaml"
+      relevance: "Documents script as dependency, contains evolution notes explaining why scripts weren't renamed previously"
+
+    - path: ".buildforce/context/state-tracking.yaml"
+      relevance: "Lists script in secondary files section"
+
+    - path: ".buildforce/context/_guidelines.yaml"
+      relevance: "Uses script path as example in guidelines"
+
+  secondary:
+    - path: ".buildforce/context/template-versioning.yml"
+      relevance: "Contains example of script path for version injection"
+
+    - path: "src/scripts/bash/common.sh"
+      relevance: "Provides helper functions used by create-spec-files.sh (get_buildforce_root, set_current_session, etc.)"
+
+    - path: "src/scripts/powershell/common.ps1"
+      relevance: "PowerShell helper functions equivalent"
+
+mermaid_diagrams:
+  - title: "Script Invocation Flow"
+    description: "How create-spec-files scripts are invoked in CREATE mode workflow"
+    diagram: |
+      ```mermaid
+      graph TD
+          A[User invokes /buildforce.plan] --> B{CREATE or UPDATE mode?}
+          B -->|CREATE mode| C[Agent generates folder name]
+          C --> D[plan.md template reads]
+          D --> E[Invokes create-spec-files.sh/ps1]
+          E --> F[Script creates .buildforce/sessions/folder-name/]
+          F --> G[Copies spec-template.yaml to spec.yaml]
+          F --> H[Copies plan-template.yaml to plan.yaml]
+          F --> I[Updates buildforce.json currentSession]
+          B -->|UPDATE mode| J[Load existing session files]
+
+          style E fill:#ff9999
+          style D fill:#ffcc99
+      ```
+
+architectural_decisions:
+  - pattern: "Intentional Script Name Stability"
+    description: "During /buildforce.spec to /buildforce.plan rename (v9.0), scripts were deliberately kept as create-spec-files.* as 'internal implementation details'"
+    rationale: "Prioritized implementation stability over naming consistency to reduce breaking changes"
+
+  - pattern: "Partial Terminology Migration"
+    description: "User-facing terminology evolved to 'sessions' and 'plan' while internal script names remained 'spec-files'"
+    rationale: "Created cognitive overhead but maintained backward compatibility at implementation layer"
+
+tldr:
+  - "20 file references found (2 critical script invocations, 3 context docs, 15+ historical archives)"
+  - "Breaking change requires updates to plan.md template, both bash/PowerShell scripts, and 3 context files"
+  - "No TypeScript/JS code dependencies - scripts only invoked via templates"
+  - "Intentional inconsistency: scripts kept 'spec-files' name during previous renames as 'internal implementation detail'"
+  - "Terminology mismatch: /buildforce.plan → create-spec-files.sh → .buildforce/sessions/ creates conceptual friction"
+  - "Low technical risk: changes are straightforward string replacements with clear boundaries"
+  - "Alignment benefit: completing the 'spec→session' migration improves internal consistency"

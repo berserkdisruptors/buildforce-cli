@@ -290,6 +290,21 @@ contexts:
       ]
     related_context: [cli-architecture, readme-documentation]
 
+  - id: session-management-cli
+    file: session-management-cli.yaml
+    type: feature
+    description: "Interactive CLI command for managing and switching between active development sessions"
+    tags:
+      [
+        cli-command,
+        session-management,
+        interactive,
+        inquirer,
+        workflow,
+        state-tracking,
+      ]
+    related_context: [cli-architecture, state-tracking, plan-command]
+
   - id: yaml-extension-standard
     file: yaml-extension-standard.yaml
     type: pattern

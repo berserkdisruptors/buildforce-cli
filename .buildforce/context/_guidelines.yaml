@@ -71,7 +71,7 @@ code_conventions:
       cd .buildforce/scripts && bash ./get-spec-paths.sh
     reference_files:
       - ".buildforce/scripts/bash/get-spec-paths.sh"
-      - ".buildforce/scripts/bash/create-spec-files.sh"
+      - ".buildforce/scripts/bash/create-session-files.sh"
 
   - convention: "Error Handling in Templates"
     description: |

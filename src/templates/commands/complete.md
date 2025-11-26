@@ -1,5 +1,5 @@
 ---
-version: "0.0.36"
+version: "0.0.37"
 description: Finalize the current spec by creating context files, updating the context repository, and clearing the spec state.
 ---
 
@@ -17,15 +17,15 @@ $ARGUMENTS
 
    Check if there's an active spec to complete:
 
-   - Read `.buildforce/buildforce.json` file from current working directory and parse the `currentSpec` field
-   - If file doesn't exist or `currentSpec` is null/empty: **ERROR** - Reply that there is no active spec and user must run `/buildforce.plan` first
-   - If `currentSpec` field has a value (folder name): **PROCEED** - Extract folder name and continue
+   - Read `.buildforce/buildforce.json` file from current working directory and parse the `currentSession` field
+   - If file doesn't exist or `currentSession` is null/empty: **ERROR** - Reply that there is no active spec and user must run `/buildforce.plan` first
+   - If `currentSession` field has a value (folder name): **PROCEED** - Extract folder name and continue
 
 2. **Load Spec Artifacts**:
 
    Load the spec and plan files from the active spec folder:
 
-   - Construct spec directory path: `.buildforce/sessions/{folder-name}/` where folder-name comes from `buildforce.json` `currentSpec` field
+   - Construct spec directory path: `.buildforce/sessions/{folder-name}/` where folder-name comes from `buildforce.json` `currentSession` field
    - Read `spec.yaml` from spec directory
    - Read `plan.yaml` from spec directory if it exists
    - Read `research.yaml` from spec directory if it exist
@@ -213,7 +213,7 @@ $ARGUMENTS
 
    Mark the spec as complete:
 
-   - Read `.buildforce/buildforce.json` and set the `currentSpec` field to `null`
+   - Read `.buildforce/buildforce.json` and set the `currentSession` field to `null`
    - This signals that no active spec is in progress
    - The `buildforce.json` file is preserved for future specs
 
@@ -242,7 +242,7 @@ Provide a concise report to the user:
 **CREATE mode** (new component):
 
 ```
-1. Read buildforce.json currentSpec → "20250123150000-add-auth"
+1. Read buildforce.json currentSession → "20250123150000-add-auth"
 2. Load spec.yaml and plan.yaml from .buildforce/sessions/20250123150000-add-auth/
 3. Analyze: Introduced new authentication module
 4. Check _index.yaml: No existing "authentication" context
@@ -250,34 +250,34 @@ Provide a concise report to the user:
 6. Load _schema.yaml template
 7. Create .buildforce/context/authentication.yaml with full content
 8. Add entry to _index.yaml
-9. Clear currentSpec in buildforce.json (set to null)
+9. Clear currentSession in buildforce.json (set to null)
 10. Report: "Created authentication.yaml context file for new auth module"
 ```
 
 **UPDATE mode** (existing component):
 
 ```
-1. Read buildforce.json currentSpec → "20250123160000-refactor-auth"
+1. Read buildforce.json currentSession → "20250123160000-refactor-auth"
 2. Load spec.yaml and plan.yaml
 3. Analyze: Modified existing authentication module
 4. Check _index.yaml: Found existing "authentication.yaml"
 5. Read existing authentication.yaml
 6. Add evolution entry, update files list, append to related_specs
 7. No index update needed (entry exists)
-8. Clear currentSpec in buildforce.json (set to null)
+8. Clear currentSession in buildforce.json (set to null)
 9. Report: "Updated authentication.yaml with refactoring changes"
 ```
 
 **MIXED mode** (multiple components):
 
 ```
-1. Read buildforce.json currentSpec → "20250123170000-add-feature-x"
+1. Read buildforce.json currentSession → "20250123170000-add-feature-x"
 2. Load spec.yaml and plan.yaml
 3. Analyze: Modified auth module, created new config module, touched error handling
 4. Check _index.yaml: Found "authentication.yaml" and "error-handling.yaml", no "config-management.yaml"
 5. UPDATE authentication.yaml and error-handling.yaml
 6. CREATE config-management.yaml
 7. Add config-management entry to _index.yaml
-8. Clear currentSpec in buildforce.json (set to null)
+8. Clear currentSession in buildforce.json (set to null)
 9. Report: "Updated 2 context files (authentication, error-handling) and created 1 new file (config-management)"
 ```

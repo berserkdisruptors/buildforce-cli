@@ -54,6 +54,7 @@ export interface BuildforceConfig {
   sessionsFolder: string;
   framework: string;
   aiAssistants?: string[];
+  currentSession?: string | null;
   scriptType?: string;
   version?: string;
 }

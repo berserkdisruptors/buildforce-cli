@@ -71,8 +71,8 @@ function Get-RepoRoot {
     return $fallbackRoot
 }
 
-# Get current spec from buildforce.json
-function Get-CurrentSpec {
+# Get current session from buildforce.json
+function Get-CurrentSession {
     param([string]$BuildforceRoot)
     $jsonFile = Join-Path $BuildforceRoot '.buildforce/buildforce.json'
 
@@ -82,12 +82,12 @@ function Get-CurrentSpec {
     }
 
     try {
-        # Parse JSON and extract currentSpec field
+        # Parse JSON and extract currentSession field
         $content = Get-Content $jsonFile -Raw | ConvertFrom-Json
 
-        # Return currentSpec value (null if not set)
-        if ($null -ne $content.currentSpec -and $content.currentSpec -ne "") {
-            return $content.currentSpec
+        # Return currentSession value (null if not set)
+        if ($null -ne $content.currentSession -and $content.currentSession -ne "") {
+            return $content.currentSession
         }
     } catch {
         # JSON parsing failed, return null
@@ -96,9 +96,9 @@ function Get-CurrentSpec {
     return $null
 }
 
-# Set current spec in buildforce.json
-function Set-CurrentSpec {
-    param([string]$BuildforceRoot, [string]$SpecFolder)
+# Set current session in buildforce.json
+function Set-CurrentSession {
+    param([string]$BuildforceRoot, [string]$SessionFolder)
     $jsonFile = Join-Path $BuildforceRoot '.buildforce/buildforce.json'
     $tempFile = "$jsonFile.tmp"
 
@@ -107,16 +107,16 @@ function Set-CurrentSpec {
         try {
             $existingContent = Get-Content $jsonFile -Raw | ConvertFrom-Json
 
-            # Update currentSpec field, preserving all other fields
-            $existingContent | Add-Member -MemberType NoteProperty -Name "currentSpec" -Value $SpecFolder -Force
+            # Update currentSession field, preserving all other fields
+            $existingContent | Add-Member -MemberType NoteProperty -Name "currentSession" -Value $SessionFolder -Force
             $jsonContent = $existingContent
         } catch {
             # JSON parsing failed, create minimal structure
-            $jsonContent = @{ currentSpec = $SpecFolder }
+            $jsonContent = @{ currentSession = $SessionFolder }
         }
     } else {
-        # Create new JSON with currentSpec only
-        $jsonContent = @{ currentSpec = $SpecFolder }
+        # Create new JSON with currentSession only
+        $jsonContent = @{ currentSession = $SessionFolder }
     }
 
     # Atomic write: write to temp file first, then move
@@ -124,8 +124,8 @@ function Set-CurrentSpec {
     Move-Item -Path $tempFile -Destination $jsonFile -Force
 }
 
-# Clear current spec in buildforce.json (set to null)
-function Clear-CurrentSpec {
+# Clear current session in buildforce.json (set to null)
+function Clear-CurrentSession {
     param([string]$BuildforceRoot)
     $jsonFile = Join-Path $BuildforceRoot '.buildforce/buildforce.json'
     $tempFile = "$jsonFile.tmp"
@@ -135,16 +135,16 @@ function Clear-CurrentSpec {
         try {
             $existingContent = Get-Content $jsonFile -Raw | ConvertFrom-Json
 
-            # Set currentSpec field to null, preserving all other fields
-            $existingContent | Add-Member -MemberType NoteProperty -Name "currentSpec" -Value $null -Force
+            # Set currentSession field to null, preserving all other fields
+            $existingContent | Add-Member -MemberType NoteProperty -Name "currentSession" -Value $null -Force
             $jsonContent = $existingContent
         } catch {
             # JSON parsing failed, create minimal structure with null
-            $jsonContent = @{ currentSpec = $null }
+            $jsonContent = @{ currentSession = $null }
         }
     } else {
-        # Create new JSON with currentSpec null
-        $jsonContent = @{ currentSpec = $null }
+        # Create new JSON with currentSession null
+        $jsonContent = @{ currentSession = $null }
     }
 
     # Atomic write: write to temp file first, then move
@@ -226,11 +226,11 @@ function Get-FeatureDir {
 
 function Get-SpecPaths {
     $buildforceRoot = Get-BuildforceRoot
-    $specFolder = Get-CurrentSpec -BuildforceRoot $buildforceRoot
+    $sessionFolder = Get-CurrentSession -BuildforceRoot $buildforceRoot
     $specDir = ""
 
-    if ($specFolder) {
-        $specDir = Join-Path $buildforceRoot ".buildforce/sessions/$specFolder"
+    if ($sessionFolder) {
+        $specDir = Join-Path $buildforceRoot ".buildforce/sessions/$sessionFolder"
     }
 
     [PSCustomObject]@{
