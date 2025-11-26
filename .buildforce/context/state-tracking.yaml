@@ -31,7 +31,7 @@ files:
     - src/scripts/bash/common.sh
     - .buildforce/scripts/bash/common.sh
   secondary:
-    - src/scripts/bash/create-spec-files.sh
+    - src/scripts/bash/create-session-files.sh
     - src/templates/commands/plan.md
     - src/templates/commands/research.md
     - src/templates/commands/complete.md

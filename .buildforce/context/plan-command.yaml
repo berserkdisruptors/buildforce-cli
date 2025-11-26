@@ -15,15 +15,15 @@ responsibilities:
   - Guide agents through spec creation workflow with 7 structured steps
   - Determine CREATE vs UPDATE mode using buildforce.json currentSpec field
   - Instruct agents to generate semantic-slug-first folder names (CREATE mode only)
-  - Execute create-spec-files script with agent-generated folder name
+  - Execute create-session-files script with agent-generated folder name
   - Capture WHAT needs to be built (not HOW) in spec.yaml files
   - Identify ambiguities and prompt for clarifying questions using standardized format
   - Validate prerequisite context from /research commands
 
 dependencies:
   internal:
-    - create-spec-files.sh: "Bash script for creating spec folder structure"
-    - create-spec-files.ps1: "PowerShell equivalent for cross-platform support"
+    - create-session-files.sh: "Bash script for creating spec folder structure"
+    - create-session-files.ps1: "PowerShell equivalent for cross-platform support"
     - spec-template.yaml: "Template structure for new spec files"
     - state-tracking: "Reads buildforce.json currentSpec field to determine CREATE vs UPDATE mode"
     - research-persistence: "Materializes .research-cache.md into research.yaml, reads it for context-aware spec population"
@@ -34,8 +34,8 @@ files:
   primary:
     - src/templates/commands/plan.md
   secondary:
-    - src/scripts/bash/create-spec-files.sh
-    - src/scripts/powershell/create-spec-files.ps1
+    - src/scripts/bash/create-session-files.sh
+    - src/scripts/powershell/create-session-files.ps1
     - src/templates/spec-template.yaml
 
 command_signature:
@@ -112,7 +112,7 @@ evolution:
 
   - version: "9.0"
     date: "2025-11-21"
-    changes: "Renamed command from /buildforce.spec to /buildforce.plan for semantic clarity. Command name now reflects dual purpose of creating both spec.yaml (WHAT) and plan.yaml (HOW). Updated all internal references, README.md documentation, CLI output, and context files. Command template file renamed from spec.md to plan.md. Context file renamed from spec-command.yaml to plan-command.yaml. Script names (create-spec-files.sh) remain unchanged as internal implementation details."
+    changes: "Renamed command from /buildforce.spec to /buildforce.plan for semantic clarity. Command name now reflects dual purpose of creating both spec.yaml (WHAT) and plan.yaml (HOW). Updated all internal references, README.md documentation, CLI output, and context files. Command template file renamed from spec.md to plan.md. Context file renamed from spec-command.yaml to plan-command.yaml. Script names (create-session-files.sh) renamed from create-spec-files.sh to align with session terminology."
 
 related_specs:
   - redesign-spec-context-20250107120000
