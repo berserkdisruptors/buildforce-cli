@@ -3,7 +3,7 @@ name: "Plan Command Template"
 type: feature
 status: production
 created: 2025-01-23
-last_updated: 2025-11-21
+last_updated: 2025-11-26
 
 summary: |
   Template-based slash command that guides AI agents through creating or updating structured
@@ -114,6 +114,10 @@ evolution:
     date: "2025-11-21"
     changes: "Renamed command from /buildforce.spec to /buildforce.plan for semantic clarity. Command name now reflects dual purpose of creating both spec.yaml (WHAT) and plan.yaml (HOW). Updated all internal references, README.md documentation, CLI output, and context files. Command template file renamed from spec.md to plan.md. Context file renamed from spec-command.yaml to plan-command.yaml. Script names (create-session-files.sh) renamed from create-spec-files.sh to align with session terminology."
 
+  - version: "9.1"
+    date: "2025-11-26"
+    changes: "Completed script rename terminology migration. Renamed bash script create-spec-files.sh to create-session-files.sh and PowerShell script create-spec-files.ps1 to create-session-files.ps1. Updated all script references in plan.md template, context files (_guidelines.yaml, template-versioning.yml), and this file. This completes the spec→session terminology migration started in v1.1 (folder rename) and v9.0 (command rename)."
+
 related_specs:
   - redesign-spec-context-20250107120000
   - swap-timestamp-slug-order-20251024093000
@@ -123,6 +127,7 @@ related_specs:
   - add-template-verification-20251024142000
   - migrate-currentspec-to-json-20251029000000
   - rename-spec-to-plan-20251121000000
+  - rename-create-spec-to-session-20251126000000
 
 notes: |
   The /buildforce.plan command follows a 7-step workflow:
