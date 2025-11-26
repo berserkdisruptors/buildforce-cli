@@ -28,6 +28,7 @@ Instead of re-explaining architectural decisions every time you start a new feat
 AI agents typically start fresh with each session, often leading to inconsistent implementations or "amnesic" behavior where past decisions are forgotten. Buildforce solves this by anchoring your AI assistant to your project's accumulated history.
 
 This approach ensures:
+
 - **Consistency**: New features align with existing patterns and architecture.
 - **Reliability**: Requirements are captured and validated before code is written.
 - **Efficiency**: Less time spent re-explaining context, more time building.
@@ -36,16 +37,16 @@ Context persists in version-controlled YAML files alongside your code, so your p
 
 ## What Makes It Different
 
-| AI Assistant only                             | AI Assistant + Buildforce                                                             |
-| --------------------------------------------- | ------------------------------------------------------------------------------------- |
-| Context lost after each session               | Context persists in `.buildforce/context/`                                            |
-| No workflow structure                         | Flexible but structured workflows                                                     |
-| Requirements exist only in conversation       | User intent captured in `spec.yaml` with acceptance criteria                          |
-| Plans exist only in specific modes            | The captured intent is automatically converted into a plan for iteration       |
-| Implementation deviations go untracked        | Deviations logged with rationale (Original → Actual → Reason)                         |
-| Architectural decisions forgotten             | Decisions preserved, searchable, and enforced via `_guidelines.yaml`                  |
-| Knowledge lives in individual developer heads | Shared context repository for team-wide knowledge                                     |
-| Each feature starts from scratch              | Each feature builds on accumulated project context                                    |
+| AI Assistant only                             | AI Assistant + Buildforce                                                |
+| --------------------------------------------- | ------------------------------------------------------------------------ |
+| Context lost after each session               | Context persists in `.buildforce/context/`                               |
+| No workflow structure                         | Flexible but structured workflows                                        |
+| Requirements exist only in conversation       | User intent captured in `spec.yaml` with acceptance criteria             |
+| Plans exist only in specific modes            | The captured intent is automatically converted into a plan for iteration |
+| Implementation deviations go untracked        | Deviations logged with rationale (Original → Actual → Reason)            |
+| Architectural decisions forgotten             | Decisions preserved, searchable, and enforced via `_guidelines.yaml`     |
+| Knowledge lives in individual developer heads | Shared context repository for team-wide knowledge                        |
+| Each feature starts from scratch              | Each feature builds on accumulated project context                       |
 
 ## Quick Start
 
@@ -78,6 +79,34 @@ npx @buildforce/cli init .
 <div align="center">
 <img src=".github/assets/screenshot-init.png" alt="Buildforce initialization screenshot" width="700"/>
 </div>
+
+### Upgrading to the Latest Version
+
+To upgrade an existing Buildforce project to the latest version:
+
+```bash
+buildforce upgrade
+```
+
+The upgrade command will:
+
+- **Interactively prompt** you to select or modify your AI assistants (matching the init experience)
+- Update slash command templates to the latest versions
+- Preserve your existing configuration while allowing you to modify it
+- Pre-select your currently configured AI assistants for easy modification
+
+**Options:**
+
+```bash
+# Skip the interactive prompt and merge specific AI assistant(s)
+buildforce upgrade --ai claude
+
+# Specify script type (sh/bash/ps/cmd)
+buildforce upgrade --script sh
+
+# Debug mode for troubleshooting
+buildforce upgrade --debug
+```
 
 ### Your First Workflow (Hello Buildforce)
 
@@ -347,9 +376,9 @@ buildforce session
 
 ## Supported AI Agents
 
-Buildforce works with 11 AI coding agents: Claude Code, Cursor, Codex CLI, Gemini CLI, GitHub Copilot, Windsurf, Kilo Code, Roo Code and Auggie CLI. 
+Buildforce works with 11 AI coding agents: Claude Code, Cursor, Codex CLI, Gemini CLI, GitHub Copilot, Windsurf, Kilo Code, Roo Code and Auggie CLI.
 
-However, at the moment, not all of them are fully tested. That's why we recommend using **Claude Code** or **Cursor** if you are just getting started. 
+However, at the moment, not all of them are fully tested. That's why we recommend using **Claude Code** or **Cursor** if you are just getting started.
 
 But if you prefer some of the other supported agents, please give it a try and submit an issue if you see something that doesn't work as expected. Open a new issue if you want to add a new agent to the list.
 

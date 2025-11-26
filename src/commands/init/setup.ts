@@ -16,7 +16,7 @@ import { resolveLocalArtifact } from "../../lib/local-artifacts.js";
  */
 export async function setupProject(
   projectPath: string,
-  selectedAi: string,
+  selectedAi: string[],
   selectedScript: string,
   isHere: boolean,
   options: {
@@ -34,8 +34,8 @@ export async function setupProject(
   // Pre-steps recorded as completed before live rendering
   tracker.add("precheck", "Check required tools");
   tracker.complete("precheck", "ok");
-  tracker.add("ai-select", "Select AI assistant");
-  tracker.complete("ai-select", selectedAi);
+  tracker.add("ai-select", "Select AI assistant(s)");
+  tracker.complete("ai-select", selectedAi.join(", "));
   tracker.add("script-select", "Select script type");
   tracker.complete("script-select", selectedScript);
 
@@ -79,37 +79,77 @@ export async function setupProject(
     // Initial render
     renderTracker();
 
-    // Resolve local artifact if --local flag is provided
-    let localZipPath: string | undefined;
-    if (local) {
-      const localDir = typeof local === "string" ? local : ".genreleases";
+    // Download and extract templates for each selected agent
+    let version: string | undefined;
+    const successfulAgents: string[] = [];
+    const failedAgents: Array<{ agent: string; error: string }> = [];
+
+    for (let i = 0; i < selectedAi.length; i++) {
+      const agent = selectedAi[i];
       try {
-        const result = await resolveLocalArtifact(
-          localDir,
-          selectedAi,
-          selectedScript
+        // Resolve local artifact if --local flag is provided
+        let localZipPath: string | undefined;
+        if (local) {
+          const localDir = typeof local === "string" ? local : ".genreleases";
+          try {
+            const result = await resolveLocalArtifact(
+              localDir,
+              agent,
+              selectedScript
+            );
+            localZipPath = result.zipPath;
+          } catch (e: any) {
+            tracker.error(`fetch-${agent}`, e.message);
+            throw e;
+          }
+        }
+
+        // Tracker will show progress for current agent
+
+        const result = await downloadAndExtractTemplate(
+          projectPath,
+          agent,
+          selectedScript,
+          isHere,
+          {
+            verbose: false,
+            tracker,
+            debug,
+            githubToken,
+            skipTls,
+            localZipPath,
+          }
         );
-        localZipPath = result.zipPath;
+
+        version = result.version;
+        successfulAgents.push(agent);
       } catch (e: any) {
-        tracker.error("fetch", e.message);
-        throw e;
+        failedAgents.push({ agent, error: e.message });
+        // Continue with remaining agents instead of throwing
+        if (debug) {
+          console.log(chalk.gray(`\nFailed to download ${agent}: ${e.message}`));
+        }
       }
     }
 
-    const { version } = await downloadAndExtractTemplate(
-      projectPath,
-      selectedAi,
-      selectedScript,
-      isHere,
-      {
-        verbose: false,
-        tracker,
-        debug,
-        githubToken,
-        skipTls,
-        localZipPath,
-      }
-    );
+    // If all agents failed, throw error
+    if (successfulAgents.length === 0) {
+      throw new Error(
+        `All agent template downloads failed:\n${failedAgents.map(f => `- ${f.agent}: ${f.error}`).join("\n")}`
+      );
+    }
+
+    // If some agents failed, log warning but continue
+    if (failedAgents.length > 0) {
+      console.log();
+      console.log(
+        chalk.yellow(
+          `⚠ Warning: Some agents failed to download:\n${failedAgents.map(f => `- ${f.agent}: ${f.error}`).join("\n")}`
+        )
+      );
+      console.log(chalk.yellow(`Successfully downloaded: ${successfulAgents.join(", ")}`));
+      console.log();
+    }
 
     // Ensure scripts are executable (POSIX)
     const { updated, failures } = ensureExecutableScripts(projectPath, debug);
@@ -130,7 +170,7 @@ export async function setupProject(
     await fs.ensureDir(buildforceDir);
 
     const configPath = path.join(buildforceDir, "buildforce.json");
-    const configContent = createConfigContent(selectedAi, selectedScript, version);
+    const configContent = createConfigContent(successfulAgents, selectedScript, version);
 
     if (debug) {
       console.log(chalk.gray(`\nWriting config to: ${configPath}`));

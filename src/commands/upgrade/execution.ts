@@ -16,7 +16,7 @@ import { resolveLocalArtifact } from "../../lib/local-artifacts.js";
  */
 export async function executeUpgrade(
   projectPath: string,
-  selectedAi: string,
+  selectedAi: string[],
   selectedScript: string,
   options: {
     dryRun: boolean;
@@ -77,90 +77,142 @@ export async function executeUpgrade(
 
   tracker.attachRefresh(renderTracker);
 
-  let tempDir: string | null = null;
-  let zipPath: string | null = null;
+  let tempDirs: Map<string, string> = new Map();
+  let zipPaths: Map<string, string> = new Map();
   let backupDir: string | null = null;
+  let version: string | undefined;
+
+  const successfulAgents: string[] = [];
+  const failedAgents: Array<{ agent: string; error: string }> = [];
 
   try {
     renderTracker();
 
-    // Step 1: Resolve local artifact if --local flag is provided
-    let localZipPath: string | undefined;
-    if (local) {
-      const localDir = typeof local === "string" ? local : ".genreleases";
+    // Download templates for all agents
+    for (let i = 0; i < selectedAi.length; i++) {
+      const agent = selectedAi[i];
       try {
-        tracker.start("fetch");
-        const result = await resolveLocalArtifact(
-          localDir,
-          selectedAi,
-          selectedScript
+        // Step 1: Resolve local artifact if --local flag is provided
+        let localZipPath: string | undefined;
+        if (local) {
+          const localDir = typeof local === "string" ? local : ".genreleases";
+          try {
+            tracker.start("fetch");
+            const result = await resolveLocalArtifact(
+              localDir,
+              agent,
+              selectedScript
+            );
+            localZipPath = result.zipPath;
+          } catch (e: any) {
+            tracker.error("fetch", e.message);
+            throw e;
+          }
+        } else {
+          tracker.start("fetch");
+        }
+
+        // Step 2: Download or use local template
+        const currentDir = process.cwd();
+
+        const result = await downloadTemplateFromGithub(agent, currentDir, {
+          scriptType: selectedScript,
+          verbose: false,
+          showProgress: false,
+          debug,
+          githubToken,
+          skipTls,
+          localZipPath,
+        });
+
+        zipPaths.set(agent, result.zipPath);
+        const meta = result.metadata;
+        version = meta.release;
+
+        tracker.complete(
+          "fetch",
+          `release ${meta.release} (${agent})`
         );
-        localZipPath = result.zipPath;
+        tracker.complete("download", meta.filename);
+
+        successfulAgents.push(agent);
       } catch (e: any) {
-        tracker.error("fetch", e.message);
-        throw e;
-      }
-    } else {
-      tracker.start("fetch");
-    }
-
-    // Step 2: Download or use local template
-    const currentDir = process.cwd();
-
-    const result = await downloadTemplateFromGithub(selectedAi, currentDir, {
-      scriptType: selectedScript,
-      verbose: false,
-      showProgress: false,
-      debug,
-      githubToken,
-      skipTls,
-      localZipPath,
-    });
-
-    zipPath = result.zipPath;
-    const meta = result.metadata;
-
-    tracker.complete(
-      "fetch",
-      `release ${meta.release} (${meta.size.toLocaleString()} bytes)`
-    );
-    tracker.complete("download", meta.filename);
-
-    // Step 2: Extract to temp directory
-    tracker.start("extract");
-    tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "buildforce-upgrade-"));
-
-    const zip = new AdmZip(zipPath);
-    zip.extractAllTo(tempDir, true);
-
-    // Handle nested directory structure (GitHub releases)
-    const extractedItems = await fs.readdir(tempDir);
-    let sourceDir = tempDir;
-    if (extractedItems.length === 1) {
-      const firstItem = path.join(tempDir, extractedItems[0]);
-      if ((await fs.stat(firstItem)).isDirectory()) {
-        sourceDir = firstItem;
+        failedAgents.push({ agent, error: e.message });
+        if (debug) {
+          console.log(chalk.gray(`\nFailed to download ${agent}: ${e.message}`));
+        }
       }
     }
 
-    tracker.complete("extract", `${extractedItems.length} items`);
+    // If all agents failed, throw error
+    if (successfulAgents.length === 0) {
+      throw new Error(
+        `All agent template downloads failed:\n${failedAgents.map(f => `- ${f.agent}: ${f.error}`).join("\n")}`
+      );
+    }
+
+    // If some agents failed, log warning but continue
+    if (failedAgents.length > 0) {
+      console.log();
+      console.log(
+        chalk.yellow(
+          `⚠ Warning: Some agents failed to download:\n${failedAgents.map(f => `- ${f.agent}: ${f.error}`).join("\n")}`
+        )
+      );
+      console.log(chalk.yellow(`Successfully downloaded: ${successfulAgents.join(", ")}`));
+      console.log();
+    }
+
+    // Extract templates for all successful agents
+    const sourceDirs: Map<string, string> = new Map();
+
+    for (const agent of successfulAgents) {
+      const zipPath = zipPaths.get(agent)!;
+      tracker.start("extract");
+
+      const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), `buildforce-upgrade-${agent}-`));
+      tempDirs.set(agent, tempDir);
+
+      const zip = new AdmZip(zipPath);
+      zip.extractAllTo(tempDir, true);
+
+      // Handle nested directory structure (GitHub releases)
+      const extractedItems = await fs.readdir(tempDir);
+      let sourceDir = tempDir;
+      if (extractedItems.length === 1) {
+        const firstItem = path.join(tempDir, extractedItems[0]);
+        if ((await fs.stat(firstItem)).isDirectory()) {
+          sourceDir = firstItem;
+        }
+      }
+
+      sourceDirs.set(agent, sourceDir);
+      tracker.complete("extract", `${extractedItems.length} items (${agent})`);
+    }
 
     if (dryRun) {
       // Dry run mode: just show what would be updated
       tracker.start("backup");
       tracker.skip("backup", "dry-run mode");
 
-      const agentFolder = AGENT_FOLDER_MAP[selectedAi];
-      const commandsPath = path.join(projectPath, agentFolder, "commands");
+      for (const agent of successfulAgents) {
+        const agentFolder = AGENT_FOLDER_MAP[agent];
+        const commandsPath = path.join(projectPath, agentFolder, "commands");
+
+        console.log(chalk.gray(`\nAgent: ${agent}`));
+
+        if (await fs.pathExists(commandsPath)) {
+          console.log(chalk.gray(`  would update ${agentFolder}commands/`));
+        } else {
+          console.log(chalk.gray(`  would create ${agentFolder}commands/`));
+        }
+      }
+
       const templatesPath = path.join(projectPath, ".buildforce", "templates");
       const scriptsPath = path.join(projectPath, ".buildforce", "scripts");
 
       tracker.start("replace-commands");
-      if (await fs.pathExists(commandsPath)) {
-        tracker.complete("replace-commands", `would update ${agentFolder}commands/`);
-      } else {
-        tracker.complete("replace-commands", `would create ${agentFolder}commands/`);
-      }
+      tracker.complete("replace-commands", `${successfulAgents.length} agents`);
 
       tracker.start("replace-templates");
       if (await fs.pathExists(templatesPath)) {
@@ -182,35 +234,43 @@ export async function executeUpgrade(
     } else {
       // Real upgrade mode: create backup and replace files
       tracker.start("backup");
-      backupDir = path.join(tempDir, "backup");
-      await fs.ensureDir(backupDir);
+      const backupBaseDir = await fs.mkdtemp(path.join(os.tmpdir(), "buildforce-backup-"));
+      backupDir = backupBaseDir;
 
-      const agentFolder = AGENT_FOLDER_MAP[selectedAi];
-      const commandsSrc = path.join(sourceDir, agentFolder, "commands");
-      const commandsDest = path.join(projectPath, agentFolder, "commands");
-
-      // Backup commands if they exist
-      if (await fs.pathExists(commandsDest)) {
-        await fs.copy(commandsDest, path.join(backupDir, "commands"));
-      }
-
-      tracker.complete("backup", "current files backed up");
-
-      // Replace commands
+      // Replace commands for each agent
       tracker.start("replace-commands");
-      if (await fs.pathExists(commandsSrc)) {
-        await fs.ensureDir(path.dirname(commandsDest));
-        await fs.remove(commandsDest);
-        await fs.copy(commandsSrc, commandsDest);
-        const commandFiles = await fs.readdir(commandsDest);
-        tracker.complete("replace-commands", `${commandFiles.length} command files`);
-      } else {
-        tracker.skip("replace-commands", "no commands in template");
+      let totalCommandFiles = 0;
+
+      for (const agent of successfulAgents) {
+        const agentFolder = AGENT_FOLDER_MAP[agent];
+        const sourceDir = sourceDirs.get(agent)!;
+        const commandsSrc = path.join(sourceDir, agentFolder, "commands");
+        const commandsDest = path.join(projectPath, agentFolder, "commands");
+
+        // Backup commands if they exist
+        if (await fs.pathExists(commandsDest)) {
+          await fs.copy(commandsDest, path.join(backupDir, agent, "commands"));
+        }
+
+        // Replace commands
+        if (await fs.pathExists(commandsSrc)) {
+          await fs.ensureDir(path.dirname(commandsDest));
+          await fs.remove(commandsDest);
+          await fs.copy(commandsSrc, commandsDest);
+          const commandFiles = await fs.readdir(commandsDest);
+          totalCommandFiles += commandFiles.length;
+        }
       }
 
-      // Replace templates
+      tracker.complete("backup", `backed up ${successfulAgents.length} agents`);
+      tracker.complete("replace-commands", `${totalCommandFiles} command files`);
+
+      // Replace templates (shared across all agents)
       tracker.start("replace-templates");
-      const templatesSrc = path.join(sourceDir, ".buildforce", "templates");
+      // Use first agent's templates as they should be the same
+      const firstAgent = successfulAgents[0];
+      const firstSourceDir = sourceDirs.get(firstAgent)!;
+      const templatesSrc = path.join(firstSourceDir, ".buildforce", "templates");
       const templatesDest = path.join(projectPath, ".buildforce", "templates");
 
       if (await fs.pathExists(templatesSrc)) {
@@ -224,9 +284,9 @@ export async function executeUpgrade(
         tracker.skip("replace-templates", "no templates in release");
       }
 
-      // Replace scripts
+      // Replace scripts (shared across all agents)
       tracker.start("replace-scripts");
-      const scriptsSrc = path.join(sourceDir, ".buildforce", "scripts");
+      const scriptsSrc = path.join(firstSourceDir, ".buildforce", "scripts");
       const scriptsDest = path.join(projectPath, ".buildforce", "scripts");
 
       if (await fs.pathExists(scriptsSrc)) {
@@ -243,39 +303,46 @@ export async function executeUpgrade(
       // Update buildforce.json with version metadata
       tracker.start("update-config");
       saveBuildforceConfig(projectPath, {
-        aiAssistant: selectedAi,
+        aiAssistants: successfulAgents,
         scriptType: selectedScript,
-        version: meta.release,
+        version: version,
       });
-      tracker.complete("update-config", `version ${meta.release}`);
+      tracker.complete("update-config", `version ${version}`);
 
       tracker.complete("final", "upgrade complete");
     }
 
     // Cleanup
     tracker.start("cleanup");
-    if (tempDir && (await fs.pathExists(tempDir))) {
-      await fs.remove(tempDir);
+    for (const [agent, tempDir] of tempDirs) {
+      if (await fs.pathExists(tempDir)) {
+        await fs.remove(tempDir);
+      }
     }
-    if (zipPath && (await fs.pathExists(zipPath))) {
-      await fs.unlink(zipPath);
+    for (const [agent, zipPath] of zipPaths) {
+      if (await fs.pathExists(zipPath)) {
+        await fs.unlink(zipPath);
+      }
     }
     tracker.complete("cleanup");
   } catch (e: any) {
     // Rollback on error
     if (!dryRun && backupDir && (await fs.pathExists(backupDir))) {
       try {
-        // Restore from backup
-        const agentFolder = AGENT_FOLDER_MAP[selectedAi];
-        const commandsBackup = path.join(backupDir, "commands");
+        // Restore from backup for each agent
+        for (const agent of successfulAgents) {
+          const agentFolder = AGENT_FOLDER_MAP[agent];
+          const commandsBackup = path.join(backupDir, agent, "commands");
+
+          if (await fs.pathExists(commandsBackup)) {
+            const commandsDest = path.join(projectPath, agentFolder, "commands");
+            await fs.remove(commandsDest);
+            await fs.copy(commandsBackup, commandsDest);
+          }
+        }
+
         const templatesBackup = path.join(backupDir, "templates");
         const scriptsBackup = path.join(backupDir, "scripts");
-
-        if (await fs.pathExists(commandsBackup)) {
-          const commandsDest = path.join(projectPath, agentFolder, "commands");
-          await fs.remove(commandsDest);
-          await fs.copy(commandsBackup, commandsDest);
-        }
 
         if (await fs.pathExists(templatesBackup)) {
           const templatesDest = path.join(projectPath, ".buildforce", "templates");
@@ -301,11 +368,15 @@ export async function executeUpgrade(
     tracker.error("final", e.message);
 
     // Cleanup on error
-    if (tempDir && (await fs.pathExists(tempDir))) {
-      await fs.remove(tempDir);
+    for (const [agent, tempDir] of tempDirs) {
+      if (await fs.pathExists(tempDir)) {
+        await fs.remove(tempDir);
+      }
     }
-    if (zipPath && (await fs.pathExists(zipPath))) {
-      await fs.unlink(zipPath);
+    for (const [agent, zipPath] of zipPaths) {
+      if (await fs.pathExists(zipPath)) {
+        await fs.unlink(zipPath);
+      }
     }
 
     throw e;

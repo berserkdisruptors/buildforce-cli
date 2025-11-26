@@ -14,18 +14,18 @@ export function getDefaultConfig(): BuildforceConfig {
 
 /**
  * Create a buildforce.json config file content
- * @param aiAssistant - Optional AI assistant name
+ * @param aiAssistants - Optional AI assistant names array
  * @param scriptType - Optional script type (sh or ps)
  * @param version - Optional CLI version
  */
 export function createConfigContent(
-  aiAssistant?: string,
+  aiAssistants?: string[],
   scriptType?: string,
   version?: string
 ): string {
   const config: BuildforceConfig = {
     ...getDefaultConfig(),
-    ...(aiAssistant && { aiAssistant }),
+    ...(aiAssistants && { aiAssistants }),
     ...(scriptType && { scriptType }),
     ...(version && { version }),
   };

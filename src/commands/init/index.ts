@@ -9,7 +9,7 @@ import {
 } from "../../constants.js";
 import { InitOptions } from "../../types.js";
 import { checkTool } from "../../utils/index.js";
-import { showBanner, selectWithArrows } from "../../lib/interactive.js";
+import { showBanner, selectWithArrows, selectMultipleWithCheckboxes } from "../../lib/interactive.js";
 import {
   validateProjectSetup,
   validateAiAssistant,
@@ -65,23 +65,26 @@ export async function initCommand(options: InitOptions): Promise<void> {
     }
   }
 
-  // AI assistant selection
-  let selectedAi: string;
+  // AI assistant selection (multi-select)
+  let selectedAi: string[];
   if (inputAiAssistant) {
-    validateAiAssistant(inputAiAssistant, AI_CHOICES);
-    selectedAi = inputAiAssistant;
+    // Handle array input from Commander.js variadic option
+    const aiArray = Array.isArray(inputAiAssistant) ? inputAiAssistant : [inputAiAssistant];
+    // Validate each assistant
+    aiArray.forEach(ai => validateAiAssistant(ai, AI_CHOICES));
+    selectedAi = aiArray;
   } else {
-    // Use arrow-key selection interface
-    selectedAi = await selectWithArrows(
+    // Use checkbox multi-select interface
+    selectedAi = await selectMultipleWithCheckboxes(
       AI_CHOICES,
-      "Choose your AI assistant:",
-      "copilot"
+      "Choose your AI assistant(s) (use spacebar to select, enter to confirm):",
+      ["claude"]
     );
   }
 
-  // Check agent tools unless ignored
-  if (!ignoreAgentTools) {
-    checkAgentTool(selectedAi, AI_CHOICES, checkTool);
+  // Check agent tools unless ignored (check first agent only to avoid multiple prompts)
+  if (!ignoreAgentTools && selectedAi.length > 0) {
+    checkAgentTool(selectedAi[0], AI_CHOICES, checkTool);
   }
 
   // Determine script type
@@ -105,7 +108,8 @@ export async function initCommand(options: InitOptions): Promise<void> {
     }
   }
 
-  console.log(MINT_COLOR("Selected AI assistant:"), selectedAi);
+  console.log(MINT_COLOR("Selected AI assistant(s):"), selectedAi.join(", "));
+  console.log(MINT_COLOR(`(${selectedAi.length} agent${selectedAi.length > 1 ? "s" : ""})`));
   console.log(MINT_COLOR("Selected script type:"), selectedScript);
   console.log();
 
@@ -124,8 +128,8 @@ export async function initCommand(options: InitOptions): Promise<void> {
     console.log(GREEN_COLOR.bold("Buildforce is initialized."));
 
     // Display post-setup information
-    // displayAgentSecurityNotice(selectedAi, AGENT_FOLDER_MAP);
-    displayNextSteps(projectName, projectPath, selectedAi, isHere);
+    // displayAgentSecurityNotice(selectedAi[0], AGENT_FOLDER_MAP);
+    displayNextSteps(projectName, projectPath, selectedAi[0], isHere);
   } catch (e: any) {
     await handleSetupError(e, projectPath, isHere, debug);
   }
