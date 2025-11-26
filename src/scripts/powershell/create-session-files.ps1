@@ -14,8 +14,8 @@ $ErrorActionPreference = 'Stop'
 # Validate folder name is provided
 if (-not $FolderName) {
     Write-Error "Error: -FolderName parameter is required"
-    Write-Host "Usage: ./create-spec-files.ps1 [-Json] -FolderName <semantic-slug-timestamp>" -ForegroundColor Red
-    Write-Host "Example: ./create-spec-files.ps1 -FolderName add-auth-jwt-20250122143052" -ForegroundColor Yellow
+    Write-Host "Usage: ./create-session-files.ps1 [-Json] -FolderName <semantic-slug-timestamp>" -ForegroundColor Red
+    Write-Host "Example: ./create-session-files.ps1 -FolderName add-auth-jwt-20250122143052" -ForegroundColor Yellow
     exit 1
 }
 
