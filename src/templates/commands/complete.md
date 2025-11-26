@@ -1,5 +1,5 @@
 ---
-version: "0.0.37"
+version: "0.0.38"
 description: Finalize the current spec by creating context files, updating the context repository, and clearing the spec state.
 ---
 
