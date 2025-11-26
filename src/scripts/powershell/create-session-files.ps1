@@ -14,8 +14,8 @@ $ErrorActionPreference = 'Stop'
 # Validate folder name is provided
 if (-not $FolderName) {
     Write-Error "Error: -FolderName parameter is required"
-    Write-Host "Usage: ./create-spec-files.ps1 [-Json] -FolderName <semantic-slug-timestamp>" -ForegroundColor Red
-    Write-Host "Example: ./create-spec-files.ps1 -FolderName add-auth-jwt-20250122143052" -ForegroundColor Yellow
+    Write-Host "Usage: ./create-session-files.ps1 [-Json] -FolderName <semantic-slug-timestamp>" -ForegroundColor Red
+    Write-Host "Example: ./create-session-files.ps1 -FolderName add-auth-jwt-20250122143052" -ForegroundColor Yellow
     exit 1
 }
 
@@ -82,11 +82,11 @@ if (Test-Path $planTemplate) {
     New-Item -ItemType File -Path $planFile -Force | Out-Null
 }
 
-# Update state file to track current spec across sessions
-Set-CurrentSpec $buildforceRoot $FolderName
+# Update state file to track current session across sessions
+Set-CurrentSession $buildforceRoot $FolderName
 
-# Set CURRENT_SPEC environment variable for session tracking
-$env:CURRENT_SPEC = $FolderName
+# Set CURRENT_SESSION environment variable for session tracking
+$env:CURRENT_SESSION = $FolderName
 
 if ($Json) {
     @{
@@ -100,5 +100,5 @@ if ($Json) {
     Write-Host "SPEC_FILE: $specFile"
     Write-Host "PLAN_FILE: $planFile"
     Write-Host "SPEC_DIR: $featureDir"
-    Write-Host "CURRENT_SPEC environment variable set to: $FolderName"
+    Write-Host "CURRENT_SESSION environment variable set to: $FolderName"
 }

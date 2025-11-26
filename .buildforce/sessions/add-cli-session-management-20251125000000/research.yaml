@@ -1,0 +1,272 @@
+version: "0.0.36"
+id: "add-cli-session-management-20251125000000-research"
+created: "2025-11-25"
+last_updated: "2025-11-25"
+
+summary: |
+  Research into currentSpec utilization in buildforce.json and considerations for parallel session support.
+  Discovered that currentSpec was not renamed to currentSession in the last PR (specs→sessions rename), creating naming inconsistency.
+  Analyzed state management architecture, workflow integration, and concluded that CLI-based session management with interactive picker is the optimal approach.
+
+key_findings:
+  - "currentSpec in buildforce.json tracks the active development session folder name (e.g., 'add-auth-jwt-20250122143052')"
+  - "Used by /buildforce.plan (CREATE/UPDATE mode), /buildforce.build (session resolution), /buildforce.complete (finalization)"
+  - "currentSpec should be currentSession - missed in v1.1 rename from specs→sessions terminology"
+  - "State managed via bash/PowerShell functions: get_current_spec(), set_current_spec(), clear_current_spec()"
+  - "True parallel sessions via git worktrees would require complex automation not achievable with agent-agnostic tools"
+  - "Session switching (not concurrent execution) solves 80% of use cases without worktree complexity"
+  - "CLI tool is underutilized - currently only does 'init' and 'upgrade' but capable of much more"
+  - "Slash commands can execute scripts that call CLI commands (existing pattern in plan.md, build.md)"
+  - "buildforce CLI uses inquirer for interactive prompts (agent selection during init) - same pattern applicable for session switching"
+
+file_paths:
+  primary:
+    - path: ".buildforce/buildforce.json"
+      relevance: "Stores currentSpec value (line 7) - needs rename to currentSession"
+
+    - path: "src/types.ts"
+      relevance: "BuildforceConfig interface (53-59) - missing currentSession field definition"
+
+    - path: "src/utils/config.ts"
+      relevance: "Config read/write utilities - getDefaultConfig(), readBuildforceConfig(), saveBuildforceConfig()"
+
+    - path: "src/scripts/bash/common.sh"
+      relevance: "Bash state management functions (34-108) - get_current_spec(), set_current_spec(), clear_current_spec()"
+
+    - path: "src/scripts/powershell/common.ps1"
+      relevance: "PowerShell state management functions (75-153)"
+
+    - path: "src/templates/commands/plan.md"
+      relevance: "CREATE/UPDATE mode determination (21-23, 129)"
+
+    - path: "src/templates/commands/complete.md"
+      relevance: "Session finalization and state clearing (20-22, 216)"
+
+    - path: "src/cli.ts"
+      relevance: "CLI entry point with Commander.js - init, upgrade, check, examples commands"
+
+    - path: ".buildforce/context/state-tracking.yaml"
+      relevance: "Context documentation for state tracking system"
+
+mermaid_diagrams:
+  - title: "Current State Management Architecture"
+    description: "How currentSpec flows through the spec-driven workflow"
+    diagram: |
+      ```mermaid
+      graph TD
+          A[User runs /buildforce.plan] --> B{Check currentSpec in buildforce.json}
+          B -->|null or empty| C[CREATE Mode]
+          B -->|has folder name| D[UPDATE Mode]
+
+          C --> E[create-spec-files.sh]
+          E --> F[Generate timestamp folder]
+          F --> G[Create spec.yaml + plan.yaml]
+          G --> H[set_current_spec]
+          H --> I[buildforce.json currentSpec = folder-name]
+
+          D --> J[Load existing session files]
+          J --> K[Update spec.yaml or plan.yaml]
+
+          L[User runs /buildforce.build] --> M[get_current_spec]
+          M --> N[Read from .buildforce/sessions/folder-name/]
+
+          O[User runs /buildforce.complete] --> P{Check currentSpec}
+          P -->|null| Q[ERROR: No active session]
+          P -->|has value| R[Finalize session]
+          R --> S[Create context files]
+          S --> T[clear_current_spec]
+          T --> U[buildforce.json currentSpec = null]
+
+          style I fill:#f9f,stroke:#333,stroke-width:4px
+          style U fill:#9f9,stroke:#333,stroke-width:4px
+          style B fill:#ff9,stroke:#333,stroke-width:2px
+      ```
+
+  - title: "Proposed CLI Session Management Flow"
+    description: "Interactive session picker with inquirer"
+    diagram: |
+      ```mermaid
+      graph TD
+          A[User runs: buildforce session] --> B[CLI scans .buildforce/sessions/]
+          B --> C[Read each session's spec.yaml status field]
+          C --> D{Filter sessions}
+          D -->|status = draft or in-progress| E[Include in list]
+          D -->|status = completed| F[Exclude from list]
+
+          E --> G[Load currentSession from buildforce.json]
+          G --> H[Build inquirer choices with active marker]
+          H --> I[Display interactive picker]
+
+          I --> J{User selects session}
+          J --> K[saveBuildforceConfig with new currentSession]
+          K --> L[Display confirmation message]
+
+          style I fill:#9f9,stroke:#333,stroke-width:4px
+          style K fill:#f9f,stroke:#333,stroke-width:4px
+      ```
+
+data_models:
+  - name: "BuildforceConfig (Current)"
+    description: "Existing interface in src/types.ts:53"
+    properties:
+      - name: "sessionsFolder"
+        type: "string"
+        required: true
+        description: "Default value './sessions' - already renamed from specsFolder"
+
+      - name: "framework"
+        type: "string"
+        required: true
+        description: "Framework identifier, default 'buildforce'"
+
+      - name: "aiAssistant"
+        type: "string"
+        required: false
+        description: "Selected AI assistant"
+
+      - name: "scriptType"
+        type: "string"
+        required: false
+        description: "Script type (sh or ps)"
+
+      - name: "version"
+        type: "string"
+        required: false
+        description: "CLI version"
+
+    relationships:
+      - "Used by getDefaultConfig() in src/utils/config.ts"
+      - "Saved/read by saveBuildforceConfig() and readBuildforceConfig()"
+      - "Missing currentSession field - should be added"
+
+  - name: "BuildforceConfig (Proposed)"
+    description: "Updated interface with currentSession field"
+    properties:
+      - name: "sessionsFolder"
+        type: "string"
+        required: true
+        description: "Path to sessions directory"
+
+      - name: "framework"
+        type: "string"
+        required: true
+        description: "Framework identifier"
+
+      - name: "aiAssistant"
+        type: "string"
+        required: false
+        description: "Selected AI assistant"
+
+      - name: "scriptType"
+        type: "string"
+        required: false
+        description: "Script type (sh or ps)"
+
+      - name: "version"
+        type: "string"
+        required: false
+        description: "CLI version"
+
+      - name: "currentSession"
+        type: "string | null"
+        required: true
+        description: "Active session folder name or null - renamed from currentSpec"
+
+    relationships:
+      - "Matches actual buildforce.json structure"
+      - "TypeScript interface should reflect runtime reality"
+
+  - name: "SessionMetadata (Spec YAML)"
+    description: "Metadata fields in spec.yaml used for session filtering"
+    properties:
+      - name: "id"
+        type: "string"
+        required: true
+        description: "Session folder name (e.g., 'add-auth-jwt-20250122143052')"
+
+      - name: "name"
+        type: "string"
+        required: true
+        description: "Human-readable session name"
+
+      - name: "status"
+        type: "enum: draft | in-progress | completed"
+        required: true
+        description: "Session lifecycle status - used to filter active sessions"
+
+      - name: "created"
+        type: "string (YYYY-MM-DD)"
+        required: true
+        description: "Creation date"
+
+      - name: "last_updated"
+        type: "string (YYYY-MM-DD)"
+        required: true
+        description: "Last modification date"
+
+architectural_decisions:
+  - pattern: "CLI-based session management instead of slash commands"
+    description: "Use buildforce CLI for session switching with inquirer-based interactive picker"
+    rationale: "CLI provides robust TypeScript implementation, leverages existing inquirer dependency, and offers better error handling than bash/PowerShell scripts. Slash commands can recommend CLI usage for seamless UX."
+
+  - pattern: "Derive active sessions from filesystem + spec.yaml status"
+    description: "Scan .buildforce/sessions/ and filter by status field (draft/in-progress) instead of maintaining array in buildforce.json"
+    rationale: "buildforce.json is gitignored, so array would be lost across clones. Session artifacts (spec.yaml) are committed and contain status field. Filesystem is source of truth."
+
+  - pattern: "Single 'buildforce session' command with interactive picker"
+    description: "No separate list/switch/current subcommands - just interactive selection"
+    rationale: "Follows best practices for CLI tools (like git checkout with interactive mode). Simpler UX, fewer commands to remember, discoverable through arrow keys + Enter."
+
+  - pattern: "Rename currentSpec → currentSession globally"
+    description: "Update all references across TypeScript, bash, PowerShell, templates, and docs"
+    rationale: "Fixes naming inconsistency from v1.1 (specs→sessions rename). Aligns terminology with sessionsFolder field for consistency."
+
+code_snippets:
+  - title: "Existing inquirer usage in init command"
+    language: "typescript"
+    description: "Pattern to reuse from src/lib/interactive.ts - selectWithArrows()"
+    code: |
+      import inquirer from "inquirer";
+
+      export async function selectWithArrows(
+        message: string,
+        choices: Array<{ name: string; value: string }>
+      ): Promise<string> {
+        const { selected } = await inquirer.prompt([
+          {
+            type: "list",
+            name: "selected",
+            message,
+            choices,
+          },
+        ]);
+        return selected;
+      }
+
+  - title: "Current state management in bash"
+    language: "bash"
+    description: "get_current_spec() from src/scripts/bash/common.sh:34-53"
+    code: |
+      get_current_spec() {
+          local json_file="$1/.buildforce/buildforce.json"
+
+          if [[ ! -f "$json_file" ]]; then
+              return 0
+          fi
+
+          local content=$(cat "$json_file" 2>/dev/null || echo "")
+          local spec=$(echo "$content" | grep -o '"currentSpec"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*"currentSpec"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+
+          if [[ -n "$spec" ]]; then
+              echo "$spec"
+          fi
+      }
+
+tldr:
+  - "currentSpec in buildforce.json tracks active session but should be currentSession (naming inconsistency)"
+  - "CLI tool is underutilized - can provide rich interactive session management"
+  - "Use inquirer for interactive picker (same pattern as agent selection in init)"
+  - "Derive active sessions from .buildforce/sessions/ + spec.yaml status field (draft/in-progress)"
+  - "Single command 'buildforce session' with interactive picker - no separate list/switch/current"
+  - "Rename currentSpec → currentSession across all files (TypeScript, bash, PowerShell, templates)"
+  - "No buildforce.json array needed - filesystem + status field is source of truth"

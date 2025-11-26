@@ -1,0 +1,131 @@
+version: "0.0.36"
+id: rename-create-spec-to-session-20251126000000
+name: "Rename create-spec-files scripts to create-session-files"
+type: feature
+status: completed
+created: "2025-11-26"
+last_updated: "2025-11-26"
+
+summary: |
+  Rename create-spec-files.sh and create-spec-files.ps1 to create-session-files.sh and create-session-files.ps1
+  to complete the terminology migration from "spec" to "session" across the codebase.
+
+# INTENT / PROBLEM STATEMENT
+
+problem: |
+  The codebase shows partial terminology migration: folders renamed to .buildforce/sessions/,
+  state field renamed to currentSession, and command renamed to /buildforce.plan, but the
+  underlying scripts remain named create-spec-files.sh/ps1. This creates cognitive overhead
+  where /buildforce.plan invokes create-spec-files.sh which creates folders in .buildforce/sessions/.
+  The terminology mismatch reduces clarity for developers and AI agents navigating the codebase.
+
+motivation: |
+  Completing the spec→session terminology migration improves internal consistency and reduces
+  conceptual friction. While the scripts were intentionally kept as "internal implementation details"
+  during the v9.0 /buildforce.spec to /buildforce.plan rename, maintaining naming consistency
+  across all layers (user-facing, folder structure, state tracking, AND scripts) creates a more
+  coherent developer experience. This is a low-risk breaking change with clear boundaries and
+  minimal dependencies.
+
+# GOALS
+
+primary_goals:
+  - Rename src/scripts/bash/create-spec-files.sh to create-session-files.sh
+  - Rename src/scripts/powershell/create-spec-files.ps1 to create-session-files.ps1
+  - Update all references to the renamed scripts across templates and documentation
+  - Maintain cross-platform parity between bash and PowerShell implementations
+
+secondary_goals:
+  - Update context files that document or reference the scripts
+  - Ensure no broken references remain after the rename
+  - Preserve all existing functionality without behavior changes
+
+# REQUIREMENTS
+
+functional_requirements:
+  - FR1: Bash script must be renamed from create-spec-files.sh to create-session-files.sh
+  - FR2: PowerShell script must be renamed from create-spec-files.ps1 to create-session-files.ps1
+  - FR3: plan.md template (lines 5-6) must update script invocation paths in scripts section
+  - FR4: Internal usage strings in PowerShell script must reference new filename in error messages
+  - FR5: All context documentation files must update script name references
+  - FR6: Renamed scripts must preserve all existing functionality (folder creation, template copying, state updates)
+  - FR7: Script behavior must remain identical - only filenames and internal references change
+
+non_functional_requirements:
+  - NFR1: Changes must maintain cross-platform compatibility (bash for Unix/Linux/macOS, PowerShell for Windows)
+  - NFR2: No existing workflows or command invocations should break
+  - NFR3: Rename must be atomic - all references updated together to prevent inconsistent state
+  - NFR4: Variable and function names inside scripts remain unchanged (SESSIONS_DIR already uses correct terminology)
+
+# SCOPE
+
+in_scope:
+  - Renaming src/scripts/bash/create-spec-files.sh to create-session-files.sh
+  - Renaming src/scripts/powershell/create-spec-files.ps1 to create-session-files.ps1
+  - Updating src/templates/commands/plan.md script invocation (lines 5-6)
+  - Updating usage strings in PowerShell script (lines 17-18)
+  - Updating .buildforce/context/plan-command.yaml references (5 occurrences)
+  - Updating .buildforce/context/state-tracking.yaml reference (1 occurrence)
+  - Updating .buildforce/context/_guidelines.yaml example path (1 occurrence)
+  - Updating .buildforce/context/template-versioning.yml example (1 occurrence)
+
+out_of_scope:
+  - Changes to internal script logic or functionality
+  - Updates to historical session files in .buildforce/sessions/ (read-only archives)
+  - Migration logic for user projects (no active users exist)
+  - Changes to common.sh or common.ps1 helper functions (already use correct terminology)
+  - Renaming spec.yaml or plan.yaml files within session folders
+  - Changes to template file names (spec-template.yaml, plan-template.yaml remain unchanged)
+
+# DESIGN PRINCIPLES
+
+design_principles:
+  - "Complete the terminology migration - no half measures"
+  - "Maintain cross-platform parity - bash and PowerShell changes must mirror each other"
+  - "Preserve functionality - rename only, no behavior changes"
+  - "Update atomically - all references changed together"
+
+# ACCEPTANCE CRITERIA
+
+acceptance_criteria:
+  - AC1: No occurrences of "create-spec-files.sh" remain in src/ directory (should be "create-session-files.sh")
+  - AC2: No occurrences of "create-spec-files.ps1" remain in src/ directory (should be "create-session-files.ps1")
+  - AC3: plan.md template successfully invokes renamed scripts in CREATE mode
+  - AC4: PowerShell script error messages display correct filename in usage examples
+  - AC5: Context files (.buildforce/context/) reference correct script names
+  - AC6: Renamed scripts create session folders successfully when invoked
+  - AC7: All existing script functionality preserved (folder creation, template copying, buildforce.json updates)
+
+# ASSUMPTIONS & DEPENDENCIES
+
+assumptions:
+  - No active users exist who would have custom wrappers calling create-spec-files.sh directly
+  - The 18+ historical session files referencing old script names don't need updates (read-only)
+  - No external tools or CI/CD pipelines reference the script filenames directly
+
+dependencies:
+  internal:
+    - plan.md: "Template must update script invocation paths to use new filenames"
+    - common.sh/common.ps1: "Helper functions remain unchanged, already use sessions terminology"
+    - context files: "4 context files document the scripts and need reference updates"
+  external: []
+
+# OPEN QUESTIONS
+
+open_questions: []
+
+# NOTES
+
+notes: |
+  This completes the terminology migration started in:
+  - v1.1 (rename-specs-to-sessions-20251121160000): Renamed .buildforce/specs to .buildforce/sessions
+  - v1.2 (state-tracking rename): Renamed currentSpec to currentSession in buildforce.json
+  - v9.0 (rename-spec-to-plan-20251121000000): Renamed /buildforce.spec to /buildforce.plan
+
+  The original decision to keep script names as "internal implementation details" (documented in
+  plan-command.yaml v9.0) created cognitive overhead. This change resolves that by aligning
+  script names with the rest of the codebase terminology.
+
+  Research identified 20 total file references, but only 5 require updates (2 scripts, 1 template,
+  2 primary context files). The remaining references are in historical session archives or
+  secondary documentation.

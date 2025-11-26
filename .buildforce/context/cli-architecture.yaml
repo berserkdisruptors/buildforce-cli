@@ -3,7 +3,7 @@ name: Buildforce CLI Architecture
 type: module
 status: production
 created: 2025-10-27
-last_updated: 2025-11-21
+last_updated: 2025-11-25
 
 summary: |
   Comprehensive architecture of the Buildforce CLI tool - a Node.js-based command-line
@@ -53,6 +53,8 @@ files:
     - src/commands/upgrade/index.ts
     - src/commands/upgrade/validation.ts
     - src/commands/upgrade/execution.ts
+    - src/commands/session/index.ts
+    - src/commands/session/utils.ts
     - src/lib/github.ts
     - src/lib/extract.ts
     - src/lib/local-artifacts.ts
@@ -88,6 +90,10 @@ interfaces:
     - name: "buildforce check"
       signature: "CLI diagnostic command"
       description: "Verifies installed tools (git, AI assistants, IDEs)"
+
+    - name: "buildforce session"
+      signature: "CLI interactive command"
+      description: "Displays interactive picker for switching between active development sessions"
 
 design_decisions:
   - decision: "Template distribution via GitHub Releases"
@@ -172,6 +178,11 @@ architecture_patterns:
     Diagnostic Command: buildforce check
     - Verifies tool installations (git, AI assistants, IDEs)
     - Uses StepTracker for visual output
+
+    Session Management Command: buildforce session
+    - Interactive picker for switching between active development sessions
+    - Uses inquirer for arrow key navigation and selection
+    - Derives active sessions from .buildforce/sessions/ + spec.yaml status filtering
 
   initialization_flow: |
     1. Input Validation (validation.ts)
@@ -305,6 +316,8 @@ core_modules:
     - "upgrade/index.ts - Main orchestrator for project upgrades"
     - "upgrade/validation.ts - Prerequisite validation for upgrades"
     - "upgrade/execution.ts - Selective file replacement and upgrade execution"
+    - "session/index.ts - Interactive session switcher with inquirer picker"
+    - "session/utils.ts - Session discovery and filtering utilities"
     - "check.ts - Diagnostic tool verification command"
 
   libraries:
@@ -411,6 +424,10 @@ evolution:
     date: "2025-11-21"
     changes: "Renamed folder structure from .buildforce/specs to .buildforce/sessions to better reflect its purpose as session-based development tracking. Updated BuildforceConfig interface field from specsFolder to sessionsFolder. Modified all scripts (bash and PowerShell), command templates (plan.md, complete.md), and user-facing output to reference new path. Variable names updated for consistency (SPECS_DIR→SESSIONS_DIR, $specsDir→$sessionsDir). This terminology change aligns with the ephemeral, workflow-oriented nature of development sessions."
 
+  - version: "1.9"
+    date: "2025-11-25"
+    changes: "Added 'buildforce session' CLI command with interactive picker for switching between active development sessions. Implemented session discovery from filesystem (.buildforce/sessions/) with status filtering (draft/in-progress). Renamed currentSpec to currentSession throughout codebase (TypeScript, bash, PowerShell, templates, docs) for terminology consistency. Session command uses inquirer for familiar arrow key navigation pattern, matching init command UX."
+
 related_specs:
   - "standardize-cli-title-display-20250130220000"
   - "standardize-color-scheme-mint-20251031011544"
@@ -419,6 +436,7 @@ related_specs:
   - "revert-to-prefix-naming-20251104000000"
   - "cleanup-spec-kit-references-20250122143052"
   - "rename-specs-to-sessions-20251121160000"
+  - "add-cli-session-management-20251125000000"
 
 notes: |
   Key architectural strengths:

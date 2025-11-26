@@ -1,0 +1,165 @@
+version: "0.0.36"
+id: add-cli-session-management-20251125000000
+name: "CLI-based Session Management with Interactive Picker"
+type: feature
+status: draft
+created: "2025-11-25"
+last_updated: "2025-11-25"
+
+summary: |
+  Add interactive CLI command for session management using inquirer-based picker, enabling users to view and switch between active development sessions seamlessly. Rename currentSpec to currentSession throughout the codebase for terminology consistency.
+
+# INTENT / PROBLEM STATEMENT
+
+problem: |
+  Users cannot easily switch between paused development sessions. The only way to change the active session is to manually edit .buildforce/buildforce.json and update the currentSpec field, which is error-prone and poor UX.
+  Additionally, currentSpec has an inconsistent name - it should be currentSession to align with the v1.1 terminology change (specs→sessions).
+  The buildforce CLI tool is underutilized, currently only supporting init/upgrade/check/examples commands despite being capable of rich interactive features.
+
+motivation: |
+  Developers frequently need to pause work on one feature to handle urgent tasks or switch context. Without easy session switching, they resort to manual JSON editing or create new sessions unnecessarily.
+  A CLI-based interactive session picker (similar to agent selection during init) provides familiar, intuitive UX that aligns with best practices in modern CLI tools.
+  Leveraging the existing inquirer dependency and TypeScript infrastructure ensures robust implementation with better error handling than bash/PowerShell alternatives.
+
+# GOALS
+
+primary_goals:
+  - Implement `buildforce session` CLI command with interactive picker for session switching
+  - Rename currentSpec to currentSession across all codebase (TypeScript, bash, PowerShell, templates, docs)
+  - Derive active sessions from filesystem (.buildforce/sessions/ folders with status: draft or in-progress)
+  - Provide seamless UX matching existing CLI patterns (inquirer prompts, arrow key navigation)
+
+secondary_goals:
+  - Avoid adding session array to buildforce.json (filesystem is source of truth)
+  - Keep implementation simple and focused (no worktrees, no slash commands in this phase)
+  - Follow CLI best practices (single command instead of multiple subcommands)
+
+# REQUIREMENTS
+
+functional_requirements:
+  - FR1: CLI must provide `buildforce session` command that displays interactive session picker
+  - FR2: Session picker must list all active sessions (status: draft or in-progress from spec.yaml)
+  - FR3: Currently active session (currentSession in buildforce.json) must be visually marked in the picker
+  - FR4: User must be able to navigate sessions with arrow keys and select with Enter
+  - FR5: Selected session must update buildforce.json currentSession field atomically
+  - FR6: CLI must display confirmation message after successful switch
+  - FR7: All references to currentSpec must be renamed to currentSession in TypeScript source files
+  - FR8: All references to currentSpec must be renamed to currentSession in bash scripts
+  - FR9: All references to currentSpec must be renamed to currentSession in PowerShell scripts
+  - FR10: All references to currentSpec must be renamed to currentSession in command templates
+  - FR11: BuildforceConfig interface must include currentSession field definition in src/types.ts
+  - FR12: README.md must document the `buildforce session` command with description and usage examples
+  - FR13: README must include session switching workflow example showing multi-session scenario
+
+non_functional_requirements:
+  - NFR1: Session loading must be fast (<500ms for 50 sessions) - consider index file if filesystem scan is slow
+  - NFR2: CLI command must handle edge cases gracefully (no sessions, no buildforce.json, invalid session folder)
+  - NFR3: Interactive picker must use existing inquirer dependency (no new dependencies)
+  - NFR4: Rename must maintain backward compatibility (no breaking changes to script interfaces)
+  - NFR5: All changes must follow existing code style and TypeScript conventions
+
+# SCOPE
+
+in_scope:
+  - Create new CLI command: buildforce session
+  - Implement session listing logic (scan .buildforce/sessions/, filter by status)
+  - Implement interactive picker UI using inquirer
+  - Implement session switching logic (update buildforce.json currentSession)
+  - Rename currentSpec → currentSession in src/types.ts BuildforceConfig interface
+  - Rename currentSpec → currentSession in src/utils/config.ts
+  - Rename get_current_spec → get_current_session in src/scripts/bash/common.sh
+  - Rename set_current_spec → set_current_session in src/scripts/bash/common.sh
+  - Rename clear_current_spec → clear_current_session in src/scripts/bash/common.sh
+  - Update JSON field references from "currentSpec" to "currentSession" in bash scripts
+  - Rename Get-CurrentSpec → Get-CurrentSession in src/scripts/powershell/common.ps1
+  - Rename Set-CurrentSpec → Set-CurrentSession in src/scripts/powershell/common.ps1
+  - Rename Clear-CurrentSpec → Clear-CurrentSession in src/scripts/powershell/common.ps1
+  - Update JSON field references from "currentSpec" to "currentSession" in PowerShell scripts
+  - Update src/templates/commands/plan.md references to currentSession
+  - Update src/templates/commands/complete.md references to currentSession
+  - Update .buildforce/context/state-tracking.yaml documentation
+  - Add `buildforce session` command to CLI help output (automatic via commander)
+  - Update README.md with session management documentation and usage examples
+  - Add session switching workflow examples to README
+  - Handle case where no active sessions exist (show helpful message)
+  - Handle case where buildforce.json doesn't exist (error with guidance)
+
+out_of_scope:
+  - Git worktree integration (future enhancement)
+  - Slash command wrappers for session management (future enhancement)
+  - Session creation from CLI (use /buildforce.plan)
+  - Session deletion/archiving functionality
+  - Session metadata editing (name, description)
+  - Session index file (implement only if performance testing shows filesystem scan is too slow)
+  - Migration script for existing .buildforce/buildforce.json files (rename happens naturally when scripts execute)
+  - Changes to completed sessions (status: completed) - these are intentionally filtered out
+
+# DESIGN PRINCIPLES
+
+design_principles:
+  - "Follow existing CLI patterns - use inquirer for interactive prompts like init command"
+  - "Filesystem is source of truth - derive state from .buildforce/sessions/ instead of maintaining arrays"
+  - "Single responsibility - one command does one thing well (session switching)"
+  - "Graceful degradation - handle missing files and edge cases with helpful error messages"
+  - "Minimal disruption - rename is mechanical search-and-replace with no logic changes"
+
+# ACCEPTANCE CRITERIA
+
+acceptance_criteria:
+  - AC1: Running `buildforce session` displays interactive picker with all active sessions (draft/in-progress)
+  - AC2: Currently active session is visually distinguished in the picker (e.g., "session-name (active)" or checkmark)
+  - AC3: User can navigate picker with arrow keys and select with Enter key
+  - AC4: Selecting a session updates .buildforce/buildforce.json currentSession field correctly
+  - AC5: CLI displays success message: "✓ Switched to session: {session-id}"
+  - AC6: If no active sessions exist, CLI displays helpful message: "No active sessions found. Run /buildforce.plan to create one."
+  - AC7: If buildforce.json doesn't exist, CLI displays error: "Not in a buildforce project. Run 'buildforce init' first."
+  - AC8: All TypeScript files reference currentSession (zero occurrences of currentSpec)
+  - AC9: All bash scripts use get_current_session, set_current_session, clear_current_session functions
+  - AC10: All PowerShell scripts use Get-CurrentSession, Set-CurrentSession, Clear-CurrentSession functions
+  - AC11: All JSON operations in scripts reference "currentSession" field
+  - AC12: Command templates (plan.md, complete.md) reference currentSession in documentation
+  - AC13: BuildforceConfig interface includes currentSession: string | null field
+  - AC14: Session switching works correctly with renamed functions (no functional regression)
+  - AC15: README.md includes `buildforce session` command documentation in CLI commands section
+  - AC16: README.md includes practical session switching example in workflow/examples section
+  - AC17: Running `buildforce --help` or `buildforce -h` shows session command in commands list
+
+# ASSUMPTIONS & DEPENDENCIES
+
+assumptions:
+  - spec.yaml status field is reliable for filtering active sessions (draft, in-progress, completed)
+  - Filesystem access to .buildforce/sessions/ is sufficiently fast (<500ms for reasonable session counts)
+  - Users will run `buildforce session` from the buildforce project root directory
+  - YAML parsing library (js-yaml or similar) is available for reading spec.yaml files
+  - No migration needed - scripts will naturally use new field name when they execute
+
+dependencies:
+  internal:
+    - src/lib/interactive.ts: "Provides selectWithArrows() helper for inquirer prompts"
+    - src/utils/config.ts: "Provides readBuildforceConfig() and saveBuildforceConfig() utilities"
+    - src/types.ts: "BuildforceConfig interface must be updated with currentSession field"
+    - src/scripts/bash/common.sh: "State management functions to be renamed"
+    - src/scripts/powershell/common.ps1: "State management functions to be renamed"
+    - src/templates/commands/plan.md: "References currentSession for CREATE/UPDATE mode logic"
+    - src/templates/commands/complete.md: "References currentSession for state clearing"
+
+  external:
+    - inquirer: "^10.2.3 - Interactive CLI prompts (existing dependency)"
+    - chalk: "^5.4.1 - Terminal color output (existing dependency)"
+    - js-yaml: "For parsing spec.yaml files (likely already a dependency, verify)"
+    - commander: "^12.0.0 - CLI framework for command registration"
+
+# OPEN QUESTIONS
+
+open_questions: []
+
+# NOTES
+
+notes: |
+  This implementation focuses on session management via CLI only. Worktree support and slash command integration are deferred to future phases.
+
+  The rename from currentSpec to currentSession is mechanical and should not introduce functional changes - it's purely a terminology fix to align with the v1.1 specs→sessions rename.
+
+  Session filtering by status (draft, in-progress) relies on reading spec.yaml files. If performance becomes an issue with many sessions, we can introduce an index file (.buildforce/sessions/_index.json) in a future iteration.
+
+  The CLI command follows the pattern of git checkout's interactive mode - simple, familiar, and effective.

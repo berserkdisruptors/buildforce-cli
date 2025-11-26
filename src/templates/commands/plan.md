@@ -2,8 +2,8 @@
 version: "0.0.36"
 description: Create or update a structured specification (spec.yaml) and implementation plan (plan.yaml) that capture WHAT needs to be built and HOW to build it.
 scripts:
-  sh: bash src/scripts/bash/create-spec-files.sh --folder-name "{FOLDER_NAME}" --json
-  ps: src/scripts/powershell/create-spec-files.ps1 -FolderName "{FOLDER_NAME}" -Json
+  sh: bash src/scripts/bash/create-session-files.sh --folder-name "{FOLDER_NAME}" --json
+  ps: src/scripts/powershell/create-session-files.ps1 -FolderName "{FOLDER_NAME}" -Json
 ---
 
 The user input to you can be provided directly by the agent or as a command argument - you **MUST** consider it before proceeding with the prompt (if not empty).
@@ -18,9 +18,9 @@ The text the user typed after `/buildforce.plan` in the triggering message **is*
 
 1. **Determine CREATE vs UPDATE mode**:
 
-   - Read `.buildforce/buildforce.json` file from current working directory and parse the `currentSpec` field
-   - If file exists and `currentSpec` field has a value (non-empty folder name): **UPDATE mode** - Load existing spec and plan from that folder
-   - If file doesn't exist or `currentSpec` is null/empty: **CREATE mode** - Generate new folder name and create new spec and plan
+   - Read `.buildforce/buildforce.json` file from current working directory and parse the `currentSession` field
+   - If file exists and `currentSession` field has a value (non-empty folder name): **UPDATE mode** - Load existing spec and plan from that folder
+   - If file doesn't exist or `currentSession` is null/empty: **CREATE mode** - Generate new folder name and create new spec and plan
 
 2. **For CREATE mode (new spec)**:
 
@@ -126,7 +126,7 @@ The text the user typed after `/buildforce.plan` in the triggering message **is*
 
    **Step 3a: Load existing artifacts and research context**:
 
-   - Read folder name from `.buildforce/buildforce.json` (`currentSpec` field)
+   - Read folder name from `.buildforce/buildforce.json` (`currentSession` field)
    - Load both existing spec.yaml and plan.yaml from `.buildforce/sessions/{folder-name}/`
    - **Read research.yaml if it exists**:
      - Path: `.buildforce/sessions/{folder-name}/research.yaml`

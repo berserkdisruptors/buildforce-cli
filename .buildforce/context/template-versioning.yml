@@ -123,7 +123,7 @@ interfaces:
         version: "0.1.0"
         description: Create or update a structured specification
         scripts:
-          sh: src/scripts/bash/create-spec-files.sh
+          sh: src/scripts/bash/create-session-files.sh
         ---
 
 evolution:

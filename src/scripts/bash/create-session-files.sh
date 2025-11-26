@@ -96,11 +96,11 @@ else
     touch "$PLAN_FILE"
 fi
 
-# Update state file to track current spec across sessions
-set_current_spec "$BUILDFORCE_ROOT" "$FOLDER_NAME"
+# Update state file to track current session across sessions
+set_current_session "$BUILDFORCE_ROOT" "$FOLDER_NAME"
 
-# Set CURRENT_SPEC environment variable for session tracking
-export CURRENT_SPEC="$FOLDER_NAME"
+# Set CURRENT_SESSION environment variable for session tracking
+export CURRENT_SESSION="$FOLDER_NAME"
 
 if $JSON_MODE; then
     printf '{"FOLDER_NAME":"%s","SPEC_FILE":"%s","PLAN_FILE":"%s","SPEC_DIR":"%s"}\n' \
@@ -110,5 +110,5 @@ else
     echo "SPEC_FILE: $SPEC_FILE"
     echo "PLAN_FILE: $PLAN_FILE"
     echo "SPEC_DIR: $FEATURE_DIR"
-    echo "CURRENT_SPEC environment variable set to: $FOLDER_NAME"
+    echo "CURRENT_SESSION environment variable set to: $FOLDER_NAME"
 fi

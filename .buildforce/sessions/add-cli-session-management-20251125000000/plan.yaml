@@ -1,0 +1,362 @@
+version: "0.0.36"
+id: add-cli-session-management-20251125000000-plan
+name: "Implementation Plan for CLI-based Session Management"
+spec_id: "add-cli-session-management-20251125000000"
+type: implementation-plan
+status: draft
+created: "2025-11-25"
+last_updated: "2025-11-25"
+
+# ARCHITECTURE OVERVIEW
+
+approach: |
+  This implementation follows a two-phase approach: (1) add the new CLI session command with interactive picker, (2) rename currentSpec to currentSession across all files.
+
+  Phase 1 leverages existing patterns from the init command - using inquirer for interactive prompts, chalk for colored output, and the established config utilities for reading/writing buildforce.json.
+
+  Phase 2 is a mechanical rename operation across TypeScript, bash, PowerShell, and template files. Function names and JSON field references will be updated systematically to maintain consistency.
+
+  Session discovery uses filesystem scanning (.buildforce/sessions/) combined with YAML parsing to read spec.yaml status fields, filtering for draft and in-progress sessions only.
+
+technology_stack:
+  - "inquirer: ^10.2.3 - Interactive CLI prompts with arrow key navigation"
+  - "chalk: ^5.4.1 - Terminal color output for success messages and active session markers"
+  - "commander: ^12.0.0 - CLI framework for registering the session command"
+  - "fs-extra: Filesystem operations for scanning sessions directory"
+  - "js-yaml or yaml: YAML parsing for reading spec.yaml files (verify dependency exists)"
+
+decisions:
+  - decision: "Use inquirer for interactive session picker"
+    rationale: "Already used in init command (src/lib/interactive.ts selectWithArrows), provides consistent UX, handles arrow keys and Enter naturally"
+
+  - decision: "Derive active sessions from filesystem + spec.yaml status field"
+    rationale: "buildforce.json is gitignored so array would be lost across clones. Session artifacts are committed and contain status field. Filesystem is source of truth."
+
+  - decision: "Filter sessions by status: draft or in-progress only"
+    rationale: "Completed sessions are archived and shouldn't appear in active session picker. Users only switch between work-in-progress sessions."
+
+  - decision: "Single 'buildforce session' command with no subcommands"
+    rationale: "Follows CLI best practices (git checkout pattern). Simpler UX, fewer commands to remember, action is obvious (pick a session)."
+
+  - decision: "Rename currentSpec → currentSession across all files"
+    rationale: "Fixes naming inconsistency from v1.1 (specs→sessions rename). Aligns with sessionsFolder field. No functional changes, just terminology cleanup."
+
+# FILE STRUCTURE
+
+files_to_create:
+  - src/commands/session/index.ts
+  - src/commands/session/utils.ts
+
+files_to_modify:
+  - path: "src/cli.ts"
+    change_type: "edit"
+    description: "Add .command('session') registration with sessionCommand import"
+
+  - path: "src/types.ts"
+    change_type: "edit"
+    description: "Add currentSession: string | null field to BuildforceConfig interface"
+
+  - path: "src/utils/config.ts"
+    change_type: "edit"
+    description: "No changes needed - uses BuildforceConfig interface which will have new field"
+
+  - path: "src/scripts/bash/common.sh"
+    change_type: "edit"
+    description: "Rename functions: get_current_spec → get_current_session, set_current_spec → set_current_session, clear_current_spec → clear_current_session. Update JSON field references from currentSpec to currentSession."
+
+  - path: "src/scripts/bash/create-spec-files.sh"
+    change_type: "edit"
+    description: "Update set_current_spec call to set_current_session"
+
+  - path: "src/scripts/powershell/common.ps1"
+    change_type: "edit"
+    description: "Rename functions: Get-CurrentSpec → Get-CurrentSession, Set-CurrentSpec → Set-CurrentSession, Clear-CurrentSpec → Clear-CurrentSession. Update JSON field references."
+
+  - path: "src/scripts/powershell/create-spec-files.ps1"
+    change_type: "edit"
+    description: "Update Set-CurrentSpec call to Set-CurrentSession"
+
+  - path: "src/templates/commands/plan.md"
+    change_type: "edit"
+    description: "Replace all currentSpec references with currentSession in documentation and logic descriptions"
+
+  - path: "src/templates/commands/complete.md"
+    change_type: "edit"
+    description: "Replace all currentSpec references with currentSession"
+
+  - path: ".buildforce/context/state-tracking.yaml"
+    change_type: "edit"
+    description: "Update documentation to reference currentSession instead of currentSpec"
+
+  - path: "README.md"
+    change_type: "edit"
+    description: "Add buildforce session command documentation and session switching workflow examples"
+
+# IMPLEMENTATION PHASES
+
+phase_1:
+  name: "CLI Session Command Implementation"
+  description: |
+    Create the new 'buildforce session' CLI command with interactive picker functionality.
+    This phase adds the core feature without touching the rename logic.
+
+  tasks:
+    - [ ] Create src/commands/session/utils.ts with session discovery logic
+      spec_refs: [FR2, NFR1]
+      files: [src/commands/session/utils.ts]
+      notes: "Implement getActiveSessions() that scans .buildforce/sessions/, reads spec.yaml files, filters by status (draft/in-progress), and returns session metadata array"
+
+    - [ ] Create src/commands/session/index.ts with interactive picker
+      spec_refs: [FR1, FR3, FR4, FR5, FR6, NFR2, NFR3]
+      files: [src/commands/session/index.ts]
+      notes: "Implement sessionCommand() that calls getActiveSessions(), loads currentSession from buildforce.json, builds inquirer choices with active marker, displays picker, handles selection, calls saveBuildforceConfig(), shows confirmation"
+
+    - [ ] Register session command in src/cli.ts
+      spec_refs: [FR1]
+      files: [src/cli.ts]
+      notes: "Add .command('session').description('Manage development sessions').action(sessionCommand)"
+
+    - [ ] Handle edge cases (no sessions, no buildforce.json)
+      spec_refs: [NFR2, AC6, AC7]
+      files: [src/commands/session/index.ts]
+      notes: "Check buildforce.json exists (error if not), check sessions exist (helpful message if not), validate session folder exists before switching"
+
+  validation:
+    - [ ] All phase_1 tasks completed
+    - [ ] Code compiles without errors (npm run build)
+    - [ ] Manually test: buildforce session displays picker with active sessions
+    - [ ] Manually test: Selecting session updates buildforce.json currentSession
+    - [ ] Manually test: Edge cases handled gracefully
+    - [ ] Spec requirements covered: [FR1, FR2, FR3, FR4, FR5, FR6, NFR1, NFR2, NFR3]
+
+phase_2:
+  name: "Rename currentSpec to currentSession"
+  description: |
+    Systematic rename of currentSpec to currentSession across all files.
+    This is a mechanical change with no logic modifications.
+
+  tasks:
+    - [ ] Update BuildforceConfig interface in src/types.ts
+      spec_refs: [FR7, FR11, AC13]
+      files: [src/types.ts]
+      notes: "Add currentSession: string | null field (remove currentSpec if it exists, or add if missing)"
+
+    - [ ] Rename bash functions in src/scripts/bash/common.sh
+      spec_refs: [FR8, AC9, AC11]
+      files: [src/scripts/bash/common.sh]
+      notes: "Rename: get_current_spec → get_current_session, set_current_spec → set_current_session, clear_current_spec → clear_current_session. Update all 'currentSpec' string literals to 'currentSession' in JSON operations"
+
+    - [ ] Update bash script callers
+      spec_refs: [FR8, AC9]
+      files: [src/scripts/bash/create-spec-files.sh]
+      notes: "Change set_current_spec call to set_current_session"
+
+    - [ ] Rename PowerShell functions in src/scripts/powershell/common.ps1
+      spec_refs: [FR9, AC10, AC11]
+      files: [src/scripts/powershell/common.ps1]
+      notes: "Rename: Get-CurrentSpec → Get-CurrentSession, Set-CurrentSpec → Set-CurrentSession, Clear-CurrentSpec → Clear-CurrentSession. Update JSON field references"
+
+    - [ ] Update PowerShell script callers
+      spec_refs: [FR9, AC10]
+      files: [src/scripts/powershell/create-spec-files.ps1]
+      notes: "Change Set-CurrentSpec call to Set-CurrentSession"
+
+    - [ ] Update command templates
+      spec_refs: [FR10, AC12]
+      files: [src/templates/commands/plan.md, src/templates/commands/complete.md]
+      notes: "Search and replace all 'currentSpec' with 'currentSession' in both files"
+
+    - [ ] Update context documentation
+      spec_refs: [FR10]
+      files: [.buildforce/context/state-tracking.yaml]
+      notes: "Update all references to currentSpec to use currentSession terminology"
+
+  validation:
+    - [ ] All phase_2 tasks completed
+    - [ ] Code compiles without errors (npm run build)
+    - [ ] Grep shows zero occurrences of 'currentSpec' in TypeScript files: grep -r 'currentSpec' src/**/*.ts
+    - [ ] Grep shows zero occurrences of 'get_current_spec' in bash files: grep -r 'get_current_spec' src/scripts/bash/
+    - [ ] Grep shows zero occurrences of 'Get-CurrentSpec' in PowerShell files: grep -r 'Get-CurrentSpec' src/scripts/powershell/
+    - [ ] Manually test: /buildforce.plan still works with renamed functions
+    - [ ] Manually test: /buildforce.complete still works with renamed functions
+    - [ ] Spec requirements covered: [FR7, FR8, FR9, FR10, FR11, NFR4, NFR5, AC8, AC9, AC10, AC11, AC12, AC13, AC14]
+
+phase_3:
+  name: "Documentation Updates"
+  description: |
+    Update README.md with session management documentation and examples.
+    Ensure CLI help output reflects the new command (automatic via commander).
+
+  tasks:
+    - [ ] Add session command documentation to README.md CLI Commands section
+      spec_refs: [FR12, AC15]
+      files: [README.md]
+      notes: "Document 'buildforce session' with description: 'Interactively switch between active development sessions'. Include basic usage example."
+
+    - [ ] Add session switching workflow example to README.md
+      spec_refs: [FR13, AC16]
+      files: [README.md]
+      notes: "Add practical example showing: (1) Create multiple sessions with /buildforce.plan, (2) Use buildforce session to switch, (3) Continue work on different feature. Show the interactive picker output."
+
+    - [ ] Verify CLI help displays session command
+      spec_refs: [AC17]
+      files: []
+      notes: "Run 'buildforce --help' and confirm 'session' appears in commands list. Commander automatically adds registered commands to help output."
+
+  validation:
+    - [ ] All phase_3 tasks completed
+    - [ ] README.md includes buildforce session in CLI commands section
+    - [ ] README.md includes session switching workflow example with clear steps
+    - [ ] Running 'buildforce --help' shows session command in output
+    - [ ] Documentation is clear, concise, and follows existing README style
+    - [ ] Spec requirements covered: [FR12, FR13, AC15, AC16, AC17]
+
+# DEVIATION LOG
+
+deviations:
+  - original: "Use dynamic import for fs-extra: const fs = await import('fs-extra')"
+    actual: "Use static import at top of file: import fs from 'fs-extra'"
+    reason: "Dynamic import of fs-extra in ESM context doesn't expose existsSync method directly. Using static import matches the pattern used in utils.ts and works correctly with the ESM module resolution."
+    affected_files: [src/commands/session/index.ts]
+    phase: "phase_1"
+    task: "Create src/commands/session/index.ts with interactive picker"
+
+  - original: "No customization of inquirer status text"
+    actual: "Added spinner configuration with empty frames to INQUIRER_THEME"
+    reason: "User feedback: The default 'idle' and 'done' status text from @inquirer/prompts appeared next to the question, creating visual clutter. Setting spinner.frames to [''] hides this status indicator for cleaner UX."
+    affected_files: [src/constants.ts]
+    phase: "iteration_2"
+    task: "Remove annoying idle/done status text from session picker"
+
+# GUIDELINE COMPLIANCE
+
+guideline_compliance:
+  strict_validations: []
+  recommended_validations: []
+
+# TESTING GUIDANCE
+
+testing:
+  automated_tests:
+    - test_file: "None (CLI interactive command, manual testing required)"
+      what: "Session picker interaction and state updates"
+      command: "npm run build && buildforce session"
+
+  manual_tests:
+    - scenario: "Interactive session switching"
+      steps: |
+        1. Create multiple sessions:
+           - /buildforce.plan "Feature A" (creates session A, status: draft)
+           - /buildforce.plan "Feature B" (creates session B, status: draft)
+           - /buildforce.plan "Feature C" (creates session C, status: draft)
+
+        2. Run: buildforce session
+           - Verify picker displays all 3 sessions
+           - Verify currently active session is marked (e.g., "● Feature C")
+
+        3. Navigate with arrow keys to Feature A, press Enter
+           - Verify success message: "✓ Switched to session: feature-a-20251125..."
+           - Verify .buildforce/buildforce.json currentSession field is updated
+
+        4. Run /buildforce.plan again
+           - Verify UPDATE mode is triggered (loading Feature A session)
+
+    - scenario: "Edge case: No active sessions"
+      steps: |
+        1. Complete all sessions (/buildforce.complete on each)
+        2. Run: buildforce session
+        3. Verify message: "No active sessions found. Run /buildforce.plan to create one."
+
+    - scenario: "Edge case: Not in buildforce project"
+      steps: |
+        1. cd to directory without .buildforce/
+        2. Run: buildforce session
+        3. Verify error: "Not in a buildforce project. Run 'buildforce init' first."
+
+    - scenario: "Verify rename doesn't break workflows"
+      steps: |
+        1. After Phase 2 rename is complete
+        2. Run: /buildforce.plan "Test feature"
+        3. Verify spec and plan are created correctly
+        4. Run: buildforce session
+        5. Verify picker works with renamed currentSession field
+        6. Run: /buildforce.complete
+        7. Verify completion clears currentSession correctly
+
+# VALIDATION CRITERIA
+
+success_metrics:
+  - "buildforce session command available in CLI help output"
+  - "Interactive picker displays and functions correctly"
+  - "Session switching updates buildforce.json atomically"
+  - "Zero occurrences of 'currentSpec' in codebase after Phase 2"
+  - "All existing workflows (plan, build, complete) continue functioning"
+
+spec_coverage:
+  - FR1: "⏳ Phase 1: Task 2 (CLI session command)"
+  - FR2: "⏳ Phase 1: Task 1 (session discovery logic)"
+  - FR3: "⏳ Phase 1: Task 2 (active session marker)"
+  - FR4: "⏳ Phase 1: Task 2 (arrow key navigation)"
+  - FR5: "⏳ Phase 1: Task 2 (update buildforce.json)"
+  - FR6: "⏳ Phase 1: Task 2 (confirmation message)"
+  - FR7: "⏳ Phase 2: Tasks 1-7 (rename in TypeScript)"
+  - FR8: "⏳ Phase 2: Tasks 2-3 (rename in bash)"
+  - FR9: "⏳ Phase 2: Tasks 4-5 (rename in PowerShell)"
+  - FR10: "⏳ Phase 2: Tasks 6-7 (rename in templates)"
+  - FR11: "⏳ Phase 2: Task 1 (BuildforceConfig interface)"
+  - FR12: "⏳ Phase 3: Task 1 (README CLI commands documentation)"
+  - FR13: "⏳ Phase 3: Task 2 (README session workflow example)"
+  - NFR1: "⏳ Phase 1: Task 1 (fast session loading)"
+  - NFR2: "⏳ Phase 1: Task 4 (edge case handling)"
+  - NFR3: "⏳ Phase 1: Task 2 (use existing inquirer)"
+  - NFR4: "⏳ Phase 2: All tasks (backward compatible)"
+  - NFR5: "⏳ All phases (follow code style)"
+
+# PROGRESS SUMMARY
+
+overall_progress:
+  phase_1: "0/4 tasks completed"
+  phase_2: "0/7 tasks completed"
+  phase_3: "0/3 tasks completed"
+
+current_status: |
+  Planning complete. Ready to begin implementation with Phase 1.
+
+next_immediate_steps:
+  - "Implement getActiveSessions() utility function"
+  - "Create interactive picker in sessionCommand()"
+  - "Test CLI session command functionality"
+
+# RISKS & CONSIDERATIONS
+
+risks:
+  - risk: "Session loading performance with many sessions (>50)"
+    mitigation: "Phase 1 implementation includes filesystem scan. If testing shows performance issues (>500ms), add session index file in follow-up PR."
+
+  - risk: "Missing YAML parsing dependency"
+    mitigation: "Verify js-yaml or yaml package exists in package.json before implementing. If missing, add to devDependencies."
+
+  - risk: "Rename might miss some occurrences of currentSpec"
+    mitigation: "Use comprehensive grep searches in validation phase. Search patterns: 'currentSpec', 'current_spec', 'CurrentSpec', 'get_current_spec', 'Get-CurrentSpec'"
+
+  - risk: "Breaking changes to script interfaces"
+    mitigation: "Function signature stays the same (parameters unchanged), only names change. Scripts that call these functions are updated in Phase 2. No external callers exist."
+
+# NOTES
+
+general_notes:
+  - "This feature enables session switching without slash commands or worktrees - both deferred to future phases"
+  - "The CLI approach leverages existing TypeScript infrastructure for robust error handling"
+  - "Rename is mechanical and low-risk - no logic changes, just terminology cleanup"
+
+lessons_learned:
+  - "CLI tools can provide richer UX than slash commands for certain operations (interactive pickers, error handling)"
+  - "Filesystem as source of truth eliminates state synchronization issues"
+
+future_enhancements:
+  - "Session index file (.buildforce/sessions/_index.json) for faster loading if needed"
+  - "Git worktree integration for true parallel development"
+  - "Slash command wrapper that recommends buildforce session usage"
+  - "Session metadata display (show spec summary in picker)"
+  - "Session archiving/deletion functionality"
+  - "Session renaming capability"
