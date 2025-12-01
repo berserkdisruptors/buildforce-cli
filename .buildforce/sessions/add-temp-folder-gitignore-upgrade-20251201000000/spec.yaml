@@ -1,0 +1,134 @@
+version: "0.0.38"
+id: add-temp-folder-gitignore-upgrade-20251201000000
+name: "Add .buildforce/.temp to .gitignore with Upgrade Support"
+type: feature
+status: in-progress
+created: "2025-12-01"
+last_updated: "2025-12-01"
+
+summary: |
+  Add .buildforce/.temp folder to the .gitignore file during init process and implement upgrade logic
+  to ensure existing projects receive this new ignore entry when running buildforce upgrade.
+
+# INTENT / PROBLEM STATEMENT
+
+problem: |
+  The .buildforce/.temp folder is used for temporary files (research cache) but is not currently
+  excluded from version control. This means temporary research cache files could accidentally be
+  committed to git, polluting the repository with ephemeral data that should not be tracked.
+
+  Additionally, the upgrade process does not currently modify .gitignore, so existing projects
+  upgrading to newer CLI versions won't automatically receive new ignore entries, requiring manual
+  user intervention.
+
+motivation: |
+  By adding .buildforce/.temp to .gitignore during init and implementing upgrade logic to update
+  existing .gitignore files, we ensure that temporary files are properly excluded from version
+  control across all projects, both new and existing. This prevents accidental commits of cache
+  files and provides a better user experience during upgrades.
+
+# GOALS
+
+primary_goals:
+  - Add .buildforce/.temp to .gitignore during buildforce init process
+  - Implement .gitignore update logic in buildforce upgrade command
+  - Ensure backward compatibility with projects that don't have .temp entry
+
+secondary_goals:
+  - Maintain consistent .gitignore update patterns between init and upgrade
+  - Provide clear debug logging for .gitignore updates during upgrade
+  - Follow existing code patterns from init's .gitignore update implementation
+
+# REQUIREMENTS
+
+functional_requirements:
+  - FR1: Init command must append .buildforce/.temp to .gitignore after creating buildforce.json
+  - FR2: Init command must check if .buildforce/.temp already exists in .gitignore before appending
+  - FR3: Upgrade command must update .gitignore to include .buildforce/.temp if not already present
+  - FR4: Upgrade command must preserve all existing .gitignore entries and formatting
+  - FR5: Both init and upgrade must handle the case where .gitignore file doesn't exist gracefully
+  - FR6: .gitignore updates must be idempotent (safe to run multiple times)
+
+non_functional_requirements:
+  - NFR1: .gitignore update logic must follow existing code patterns from src/commands/init/setup.ts:198-226
+  - NFR2: Debug logging must be provided for .gitignore updates during upgrade (matching init's debug behavior)
+  - NFR3: Implementation must not break existing .gitignore update logic for buildforce.json entry
+  - NFR4: Code must be maintainable and consistent with existing init setup patterns
+
+# SCOPE
+
+in_scope:
+  - Modify src/commands/init/setup.ts to add .buildforce/.temp to .gitignore
+  - Create .gitignore update logic in src/commands/upgrade/execution.ts
+  - Add debug logging for .gitignore updates during upgrade
+  - Test with existing projects that have various .gitignore configurations
+  - Ensure backward compatibility with projects without .temp entry
+
+out_of_scope:
+  - Adding other new entries to .gitignore beyond .buildforce/.temp
+  - Creating .gitignore file if it doesn't exist (both init and upgrade skip if missing)
+  - Modifying .gitignore handling for entries other than .temp and buildforce.json
+  - Changing the existing .gitignore update logic for buildforce.json entry
+  - Implementing .gitignore template distribution in release packages
+
+# DESIGN PRINCIPLES
+
+design_principles:
+  - "Reuse existing .gitignore update patterns from init command"
+  - "Maintain idempotent operations—safe to run multiple times"
+  - "Follow existing debug logging patterns for transparency"
+  - "Preserve backward compatibility with existing projects"
+
+# ACCEPTANCE CRITERIA
+
+acceptance_criteria:
+  - AC1: Running buildforce init on a new project adds both .buildforce/buildforce.json and .buildforce/.temp to .gitignore
+  - AC2: Running buildforce init when .buildforce/.temp already exists in .gitignore does not duplicate the entry
+  - AC3: Running buildforce upgrade on an existing project adds .buildforce/.temp to .gitignore if not already present
+  - AC4: Running buildforce upgrade when .buildforce/.temp already exists in .gitignore does not duplicate the entry
+  - AC5: Debug mode (--debug flag) logs .gitignore update operations during upgrade
+  - AC6: All existing .gitignore entries are preserved during init and upgrade operations
+  - AC7: If .gitignore doesn't exist, both init and upgrade skip the update step without errors
+
+# ASSUMPTIONS & DEPENDENCIES
+
+assumptions:
+  - Users have write permissions to .gitignore file in their project root
+  - .buildforce/.temp folder is used for temporary files that should not be version controlled
+  - The .gitignore file uses standard gitignore format (one pattern per line)
+  - Research cache functionality already creates .buildforce/.temp folder
+
+dependencies:
+  internal:
+    - src/commands/init/setup.ts: "Existing .gitignore update logic for buildforce.json"
+    - src/commands/upgrade/execution.ts: "Upgrade execution flow where .gitignore update will be added"
+    - src/utils/config.ts: "Configuration utilities (may need for path resolution)"
+  external:
+    - fs-extra: "^11.2.0 - File system operations for reading/writing .gitignore"
+    - chalk: "^5.4.1 - Debug logging output"
+
+# OPEN QUESTIONS
+
+open_questions: []
+
+# RESOLVED QUESTIONS
+resolved_questions:
+  - question: "Should upgrade's .gitignore update happen before or after template/script replacement in the execution flow?"
+    resolution: "After template/script replacement but before cleanup (after line 310 in upgrade/execution.ts). This maintains logical cohesion with buildforce.json update and mirrors init's pattern of updating .gitignore immediately after creating config."
+
+  - question: "Should we add this update to the StepTracker in upgrade, or keep it silent like in init?"
+    resolution: "Keep silent, only log with --debug flag. This matches init's behavior where .gitignore updates are housekeeping tasks that don't need user visibility unless debugging."
+
+  - question: "Do we need to handle .gitignore files with Windows line endings (CRLF) differently?"
+    resolution: "No explicit handling needed. The .includes() method is line-ending agnostic and will work correctly with both LF and CRLF line endings."
+
+# NOTES
+
+notes: |
+  Research findings show that .gitignore is currently only updated during init (src/commands/init/setup.ts:198-226)
+  and not during upgrade. This is the first time we're implementing .gitignore updates in the upgrade path.
+
+  The existing init logic handles backward compatibility by replacing legacy .buildforce/.current-spec entries,
+  so we should follow similar patterns for consistency.
+
+  The .temp folder is used by the research persistence feature to cache research findings between commands.

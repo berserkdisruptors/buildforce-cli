@@ -1,0 +1,337 @@
+version: "0.0.38"
+# Plan Template for /buildforce.build Agent Execution
+# This template is optimized for AI agent consumption during /buildforce.build commands
+# It provides checkbox-based progress tracking, deviation logging, and spec traceability
+
+id: add-temp-folder-gitignore-upgrade-20251201000000-plan
+name: "Implementation Plan for Add .buildforce/.temp to .gitignore with Upgrade Support"
+spec_id: "add-temp-folder-gitignore-upgrade-20251201000000"
+type: implementation-plan
+status: in-progress
+created: "2025-12-01"
+last_updated: "2025-12-01"
+
+# ARCHITECTURE OVERVIEW
+# Describe the high-level implementation approach and key technical decisions.
+
+approach: |
+  This implementation follows the existing .gitignore update pattern established in the init command.
+  We will modify two files: src/commands/init/setup.ts to add .buildforce/.temp during init, and
+  src/commands/upgrade/execution.ts to add .buildforce/.temp during upgrade.
+
+  The approach is straightforward:
+  1. In init, extend the existing .gitignore update logic (lines 198-226) to also check for and add .buildforce/.temp
+  2. In upgrade, add a new .gitignore update step after the config update step, following init's patterns
+  3. Both implementations will be idempotent and include debug logging
+
+technology_stack:
+  - fs-extra (v11.2.0) - File system operations for reading/writing .gitignore
+  - chalk (v5.4.1) - Colored console output for debug logging
+  - path (Node.js built-in) - Path resolution for .gitignore location
+
+decisions:
+  - decision: "Add .temp entry in the same .gitignore update block as buildforce.json in init"
+    rationale: "Keeps related .gitignore updates together, reduces code duplication, and maintains consistency with existing patterns. Both entries are internal .buildforce configuration that should not be version controlled."
+
+  - decision: "Place upgrade's .gitignore update after config update step (after line 310)"
+    rationale: "Following the flow in upgrade/execution.ts, the config update happens at line 304-310. Placing .gitignore update after ensures buildforce.json exists before we add .gitignore entries. This maintains logical flow: create/update config → ensure it's ignored."
+
+  - decision: "Keep .gitignore update silent in upgrade (no StepTracker), matching init's behavior"
+    rationale: "Init's .gitignore update is silent (only logged with --debug). Upgrade should match this behavior for consistency. This is a housekeeping task that doesn't need user visibility unless debugging."
+
+  - decision: "Skip .gitignore update if file doesn't exist, without creating it"
+    rationale: "Matches init's behavior - if no .gitignore exists, we skip the update. Users who don't use git don't need .gitignore created for them. This is a safe default that respects user's project setup."
+
+# FILE STRUCTURE
+# List all files to be created or modified during implementation
+
+files_to_create: []
+
+files_to_modify:
+  - path: "src/commands/init/setup.ts"
+    change_type: "edit"
+    description: "Add .buildforce/.temp to the .gitignore update logic in the existing block (lines 198-226). Check if .temp exists before appending, similar to buildforce.json check."
+
+  - path: "src/commands/upgrade/execution.ts"
+    change_type: "edit"
+    description: "Add new .gitignore update logic after the config update step (after line 310). Implement idempotent check for .buildforce/.temp and append if missing. Include debug logging."
+
+# IMPLEMENTATION PHASES
+# Break down the implementation into logical phases with checkbox-based task tracking
+# Use [ ] for pending tasks and [x] for completed tasks
+# Each task should link back to spec requirements via spec_refs
+
+phase_1:
+  name: "Update Init Command"
+  description: |
+    Modify the init command's .gitignore update logic to include .buildforce/.temp entry.
+    This phase extends the existing logic at lines 198-226 in src/commands/init/setup.ts.
+
+  tasks:
+    - [x] Read existing .gitignore update logic in src/commands/init/setup.ts:198-226
+      spec_refs: [FR1, FR2, NFR1]
+      files: [src/commands/init/setup.ts]
+      notes: "Understand current pattern: check if file exists, read content, check for buildforce.json, append if missing"
+
+    - [x] Add .buildforce/.temp check and append logic after buildforce.json update
+      spec_refs: [FR1, FR2, FR6]
+      files: [src/commands/init/setup.ts]
+      notes: "Implement idempotent check: if (!gitignoreContent.includes('.buildforce/.temp')) { append }. Add debug logging for .temp update. IMPLEMENTATION: Added .temp check after buildforce.json update at lines 228-236. Used same pattern with modified flag to avoid multiple file writes."
+
+    - [x] Test init command with various .gitignore states
+      spec_refs: [AC1, AC2, AC7]
+      files: []
+      notes: "Test cases: (1) fresh project, (2) .temp already exists, (3) no .gitignore file. Verify AC1, AC2, AC7. COMPLETED - User tested successfully."
+
+  validation:
+    - [x] All phase_1 tasks completed
+    - [x] Code compiles without errors
+    - [x] Init adds both .buildforce/buildforce.json and .buildforce/.temp to .gitignore
+    - [x] Init doesn't duplicate .temp entry if it already exists
+    - [x] Spec requirements covered: [FR1, FR2, FR6, NFR1, AC1, AC2, AC7]
+
+phase_2:
+  name: "Update Upgrade Command"
+  description: |
+    Add .gitignore update logic to the upgrade command. This will be placed after the
+    config update step in src/commands/upgrade/execution.ts (after line 310).
+
+  tasks:
+    - [x] Add .gitignore update logic after config update in upgrade/execution.ts
+      spec_refs: [FR3, FR4, FR5, NFR2]
+      files: [src/commands/upgrade/execution.ts]
+      notes: "Insert new code block after line 310 (config update). Follow init's pattern: check if .gitignore exists, read content, check for .temp, append if missing. Include debug logging with chalk.gray(). IMPLEMENTATION: Added .gitignore update logic at lines 312-326, immediately after config update."
+
+    - [x] Implement idempotent .gitignore check for .buildforce/.temp
+      spec_refs: [FR6, NFR3]
+      files: [src/commands/upgrade/execution.ts]
+      notes: "Use: if (!gitignoreContent.includes('.buildforce/.temp')) { ... }. Preserve all existing entries. IMPLEMENTATION: Check implemented at line 318 with .includes() method."
+
+    - [x] Add debug logging for .gitignore updates during upgrade
+      spec_refs: [NFR2]
+      files: [src/commands/upgrade/execution.ts]
+      notes: "Mirror init's debug pattern: if (debug) { console.log(chalk.gray('Updated .gitignore: added .buildforce/.temp')); } IMPLEMENTATION: Debug logging added at lines 322-324."
+
+    - [x] Test upgrade command with various .gitignore states
+      spec_refs: [AC3, AC4, AC5, AC6, AC7]
+      files: []
+      notes: "Test cases: (1) project without .temp entry, (2) project with .temp already, (3) no .gitignore file, (4) --debug flag shows logs. Verify AC3-AC7. COMPLETED - User tested successfully."
+
+  validation:
+    - [x] All phase_2 tasks completed
+    - [x] Code compiles without errors
+    - [x] Upgrade adds .buildforce/.temp to .gitignore if not present
+    - [x] Upgrade doesn't duplicate .temp entry if it already exists
+    - [x] Debug mode logs .gitignore update operations
+    - [x] Spec requirements covered: [FR3, FR4, FR5, FR6, NFR2, NFR3, AC3, AC4, AC5, AC6, AC7]
+
+phase_3:
+  name: "Integration Testing and Edge Cases"
+  description: |
+    Test the complete implementation across init and upgrade workflows, including edge cases
+    like Windows line endings, partial .gitignore entries, and backward compatibility.
+
+  tasks:
+    - [x] Test end-to-end workflow: init → modify .gitignore → upgrade
+      spec_refs: [AC1, AC3, AC6]
+      files: []
+      notes: "Scenario: Run init, manually add entries to .gitignore, run upgrade. Verify both buildforce.json and .temp entries are present and no duplication occurs. COMPLETED - User tested successfully."
+
+    - [x] Test backward compatibility with existing projects
+      spec_refs: [FR5, FR6, AC7]
+      files: []
+      notes: "Test with projects that: (1) have old buildforce.json entry but no .temp, (2) have neither entry, (3) have both entries already. COMPLETED - User tested successfully."
+
+    - [x] Verify no regressions in existing .gitignore logic
+      spec_refs: [NFR3, NFR4]
+      files: []
+      notes: "Test that buildforce.json logic still works (including legacy .current-spec replacement). No existing functionality should break. COMPLETED - User tested successfully."
+
+    - [x] Test with different .gitignore formats (CRLF, various spacing)
+      spec_refs: [FR4, AC6]
+      files: []
+      notes: "Verify that different line endings and spacing patterns are preserved. Test on Windows if possible. COMPLETED - User tested successfully."
+
+  validation:
+    - [x] All phase_3 tasks completed
+    - [x] End-to-end workflows pass without errors
+    - [x] Backward compatibility verified with old projects
+    - [x] No regressions in existing .gitignore functionality
+    - [x] Spec requirements covered: [FR4, FR5, FR6, NFR3, NFR4, AC1, AC3, AC6, AC7]
+
+# DEVIATION LOG
+# The /buildforce.build agent populates this section when implementation deviates from the original plan
+# Format: phase → task → original plan → actual implementation → reason for deviation
+
+deviations: []
+
+# GUIDELINE COMPLIANCE
+# Track validation results for strict and recommended enforcement levels
+# This section is populated during /buildforce.build when .buildforce/context/_guidelines.yaml exists
+# Guidelines are for AI agent education - agents validate their own generated code against project conventions
+
+guideline_compliance:
+  strict_validations:
+    - guideline: "Template-Only Slash Commands"
+      status: "✓ PASS"
+      checked_files: [src/commands/init/setup.ts, src/commands/upgrade/execution.ts]
+      notes: "No slash command templates were modified. Changes only touch CLI infrastructure files (init/setup.ts, upgrade/execution.ts) which is appropriate for .gitignore update logic."
+
+    - guideline: "Bash Script Context Loading"
+      status: "✓ PASS"
+      checked_files: []
+      notes: "No bash script modifications made. Implementation only modifies TypeScript files."
+
+  recommended_validations:
+    - guideline: "Context Repository Pattern"
+      status: "✓ PASS"
+      checked_files: []
+      notes: "No context files were modified. This is infrastructure change, not project knowledge."
+
+    - guideline: "Error Handling in Templates"
+      status: "✓ PASS"
+      checked_files: []
+      notes: "No template changes required. Error handling already exists in init/upgrade commands."
+
+    - guideline: "Template-Only Changes Preferred"
+      status: "✓ PASS"
+      checked_files: [src/commands/init/setup.ts, src/commands/upgrade/execution.ts]
+      notes: "TypeScript changes were necessary as this is CLI infrastructure logic (file system operations). Template-based solution not feasible for .gitignore manipulation."
+
+# TESTING GUIDANCE
+# Structured guidance for testing the implementation
+
+testing:
+  automated_tests: []
+
+  manual_tests:
+    - scenario: "Test init command with fresh project"
+      steps: |
+        1. Create empty project directory
+        2. Run `buildforce init test-project`
+        3. Check .gitignore file contains both .buildforce/buildforce.json and .buildforce/.temp
+        4. Verify no duplicate entries
+
+    - scenario: "Test init command when .temp already in .gitignore"
+      steps: |
+        1. Create project with .gitignore containing .buildforce/.temp
+        2. Run `buildforce init . --here`
+        3. Verify .temp entry is not duplicated
+        4. Verify buildforce.json entry is added
+
+    - scenario: "Test upgrade command adds .temp entry"
+      steps: |
+        1. Use existing project with .gitignore containing only .buildforce/buildforce.json
+        2. Run `buildforce upgrade --debug`
+        3. Check .gitignore now contains .buildforce/.temp
+        4. Verify debug log shows .gitignore update message
+
+    - scenario: "Test upgrade command when .temp already exists"
+      steps: |
+        1. Use project with .gitignore containing both entries
+        2. Run `buildforce upgrade`
+        3. Verify no duplicate .temp entry is added
+        4. Verify all existing entries are preserved
+
+    - scenario: "Test with no .gitignore file"
+      steps: |
+        1. Create project without .gitignore
+        2. Run `buildforce init .` and `buildforce upgrade`
+        3. Verify both commands succeed without errors
+        4. Verify no .gitignore file is created
+
+# VALIDATION CRITERIA
+# Define success metrics and track spec requirement coverage
+
+success_metrics:
+  - "Both init and upgrade commands successfully add .buildforce/.temp to .gitignore when missing"
+  - "No duplicate .temp entries are created when running init or upgrade multiple times"
+  - "All existing .gitignore entries are preserved during updates"
+  - "Debug logging shows .gitignore update operations in both init and upgrade"
+
+spec_coverage:
+  # Auto-track which spec requirements are implemented in which tasks
+  # Format: requirement_id: status + location
+  - FR1: "✅ IMPLEMENTED - Phase 1: Task 2 (src/commands/init/setup.ts:228-236)"
+  - FR2: "✅ IMPLEMENTED - Phase 1: Task 2 (idempotent check at line 229)"
+  - FR3: "✅ IMPLEMENTED - Phase 2: Task 1 (src/commands/upgrade/execution.ts:312-326)"
+  - FR4: "✅ IMPLEMENTED - Phase 2: Task 1 (trimEnd() preserves formatting)"
+  - FR5: "✅ IMPLEMENTED - Phase 2: Task 1 (pathExists check at line 314)"
+  - FR6: "✅ IMPLEMENTED - Phase 1: Task 2, Phase 2: Task 2 (includes() checks)"
+  - NFR1: "✅ IMPLEMENTED - Phase 1: Task 1 (followed init's pattern)"
+  - NFR2: "✅ IMPLEMENTED - Phase 2: Task 3 (debug logging at lines 322-324)"
+  - NFR3: "✅ IMPLEMENTED - Phase 2: Task 2 (existing entries preserved)"
+  - NFR4: "✅ IMPLEMENTED - Code follows existing init patterns"
+  - AC1: "✅ VERIFIED - Phase 1: Task 3 - Init adds both entries to .gitignore"
+  - AC2: "✅ VERIFIED - Phase 1: Task 3 - Init doesn't duplicate .temp entry"
+  - AC3: "✅ VERIFIED - Phase 2: Task 4 - Upgrade adds .temp to .gitignore"
+  - AC4: "✅ VERIFIED - Phase 2: Task 4 - Upgrade doesn't duplicate .temp entry"
+  - AC5: "✅ VERIFIED - Phase 2: Task 4 - Debug mode logs .gitignore updates"
+  - AC6: "✅ VERIFIED - Phase 2: Task 4, Phase 3: Task 1 - All entries preserved"
+  - AC7: "✅ VERIFIED - Phase 1: Task 3, Phase 2: Task 4 - No errors when .gitignore missing"
+
+# PROGRESS SUMMARY
+# Track overall progress and identify next steps
+
+overall_progress:
+  phase_1: "3/3 tasks completed ✅"
+  phase_2: "4/4 tasks completed ✅"
+  phase_3: "4/4 tasks completed ✅"
+
+current_status: |
+  ✅ FEATURE COMPLETE AND TESTED!
+
+  Implementation:
+  - src/commands/init/setup.ts: Added .buildforce/.temp to .gitignore update logic (lines 228-236)
+  - src/commands/upgrade/execution.ts: Added .gitignore update for .temp (lines 312-326)
+  - TypeScript compilation successful with no errors
+  - All strict and recommended guidelines passed
+
+  Requirements Coverage:
+  - All 6 functional requirements (FR1-FR6): ✅ IMPLEMENTED & VERIFIED
+  - All 4 non-functional requirements (NFR1-NFR4): ✅ IMPLEMENTED & VERIFIED
+  - All 7 acceptance criteria (AC1-AC7): ✅ VERIFIED BY USER
+
+  Testing:
+  - Phase 1 (Init): All test scenarios passed
+  - Phase 2 (Upgrade): All test scenarios passed
+  - Phase 3 (Integration): End-to-end, backward compatibility, and edge cases verified
+
+  Ready for commit!
+
+next_immediate_steps:
+  - "Commit changes with descriptive message"
+  - "Consider running /buildforce.complete to finalize session"
+
+# RISKS & CONSIDERATIONS
+# Document potential risks and mitigation strategies
+
+risks:
+  - risk: "Windows CRLF line endings may cause issues with string matching"
+    mitigation: "Test on Windows environment. Use .includes() which is line-ending agnostic. If needed, normalize line endings before checking."
+
+  - risk: "Existing .gitignore with unusual formatting could be disrupted"
+    mitigation: "Use .trimEnd() before appending to preserve existing formatting. Test with various .gitignore formats during Phase 3."
+
+  - risk: "Race condition if multiple users upgrade simultaneously"
+    mitigation: "Not a concern - git will handle merge conflicts in .gitignore if they occur. Users can easily resolve since we're only adding a single line."
+
+  - risk: "Breaking existing buildforce.json .gitignore logic"
+    mitigation: "Keep .temp logic separate from buildforce.json logic. Test existing logic in Phase 3 to ensure no regressions."
+
+# NOTES
+# Capture lessons learned and future enhancement ideas
+
+general_notes:
+  - "This is the first time we're adding .gitignore update logic to upgrade command"
+  - "Following the established pattern from init ensures consistency and maintainability"
+  - "The .buildforce/.temp folder is used by research persistence cache feature"
+  - "Guidelines compliance: No strict enforcement guidelines apply to this change"
+
+lessons_learned: []
+
+future_enhancements:
+  - "Consider creating a shared utility function for .gitignore updates to reduce duplication between init and upgrade"
+  - "Add support for creating .gitignore if it doesn't exist (currently skipped)"
+  - "Implement .gitignore template distribution in release packages for more comprehensive coverage"
+  - "Add telemetry to track how often .temp entries are added during upgrade (helps measure adoption)"
