@@ -25,6 +25,72 @@ $ARGUMENTS
 
 6. **Data models**: When data structures are involved, explicitly document the data models with their properties, types, and relationships—not just summarized sentences.
 
-7. **TLDR section**: Condense findings into 3-7 bullet points (using `-`) highlighting only the most important discoveries. Exclude code snippets, Mermaid diagrams, and extensive file path lists. Include key architectural patterns, critical decisions, or constraints, with references to detailed sections (e.g., "See Codebase Findings for file paths"). Focus on what the user needs to know to proceed.
+7. **Research Persistence**: After completing all research steps above, silently persist findings. This step executes AFTER all research is complete but BEFORE presenting TLDR.
 
-8. **Next steps**: Suggest the logical next action (e.g., "Ready to plan?" or "Would you like to explore anything else?").
+   **Session-Aware Persistence Location**:
+   - Check `.buildforce/buildforce.json` for `currentSession` field
+   - If `currentSession` exists (active session): Write to `.buildforce/sessions/{currentSession}/research.yaml`
+   - If `currentSession` is null (no active session): Use cache strategy below
+
+   **Cache Strategy** (when no active session):
+   - Target file: `.buildforce/.temp/research-cache.yaml`
+   - Check if cache file exists to determine MERGE vs REPLACE behavior
+
+   **Topic Detection Algorithm**:
+   If cache exists, determine relatedness by keyword overlap:
+   1. Extract keywords from existing cache (lowercased tokens from `summary` + `key_findings` fields)
+   2. Extract keywords from new research (lowercased tokens from query ($ARGUMENTS) + new findings)
+   3. Calculate overlap ratio: `shared_keywords / total_unique_keywords`
+   4. Decision threshold:
+      - If overlap > 0.3 (30%): **MERGE** (related topics - accumulate findings)
+      - If overlap ≤ 0.3 (30%): **REPLACE** (unrelated topics - start fresh)
+   5. **Silent Detection**: DO NOT output any messages about keyword analysis, overlap calculations, or merge/replace decisions to the user
+   6. DO NOT use shell commands to determine, only read files (if needed) and reason based on it
+
+   **MERGE Behavior** (related research):
+   - Append new findings to existing `key_findings` array (check for duplicates)
+   - Append new file paths to `file_paths.primary` and `file_paths.secondary` (deduplicate)
+   - Append new diagrams to `mermaid_diagrams` array (PRESERVE VERBATIM - do not modify existing diagrams)
+   - Append new models to `data_models` array (deduplicate by model name)
+   - Merge TLDR bullets: combine existing + new TLDR arrays, deduplicate similar points, keep most informative version
+   - Update `summary` to reflect combined scope (2-4 sentences covering both research topics)
+   - Update `last_updated` to today's date (YYYY-MM-DD format)
+   - Add entry to `updates` array: `{date: "YYYY-MM-DD", summary: "Merged research on [new topic]"}`
+
+   **REPLACE Behavior** (unrelated research):
+   - Drop all old cache content completely
+   - Write new research.yaml from scratch with fresh structure:
+     - `id: "research-cache"` (fixed ID for temp cache)
+     - `created: "YYYY-MM-DD"` (today's date)
+     - `last_updated: "YYYY-MM-DD"` (today's date)
+     - Populate all sections with new research findings only
+
+   **Silent .temp Folder Creation**:
+   - If `.buildforce/.temp/` doesn't exist, create it in a single command with the file creation of the `research-cache.yaml` using mkdir -p pattern
+   - DO NOT output messages like "folder doesn't exist, I will create one" - execute silently
+
+   **Silent Execution**:
+   - Execute the write operation silently (permission prompt may appear before TLDR if triggered)
+   - DO NOT output any messages to the user about:
+     - Merge vs replace decision
+     - File write operations
+     - Folder creation
+     - Topic detection results
+   - The write happens internally - user sees no file operation messages
+
+   **Graceful Failure Handling**:
+   If write operation fails (permission denied, disk full, etc.):
+   - Catch the error silently (do not display error during this step)
+   - Continue to Step 8 (TLDR) and Step 9 (Next Steps) normally
+   - AFTER presenting Next Steps, display warning message:
+     ```
+     ⚠ Research was not persisted due to permission denial.
+     If you run /clear, research context will be lost.
+     Re-run /buildforce.research to recreate findings after /clear.
+     ```
+
+   **Important**: Step 7 is completely silent unless write fails. Permission prompt (if needed) appears BEFORE Step 8 (TLDR), ensuring TLDR and Next Steps remain the final visible output without interruption.
+
+8. **TLDR section**: Condense findings into 3-7 bullet points (using `-`) highlighting only the most important discoveries. Exclude code snippets, Mermaid diagrams, and extensive file path lists. Include key architectural patterns, critical decisions, or constraints, with references to detailed sections (e.g., "See Codebase Findings for file paths"). Focus on what the user needs to know to proceed.
+
+9. **Next steps**: Suggest the logical next action (e.g., "Ready to plan?" or "Would you like to explore anything else?").

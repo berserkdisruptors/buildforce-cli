@@ -42,26 +42,37 @@ The text the user typed after `/buildforce.plan` in the triggering message **is*
    - Run `{SCRIPT}` from current working directory with generated FOLDER_NAME and parse JSON output for FOLDER_NAME, SPEC_FILE, PLAN_FILE, SPEC_DIR
    - The script creates both spec.yaml and plan.yaml files from templates
 
-   **Step 2c: Materialize research.yaml from conversation history** (if research context exists):
+   **Step 2c: Materialize research.yaml from cache or conversation** (if research context exists):
 
-   Determine if research context exists in the conversation and materialize it into structured research.yaml:
+   Determine if research context exists in temp cache or conversation and materialize it into structured research.yaml:
 
-   1. **Assess conversation for research context**:
+   1. **Check for temp cache first** (research persistence v3.0):
+
+      - Check if `.buildforce/.temp/research-cache.yaml` exists
+      - If temp cache EXISTS:
+        - Read `.buildforce/.temp/research-cache.yaml`
+        - Copy content to `.buildforce/sessions/{FOLDER_NAME}/research.yaml`
+        - Update `id` field from "research-cache" to "{FOLDER_NAME}-research"
+        - Delete `.buildforce/.temp/research-cache.yaml` after successful promotion (single-use cache)
+        - **SKIP to Step 2d** - cache promotion complete
+      - If temp cache DOES NOT EXIST: **PROCEED to conversation materialization (Step 2 below)**
+
+   2. **Assess conversation for research context** (fallback when no cache):
 
       - Review conversation history for research-related content:
         - Explicit `/buildforce.research` command output with findings, diagrams, data models
         - User discussions about architecture, patterns, or technical exploration
         - File path discoveries, codebase analysis, or external references
       - If NO research context exists (user went straight to `/buildforce.plan`): **SKIP to Step 2d** - don't create empty research.yaml
-      - If research context EXISTS: **PROCEED with materialization**
+      - If research context EXISTS: **PROCEED with materialization (Step 3 below)**
 
-   2. **Read template structure**:
+   3. **Read template structure** (for conversation materialization):
 
       - Read `.buildforce/templates/research-template.yaml` for structure guidance
       - Understand flexible sections: summary, key_findings, file_paths, mermaid_diagrams, data_models, code_snippets, architectural_decisions, external_references, tldr
       - Remember: sections are OPTIONAL - adapt to research content type
 
-   3. **Intelligent materialization from conversation** (CRITICAL - preserve information richness):
+   4. **Intelligent materialization from conversation** (CRITICAL - preserve information richness):
 
       - **PRESERVE VERBATIM**: Mermaid diagrams, data models, code snippets - these are essential for /buildforce.build
       - **PRESERVE WITH CONTEXT**: File paths (with relevance notes), architectural decisions (with rationale)
@@ -70,7 +81,7 @@ The text the user typed after `/buildforce.plan` in the triggering message **is*
       - **DO NOT TRUNCATE**: Diagrams, models, code snippets must be complete
       - **DO NOT OVER-CONDENSE**: Preserve information-rich elements - /buildforce.build needs comprehensive context
 
-   4. **Create research.yaml**:
+   5. **Create research.yaml from conversation**:
       - Write to `.buildforce/sessions/{FOLDER_NAME}/research.yaml`
       - Set id = "{FOLDER_NAME}-research"
       - Follow template structure but omit sections with no content (e.g., no diagrams if research was conceptual)
