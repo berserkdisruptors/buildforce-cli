@@ -118,6 +118,10 @@ evolution:
     date: "2025-11-26"
     changes: "Completed script rename terminology migration. Renamed bash script create-spec-files.sh to create-session-files.sh and PowerShell script create-spec-files.ps1 to create-session-files.ps1. Updated all script references in plan.md template, context files (_guidelines.yaml, template-versioning.yml), and this file. This completes the spec→session terminology migration started in v1.1 (folder rename) and v9.0 (command rename)."
 
+  - version: "9.2"
+    date: "2025-11-28"
+    changes: "Integrated research persistence v3.0 cache promotion logic into Step 2c. CREATE mode now checks for .buildforce/.temp/research-cache.yaml first before conversation materialization. If temp cache exists: (1) Read cache content, (2) Copy to sessions/{folder}/research.yaml, (3) Update id field from 'research-cache' to '{folder}-research', (4) Delete temp cache after promotion (single-use), (5) Skip to Step 2d. Maintains backwards compatibility with conversation materialization as fallback when no cache exists. Enables seamless workflow: /research → /clear → /plan without losing findings."
+
 related_specs:
   - redesign-spec-context-20250107120000
   - swap-timestamp-slug-order-20251024093000
@@ -128,6 +132,7 @@ related_specs:
   - migrate-currentspec-to-json-20251029000000
   - rename-spec-to-plan-20251121000000
   - rename-create-spec-to-session-20251126000000
+  - research-persistence-cache-20251128091500
 
 notes: |
   The /buildforce.plan command follows a 7-step workflow:

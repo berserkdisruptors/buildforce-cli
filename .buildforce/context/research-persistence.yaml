@@ -137,9 +137,14 @@ evolution:
     date: "2025-11-03"
     changes: "Removed cache accumulation mechanism to prioritize user experience. Eliminated .research-cache.md file operations that required explicit permissions at each /research invocation. Simplified to conversation-based materialization where agents create research.yaml from conversation history during /plan. Removed cache cleanup from /complete. Template-only changes with no TypeScript modifications."
 
+  - version: "3.0"
+    date: "2025-11-28"
+    changes: "Implemented single-cache YAML strategy with intelligent topic detection to address context window exhaustion problem. Major additions: (1) Session-aware persistence - writes directly to active session's research.yaml or temp cache based on buildforce.json currentSession, (2) Topic detection algorithm using 30% keyword overlap threshold to determine MERGE (related topics) vs REPLACE (unrelated topics) behavior, preventing research pollution, (3) Silent .temp folder creation with graceful failure handling - persists after research completes but before TLDR presentation, displays warning AFTER Next Steps only if write fails, (4) Cache promotion in /plan Step 2c - checks .temp/research-cache.yaml first, promotes to sessions/{folder}/research.yaml with id update, deletes temp cache after use, falls back to conversation materialization if no cache. UX preserved: TLDR and Next Steps remain final visible output, permission prompt (if triggered) appears before TLDR. Addresses critical workflow gap for multi-research sessions requiring /clear before /plan."
+
 related_specs:
   - research-persistence-intelligent-20251027213207
   - remove-research-caching-20251103150000
+  - research-persistence-cache-20251128091500
 
 notes: |
   Key design principles:
