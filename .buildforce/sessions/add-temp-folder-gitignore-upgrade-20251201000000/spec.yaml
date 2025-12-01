@@ -2,7 +2,7 @@ version: "0.0.38"
 id: add-temp-folder-gitignore-upgrade-20251201000000
 name: "Add .buildforce/.temp to .gitignore with Upgrade Support"
 type: feature
-status: in-progress
+status: completed
 created: "2025-12-01"
 last_updated: "2025-12-01"
 
