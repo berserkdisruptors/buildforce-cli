@@ -1,0 +1,248 @@
+version: "0.0.36"
+id: "research-persistence-cache-20251128091500-research"
+created: "2025-11-28"
+last_updated: "2025-11-28"
+
+summary: |
+  Investigation of research persistence mechanisms in /buildforce.research command, analyzing
+  UX constraints (TLDR/Next Steps visibility), context window exhaustion problems, and designing
+  a single-cache solution with topic detection for merge vs replace behavior.
+
+key_findings:
+  - "Current v2.1 has NO persistence - removed in v2.0 due to UX friction from permission prompts"
+  - "v1.0 cache (.research-cache.md) was rolled back because file operations interrupted TLDR/Next Steps flow"
+  - "Critical workflow gap: multi-research iterations exhaust context → /clear loses findings → plan quality degrades"
+  - "UX principle: TLDR and Next Steps must remain final visible output (actionable summary without scrolling)"
+  - "Timestamp-based files create pollution risk - unrelated research loaded into wrong specs"
+  - "Single .temp/research-cache.yaml with topic detection prevents pollution and manual cleanup burden"
+  - "Topic detection: >30% keyword overlap → MERGE, <30% → REPLACE (prevents cross-contamination)"
+  - "Session promotion: /buildforce.plan moves cache to sessions/{name}/research.yaml and deletes temp cache"
+
+file_paths:
+  primary:
+    - path: "src/templates/commands/research.md"
+      relevance: "Step 7 insertion point for silent persistence between Data Models and TLDR"
+
+    - path: "src/templates/commands/plan.md"
+      relevance: "Step 2c update to check for .temp/research-cache.yaml, promote to session, then delete"
+
+    - path: ".buildforce/context/research-persistence.yaml"
+      relevance: "Update with v3.0 evolution documenting cache-based approach with topic detection"
+
+  secondary:
+    - path: ".buildforce/templates/research-template.yaml"
+      relevance: "Structure template for materialization (already correct)"
+
+    - path: ".buildforce/context/research-slash-command.yaml"
+      relevance: "Update to reflect Step 7 persistence addition"
+
+mermaid_diagrams:
+  - title: "Proposed Solution - Single Cache with Topic Detection"
+    description: "Silent persistence at Step 7 with merge/replace logic based on topic relatedness"
+    diagram: |
+      ```mermaid
+      graph TD
+          A[Step 6: Data Models] --> B[Step 7: SILENT Research Persistence]
+
+          B --> C{Check buildforce.json}
+          C -->|currentSession exists| D[Write to sessions/session-name/research.yaml]
+          C -->|currentSession null| E[Cache Strategy]
+
+          E --> F{.temp/research-cache.yaml exists?}
+          F -->|No| G[Create new cache]
+          F -->|Yes| H[Topic Detection]
+
+          H --> I[Extract keywords from cache + new research]
+          I --> J{Keyword overlap > 30%?}
+          J -->|Yes - Related| K[MERGE: Append findings, diagrams, merge TLDR]
+          J -->|No - Unrelated| L[REPLACE: Drop old cache, write new]
+
+          D --> M[Permission prompt may appear]
+          G --> M
+          K --> M
+          L --> M
+
+          M --> N[Write completes silently]
+          N --> O[NO output to user]
+          O --> P[Step 8: TLDR Section]
+          P --> Q[Step 9: Next Steps]
+
+          R[/buildforce.plan runs] --> S{Check .temp/research-cache.yaml}
+          S -->|Exists| T[Promote to sessions/folder/research.yaml]
+          T --> U[Delete .temp/research-cache.yaml]
+          U --> V[Use promoted research for spec]
+
+          style B fill:#f9f,stroke:#333,stroke-width:4px
+          style O fill:#9f9,stroke:#333,stroke-width:2px
+          style P fill:#ff9,stroke:#333,stroke-width:2px
+          style Q fill:#ff9,stroke:#333,stroke-width:2px
+          style T fill:#9ff,stroke:#333,stroke-width:2px
+      ```
+
+  - title: "Error Handling Flow with User Notification"
+    description: "Graceful failure when research cannot be persisted, with clear user notification about compaction risk"
+    diagram: |
+      ```mermaid
+      graph TD
+          A[Step 7: Attempt Write] --> B{.temp folder exists?}
+          B -->|No| C[Silently create .buildforce/.temp/]
+          B -->|Yes| D[Proceed with write]
+          C --> D
+
+          D --> E{Write successful?}
+          E -->|Yes| F[Continue to Step 8 silently]
+          E -->|No - Permission denied| G[Catch error silently]
+
+          G --> H[Continue to Step 8]
+          H --> I[Present TLDR normally]
+          I --> J[Present Next Steps with warning]
+
+          J --> K[Output: Warning notification]
+          K --> L["⚠ Research was not persisted due to permission denial.<br/>If you run /clear, research context will be lost.<br/>Re-run /buildforce.research to recreate findings after /clear."]
+
+          F --> M[Step 8: TLDR]
+          M --> N[Step 9: Next Steps - no warning]
+
+          style C fill:#9f9,stroke:#333,stroke-width:2px
+          style G fill:#f99,stroke:#333,stroke-width:2px
+          style K fill:#ff9,stroke:#333,stroke-width:3px
+          style L fill:#fdd,stroke:#333,stroke-width:2px
+      ```
+
+data_models:
+  - name: "ResearchCacheYaml"
+    description: "Structure of .temp/research-cache.yaml artifact"
+    properties:
+      - name: "id"
+        type: "string"
+        required: true
+        description: "Always 'research-cache' for temp cache, changes to '{session-id}-research' on promotion"
+
+      - name: "created"
+        type: "date (YYYY-MM-DD)"
+        required: true
+        description: "Initial creation date"
+
+      - name: "last_updated"
+        type: "date (YYYY-MM-DD)"
+        required: true
+        description: "Last modification date (updated on MERGE)"
+
+      - name: "summary"
+        type: "string (2-4 sentences)"
+        required: true
+        description: "Condensed research scope, updated on MERGE to include both topics"
+
+      - name: "key_findings"
+        type: "array[string]"
+        required: false
+        description: "MERGE behavior: append new findings, check for duplicates"
+
+      - name: "file_paths"
+        type: "object {primary: [], secondary: []}"
+        required: false
+        description: "MERGE behavior: append new paths with deduplication"
+
+      - name: "mermaid_diagrams"
+        type: "array[object]"
+        required: false
+        description: "MERGE behavior: append new diagrams (PRESERVE VERBATIM)"
+
+      - name: "tldr"
+        type: "array[string]"
+        required: true
+        description: "MERGE behavior: combine bullets, deduplicate similar points"
+
+      - name: "updates"
+        type: "array[object]"
+        required: false
+        description: "MERGE only: add entry with date and summary of what was merged"
+
+    relationships:
+      - "Promoted to sessions/{folder}/research.yaml by /buildforce.plan Step 2c"
+      - "Deleted after successful promotion (single-use cache)"
+
+code_snippets:
+  - title: "Topic Detection Pseudocode"
+    language: "markdown"
+    description: "Algorithm for determining MERGE vs REPLACE behavior"
+    code: |
+      # Extract keywords from existing cache
+      existing_keywords = extract_keywords(cache.summary + cache.key_findings)
+
+      # Extract keywords from new research
+      new_keywords = extract_keywords(new_research.query + new_research.findings)
+
+      # Calculate overlap
+      shared = set(existing_keywords) & set(new_keywords)
+      total = set(existing_keywords) | set(new_keywords)
+      overlap_ratio = len(shared) / len(total) if total else 0
+
+      # Decision threshold
+      if overlap_ratio > 0.3:
+          return "MERGE"  # Related topics - append findings
+      else:
+          return "REPLACE"  # Unrelated topics - start fresh
+
+  - title: "Error Handling with User Notification"
+    language: "markdown"
+    description: "Silent .temp folder creation and graceful failure with clear warning"
+    code: |
+      # Step 7: Research Persistence
+
+      try:
+          # Silently ensure .temp folder exists
+          if not exists(".buildforce/.temp"):
+              mkdir -p ".buildforce/.temp"  # No output to user
+
+          # Attempt write
+          write_research_cache(research_data)
+
+          # Success - continue to Step 8 silently
+          PERSISTENCE_SUCCESS = true
+
+      except PermissionDenied:
+          # Catch error, continue without blocking
+          PERSISTENCE_SUCCESS = false
+
+      # Step 8: TLDR (always executes)
+      present_tldr()
+
+      # Step 9: Next Steps
+      present_next_steps()
+
+      # After Next Steps - conditional warning
+      if not PERSISTENCE_SUCCESS:
+          print("⚠ Research was not persisted due to permission denial.")
+          print("If you run /clear, research context will be lost.")
+          print("Re-run /buildforce.research to recreate findings after /clear.")
+
+architectural_decisions:
+  - pattern: "Single Cache File (.temp/research-cache.yaml)"
+    description: "Use one predictable cache location instead of timestamp-based files"
+    rationale: "Prevents pollution (unrelated research loaded into wrong specs), eliminates manual cleanup burden, simple to reason about. Topic detection handles merge vs replace."
+
+  - pattern: "Topic Detection for Merge vs Replace"
+    description: "Extract keywords from cache + new research, calculate overlap ratio, >30% → MERGE, <30% → REPLACE"
+    rationale: "Intentional behavior - related research accumulates, unrelated research starts fresh. Prevents cross-contamination without user intervention."
+
+  - pattern: "Session Promotion in /buildforce.plan"
+    description: "Step 2c checks for .temp/research-cache.yaml, promotes to sessions/{folder}/research.yaml, deletes temp cache"
+    rationale: "Cache is single-use - consumed by spec creation. Promotes research to permanent session artifact, keeps .temp clean."
+
+  - pattern: "Silent .temp Folder Creation"
+    description: "If .buildforce/.temp doesn't exist, create it silently during write operation without user notification"
+    rationale: "Prevents confusing errors like 'folder doesn't exist, I will create one'. User doesn't need to know about internal folder structure."
+
+  - pattern: "Graceful Failure with Clear Warning"
+    description: "If persistence fails, continue to TLDR/Next Steps normally, then show warning AFTER Next Steps about compaction risk"
+    rationale: "Preserves UX (TLDR/Next Steps remain final actionable output), but warns user about potential data loss if they /clear. Transparency without interruption."
+
+tldr:
+  - "Add silent Step 7 persistence between Data Models and TLDR in research.md"
+  - "Single cache: .temp/research-cache.yaml (not timestamp-based files)"
+  - "Topic detection: >30% keyword overlap → MERGE, <30% → REPLACE (prevents pollution)"
+  - "/buildforce.plan promotes cache to sessions/{folder}/research.yaml, then deletes temp"
+  - "Silently create .temp folder if needed (no user-visible errors)"
+  - "Graceful failure: if write fails, continue normally but warn after Next Steps about compaction risk"
+  - "UX preserved: TLDR and Next Steps remain final visible output, permission prompt before TLDR"

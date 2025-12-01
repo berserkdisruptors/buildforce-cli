@@ -3,13 +3,14 @@ name: Upgrade Command
 type: feature
 status: production
 created: 2025-10-28
-last_updated: 2025-11-25
+last_updated: 2025-12-01
 
 summary: |
   Slash command for upgrading existing Buildforce projects to the latest templates, scripts,
   and slash commands while preserving user-created content (context repository and specs).
   Automatically detects project configuration and supports selective override via flags.
   Supports local artifact loading via --local flag for offline workflows and testing.
+  Updates .gitignore to include .buildforce/.temp entry for temporary file exclusion.
 
 responsibilities:
   - Upgrade slash commands, templates, and scripts to latest versions from GitHub Releases or local artifacts
@@ -22,6 +23,7 @@ responsibilities:
   - Provide dry-run mode to preview changes before applying
   - Display upgrade progress with clear status indicators
   - Update buildforce.json with version metadata after successful upgrade
+  - Update .gitignore to include .buildforce/.temp entry if not already present
   - Implement atomic operations with rollback on failure
   - Handle backward compatibility with projects initialized by older CLI versions
 
@@ -164,6 +166,7 @@ architecture_flow: |
 
   6. Finalization (execution.ts):
      - Update buildforce.json with version metadata
+     - Update .gitignore to include .buildforce/.temp if not present (idempotent check)
      - Remove backups if upgrade successful
      - Clean up temporary directory
      - Display success summary
@@ -254,10 +257,15 @@ evolution:
     date: "2025-11-25"
     changes: "Added interactive AI assistant selection prompts matching init command behavior. Upgrade now always prompts for AI selection (unless --ai flag provided), pre-selecting existing configuration as defaults. Updated README documentation with upgrade command section explaining interactive behavior and all CLI options."
 
+  - version: "1.3"
+    date: "2025-12-01"
+    changes: "Added .gitignore update logic to ensure .buildforce/.temp entry is present during upgrade. Follows init's pattern with idempotent check to prevent duplication. Includes debug logging for transparency. Placed after config update step to maintain logical cohesion."
+
 related_specs:
   - add-upgrade-command-20251027000000
   - add-local-flag-init-upgrade-20251028143052
   - upgrade-ai-prompt-20251125143052
+  - add-temp-folder-gitignore-upgrade-20251201000000
 
 notes: |
   The upgrade command is a critical feature for maintaining Buildforce projects over time.
