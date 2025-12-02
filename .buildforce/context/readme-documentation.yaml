@@ -3,7 +3,7 @@ name: "Comprehensive README Documentation for Buildforce CLI"
 type: feature
 status: production
 created: 2025-10-10
-last_updated: 2025-11-25
+last_updated: 2025-12-02
 
 summary: |
   Developer-focused README featuring simplified, user-perspective slash command documentation.
@@ -108,6 +108,10 @@ evolution:
     date: "2025-11-25"
     changes: "Added comprehensive upgrade command documentation section (lines 82-112) after Quick Start installation section. Documented interactive AI assistant selection prompts, pre-selection of existing configuration, and all CLI options (--ai, --script, --debug). Explains that upgrade always prompts for AI selection unless --ai flag provided, matching init command behavior. Total additions: ~30 lines maintaining user-perspective structure and consistent formatting."
 
+  - version: "3.5"
+    date: "2025-12-02"
+    changes: "Added standalone build mode documentation reflecting new dual-mode /buildforce.build behavior. Added 5th workflow scenario 'Standalone workflow' for quick ad-hoc changes. Updated /buildforce.build command section with 'Dual-mode behavior' subsection explaining session vs standalone mode detection. Added separate examples for session-based and standalone usage. Updated purpose to reflect intelligent mode detection. Total additions: ~25 lines maintaining user-perspective structure."
+
 related_specs:
   - "now-update-readme-20250106120000 (spec.yaml and plan.yaml)"
   - "readme-v3-developer-focused-20250130000000 (spec.yaml and plan.yaml)"
@@ -115,6 +119,7 @@ related_specs:
   - "implement-guidelines-system-20251112000000 (spec.yaml and plan.yaml - Phase 4)"
   - "fix-command-naming-inconsistencies-20251121120000 (spec.yaml and plan.yaml)"
   - "upgrade-ai-prompt-20251125143052 (spec.yaml and plan.yaml)"
+  - "standalone-build-mode-20251202174500 (spec.yaml and plan.yaml)"
 
 notes: |
   README evolution: v1 comprehensive → v2 minimal → v3 developer-focused → v3.1 simplified user-perspective.

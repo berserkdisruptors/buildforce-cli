@@ -16,7 +16,60 @@ $ARGUMENTS
 
 **Key guidelines**:
 
-1. **Script Execution & Context Loading**: Run `{SCRIPT}` FROM CURRENT WORKING DIRECTORY AND NEVER FROM SOMEWHERE ELSE!. **NEVER proceed** if script fails - display the error message to the user, explain that the `.buildforce` directory was not found, suggest: 1) check if you're in the buildforce root directory (where you ran `buildforce init`), 2) run `buildforce init .` if needed. Parse the JSON response to extract **SPEC_DIR** (absolute path). Load {SPEC_DIR}/spec.yaml and {SPEC_DIR}/plan.yaml into context. **Load {SPEC_DIR}/research.yaml if it exists** - this provides critical implementation context including:
+1. **Script Execution & Mode Detection**: Run `{SCRIPT}` FROM CURRENT WORKING DIRECTORY AND NEVER FROM SOMEWHERE ELSE!. **NEVER proceed** if script fails - display the error message to the user, explain that the `.buildforce` directory was not found, suggest: 1) check if you're in the buildforce root directory (where you ran `buildforce init`), 2) run `buildforce init .` if needed. Parse the JSON response to extract **SPEC_DIR** (absolute path).
+
+   **Mode Selection**:
+
+   - If **SPEC_DIR is empty or null** → Enter **STANDALONE MODE** (follow guidelines S1-S7 below)
+   - If **SPEC_DIR contains a path** → Enter **FULL WORKFLOW MODE** (follow guidelines 2-8 below)
+
+   ***
+
+   ## STANDALONE MODE (No Active Session)
+
+   **Display mode indicator**: "--- Standalone Mode - No active session ---"
+
+   If $ARGUMENTS is empty, ask user: "What would you like to build or change?" and wait for response.
+
+   **S1. Quick Exploration**: Search codebase for files related to the goal. Identify: affected files, dependencies, impact level (Low/Medium/High). If >5 files affected or architectural changes detected, suggest: "This looks like a complex change. Consider using `/buildforce.spec` for the full workflow, or proceed if you prefer ad-hoc."
+
+   **S2. Present Plan**: Before implementing, present a quick plan:
+
+   - **Goal**: [parsed from $ARGUMENTS]
+   - **Files to Modify**: [list files]
+   - **Approach**: [1-3 bullets]
+   - **Risks**: [any concerns]
+
+   **S3. Clarify if Ambiguous**: If multiple valid approaches exist, ask clarifying questions. Skip if requirements are clear.
+
+   **S4. Confirm (MANDATORY)**: **ALWAYS** ask user to confirm before proceeding. Display: "Ready to implement. Proceed? (Y/n)" and **WAIT for user response**. **NEVER proceed without explicit user confirmation.** If user declines, ask what they'd like to change.
+
+   **S5. Implement**: Execute the confirmed plan. Apply guideline #8 (\_guidelines.yaml compliance) during implementation.
+
+   **S6. Present Summary**: After implementation, present structured summary:
+
+   - **Goal**: [what was implemented]
+   - **Approach**: [how it was done]
+   - **Files Changed**: [list with brief descriptions]
+   - **Deviations**: [any changes from plan, or "None"]
+   - **Testing**: [what to verify and how]
+   - **Context Updated**: [Yes/No - file name if created]
+
+   **S7. Update Context Repository (if significant)**: Determine if change warrants context file creation.
+
+   **CREATE context when**: New pattern introduced, new module/component created, architectural change, external integration added, new feature.
+
+   **SKIP context for**: Typo fixes, single-line bug fixes, import reordering, comment updates, formatting changes.
+
+   If creating context: Create `.buildforce/context/{kebab-case-name}.yaml` following `_schema.yaml` structure, then update `.buildforce/context/_index.yaml` with new entry.
+
+   **End of Standalone Mode** - Do not proceed to guidelines 2-8.
+
+   ***
+
+   ## FULL WORKFLOW MODE (Active Session)
+
+   Load {SPEC_DIR}/spec.yaml and {SPEC_DIR}/plan.yaml into context. **Load {SPEC_DIR}/research.yaml if it exists** - this provides critical implementation context including:
 
    - **File paths** discovered during research (primary/secondary files)
    - **Mermaid diagrams** showing architecture flows and component relationships
