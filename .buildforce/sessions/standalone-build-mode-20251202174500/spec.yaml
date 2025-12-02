@@ -1,0 +1,156 @@
+version: "0.0.38"
+id: standalone-build-mode-20251202174500
+name: "Standalone Build Mode for /buildforce.build"
+type: feature
+status: completed
+created: "2025-12-02"
+last_updated: "2025-12-02"
+
+summary: |
+  Add a standalone mode to /buildforce.build that activates automatically when no active session exists,
+  enabling quick ad-hoc implementations with exploration, planning, optional clarifications, and automatic
+  context repository updates - all without requiring the full spec-driven workflow.
+
+# INTENT / PROBLEM STATEMENT
+
+problem: |
+  Currently, /buildforce.build fails with an error when no active session exists (SPEC_DIR empty).
+  This forces users to go through the full spec-driven workflow (/research → /spec → /build) even for
+  simple, quick changes like fixing a bug, adding a small feature, or making targeted improvements.
+  This creates unnecessary friction for ad-hoc development tasks.
+
+motivation: |
+  Users often want to make quick changes without losing the benefits of buildforce: intelligent exploration,
+  planning before implementation, and context capture. A standalone mode would provide a lightweight
+  alternative that preserves these benefits while eliminating the ceremony of full workflow for simple tasks.
+  This makes buildforce useful for both complex features (full workflow) and quick tasks (standalone mode).
+
+# GOALS
+
+primary_goals:
+  - Enable /buildforce.build to work without an active session by providing standalone mode
+  - Preserve key buildforce benefits (exploration, planning, context capture) in lightweight form
+  - Maintain seamless transition - same command, intelligent mode detection
+
+secondary_goals:
+  - Provide user visibility into which mode is active
+  - Support escalation path to full workflow when complexity warrants
+  - Keep standalone mode stateless and simple
+
+# REQUIREMENTS
+
+functional_requirements:
+  - FR1: When /buildforce.build is invoked and SPEC_DIR is empty, activate standalone mode instead of failing
+  - FR2: If $ARGUMENTS is empty in standalone mode, prompt user for their implementation goal
+  - FR3: Perform quick codebase exploration to identify affected files and assess impact
+  - FR4: Present a simple plan to the user (goal, files to modify, approach, risks)
+  - FR5: Ask up to 2 clarifying questions if ambiguity is high; skip if requirements are clear
+  - FR6: Request user confirmation before proceeding with implementation
+  - FR7: Implement the change following the confirmed plan
+  - FR8: Check _guidelines.yaml compliance (same as full mode)
+  - FR9: Present structured summary with testing guidance after implementation
+  - FR10: Create/update context file in .buildforce/context/ if change is significant (agent-determined)
+  - FR11: Update _index.yaml when context file is created
+  - FR12: Display mode indicator to user (e.g., "Standalone Mode - No active session")
+  - FR13: Suggest full /buildforce.spec workflow if complexity appears high (>5 files or architectural changes)
+  - FR14: Update README.md with standalone build mode documentation (workflow scenarios, command usage, examples)
+
+non_functional_requirements:
+  - NFR1: Standalone mode should add minimal template lines (~30-40 lines of new content)
+  - NFR2: Mode detection must be instant (based on existing SPEC_DIR check)
+  - NFR3: Standalone flow should complete in single conversation turn where possible
+  - NFR4: Context file naming should follow existing kebab-case convention
+
+# SCOPE
+
+in_scope:
+  - Modifying src/templates/commands/build.md to add standalone mode logic
+  - Adding mode indicator display
+  - Adding quick exploration step
+  - Adding simple plan presentation
+  - Adding optional clarification questions
+  - Adding user confirmation step
+  - Adding structured summary output
+  - Adding context file creation logic with significance heuristics
+  - Updating .buildforce/context/build-command.yaml after implementation
+  - Updating README.md to document standalone build mode feature
+
+out_of_scope:
+  - Creating new scripts or TypeScript code (template-only changes)
+  - Modifying get-spec-paths.sh behavior
+  - Adding session creation in standalone mode (stays stateless)
+  - Creating separate /buildforce.quick command
+  - Adding hard complexity limits that block users
+
+# DESIGN PRINCIPLES
+
+design_principles:
+  - "Automatic mode detection - no flags required"
+  - "Same command, intelligent behavior based on context"
+  - "Lightweight but not featureless - preserve exploration and planning"
+  - "Agent decides significance - no arbitrary thresholds for context creation"
+  - "Suggest, don't block - recommend full workflow for complex changes but let user decide"
+  - "Visible mode indicator - user always knows which mode is active"
+
+# ACCEPTANCE CRITERIA
+
+acceptance_criteria:
+  - AC1: /buildforce.build with no session and valid $ARGUMENTS enters standalone mode without error
+  - AC2: /buildforce.build with no session and empty $ARGUMENTS prompts for goal
+  - AC3: Standalone mode displays mode indicator to user
+  - AC4: Quick exploration identifies relevant files before presenting plan
+  - AC5: Simple plan is presented before implementation starts
+  - AC6: User confirmation is requested before implementation
+  - AC7: _guidelines.yaml compliance is checked in standalone mode
+  - AC8: Structured summary with testing guidance is presented after implementation
+  - AC9: Context file is created when agent determines change is significant
+  - AC10: _index.yaml is updated when context file is created
+  - AC11: High complexity changes trigger suggestion to use /buildforce.spec (but don't block)
+  - AC12: Full workflow mode (with session) continues to work unchanged
+  - AC13: README.md documents standalone mode as a workflow scenario with usage examples
+
+# ASSUMPTIONS & DEPENDENCIES
+
+assumptions:
+  - get-spec-paths.sh returns empty SPEC_DIR when no session is active
+  - Agents can assess significance based on change scope and type
+  - Template-only implementation is sufficient (no new scripts needed)
+  - Existing /document command patterns can be referenced for context creation
+
+dependencies:
+  internal:
+    - build-command: "Extends existing build.md template"
+    - state-tracking: "Uses buildforce.json/currentSession for mode detection"
+    - document-command: "Reference for context file creation patterns"
+    - slash-commands: "Part of slash command system"
+  external: []
+
+# OPEN QUESTIONS
+
+open_questions: []
+
+# NOTES
+
+notes: |
+  This feature transforms /buildforce.build from a session-dependent command to a context-aware
+  command that works in both scenarios. The key insight is that users want buildforce's intelligent
+  approach (explore → plan → implement → document) even for quick tasks, just in compressed form.
+
+  Significance heuristics for context creation (agent applies these):
+  CREATE context when:
+  - New pattern introduced (e.g., retry logic, validation approach)
+  - New module/component created
+  - Architectural change made
+  - Integration with external system added
+  - >3 files modified cohesively
+
+  SKIP context for:
+  - Typo fixes
+  - Single-line bug fixes
+  - Import reordering
+  - Comment updates
+  - Formatting changes
+
+  Future consideration: If standalone mode proves popular, could add option to "promote"
+  ad-hoc work to a session for continued iteration, but this is explicitly out of scope
+  for initial implementation.
