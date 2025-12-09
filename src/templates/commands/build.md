@@ -1,9 +1,6 @@
 ---
 version: "0.0.38"
 description: Build the code changes required for the current spec following the plan, with progress tracking, deviation logging, and iterative refinement.
-scripts:
-  sh: bash src/scripts/bash/get-spec-paths.sh --json
-  ps: src/scripts/powershell/get-spec-paths.ps1 -Json
 ---
 
 User input:
@@ -16,12 +13,13 @@ $ARGUMENTS
 
 **Key guidelines**:
 
-1. **Script Execution & Mode Detection**: Run `{SCRIPT}` FROM CURRENT WORKING DIRECTORY AND NEVER FROM SOMEWHERE ELSE!. **NEVER proceed** if script fails - display the error message to the user, explain that the `.buildforce` directory was not found, suggest: 1) check if you're in the buildforce root directory (where you ran `buildforce init`), 2) run `buildforce init .` if needed. Parse the JSON response to extract **SPEC_DIR** (absolute path).
+1. **Script Execution & Mode Detection**: Read `./buildforce/buildforce.json` FROM CURRENT WORKING DIRECTORY AND NEVER FROM SOMEWHERE ELSE!. **NEVER proceed** if file doesn't exist - display error message to the user, explain that the `.buildforce` directory was not found, suggest: 1) check if you're in the buildforce root directory (where you ran `buildforce init`), 2) run `buildforce init .` if needed.
+   Read the `currentSession` field from the `buildforce.json`
 
    **Mode Selection**:
 
-   - If **SPEC_DIR is empty or null** → Enter **STANDALONE MODE** (follow guidelines S1-S7 below)
-   - If **SPEC_DIR contains a path** → Enter **FULL WORKFLOW MODE** (follow guidelines 2-8 below)
+   - If **currentSession is empty** → Enter **STANDALONE MODE** (follow guidelines S1-S7 below)
+   - Else → Enter **FULL WORKFLOW MODE** (follow guidelines 2-8 below)
 
    ***
 
@@ -69,7 +67,7 @@ $ARGUMENTS
 
    ## FULL WORKFLOW MODE (Active Session)
 
-   Load {SPEC_DIR}/spec.yaml and {SPEC_DIR}/plan.yaml into context. **Load {SPEC_DIR}/research.yaml if it exists** - this provides critical implementation context including:
+   Load {currentSession}/spec.yaml and {currentSession}/plan.yaml into context. **Load {currentSession}/research.yaml if it exists** - this provides critical implementation context including:
 
    - **File paths** discovered during research (primary/secondary files)
    - **Mermaid diagrams** showing architecture flows and component relationships
@@ -87,7 +85,7 @@ $ARGUMENTS
 
 3. **Follow the Plan**: Execute implementation steps sequentially as specified in the plan. Parse $ARGUMENTS for iteration-specific instructions (e.g., "change library X to Y", "fix edge case Z"). Reference specific file paths when creating or modifying code. Keep progress updates concise but informative.
 
-4. **Deviation Logging**: If you deviate from the original plan (due to user instructions, discovered issues, or better approaches), log each deviation in {FEATURE_DIR}/plan.yaml : **Original** → **Actual** → **Reason**. Maintain a running deviation log throughout the build and across iterations. **NEVER hide deviations**—transparency is critical.
+4. **Deviation Logging**: If you deviate from the original plan (due to user instructions, discovered issues, or better approaches), log each deviation in {currentSession}/plan.yaml : **Original** → **Actual** → **Reason**. Maintain a running deviation log throughout the build and across iterations. **NEVER hide deviations**—transparency is critical.
 
 5. **Validate Against Spec & Plan**: After completing all implementation steps, cross-check the implementation against BOTH the spec's requirements AND the plan's steps. Verify all functional requirements are met, edge cases are handled, and the plan was followed (or deviations logged). Ensure code compiles with no errors.
 
