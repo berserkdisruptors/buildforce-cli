@@ -1,0 +1,160 @@
+version: "0.0.38"
+id: "standalone-build-mode-20251202174500-research"
+created: "2025-12-02"
+last_updated: "2025-12-02"
+
+summary: |
+  Research into adding a standalone mode to the /buildforce.build command that activates when no
+  active session exists. This mode enables quick, ad-hoc implementations without requiring the full
+  spec-driven workflow, while still preserving context through automatic context repository updates.
+
+key_findings:
+  - "Current build command fails when SPEC_DIR is empty (no active session) - this is the trigger point for standalone mode"
+  - "Build command template is 43 lines with 8 guidelines - standalone logic should integrate into guideline #1 (Script Execution & Context Loading)"
+  - "State tracking uses buildforce.json with currentSession field parsed by get-spec-paths.sh"
+  - "Context repository pattern (.buildforce/context/) already supports dynamic context file creation via /document command - can reuse patterns"
+  - "Plan template uses checkbox syntax [ ]/[x] - standalone mode won't have persistent plan, just inline tracking"
+  - "_guidelines.yaml compliance checking should still apply in standalone mode for consistency"
+
+file_paths:
+  primary:
+    - path: "src/templates/commands/build.md"
+      relevance: "Main template to modify - add conditional standalone mode logic"
+    - path: "src/scripts/bash/get-spec-paths.sh"
+      relevance: "Returns SPEC_DIR - empty value triggers standalone mode"
+    - path: "src/scripts/bash/common.sh"
+      relevance: "Contains get_current_session() function that determines active session"
+
+  secondary:
+    - path: ".buildforce/context/_index.yaml"
+      relevance: "Updated by standalone mode when creating context files"
+    - path: ".buildforce/context/_guidelines.yaml"
+      relevance: "Compliance checking applies in standalone mode"
+    - path: "src/templates/commands/document.md"
+      relevance: "Reference for context file creation patterns (kebab-case naming, _index.yaml updates)"
+
+mermaid_diagrams:
+  - title: "Standalone Mode Flow"
+    description: "Decision flow when /buildforce.build is invoked without active session"
+    diagram: |
+      ```mermaid
+      flowchart TD
+          A["/buildforce.build $ARGUMENTS"] --> B[Run get-spec-paths.sh]
+          B --> C{SPEC_DIR exists?}
+
+          C -->|Yes| D[Full Workflow Mode<br/>Load spec/plan/research]
+          D --> E[Guidelines 2-8 as current]
+
+          C -->|No| F{$ARGUMENTS provided?}
+          F -->|No| G[Ask: What do you want to build?]
+          F -->|Yes| H[Standalone Mode]
+
+          H --> I[Quick Exploration<br/>Search codebase, assess impact]
+          I --> J{High complexity?}
+          J -->|Yes| K[Suggest /buildforce.spec<br/>but continue if user wants]
+          J -->|No| L[Present Quick Plan]
+          K --> L
+
+          L --> M{Ambiguous?}
+          M -->|Yes| N[Ask 1-2 clarifying questions]
+          M -->|No| O[Confirm with user]
+          N --> O
+
+          O --> P[Implement]
+          P --> Q[Check _guidelines.yaml compliance]
+          Q --> R[Present Summary + Testing Guidance]
+
+          R --> S{Significant change?}
+          S -->|Yes| T[Create/Update context file]
+          S -->|No| U[Skip context update]
+          T --> V[Done]
+          U --> V
+      ```
+
+  - title: "Mode Selection Logic"
+    description: "How the build command determines which mode to operate in"
+    diagram: |
+      ```mermaid
+      stateDiagram-v2
+          [*] --> CheckSession: /buildforce.build invoked
+          CheckSession --> FullMode: SPEC_DIR not empty
+          CheckSession --> StandaloneCheck: SPEC_DIR empty
+          StandaloneCheck --> StandaloneMode: $ARGUMENTS provided
+          StandaloneCheck --> AskUser: $ARGUMENTS empty
+          AskUser --> StandaloneMode: User provides goal
+          FullMode --> [*]: Complete with session tracking
+          StandaloneMode --> [*]: Complete with optional context update
+      ```
+
+data_models:
+  - name: "Standalone Summary Output"
+    description: "Structure for presenting standalone build results to user"
+    properties:
+      - name: "goal"
+        type: "string"
+        required: true
+        description: "Parsed goal from $ARGUMENTS"
+      - name: "approach"
+        type: "string"
+        required: true
+        description: "What was done to implement"
+      - name: "files_changed"
+        type: "array<{path: string, description: string}>"
+        required: true
+        description: "List of modified/created files with brief descriptions"
+      - name: "deviations"
+        type: "array<string>"
+        required: false
+        description: "Any deviations from original quick plan"
+      - name: "testing"
+        type: "string"
+        required: true
+        description: "What to verify"
+      - name: "context_updated"
+        type: "{created: boolean, file_name?: string}"
+        required: true
+        description: "Whether context file was created/updated"
+
+  - name: "Significance Heuristics"
+    description: "Criteria for determining if context file should be created"
+    properties:
+      - name: "create_context_when"
+        type: "array<string>"
+        required: true
+        description: "Signals that warrant context creation"
+      - name: "skip_context_when"
+        type: "array<string>"
+        required: true
+        description: "Signals that context creation is unnecessary"
+    relationships:
+      - "Agent evaluates these heuristics after implementation to decide on context update"
+
+architectural_decisions:
+  - pattern: "Automatic Trigger (No Flag)"
+    description: "Standalone mode activates automatically when no session exists, rather than requiring explicit --standalone flag"
+    rationale: "Lower friction for quick tasks. User intent is inferred from context (no session = ad-hoc work). Explicit flag adds ceremony that defeats the purpose of quick mode."
+
+  - pattern: "No Scope Limits"
+    description: "No hard limits on file count or complexity - user decides scope"
+    rationale: "Users know their codebase best. Agent provides suggestions but doesn't block. Preserves flexibility for legitimate large ad-hoc changes."
+
+  - pattern: "Agent-Determined Context Creation"
+    description: "Agent decides if change is significant enough to warrant context file creation"
+    rationale: "Avoids context bloat from trivial changes. Agent has full visibility of what was changed and can apply significance heuristics."
+
+  - pattern: "Same Command Name"
+    description: "Keep /buildforce.build instead of creating /buildforce.quick"
+    rationale: "Single command with intelligent mode detection. Reduces cognitive load. Users don't need to remember which command for which scenario."
+
+  - pattern: "Stateless Standalone"
+    description: "Standalone mode doesn't create sessions - each invocation is independent"
+    rationale: "Keeps standalone lightweight. Complex multi-iteration work should use full workflow. Agent can suggest session creation if needed."
+
+tldr:
+  - "Standalone mode triggers automatically when SPEC_DIR is empty AND $ARGUMENTS provided"
+  - "No hard scope limits - agent suggests /buildforce.spec for complex changes but doesn't block"
+  - "Agent determines context file creation based on significance heuristics"
+  - "Keep same /buildforce.build command name with conditional logic"
+  - "Still applies _guidelines.yaml compliance checking"
+  - "Presents structured summary with testing guidance at end"
+  - "Mode indicator should be visible to set user expectations"

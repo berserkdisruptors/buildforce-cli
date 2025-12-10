@@ -7,7 +7,7 @@ import { BuildforceConfig } from "../types.js";
  */
 export function getDefaultConfig(): BuildforceConfig {
   return {
-    sessionsFolder: "./specs",
+    sessionsFolder: "./sessions",
     framework: "buildforce",
   };
 }

@@ -154,7 +154,7 @@ Buildforce uses slash commands inside AI assistant conversations to orchestrate 
 - `/buildforce.complete`: Validates that all requirements are met, generates context files from the work done, and updates the context repository.
 - `/buildforce.document`: Standalone utility for documenting existing code. Use `/buildforce.document guidelines` to capture project conventions.
 
-**Three workflow scenarios:**
+**Workflow scenarios:**
 
 1. **Basic workflow** (recommended for simple updates):
 
@@ -178,6 +178,12 @@ Buildforce uses slash commands inside AI assistant conversations to orchestrate 
    ```
    /buildforce.document guidelines → /buildforce.plan [feature] → /buildforce.build → /buildforce.complete
    ```
+
+5. **Standalone workflow** (quick ad-hoc changes without session):
+   ```
+   /buildforce.build [describe your change]
+   ```
+   When no active session exists, `/buildforce.build` enters standalone mode—exploring the codebase, presenting a quick plan, asking for confirmation, and optionally creating context files for significant changes.
 
 The key insight: Buildforce isn't just about individual commands. It's about how commands feed context forward (research informs planning, planning guides build, build enriches context). This orchestration prevents context loss and creates knowledge that compounds over time.
 
@@ -241,15 +247,20 @@ Converts your feature description into a structured specification with clear req
 
 ### /buildforce.build - Execute Implementation
 
-**Purpose**: Execute implementation following the established plan, with progress tracking and deviation logging.
+**Purpose**: Execute implementation with automatic mode detection—follows an established plan when a session exists, or provides a lightweight standalone flow for quick ad-hoc changes.
 
 **Usage:**
 
 ```
-/buildforce.build [optional-iteration-instructions]
+/buildforce.build [instructions]
 ```
 
-**Examples:**
+**Dual-mode behavior:**
+
+- **With active session** (after `/buildforce.plan`): Executes the plan with progress tracking, deviation logging, and validation against spec requirements.
+- **Without active session** (standalone mode): Explores the codebase, presents a quick plan, asks for confirmation, implements, and optionally creates context files for significant changes.
+
+**Examples (with session):**
 
 ```
 /buildforce.build
@@ -259,11 +270,23 @@ Converts your feature description into a structured specification with clear req
 /buildforce.build Add validation for empty email field
 ```
 
+**Examples (standalone mode):**
+
+```
+/buildforce.build Add retry logic to API calls
+
+/buildforce.build Fix the null check in user validation
+
+/buildforce.build Add logging to the init command
+```
+
 **What it does:**
 
-Executes your implementation following the spec and plan, checking off tasks as work progresses and logging any deviations from the original approach. Validates the work against both requirements and plan steps, runs tests, and provides clear guidance on what still needs verification. Supports iterative refinement—you can run it multiple times with feedback to converge on the right solution while maintaining full transparency about what changed and why.
+When a session exists, executes your implementation following the spec and plan, checking off tasks as work progresses and logging any deviations from the original approach. Validates the work against both requirements and plan steps, runs tests, and provides clear guidance on what still needs verification.
 
-**Pro tip**: If you iterated a couple of times on the build step and your context window is already getting above 40-50% full, perform **intentional compaction** before iterating more or completing your sessions. Since progress is tracked in `plan.yaml`, you can start a fresh session and pick up exactly where you left off with a clean context window on every turn.
+When no session exists, enters standalone mode: explores affected files, presents a simple plan (goal, files, approach, risks), asks for confirmation before implementing, and creates context files for significant changes. This preserves buildforce's intelligent approach for quick tasks without the ceremony of a full spec-driven workflow.
+
+**Pro tip**: Use standalone mode for quick fixes, small features, or targeted improvements. For complex changes affecting multiple files or architectural decisions, the full workflow (`/buildforce.plan → /buildforce.build`) provides better traceability.
 
 ---
 
