@@ -1,4 +1,4 @@
-version: "0.0.38"
+version: "0.0.39"
 # Plan Template for /buildforce.build Agent Execution
 # This template is optimized for AI agent consumption during /buildforce.build commands
 # It provides checkbox-based progress tracking, deviation logging, and spec traceability
