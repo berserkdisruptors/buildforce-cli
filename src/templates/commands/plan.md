@@ -47,7 +47,10 @@ The text the user typed after `/buildforce.plan` in the triggering message **is*
    Check if `.buildforce/.temp/research-cache.yaml` exists:
    - If cache **EXISTS**:
      - Read the cache and compare its `summary` and `key_findings` with the user's planning intent ($ARGUMENTS)
-     - If cache is **RELATED**: Extract only the portions relevant to this planning context into `.buildforce/sessions/{FOLDER_NAME}/research.yaml`, update `id` to "{FOLDER_NAME}-research", then delete the temp cache
+     - If cache is **RELATED**: Materialize the research into `.buildforce/sessions/{FOLDER_NAME}/research.yaml`:
+       - If research covers **a single topic** that aligns with planning intent: Copy the full cache (all sections including mermaid_diagrams, data_models, code_snippets)
+       - If research covers **multiple topics**: Extract only the portions relevant to this planning context (e.g., if cache contains findings about both authentication and caching, but user is planning authentication, include only auth-related key_findings, file_paths, mermaid_diagrams, data_models, and code_snippets)
+       - Update `id` to "{FOLDER_NAME}-research", then delete the temp cache
      - If cache is **UNRELATED**: Preserve cache for future use, skip to Step 2d
    - If cache **DOES NOT EXIST**:
      - Use any research context from conversation history to inform spec.yaml and plan.yaml population in Step 2e (no research.yaml artifact needed)
