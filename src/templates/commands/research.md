@@ -50,8 +50,8 @@ $ARGUMENTS
    - Add entry to `updates` array: `{date: "YYYY-MM-DD", summary: "Merged research on [new topic]"}`
 
    **REPLACE Behavior** (unrelated research):
-   - Drop all old cache content completely
-   - Write new research.yaml from scratch with fresh structure:
+   - Drop the old cache content completely
+   - Overwrite the `.buildforce/.temp/research-cache.yaml` content with fresh structure:
      - `id: "research-cache"` (fixed ID for temp cache)
      - `created: "YYYY-MM-DD"` (today's date)
      - `last_updated: "YYYY-MM-DD"` (today's date)

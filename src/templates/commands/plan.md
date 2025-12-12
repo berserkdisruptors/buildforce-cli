@@ -46,7 +46,7 @@ The text the user typed after `/buildforce.plan` in the triggering message **is*
 
    Determine if research context exists in temp cache or conversation and materialize it into structured research.yaml:
 
-   1. **Check for temp cache first** (research persistence v3.0):
+   1. **Check for temp cache first**:
 
       - Check if `.buildforce/.temp/research-cache.yaml` exists
       - If temp cache EXISTS:
@@ -150,39 +150,7 @@ The text the user typed after `/buildforce.plan` in the triggering message **is*
      - Use research context when analyzing update requirements
      - This ensures updates align with prior research findings
 
-   **Step 3b: Update research.yaml from conversation** (if new research context exists):
-
-   After loading existing artifacts, check if new research was conducted and update research.yaml:
-
-   1. **Assess conversation for new research context**:
-
-      - Review recent conversation history for new research-related content:
-        - New `/buildforce.research` command output since spec creation
-        - Additional user discussions about architecture or technical exploration
-        - New file path discoveries, codebase analysis, or external references
-      - If NO new research context: **SKIP to Step 3c** - keep existing research.yaml as-is
-      - If new research context EXISTS: **PROCEED with update**
-
-   2. **Read template structure**:
-
-      - Read `.buildforce/templates/research-template.yaml` for structure guidance
-
-   3. **Intelligent merge with existing research.yaml**:
-      - Read existing `.buildforce/sessions/{folder-name}/research.yaml`
-      - Compare new conversation content with existing research
-      - **Append new findings** with update metadata:
-        ```yaml
-        updates:
-          - date: "YYYY-MM-DD"
-            summary: "Brief description of what new research added"
-        ```
-      - **Preserve new artifacts**: Append new diagrams, models, snippets to respective sections
-      - **Merge TLDR**: Combine new TLDR bullets with existing without duplication
-      - **DO NOT duplicate**: Check for similar findings before appending
-      - Update `last_updated` field
-      - Write updated research.yaml back to spec folder
-
-   **Step 3c: Load project guidelines** (if available):
+   **Step 3b: Load project guidelines** (if available):
 
    Guidelines provide project-specific conventions that must be followed during implementation.
 
@@ -193,7 +161,7 @@ The text the user typed after `/buildforce.plan` in the triggering message **is*
      - Consider enforcement levels when updating plan.yaml
    - If missing, continue without guidelines (backward compatible)
 
-   **Step 3d: Intelligent routing** - Determine which file(s) to update based on user input:
+   **Step 3c: Intelligent routing** - Determine which file(s) to update based on user input:
 
    - Analyze $ARGUMENTS to determine content type:
      - **Requirements/scope/goals** → Update spec.yaml only
