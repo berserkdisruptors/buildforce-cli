@@ -51,10 +51,15 @@ The text the user typed after `/buildforce.plan` in the triggering message **is*
       - Check if `.buildforce/.temp/research-cache.yaml` exists
       - If temp cache EXISTS:
         - Read `.buildforce/.temp/research-cache.yaml`
-        - Copy content to `.buildforce/sessions/{FOLDER_NAME}/research.yaml`
-        - Update `id` field from "research-cache" to "{FOLDER_NAME}-research"
-        - Delete `.buildforce/.temp/research-cache.yaml` after successful promotion (single-use cache)
-        - **SKIP to Step 2d** - cache promotion complete
+        - **Topic Relevance Check**: Compare the cache's `summary` and `key_findings` with the current planning context (user input from $ARGUMENTS and conversation history). Determine if the cached research is related to what is being planned using your semantic understanding. Do not output any comparison process or decision reasoning.
+        - If cache is **RELATED** to current planning context:
+          - Copy content to `.buildforce/sessions/{FOLDER_NAME}/research.yaml`
+          - Update `id` field from "research-cache" to "{FOLDER_NAME}-research"
+          - Delete `.buildforce/.temp/research-cache.yaml` after successful promotion (single-use cache)
+          - **SKIP to Step 2d** - cache promotion complete
+        - If cache is **UNRELATED** to current planning context:
+          - Skip promotion - do not copy cache, do not delete cache (preserve for future use)
+          - **PROCEED to conversation materialization (Step 2 below)** - fallback to extracting context from conversation
       - If temp cache DOES NOT EXIST: **PROCEED to conversation materialization (Step 2 below)**
 
    2. **Assess conversation for research context** (fallback when no cache):
