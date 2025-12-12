@@ -1,0 +1,139 @@
+version: "0.0.36"
+id: research-persistence-cache-20251128091500
+name: "Research Persistence with Single Cache and Topic Detection"
+type: feature
+status: completed
+created: "2025-11-28"
+last_updated: "2025-11-28"
+
+summary: |
+  Implement research persistence in /buildforce.research using a single-cache approach with intelligent
+  topic detection to prevent pollution, enable context window management, and maintain clean UX.
+
+# INTENT / PROBLEM STATEMENT
+
+problem: |
+  Current v2.1 implementation has NO research persistence mechanism. After multiple /buildforce.research
+  iterations, the conversation context window becomes exhausted. Users must run /clear to continue
+  working, which loses all research findings. When they subsequently run /buildforce.plan, the agent
+  has no research context to materialize from conversation history, resulting in degraded plan quality
+  despite thorough prior research.
+
+  The v2.0 rollback removed the cache accumulation mechanism to eliminate UX friction from permission
+  prompts that interrupted the clean TLDR/Next Steps flow. However, this created a critical workflow
+  gap for users who perform extensive research before planning.
+
+motivation: |
+  Enable intentional context compaction (/clear) after research-intensive sessions without losing
+  valuable findings. Research persistence must preserve the v2.1 UX principle: TLDR and Next Steps
+  must remain the final visible output (actionable summary without scrolling). The solution must be
+  simple, prevent pollution (unrelated research loaded into wrong specs), and handle errors gracefully
+  with clear user notification about compaction risks.
+
+# GOALS
+
+primary_goals:
+  - "Enable safe /clear after research sessions by persisting findings to .temp/research-cache.yaml"
+  - "Prevent research pollution by using topic detection to determine merge vs replace behavior"
+  - "Maintain v2.1 UX quality: TLDR and Next Steps remain final visible output with zero interruption"
+  - "Silently create .temp folder when needed without user-visible error messages"
+
+secondary_goals:
+  - "Provide clear user notification when persistence fails, warning about compaction risk"
+  - "Promote cache to session folder during /buildforce.plan execution, then delete temp cache"
+  - "Support both related research accumulation (MERGE) and unrelated topic switching (REPLACE)"
+
+# REQUIREMENTS
+
+functional_requirements:
+  - FR1: "Add Step 7 (Research Persistence) to research.md between Step 6 (Data Models) and Step 8 (TLDR)"
+  - FR2: "Implement single-cache strategy using .buildforce/.temp/research-cache.yaml (not timestamp-based files)"
+  - FR3: "Execute Step 7 silently - ZERO output to user about file operations, merge/replace decisions, or folder creation"
+  - FR4: "Implement topic detection algorithm: extract keywords from cache + new research, calculate overlap ratio, >30% → MERGE, <30% → REPLACE"
+  - FR5: "MERGE behavior: append new findings/diagrams/models to existing cache, merge TLDR bullets with deduplication, update last_updated date, add updates section entry"
+  - FR6: "REPLACE behavior: drop old cache content, write new research from scratch with fresh id/dates"
+  - FR7: "Update plan.md Step 2c to check for .temp/research-cache.yaml, promote to sessions/{FOLDER_NAME}/research.yaml, delete temp cache after promotion"
+  - FR8: "Silently create .buildforce/.temp/ directory if it doesn't exist during write operation"
+  - FR9: "Graceful failure: if write fails (permission denied), continue to Step 8/9 normally, then display warning AFTER Next Steps about compaction risk"
+  - FR10: "Warning message format: '⚠ Research was not persisted due to permission denial. If you run /clear, research context will be lost. Re-run /buildforce.research to recreate findings after /clear.'"
+
+non_functional_requirements:
+  - NFR1: "Permission prompt (if triggered) must appear BEFORE TLDR presentation, not after Next Steps"
+  - NFR2: "Template-only implementation - NO TypeScript code changes (guideline: Template-Only Slash Commands)"
+  - NFR3: "Follow Template-Only Slash Commands pattern (strict enforcement) - all logic in markdown templates"
+  - NFR4: "Error handling must follow 'actionable user guidance' convention (recommended enforcement)"
+
+# SCOPE
+
+in_scope:
+  - "Step 7 addition to src/templates/commands/research.md with topic detection logic"
+  - "Step 2c update to src/templates/commands/plan.md for cache promotion"
+  - "Silent .temp folder creation during write operation"
+  - "Graceful failure handling with user notification after Next Steps"
+  - "MERGE vs REPLACE behavior based on keyword overlap threshold (30%)"
+  - "Cache promotion and deletion during /buildforce.plan execution"
+
+out_of_scope:
+  - "Timestamp-based research files (rejected due to pollution risk)"
+  - "Manual cache cleanup commands (single cache auto-managed)"
+  - "TypeScript/JavaScript code changes (template-only approach)"
+  - "Advanced NLP for topic detection (simple keyword extraction sufficient)"
+  - "Cache validation or schema checking (future enhancement)"
+  - "Explicit /research --save flag (deferred to future versions)"
+
+# DESIGN PRINCIPLES
+
+design_principles:
+  - "Preserve UX quality: TLDR and Next Steps must remain final visible output"
+  - "Silent execution: File operations happen internally without user-visible messages"
+  - "Intentional behavior: Topic detection provides predictable merge vs replace logic"
+  - "Single source of truth: One cache file, simple to reason about"
+  - "Graceful degradation: Failed persistence doesn't block workflow"
+  - "Transparency: User warned about data loss risk when persistence fails"
+
+# ACCEPTANCE CRITERIA
+
+acceptance_criteria:
+  - AC1: "After /buildforce.research completes, TLDR and Next Steps are final visible output with zero file operation messages"
+  - AC2: "Related research topics (>30% keyword overlap) merge into existing cache without user intervention"
+  - AC3: "Unrelated research topics (<30% keyword overlap) replace cache, starting fresh without manual cleanup"
+  - AC4: "After /clear, running /buildforce.plan successfully loads research from .temp/research-cache.yaml"
+  - AC5: "/buildforce.plan promotes cache to sessions/{folder}/research.yaml and deletes .temp/research-cache.yaml"
+  - AC6: "If .buildforce/.temp doesn't exist, it's created silently without 'folder doesn't exist' error"
+  - AC7: "If persistence fails, user sees TLDR/Next Steps normally, then warning message after Next Steps"
+  - AC8: "Permission prompt (if triggered) appears before TLDR presentation, not interrupting final output"
+
+# ASSUMPTIONS & DEPENDENCIES
+
+assumptions:
+  - "Simple keyword extraction (lowercased tokens) sufficient for topic detection - advanced NLP not required"
+  - "30% keyword overlap threshold provides reasonable merge vs replace boundary"
+  - "Users perform multiple related research iterations before running /buildforce.plan"
+  - ".temp folder is safe to create in .buildforce directory structure"
+
+dependencies:
+  internal:
+    - research-template.yaml: "Structure for materialized research.yaml (already correct, no changes)"
+    - research-slash-command.yaml: "Context file to update with v3.0 evolution"
+    - research-persistence.yaml: "Context file to update with cache-based approach documentation"
+    - plan-command.yaml: "Context file to update with cache promotion logic"
+  external: []
+
+# OPEN QUESTIONS
+
+open_questions: []
+
+# NOTES
+
+notes: |
+  This is v3.0 of research persistence - third attempt after v1.0 (cache accumulation, rolled back)
+  and v2.0 (conversation-only, insufficient for context management).
+
+  Key differences from v1.0:
+  - YAML instead of Markdown cache format
+  - Topic detection prevents pollution
+  - Silent .temp folder creation
+  - Warning notification after Next Steps instead of interrupting flow
+
+  Template-only implementation maintains guideline compliance (strict enforcement).
+  All logic embedded in markdown instruction templates, zero TypeScript changes.

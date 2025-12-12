@@ -1,0 +1,163 @@
+id: "add-temp-folder-gitignore-upgrade-20251201000000-research"
+created: "2025-12-01"
+last_updated: "2025-12-01"
+status: completed
+
+summary: |
+  Analysis of .gitignore update mechanism during Buildforce CLI initialization and upgrade processes.
+  The .gitignore file is only updated during the init process to ensure buildforce.json is excluded from
+  version control. The upgrade process does not modify .gitignore files.
+
+key_findings:
+  - ".gitignore is updated ONLY during init process in src/commands/init/setup.ts:198-226"
+  - "Update happens after buildforce.json creation, before git initialization step"
+  - "Logic checks if .gitignore exists and whether buildforce.json is already listed"
+  - "Backward compatibility: replaces legacy .buildforce/.current-spec entry with .buildforce/buildforce.json if found"
+  - "If buildforce.json not in .gitignore, it's appended to the file"
+  - "Upgrade process (src/commands/upgrade/execution.ts) does NOT touch .gitignore at all"
+  - "No .gitignore template is distributed in release packages—only user's existing .gitignore is modified"
+  - "Template generation script (create-release-packages.sh) does not include or handle .gitignore files"
+  - "Update is silent in non-debug mode, only logs when --debug flag is provided"
+
+file_paths:
+  primary:
+    - "src/commands/init/setup.ts"
+    - "src/commands/upgrade/execution.ts"
+  secondary:
+    - "src/commands/init/index.ts"
+    - "src/commands/init/output.ts"
+    - "src/utils/config.ts"
+    - ".github/workflows/scripts/create-release-packages.sh"
+    - ".buildforce/context/cli-architecture.yaml"
+    - ".buildforce/context/upgrade-command.yaml"
+
+mermaid_diagrams:
+  - |
+    ```mermaid
+    flowchart TB
+        START[buildforce init] --> VALIDATE[Validate Project Setup]
+        VALIDATE --> INTERACT[User Interaction<br/>Select AI & Script Type]
+        INTERACT --> DOWNLOAD[Download & Extract Template]
+        DOWNLOAD --> CHMOD[Set Script Permissions]
+        CHMOD --> CONFIG[Create buildforce.json]
+
+        CONFIG --> GITIGNORE{.gitignore<br/>exists?}
+        GITIGNORE -->|Yes| CHECK_ENTRY{buildforce.json<br/>in .gitignore?}
+        GITIGNORE -->|No| GIT_INIT
+
+        CHECK_ENTRY -->|Yes, skip| GIT_INIT[Initialize Git Repo]
+        CHECK_ENTRY -->|No| LEGACY{Legacy<br/>.current-spec<br/>found?}
+
+        LEGACY -->|Yes| REPLACE[Replace .current-spec<br/>with buildforce.json]
+        LEGACY -->|No| APPEND[Append buildforce.json<br/>to .gitignore]
+
+        REPLACE --> GIT_INIT
+        APPEND --> GIT_INIT
+        GIT_INIT --> DISPLAY[Display Next Steps]
+        DISPLAY --> END[Complete]
+
+        style CONFIG fill:#d4f4dd
+        style GITIGNORE fill:#fff4cc
+        style REPLACE fill:#ffd4cc
+        style APPEND fill:#ffd4cc
+        style GIT_INIT fill:#d4f4dd
+    ```
+
+  - |
+    ```mermaid
+    flowchart TB
+        START[buildforce upgrade] --> VALIDATE[Validate Prerequisites]
+        VALIDATE --> CONFIG[Read buildforce.json]
+        CONFIG --> PROMPT[Prompt for AI Selection]
+        PROMPT --> DOWNLOAD[Download Templates]
+        DOWNLOAD --> EXTRACT[Extract to Temp Dir]
+        EXTRACT --> BACKUP[Create Backups]
+        BACKUP --> REPLACE_CMD[Replace Slash Commands]
+        REPLACE_CMD --> REPLACE_TMPL[Replace Templates]
+        REPLACE_TMPL --> REPLACE_SCRIPTS[Replace Scripts]
+        REPLACE_SCRIPTS --> UPDATE_CONFIG[Update buildforce.json Version]
+        UPDATE_CONFIG --> CLEANUP[Cleanup Temp Files]
+        CLEANUP --> END[Complete]
+
+        NOTE[NO .gitignore UPDATE<br/>during upgrade process]
+
+        style VALIDATE fill:#d4f4dd
+        style REPLACE_CMD fill:#fff4cc
+        style REPLACE_TMPL fill:#fff4cc
+        style REPLACE_SCRIPTS fill:#fff4cc
+        style UPDATE_CONFIG fill:#d4f4dd
+        style NOTE fill:#ffd4cc
+    ```
+
+data_models:
+  - name: ".gitignore Update Logic"
+    location: "src/commands/init/setup.ts:198-226"
+    structure:
+      conditions:
+        gitignore_exists:
+          type: "boolean"
+          description: "Check if .gitignore file exists at project root"
+        buildforce_json_present:
+          type: "boolean"
+          description: "Check if .buildforce/buildforce.json is already in .gitignore"
+        legacy_entry_present:
+          type: "boolean"
+          description: "Check if legacy .buildforce/.current-spec exists in .gitignore"
+      actions:
+        replace_legacy:
+          trigger: "legacy_entry_present === true"
+          operation: "Replace .buildforce/.current-spec with .buildforce/buildforce.json"
+        append_entry:
+          trigger: "legacy_entry_present === false && buildforce_json_present === false"
+          operation: "Append .buildforce/buildforce.json to .gitignore"
+        skip_update:
+          trigger: "buildforce_json_present === true"
+          operation: "No modification to .gitignore"
+
+  - name: "Init Process Flow Steps"
+    location: "src/commands/init/setup.ts"
+    structure:
+      steps:
+        - step: 1
+          name: "precheck"
+          description: "Check required tools"
+        - step: 2
+          name: "ai-select"
+          description: "Select AI assistant(s)"
+        - step: 3
+          name: "script-select"
+          description: "Select script type"
+        - step: 4
+          name: "download"
+          description: "Download template from GitHub or local"
+        - step: 5
+          name: "extract"
+          description: "Extract template files"
+        - step: 6
+          name: "chmod"
+          description: "Set script permissions"
+        - step: 7
+          name: "config"
+          description: "Create buildforce.json"
+        - step: 8
+          name: "gitignore-update"
+          description: "Update .gitignore (happens here, line 198-226)"
+          silent: true
+          debug_only: true
+        - step: 9
+          name: "git"
+          description: "Initialize git repository"
+        - step: 10
+          name: "final"
+          description: "Finalize project"
+
+tldr:
+  - ".gitignore is updated ONLY during `buildforce init`, NOT during `buildforce upgrade`"
+  - "Update happens in src/commands/init/setup.ts:198-226, after buildforce.json creation"
+  - "Logic ensures .buildforce/buildforce.json is in .gitignore, replacing legacy .current-spec if found"
+  - "Upgrade process explicitly skips .gitignore—it only replaces commands, templates, and scripts"
+  - "No .gitignore template in release packages; only existing user .gitignore is modified during init"
+
+updates:
+  - date: "2025-12-01"
+    summary: "Initial research on .gitignore update mechanism in init/upgrade processes"

@@ -42,39 +42,19 @@ The text the user typed after `/buildforce.plan` in the triggering message **is*
    - Run `{SCRIPT}` from current working directory with generated FOLDER_NAME and parse JSON output for FOLDER_NAME, SPEC_FILE, PLAN_FILE, SPEC_DIR
    - The script creates both spec.yaml and plan.yaml files from templates
 
-   **Step 2c: Materialize research.yaml from conversation history** (if research context exists):
+   **Step 2c: Load research context** (if available):
 
-   Determine if research context exists in the conversation and materialize it into structured research.yaml:
-
-   1. **Assess conversation for research context**:
-
-      - Review conversation history for research-related content:
-        - Explicit `/buildforce.research` command output with findings, diagrams, data models
-        - User discussions about architecture, patterns, or technical exploration
-        - File path discoveries, codebase analysis, or external references
-      - If NO research context exists (user went straight to `/buildforce.plan`): **SKIP to Step 2d** - don't create empty research.yaml
-      - If research context EXISTS: **PROCEED with materialization**
-
-   2. **Read template structure**:
-
-      - Read `.buildforce/templates/research-template.yaml` for structure guidance
-      - Understand flexible sections: summary, key_findings, file_paths, mermaid_diagrams, data_models, code_snippets, architectural_decisions, external_references, tldr
-      - Remember: sections are OPTIONAL - adapt to research content type
-
-   3. **Intelligent materialization from conversation** (CRITICAL - preserve information richness):
-
-      - **PRESERVE VERBATIM**: Mermaid diagrams, data models, code snippets - these are essential for /buildforce.build
-      - **PRESERVE WITH CONTEXT**: File paths (with relevance notes), architectural decisions (with rationale)
-      - **CONDENSE INTELLIGENTLY**: Research summary prose (2-4 sentences), project context (key points only)
-      - **MERGE**: TLDR bullets from research discussions into unified tldr section
-      - **DO NOT TRUNCATE**: Diagrams, models, code snippets must be complete
-      - **DO NOT OVER-CONDENSE**: Preserve information-rich elements - /buildforce.build needs comprehensive context
-
-   4. **Create research.yaml**:
-      - Write to `.buildforce/sessions/{FOLDER_NAME}/research.yaml`
-      - Set id = "{FOLDER_NAME}-research"
-      - Follow template structure but omit sections with no content (e.g., no diagrams if research was conceptual)
-      - Ensure materialized research is condensed but information-rich
+   Check if `.buildforce/.temp/research-cache.yaml` exists:
+   - If cache **EXISTS**:
+     - Read the cache and compare its `summary` and `key_findings` with the user's planning intent ($ARGUMENTS)
+     - If cache is **RELATED**: Materialize the research into `.buildforce/sessions/{FOLDER_NAME}/research.yaml`:
+       - If research covers **a single topic** that aligns with planning intent: Copy the full cache (all sections including mermaid_diagrams, data_models, code_snippets)
+       - If research covers **multiple topics**: Extract only the portions relevant to this planning context (e.g., if cache contains findings about both authentication and caching, but user is planning authentication, include only auth-related key_findings, file_paths, mermaid_diagrams, data_models, and code_snippets)
+       - Update `id` to "{FOLDER_NAME}-research", then delete the temp cache
+     - If cache is **UNRELATED**: Preserve cache for future use, skip to Step 2d
+   - If cache **DOES NOT EXIST**:
+     - Use any research context from conversation history to inform spec.yaml and plan.yaml population in Step 2e (no research.yaml artifact needed)
+     - Proceed to Step 2d
 
    **Step 2d: Load project guidelines** (if available):
 
@@ -134,39 +114,7 @@ The text the user typed after `/buildforce.plan` in the triggering message **is*
      - Use research context when analyzing update requirements
      - This ensures updates align with prior research findings
 
-   **Step 3b: Update research.yaml from conversation** (if new research context exists):
-
-   After loading existing artifacts, check if new research was conducted and update research.yaml:
-
-   1. **Assess conversation for new research context**:
-
-      - Review recent conversation history for new research-related content:
-        - New `/buildforce.research` command output since spec creation
-        - Additional user discussions about architecture or technical exploration
-        - New file path discoveries, codebase analysis, or external references
-      - If NO new research context: **SKIP to Step 3c** - keep existing research.yaml as-is
-      - If new research context EXISTS: **PROCEED with update**
-
-   2. **Read template structure**:
-
-      - Read `.buildforce/templates/research-template.yaml` for structure guidance
-
-   3. **Intelligent merge with existing research.yaml**:
-      - Read existing `.buildforce/sessions/{folder-name}/research.yaml`
-      - Compare new conversation content with existing research
-      - **Append new findings** with update metadata:
-        ```yaml
-        updates:
-          - date: "YYYY-MM-DD"
-            summary: "Brief description of what new research added"
-        ```
-      - **Preserve new artifacts**: Append new diagrams, models, snippets to respective sections
-      - **Merge TLDR**: Combine new TLDR bullets with existing without duplication
-      - **DO NOT duplicate**: Check for similar findings before appending
-      - Update `last_updated` field
-      - Write updated research.yaml back to spec folder
-
-   **Step 3c: Load project guidelines** (if available):
+   **Step 3b: Load project guidelines** (if available):
 
    Guidelines provide project-specific conventions that must be followed during implementation.
 
@@ -177,7 +125,7 @@ The text the user typed after `/buildforce.plan` in the triggering message **is*
      - Consider enforcement levels when updating plan.yaml
    - If missing, continue without guidelines (backward compatible)
 
-   **Step 3d: Intelligent routing** - Determine which file(s) to update based on user input:
+   **Step 3c: Intelligent routing** - Determine which file(s) to update based on user input:
 
    - Analyze $ARGUMENTS to determine content type:
      - **Requirements/scope/goals** → Update spec.yaml only

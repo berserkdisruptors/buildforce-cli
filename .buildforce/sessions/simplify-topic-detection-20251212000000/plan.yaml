@@ -1,0 +1,288 @@
+version: "0.0.38"
+id: simplify-topic-detection-20251212000000-plan
+name: "Implementation Plan for Simplify Topic Detection"
+spec_id: "simplify-topic-detection-20251212000000"
+type: implementation-plan
+status: completed
+created: "2025-12-12"
+last_updated: "2025-12-12"
+
+# ARCHITECTURE OVERVIEW
+
+approach: |
+  This is a template-only refactor targeting two markdown instruction files. The approach is to
+  replace prescriptive algorithmic instructions with concise semantic comparison guidance that
+  trusts the agent's reasoning capabilities. For research.md, we'll condense the 25-line topic
+  detection section to 3-5 lines. For plan.md, we'll add a topic relevance check before cache
+  promotion using the same simplified approach.
+
+technology_stack:
+  - Markdown instruction templates (research.md, plan.md)
+  - YAML context files for documentation updates
+
+decisions:
+  - decision: "Remove all keyword extraction, calculation, and threshold logic"
+    rationale: "The explicit algorithm contradicts agentic principles. LLMs can natively compare semantic relatedness without being told how to extract keywords, count overlaps, or calculate percentages. The current approach treats the model like a rule-based system rather than a reasoning engine."
+
+  - decision: "Use simple instruction: 'Read cache, compare with current research/plan, decide if related'"
+    rationale: "Concise guidance respects model capabilities. If the topic is related, MERGE; if unrelated, REPLACE. The agent determines relatedness using its understanding, not mechanical matching. This approach is more robust - it can handle synonyms, related concepts, and semantic similarity that keyword matching would miss."
+
+  - decision: "Add topic check in plan.md before cache promotion (Step 2c)"
+    rationale: "Critical edge case: current implementation blindly promotes cache regardless of relevance. If cache contains research on authentication but user is planning a CSS refactor, promoting that cache pollutes the session. Topic check prevents this by falling back to conversation materialization when cache is unrelated."
+
+  - decision: "Maintain silent execution principle"
+    rationale: "Agents must not output comparison steps, rationale, or decision details. The comparison happens internally, the decision is made (MERGE/REPLACE or promote/skip), and execution continues silently. Only the result matters, not the reasoning process."
+
+# FILE STRUCTURE
+
+files_to_create: []
+
+files_to_modify:
+  - path: "src/templates/commands/research.md"
+    change_type: "edit"
+    description: "Simplify Step 7 Topic Detection section from 25 lines to 3-5 lines, removing keyword extraction and calculation instructions"
+
+  - path: "src/templates/commands/plan.md"
+    change_type: "edit"
+    description: "Add topic relevance check in Step 2c before cache promotion, using simplified comparison approach"
+
+  - path: ".buildforce/context/research-persistence.yaml"
+    change_type: "edit"
+    description: "Add v3.1 evolution entry documenting simplified topic detection and plan promotion fix"
+
+  - path: ".buildforce/context/research-slash-command.yaml"
+    change_type: "edit"
+    description: "Add v3.1 evolution entry documenting simplified Step 7 topic detection"
+
+# IMPLEMENTATION PHASES
+
+phase_1:
+  name: "Simplify Topic Detection in research.md"
+  description: |
+    Replace the verbose keyword-based topic detection logic in Step 7 with a concise
+    semantic comparison instruction that trusts agent reasoning.
+
+  tasks:
+    - [x] Read current research.md Step 7 to understand full context
+      spec_refs: [FR1, FR2]
+      files: [src/templates/commands/research.md]
+      notes: "Lines 39-66 contain the topic detection algorithm to be replaced"
+
+    - [x] Replace Topic Detection Algorithm section with simplified instruction
+      spec_refs: [FR1, FR2, FR5]
+      files: [src/templates/commands/research.md]
+      notes: "New instruction: Read existing cache, compare summary and key_findings with current research query and findings, determine if topics are related. If related → MERGE, if unrelated → REPLACE. Do not output comparison process."
+
+    - [x] Verify MERGE and REPLACE behavior sections remain intact
+      spec_refs: [FR1]
+      files: [src/templates/commands/research.md]
+      notes: "Lines 50-66 define MERGE/REPLACE behaviors - preserve these exactly as-is"
+
+    - [x] Ensure Silent Execution instructions remain clear
+      spec_refs: [FR5, NFR1]
+      files: [src/templates/commands/research.md]
+      notes: "Verify lines 72-79 still enforce zero output about decisions, comparisons, or calculations"
+
+  validation:
+    - [x] All phase_1 tasks completed
+    - [x] Topic detection section is 3-5 lines (AC1)
+    - [x] No mention of keywords, tokens, percentages, thresholds (AC2)
+    - [x] Silent execution preserved (AC4)
+    - [x] Spec requirements covered: [FR1, FR2, FR5, NFR1]
+
+phase_2:
+  name: "Add Topic Detection to plan.md Cache Promotion"
+  description: |
+    Insert topic relevance check in Step 2c before blindly promoting research cache,
+    preventing unrelated research contamination.
+
+  tasks:
+    - [x] Read current plan.md Step 2c to understand cache promotion flow
+      spec_refs: [FR3]
+      files: [src/templates/commands/plan.md]
+      notes: "Lines 49-57 contain cache promotion logic - currently no topic check"
+
+    - [x] Add topic relevance check after reading cache, before promotion
+      spec_refs: [FR3, FR4, FR5]
+      files: [src/templates/commands/plan.md]
+      notes: "Insert: Read cache, compare cache summary/key_findings with current planning context (user input, conversation), determine if related. If unrelated → skip promotion, proceed to Step 2 (conversation materialization). If related → continue with promotion."
+
+    - [x] Ensure fallback to conversation materialization works correctly
+      spec_refs: [FR4]
+      files: [src/templates/commands/plan.md]
+      notes: "When cache is unrelated, agent should skip promotion/deletion and jump to Step 2 (conversation fallback)"
+
+    - [x] Verify silent execution for topic decision
+      spec_refs: [FR5, NFR1]
+      files: [src/templates/commands/plan.md]
+      notes: "No output about cache comparison, relevance decision, or skip reason"
+
+  validation:
+    - [x] All phase_2 tasks completed
+    - [x] Topic check added before cache promotion (AC3)
+    - [x] Unrelated cache triggers fallback (AC5)
+    - [x] Silent execution maintained (AC4)
+    - [x] Spec requirements covered: [FR3, FR4, FR5, NFR1]
+
+phase_3:
+  name: "Update Context Documentation"
+  description: |
+    Document the v3.1 evolution in context files, capturing the philosophical shift
+    from algorithmic to agentic topic detection.
+
+  tasks:
+    - [x] Update research-persistence.yaml with v3.1 evolution entry
+      spec_refs: [NFR2]
+      files: [.buildforce/context/research-persistence.yaml]
+      notes: "Add evolution entry documenting removal of keyword algorithm, simplified semantic comparison, and plan.md promotion fix"
+
+    - [x] Update research-slash-command.yaml with v3.1 evolution entry
+      spec_refs: [NFR2]
+      files: [.buildforce/context/research-slash-command.yaml]
+      notes: "Document Step 7 simplification from 25 lines to 3-5 lines, removal of algorithmic instructions"
+
+    - [x] Update architectural decisions to reflect agentic approach
+      spec_refs: [NFR2]
+      files: [.buildforce/context/research-persistence.yaml]
+      notes: "Replace 'Topic Detection with Keyword Overlap Threshold' decision with 'Semantic Topic Comparison' decision emphasizing agent reasoning"
+
+  validation:
+    - [x] All phase_3 tasks completed
+    - [x] Context files updated with v3.1 evolution
+    - [x] Architectural decisions reflect simplified approach
+    - [x] Spec requirements covered: [NFR2]
+
+# DEVIATION LOG
+
+deviations: []
+
+# GUIDELINE COMPLIANCE
+
+guideline_compliance:
+  strict_validations:
+    - guideline: "Template-Only Slash Commands"
+      status: "✓ PASS"
+      checked_files:
+        - src/templates/commands/research.md
+        - src/templates/commands/plan.md
+      notes: "All changes are in markdown templates. Zero TypeScript code modifications. Strict guideline fully satisfied."
+
+    - guideline: "Bash Script Context Loading"
+      status: "✓ PASS (N/A)"
+      checked_files: []
+      notes: "Not applicable - no bash script modifications in this implementation."
+
+  recommended_validations:
+    - guideline: "Context Repository Pattern"
+      status: "✓ PASS"
+      checked_files:
+        - .buildforce/context/research-persistence.yaml
+        - .buildforce/context/research-slash-command.yaml
+      notes: "Updated context files with v3.1 evolution entries and new architectural decisions."
+
+    - guideline: "Template-Only Changes Preferred"
+      status: "✓ PASS"
+      checked_files:
+        - src/templates/commands/research.md
+        - src/templates/commands/plan.md
+      notes: "All changes are template-only with zero dependencies added. Perfectly aligned with guideline philosophy."
+
+# TESTING GUIDANCE
+
+testing:
+  manual_tests:
+    - scenario: "Research.md topic detection with related topics"
+      steps: |
+        1. Create .temp/research-cache.yaml with research on "authentication"
+        2. Run /buildforce.research on "JWT token expiration handling"
+        3. Verify cache is MERGED (topics are related)
+        4. Verify no output about comparison, keywords, or percentages
+        5. Verify TLDR and Next Steps are final visible output
+
+    - scenario: "Research.md topic detection with unrelated topics"
+      steps: |
+        1. Create .temp/research-cache.yaml with research on "authentication"
+        2. Run /buildforce.research on "CSS grid layout best practices"
+        3. Verify cache is REPLACED (topics unrelated)
+        4. Verify no output about comparison or decision
+        5. Verify TLDR and Next Steps are final visible output
+
+    - scenario: "Plan.md cache promotion with related research"
+      steps: |
+        1. Create .temp/research-cache.yaml with research on "user permissions"
+        2. Run /buildforce.plan for "Add role-based access control"
+        3. Verify cache is promoted to session folder
+        4. Verify research.yaml id updated to session id
+        5. Verify temp cache deleted
+        6. Verify no output about topic check or promotion
+
+    - scenario: "Plan.md cache promotion with unrelated research"
+      steps: |
+        1. Create .temp/research-cache.yaml with research on "database migration"
+        2. Run /buildforce.plan for "Add CSS dark mode toggle"
+        3. Verify cache is NOT promoted
+        4. Verify fallback to conversation materialization
+        5. Verify temp cache remains (not deleted)
+        6. Verify no output about skip decision or comparison
+
+# VALIDATION CRITERIA
+
+success_metrics:
+  - "Topic detection instructions reduced from 25 lines to 3-5 lines"
+  - "Zero agent output about comparisons, calculations, or decisions"
+  - "Unrelated cache correctly skipped during plan.md promotion"
+  - "Template-only changes with no TypeScript modifications"
+
+spec_coverage:
+  - FR1: "✓ Phase 1: Task 2 - Topic detection in research.md simplified to semantic comparison"
+  - FR2: "✓ Phase 1: Task 2 - Instruction delegates comparison logic to agent without prescribing calculations"
+  - FR3: "✓ Phase 2: Task 2 - Topic detection added in plan.md before cache promotion"
+  - FR4: "✓ Phase 2: Task 3 - Unrelated cache skipped with fallback to conversation materialization"
+  - FR5: "✓ Phase 1: Task 4, Phase 2: Task 4 - Silent execution maintained throughout"
+  - NFR1: "✓ Phase 1: Task 4, Phase 2: Task 4 - UX preserved, TLDR and Next Steps remain final output"
+  - NFR2: "✓ Phase 3: All tasks - Template-only changes, zero TypeScript modifications"
+  - NFR3: "✓ Inherent - no breaking changes to cache structure, backward compatible"
+
+# PROGRESS SUMMARY
+
+overall_progress:
+  phase_1: "4/4 tasks completed"
+  phase_2: "4/4 tasks completed"
+  phase_3: "3/3 tasks completed"
+
+current_status: |
+  Implementation complete. All phases finished successfully. Topic detection simplified from algorithmic to agentic approach.
+
+next_immediate_steps:
+  - "Validate guideline compliance"
+  - "Compile and test changes"
+  - "Verify acceptance criteria"
+
+# RISKS & CONSIDERATIONS
+
+risks:
+  - risk: "Agents may still show comparison reasoning despite simplified instructions"
+    mitigation: "Explicit silent execution reminder immediately after topic detection instruction. Monitor during testing and refine wording if needed."
+
+  - risk: "Semantic comparison may be too lenient or too strict"
+    mitigation: "Trust agent judgment - if issues arise, can add examples of related vs unrelated topics rather than reverting to algorithmic approach."
+
+  - risk: "Breaking change if agents interpret 'related' differently than keyword matching"
+    mitigation: "This is actually desired behavior - semantic understanding is more robust. Document as improvement in context files."
+
+# NOTES
+
+general_notes:
+  - "This change represents a philosophical shift: treating LLMs as reasoning engines, not rule executors"
+  - "The keyword algorithm was a false precision - semantic understanding is more reliable"
+  - "Edge case discovery (cache promotion bug) validates that algorithmic complexity doesn't guarantee correctness"
+
+lessons_learned:
+  - "Prescriptive algorithms in LLM prompts can mask missing logic elsewhere"
+  - "Silent execution principle is only maintained if instructions don't encourage verbosity"
+  - "Agentic systems work better with goals, not procedures"
+
+future_enhancements:
+  - "Consider removing MERGE/REPLACE behavior details if agents can infer them from goals"
+  - "Apply same simplification philosophy to other verbose instruction sections"
+  - "Add examples of related vs unrelated topics if semantic comparison needs calibration"

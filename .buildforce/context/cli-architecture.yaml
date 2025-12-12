@@ -3,7 +3,7 @@ name: Buildforce CLI Architecture
 type: module
 status: production
 created: 2025-10-27
-last_updated: 2025-11-25
+last_updated: 2025-12-01
 
 summary: |
   Comprehensive architecture of the Buildforce CLI tool - a Node.js-based command-line
@@ -205,6 +205,7 @@ architecture_patterns:
        - downloadAndExtractTemplate() - Extract and merge files
        - ensureExecutableScripts() - Set permissions on .sh files
        - createConfigContent() - Generate buildforce.json
+       - updateGitignore() - Add .buildforce/buildforce.json and .buildforce/.temp entries
        - initGitRepo() - Initialize git with first commit
 
     4. Output Display (output.ts)
@@ -428,6 +429,10 @@ evolution:
     date: "2025-11-25"
     changes: "Added 'buildforce session' CLI command with interactive picker for switching between active development sessions. Implemented session discovery from filesystem (.buildforce/sessions/) with status filtering (draft/in-progress). Renamed currentSpec to currentSession throughout codebase (TypeScript, bash, PowerShell, templates, docs) for terminology consistency. Session command uses inquirer for familiar arrow key navigation pattern, matching init command UX."
 
+  - version: "2.0"
+    date: "2025-12-01"
+    changes: "Extended .gitignore update logic in init command to include .buildforce/.temp entry for temporary file exclusion. Init now adds both .buildforce/buildforce.json and .buildforce/.temp with idempotent checks to prevent duplication. Includes debug logging for transparency. Upgrade command also updated to add .temp entry during upgrade process."
+
 related_specs:
   - "standardize-cli-title-display-20250130220000"
   - "standardize-color-scheme-mint-20251031011544"
@@ -437,6 +442,7 @@ related_specs:
   - "cleanup-spec-kit-references-20250122143052"
   - "rename-specs-to-sessions-20251121160000"
   - "add-cli-session-management-20251125000000"
+  - "add-temp-folder-gitignore-upgrade-20251201000000"
 
 notes: |
   Key architectural strengths:

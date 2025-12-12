@@ -3,7 +3,7 @@ name: Research Persistence with Intelligent Materialization
 type: feature
 status: production
 created: 2025-10-28
-last_updated: 2025-11-03
+last_updated: 2025-12-12
 
 summary: |
   Conversation-based research materialization system that enables agents to create structured
@@ -47,6 +47,12 @@ design_decisions:
 
   - decision: "Flexible template structure with optional sections"
     rationale: "Not all research produces diagrams/models/code. Template adapts to content type - omit empty sections. Prevents rigid enforcement that loses information."
+
+  - decision: "Semantic Topic Comparison (v3.1)"
+    rationale: "Trust agent's native reasoning capabilities over prescriptive algorithmic calculations. LLMs can semantically compare research topics without being told how to extract keywords, count overlaps, or calculate percentages. Simplified instruction delegates comparison logic to the agent, reduces template verbosity, maintains silent execution principle, and improves robustness - semantic understanding handles synonyms and related concepts that keyword matching would miss."
+
+  - decision: "Topic Relevance Check During Cache Promotion (v3.1)"
+    rationale: "Prevent unrelated research contamination. Cache promotion in /plan blindly promoted .temp/research-cache.yaml without checking relevance - if users ran /research on topic A then /plan for topic B, cache from A polluted B's session. Topic check before promotion ensures only related research informs planning, falls back to conversation materialization for unrelated cache."
 
   - decision: "Template-only implementation"
     rationale: "No code changes needed. All modifications are in command templates and documentation. Maintains consistency with Buildforce CLI's architecture."
@@ -137,9 +143,19 @@ evolution:
     date: "2025-11-03"
     changes: "Removed cache accumulation mechanism to prioritize user experience. Eliminated .research-cache.md file operations that required explicit permissions at each /research invocation. Simplified to conversation-based materialization where agents create research.yaml from conversation history during /plan. Removed cache cleanup from /complete. Template-only changes with no TypeScript modifications."
 
+  - version: "3.0"
+    date: "2025-11-28"
+    changes: "Implemented single-cache YAML strategy with intelligent topic detection to address context window exhaustion problem. Major additions: (1) Session-aware persistence - writes directly to active session's research.yaml or temp cache based on buildforce.json currentSession, (2) Topic detection algorithm using 30% keyword overlap threshold to determine MERGE (related topics) vs REPLACE (unrelated topics) behavior, preventing research pollution, (3) Silent .temp folder creation with graceful failure handling - persists after research completes but before TLDR presentation, displays warning AFTER Next Steps only if write fails, (4) Cache promotion in /plan Step 2c - checks .temp/research-cache.yaml first, promotes to sessions/{folder}/research.yaml with id update, deletes temp cache after use, falls back to conversation materialization if no cache. UX preserved: TLDR and Next Steps remain final visible output, permission prompt (if triggered) appears before TLDR. Addresses critical workflow gap for multi-research sessions requiring /clear before /plan."
+
+  - version: "3.1"
+    date: "2025-12-12"
+    changes: "Simplified topic detection from algorithmic to agentic approach. Replaced verbose 25-line keyword extraction, frequency counting, and 30% threshold calculation instructions with concise 3-line semantic comparison instruction that trusts agent reasoning. Added topic relevance check during cache promotion in /plan Step 2c - cache is only promoted if related to current planning context, otherwise skipped with fallback to conversation materialization. This prevents unrelated research contamination (e.g., authentication cache polluting CSS refactor session). Changes embody philosophical shift: treat LLMs as reasoning engines, not rule executors. Maintains silent execution principle - agents compare and decide without showing work. Template-only changes in research.md and plan.md."
+
 related_specs:
   - research-persistence-intelligent-20251027213207
   - remove-research-caching-20251103150000
+  - research-persistence-cache-20251128091500
+  - simplify-topic-detection-20251212000000
 
 notes: |
   Key design principles:

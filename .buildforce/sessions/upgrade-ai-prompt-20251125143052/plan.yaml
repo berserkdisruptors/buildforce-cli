@@ -1,0 +1,233 @@
+version: "0.0.35"
+id: upgrade-ai-prompt-20251125143052-plan
+name: "Implementation Plan for Add AI Selection Prompts to Upgrade Command"
+spec_id: "upgrade-ai-prompt-20251125143052"
+type: implementation-plan
+status: ready
+created: "2025-11-25"
+last_updated: "2025-11-25"
+
+# ARCHITECTURE OVERVIEW
+
+approach: |
+  Refactor the upgrade command's AI assistant selection logic to mirror the init command's behavior.
+  The key change is moving from conditional prompting (only when config is missing) to always prompting
+  when --ai flag is not provided. We'll pre-select existing configuration values as defaults in the
+  interactive prompt, providing a smooth upgrade experience while allowing modification.
+
+technology_stack:
+  - TypeScript for implementation
+  - Commander.js for CLI option parsing
+  - selectMultipleWithCheckboxes from lib/interactive.ts for multi-select interface
+
+decisions:
+  - decision: "Always prompt for AI selection unless --ai flag is provided"
+    rationale: "Matches init command behavior and provides consistent UX. Users can modify their selection during upgrade without CLI flags or manual config editing."
+
+  - decision: "Pre-select existing aiAssistants from buildforce.json as defaults"
+    rationale: "Preserves user's current configuration by default, reducing friction. Users can easily add/remove assistants using spacebar."
+
+  - decision: "Update messaging based on whether config exists"
+    rationale: "Provides context-aware prompts that help users understand whether they're selecting for the first time or modifying existing selection."
+
+# FILE STRUCTURE
+
+files_to_create: []
+
+files_to_modify:
+  - path: "src/commands/upgrade/index.ts"
+    change_type: "edit"
+    description: "Modify AI assistant selection logic to always prompt (unless --ai flag provided) and pre-select existing config values"
+
+# IMPLEMENTATION PHASES
+
+phase_1:
+  name: "Refactor AI Selection Logic"
+  description: |
+    Update the upgrade command to prompt for AI selection regardless of existing configuration,
+    while maintaining CLI flag override behavior and pre-selecting current configuration.
+
+  tasks:
+    - [x] Modify AI selection conditional logic in upgradeCommand function (lines 59-104)
+      spec_refs: [FR1, FR3, FR4]
+      files: [src/commands/upgrade/index.ts]
+      notes: |
+        Current logic (lines 59-104):
+        - if (aiOverride) → use CLI flag
+        - else if (config?.aiAssistants && length > 0) → use config without prompting
+        - else → prompt
+
+        New logic:
+        - if (aiOverride) → use CLI flag (merge with existing)
+        - else → always prompt with pre-selected defaults from config
+
+    - [x] Update prompt messaging to indicate detected vs. new selection
+      spec_refs: [FR5]
+      files: [src/commands/upgrade/index.ts]
+      notes: |
+        When config exists and has assistants:
+        - Message: "Modify your AI assistant(s) (current: claude, windsurf):"
+
+        When config is missing or empty:
+        - Message: "No AI assistant found. Please select one or more:"
+
+    - [x] Ensure backward compatibility with --ai CLI flag behavior
+      spec_refs: [FR3, NFR1]
+      files: [src/commands/upgrade/index.ts]
+      notes: |
+        The --ai flag should still work for non-interactive usage.
+        Keep the existing merge behavior (lines 78-80) that combines CLI input with existing config.
+
+  validation:
+    - [x] All phase_1 tasks completed
+    - [x] Code compiles without TypeScript errors
+    - [x] Spec requirements covered: [FR1, FR3, FR4, FR5, NFR1]
+
+phase_2:
+  name: "Testing and Validation"
+  description: |
+    Manually test the upgrade command with various scenarios to ensure correct behavior
+    and consistency with init command.
+
+  tasks:
+    - [ ] Test upgrade command without --ai flag with existing config
+      spec_refs: [AC1, AC2]
+      files: []
+      notes: |
+        Expected: Shows prompt with current assistants pre-selected.
+        User can modify selection using spacebar.
+
+    - [ ] Test upgrade command with --ai flag
+      spec_refs: [AC3]
+      files: []
+      notes: |
+        Expected: Skips prompt, merges CLI value with existing config.
+
+    - [ ] Test upgrade command without config (edge case)
+      spec_refs: [AC1, AC4]
+      files: []
+      notes: |
+        Expected: Shows prompt with default pre-selection (["claude"]).
+        This is the existing backward compatibility path.
+
+    - [ ] Verify UX consistency with init command
+      spec_refs: [NFR2, AC4, AC5]
+      files: []
+      notes: |
+        Compare upgrade and init command prompts side-by-side.
+        Ensure same checkbox interface, messaging style, and flow.
+
+  validation:
+    - [ ] All phase_2 tasks completed
+    - [ ] Manual testing scenarios pass
+    - [ ] Spec requirements covered: [AC1, AC2, AC3, AC4, AC5, NFR2]
+
+# DEVIATION LOG
+
+deviations:
+  - original: "Phase 2: Testing and Validation only"
+    actual: "Added README documentation for upgrade command"
+    reason: "User requested README update in iteration 2. Documentation was missing for the upgrade command entirely, so added a new section explaining the interactive AI selection behavior, CLI options, and usage examples."
+    iteration: 2
+    date: "2025-11-25"
+
+# GUIDELINE COMPLIANCE
+
+guideline_compliance:
+  strict_validations: []
+  recommended_validations: []
+
+# TESTING GUIDANCE
+
+testing:
+  automated_tests: []
+
+  manual_tests:
+    - scenario: "Upgrade with existing config, no CLI flags"
+      steps: |
+        1. Ensure buildforce.json has aiAssistants: ["claude"]
+        2. Run: buildforce upgrade
+        3. Verify: Prompt appears with "claude" pre-selected
+        4. Use spacebar to select "windsurf" as well
+        5. Press enter to confirm
+        6. Verify: Upgrade completes with both assistants selected
+
+    - scenario: "Upgrade with --ai flag override"
+      steps: |
+        1. Ensure buildforce.json has aiAssistants: ["claude"]
+        2. Run: buildforce upgrade --ai windsurf
+        3. Verify: No prompt appears
+        4. Verify: Config is merged to include both claude and windsurf
+        5. Verify: Upgrade completes successfully
+
+    - scenario: "Upgrade without existing config (backward compatibility)"
+      steps: |
+        1. Manually remove aiAssistants field from buildforce.json
+        2. Run: buildforce upgrade
+        3. Verify: Prompt appears with message about missing config
+        4. Verify: ["claude"] is pre-selected by default
+        5. Select desired assistants and press enter
+        6. Verify: Upgrade completes successfully
+
+# VALIDATION CRITERIA
+
+success_metrics:
+  - "Upgrade command prompts for AI selection when --ai flag is not provided"
+  - "Existing AI assistants are pre-selected in the prompt"
+  - "CLI flag --ai still overrides prompts for non-interactive usage"
+  - "User experience is consistent with init command"
+
+spec_coverage:
+  - FR1: "⏳ Phase 1: Task 1"
+  - FR2: "⏳ Phase 2: Task 4 (manual verification)"
+  - FR3: "⏳ Phase 1: Task 1, Task 3"
+  - FR4: "⏳ Phase 1: Task 1"
+  - FR5: "⏳ Phase 1: Task 2"
+  - NFR1: "⏳ Phase 1: Task 3"
+  - NFR2: "⏳ Phase 2: Task 4"
+  - NFR3: "⏳ Phase 1 (implicit - follows existing patterns)"
+  - AC1: "⏳ Phase 2: Task 1, Task 3"
+  - AC2: "⏳ Phase 2: Task 1"
+  - AC3: "⏳ Phase 2: Task 2"
+  - AC4: "⏳ Phase 2: Task 1, Task 4"
+  - AC5: "⏳ Phase 2: Task 4"
+
+# PROGRESS SUMMARY
+
+overall_progress:
+  phase_1: "3/3 tasks completed ✓"
+  phase_2: "0/4 tasks completed"
+
+current_status: |
+  Phase 1 implementation complete. README documentation added (iteration 2). Code compiles successfully. Ready for Phase 2 testing and validation.
+
+next_immediate_steps:
+  - "Phase 2: Manual testing of upgrade command scenarios"
+  - "Test upgrade without --ai flag with existing config"
+  - "Test upgrade with --ai flag override"
+  - "Verify UX consistency with init command"
+
+# RISKS & CONSIDERATIONS
+
+risks:
+  - risk: "Users with automation scripts may be surprised by new prompts"
+    mitigation: "CLI flag --ai still works for non-interactive usage. Document the change and recommend using --ai for scripts."
+
+  - risk: "TTY detection might fail in some environments"
+    mitigation: "The selectMultipleWithCheckboxes already handles this - it won't prompt if stdin is not a TTY. Add graceful fallback if needed."
+
+  - risk: "Migration logic (lines 48-57) might conflict with new prompt behavior"
+    mitigation: "Test the migration path separately. The prompt should come after migration completes."
+
+# NOTES
+
+general_notes:
+  - "The existing code already has most infrastructure in place (selectMultipleWithCheckboxes import, AI_CHOICES constant)"
+  - "Main change is restructuring the if-else logic at lines 59-104 in upgrade/index.ts"
+  - "Reference init/index.ts lines 68-83 for the pattern to follow"
+
+lessons_learned: []
+
+future_enhancements:
+  - "Consider adding a --no-prompt flag to skip all interactive prompts during upgrade"
+  - "Potentially add a 'keep current' option in the prompt to make it clear users can leave config unchanged"

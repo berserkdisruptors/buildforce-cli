@@ -3,7 +3,7 @@ name: "RESEARCH Slash Command"
 type: feature
 status: production
 created: "2025-01-15"
-last_updated: "2025-11-03"
+last_updated: "2025-12-12"
 
 summary: |
   First command in the spec-driven development workflow.
@@ -162,10 +162,20 @@ evolution:
     date: "2025-11-03"
     changes: "Reordered workflow steps for better UX - research persistence moved to Step 7 (between Data Models and TLDR), TLDR became Step 8, Next Steps became Step 9. Removed redundant instruction 'ALWAYS add TLDR before Next Steps' as step numbering provides implicit ordering. Removed 'After presenting findings' language from Next Steps description. Template remains 68 lines. All persistence logic preserved intact - only presentation order changed. Users now see TLDR and Next Steps as final output without scrolling."
 
+  - version: "3.0"
+    date: "2025-11-28"
+    changes: "Replaced .research-cache.md with single-cache YAML strategy (.buildforce/.temp/research-cache.yaml) featuring intelligent topic detection to prevent pollution. Major changes: (1) Session-aware persistence - writes to active session's research.yaml or temp cache based on buildforce.json currentSession field, (2) Topic detection algorithm with 30% keyword overlap threshold determining MERGE vs REPLACE behavior, (3) Silent .temp folder creation with graceful failure handling - warning displayed AFTER Next Steps if persistence fails, (4) Cache promotion in /buildforce.plan Step 2c with automatic deletion after use. Template expanded significantly. Preserves v2.1 UX principle: TLDR and Next Steps remain final visible output with zero file operation messages."
+
+  - version: "3.1"
+    date: "2025-12-12"
+    changes: "Simplified Step 7 topic detection from verbose algorithmic instructions to concise semantic comparison. Replaced 25-line keyword extraction, frequency counting, and threshold calculation logic with 3-line instruction delegating comparison to agent's reasoning. Philosophical shift: trust LLM's native semantic understanding over prescriptive mechanical calculations. Removed mentions of keywords, tokens, percentages, thresholds. Maintains silent execution - agents compare cache and new research internally, decide MERGE or REPLACE, continue without outputting comparison process. Template reduced by 10 lines. MERGE/REPLACE behavior sections preserved intact. Complements v3.0's silent execution principle by eliminating verbose algorithm that encouraged step-by-step output."
+
 related_specs:
   - add-research-tldr-section-20251024104500
   - research-persistence-intelligent-20251027213207
   - reorder-research-workflow-20251103143500
+  - research-persistence-cache-20251128091500
+  - simplify-topic-detection-20251212000000
 
 notes: |
   Most important command in the workflow—sets foundation for /plan, /build.

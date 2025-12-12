@@ -1,0 +1,47 @@
+id: "simplify-plan-research-step-20251212164500-research"
+created: "2025-12-12"
+last_updated: "2025-12-12"
+
+summary: |
+  Research on how /buildforce.plan Step 2c handles research materialization. The current implementation
+  has verbose legacy instructions from pre-persistence era when research existed only in conversation.
+  Key insight: with research persistence (v3.0+), the complexity can be significantly reduced.
+
+key_findings:
+  - "Step 2c currently has 5 sub-steps spanning 50+ lines - legacy from pre-persistence era"
+  - "Cache promotion (step 2c.1) and conversation materialization (steps 2c.2-5) share same fallback path, creating redundant branching"
+  - "Current instruction says 'Copy content' but should extract only relevant portions based on user's planning intent"
+  - "When no /research was run, conversation context should inform spec/plan directly without creating research.yaml"
+  - "Template-Only Implementation guideline (strict enforcement) - all changes in plan.md only"
+
+file_paths:
+  primary:
+    - path: "src/templates/commands/plan.md"
+      relevance: "Target file for Step 2c refactoring - contains the verbose legacy instructions"
+  secondary:
+    - path: "src/templates/commands/research.md"
+      relevance: "Shows research persistence logic that Step 2c consumes"
+    - path: ".buildforce/context/research-persistence.yaml"
+      relevance: "Documents cache promotion design decisions"
+    - path: "src/templates/research-template.yaml"
+      relevance: "Structure for research.yaml files"
+
+architectural_decisions:
+  - pattern: "Selective Materialization"
+    description: "Extract only planning-relevant research instead of copying entire cache"
+    rationale: "Users may explore multiple topics before planning - irrelevant research becomes noise in sessions"
+
+  - pattern: "Conversation-as-Context (No Artifact)"
+    description: "When no explicit /research was run, use conversation to inform spec/plan without creating research.yaml"
+    rationale: "Research artifact only needed when explicit research was conducted - avoids empty/minimal artifacts"
+
+  - pattern: "Simplified Branching"
+    description: "Single decision point: cache exists and relevant → materialize, otherwise → use conversation context"
+    rationale: "Reduces cognitive load, eliminates redundant fallback paths"
+
+tldr:
+  - "Step 2c has 50+ lines of legacy instructions from pre-persistence era - can shrink to ~15 lines"
+  - "Key change: selective materialization (extract relevant parts) instead of full cache copy"
+  - "No research.yaml artifact needed if user didn't run explicit /research - just use conversation context"
+  - "Single decision point replaces nested branching with same fallback outcomes"
+  - "Template-only change per project guidelines (strict enforcement)"

@@ -1,0 +1,109 @@
+version: "0.0.38"
+id: simplify-plan-research-step-20251212164500
+name: "Simplify /buildforce.plan Step 2c Research Materialization"
+type: feature
+status: completed
+created: "2025-12-12"
+last_updated: "2025-12-12"
+
+summary: |
+  Refactor Step 2c in plan.md to simplify research materialization logic. Replace verbose legacy
+  instructions with concise approach: selectively extract relevant research from cache (not full copy),
+  and use conversation context directly when no explicit /research was conducted.
+
+# INTENT / PROBLEM STATEMENT
+
+problem: |
+  Step 2c in src/templates/commands/plan.md contains 50+ lines of verbose instructions from
+  the pre-persistence era when research existed only in conversation. The current structure has:
+  - 5 nested sub-steps with redundant branching
+  - Both "cache doesn't exist" and "cache exists but unrelated" paths lead to same fallback
+  - Instruction to "copy content" which copies irrelevant research from multi-topic exploration
+  - Unnecessary research.yaml artifact creation when no explicit /research was run
+
+motivation: |
+  With research persistence (v3.0+), the complexity is no longer needed. Users benefit from:
+  - Cleaner session folders without irrelevant research noise
+  - Faster /plan execution with fewer decision branches
+  - Better alignment between planning intent and materialized research
+  - Simpler template maintenance for future changes
+
+# GOALS
+
+primary_goals:
+  - Reduce Step 2c from ~50 lines to ~15 lines
+  - Change from "copy entire cache" to "extract relevant portions"
+  - Remove research.yaml creation when no explicit /research was conducted
+
+secondary_goals:
+  - Improve template readability for AI agent execution
+  - Maintain backward compatibility (existing workflows still work)
+
+# REQUIREMENTS
+
+functional_requirements:
+  - FR1: When research cache exists and is relevant, extract only planning-relevant portions into research.yaml
+  - FR2: When research cache exists but is unrelated, preserve cache for future use and skip materialization
+  - FR3: When no research cache exists but conversation has research context, use it to inform spec/plan directly without creating research.yaml artifact
+  - FR4: When user went straight to /plan with no research context, skip Step 2c entirely
+  - FR5: Delete temp cache after successful selective materialization
+
+non_functional_requirements:
+  - NFR1: Step 2c instructions should be 15 lines or less (excluding comments)
+  - NFR2: Single clear decision tree with no redundant fallback paths
+
+# SCOPE
+
+in_scope:
+  - Step 2c in src/templates/commands/plan.md (CREATE mode)
+
+out_of_scope:
+  - Step 3b (UPDATE mode) - already removed from template
+  - Changes to research.md template (research persistence works correctly)
+  - Changes to research-template.yaml structure
+  - Changes to TypeScript CLI code
+  - Other steps in plan.md (2a, 2b, 2d, 2e, etc.)
+
+# DESIGN PRINCIPLES
+
+design_principles:
+  - "Selective over complete - extract what matters, not everything"
+  - "No artifact without intent - research.yaml only when explicit /research was run"
+  - "Trust semantic comparison - agent determines relevance, not mechanical rules"
+  - "Single responsibility - one decision point, clear outcomes"
+
+# ACCEPTANCE CRITERIA
+
+acceptance_criteria:
+  - AC1: Step 2c reduced to ~15 lines of concise instructions
+  - AC2: Template instructs selective extraction based on planning intent
+  - AC3: No research.yaml created when user skipped /research command
+  - AC4: Conversation context can inform spec/plan without artifact creation
+  - AC5: Existing workflows (cache promotion, cache preservation) still function correctly
+
+# ASSUMPTIONS & DEPENDENCIES
+
+assumptions:
+  - Research persistence (v3.0) is working correctly and writing to .temp/research-cache.yaml
+  - Semantic topic detection (v3.1) is reliable for determining relevance
+  - AI agents can extract relevant portions when given clear instructions
+
+dependencies:
+  internal:
+    - research-slash-command: "Produces the research cache consumed by Step 2c"
+    - research-persistence: "Defines cache structure and topic detection approach"
+  external: []
+
+# OPEN QUESTIONS
+
+open_questions: []
+
+# NOTES
+
+notes: |
+  This refactoring aligns with project guideline "Template-Only Changes Preferred" (strict enforcement).
+  All changes are in plan.md markdown template - no TypeScript modifications required.
+
+  The key philosophical shift: research.yaml is an artifact of explicit /research execution,
+  not a container for any context that might inform planning. When users skip /research,
+  the conversation itself provides sufficient context for spec/plan population.
