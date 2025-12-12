@@ -42,55 +42,16 @@ The text the user typed after `/buildforce.plan` in the triggering message **is*
    - Run `{SCRIPT}` from current working directory with generated FOLDER_NAME and parse JSON output for FOLDER_NAME, SPEC_FILE, PLAN_FILE, SPEC_DIR
    - The script creates both spec.yaml and plan.yaml files from templates
 
-   **Step 2c: Materialize research.yaml from cache or conversation** (if research context exists):
+   **Step 2c: Load research context** (if available):
 
-   Determine if research context exists in temp cache or conversation and materialize it into structured research.yaml:
-
-   1. **Check for temp cache first**:
-
-      - Check if `.buildforce/.temp/research-cache.yaml` exists
-      - If temp cache EXISTS:
-        - Read `.buildforce/.temp/research-cache.yaml`
-        - **Topic Relevance Check**: Compare the cache's `summary` and `key_findings` with the current planning context (user input from $ARGUMENTS and conversation history). Determine if the cached research is related to what is being planned using your semantic understanding. Do not output any comparison process or decision reasoning.
-        - If cache is **RELATED** to current planning context:
-          - Copy content to `.buildforce/sessions/{FOLDER_NAME}/research.yaml`
-          - Update `id` field from "research-cache" to "{FOLDER_NAME}-research"
-          - Delete `.buildforce/.temp/research-cache.yaml` after successful promotion (single-use cache)
-          - **SKIP to Step 2d** - cache promotion complete
-        - If cache is **UNRELATED** to current planning context:
-          - Skip promotion - do not copy cache, do not delete cache (preserve for future use)
-          - **PROCEED to conversation materialization (Step 2 below)** - fallback to extracting context from conversation
-      - If temp cache DOES NOT EXIST: **PROCEED to conversation materialization (Step 2 below)**
-
-   2. **Assess conversation for research context** (fallback when no cache):
-
-      - Review conversation history for research-related content:
-        - Explicit `/buildforce.research` command output with findings, diagrams, data models
-        - User discussions about architecture, patterns, or technical exploration
-        - File path discoveries, codebase analysis, or external references
-      - If NO research context exists (user went straight to `/buildforce.plan`): **SKIP to Step 2d** - don't create empty research.yaml
-      - If research context EXISTS: **PROCEED with materialization (Step 3 below)**
-
-   3. **Read template structure** (for conversation materialization):
-
-      - Read `.buildforce/templates/research-template.yaml` for structure guidance
-      - Understand flexible sections: summary, key_findings, file_paths, mermaid_diagrams, data_models, code_snippets, architectural_decisions, external_references, tldr
-      - Remember: sections are OPTIONAL - adapt to research content type
-
-   4. **Intelligent materialization from conversation** (CRITICAL - preserve information richness):
-
-      - **PRESERVE VERBATIM**: Mermaid diagrams, data models, code snippets - these are essential for /buildforce.build
-      - **PRESERVE WITH CONTEXT**: File paths (with relevance notes), architectural decisions (with rationale)
-      - **CONDENSE INTELLIGENTLY**: Research summary prose (2-4 sentences), project context (key points only)
-      - **MERGE**: TLDR bullets from research discussions into unified tldr section
-      - **DO NOT TRUNCATE**: Diagrams, models, code snippets must be complete
-      - **DO NOT OVER-CONDENSE**: Preserve information-rich elements - /buildforce.build needs comprehensive context
-
-   5. **Create research.yaml from conversation**:
-      - Write to `.buildforce/sessions/{FOLDER_NAME}/research.yaml`
-      - Set id = "{FOLDER_NAME}-research"
-      - Follow template structure but omit sections with no content (e.g., no diagrams if research was conceptual)
-      - Ensure materialized research is condensed but information-rich
+   Check if `.buildforce/.temp/research-cache.yaml` exists:
+   - If cache **EXISTS**:
+     - Read the cache and compare its `summary` and `key_findings` with the user's planning intent ($ARGUMENTS)
+     - If cache is **RELATED**: Extract only the portions relevant to this planning context into `.buildforce/sessions/{FOLDER_NAME}/research.yaml`, update `id` to "{FOLDER_NAME}-research", then delete the temp cache
+     - If cache is **UNRELATED**: Preserve cache for future use, skip to Step 2d
+   - If cache **DOES NOT EXIST**:
+     - Use any research context from conversation history to inform spec.yaml and plan.yaml population in Step 2e (no research.yaml artifact needed)
+     - Proceed to Step 2d
 
    **Step 2d: Load project guidelines** (if available):
 

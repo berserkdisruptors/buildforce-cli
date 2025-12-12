@@ -1,0 +1,175 @@
+version: "0.0.38"
+# Plan Template for /buildforce.build Agent Execution
+
+id: simplify-plan-research-step-20251212164500-plan
+name: "Implementation Plan for Simplify /buildforce.plan Step 2c"
+spec_id: "simplify-plan-research-step-20251212164500"
+type: implementation-plan
+status: completed
+created: "2025-12-12"
+last_updated: "2025-12-12"
+
+# ARCHITECTURE OVERVIEW
+
+approach: |
+  Rewrite Step 2c in plan.md with a simplified decision tree that prioritizes selective
+  materialization over full cache copy. The new approach uses a single check for research
+  cache, extracts only relevant portions, and eliminates the legacy conversation materialization
+  sub-steps. When no cache exists, conversation context informs spec/plan directly without
+  artifact creation.
+
+technology_stack:
+  - Markdown templates (plan.md) - template-only implementation per project guidelines
+
+decisions:
+  - decision: "Selective extraction over full cache copy"
+    rationale: "Users often explore multiple topics before planning. Copying everything pollutes sessions with noise. Extracting relevant portions keeps sessions clean and focused."
+
+  - decision: "No research.yaml without explicit /research"
+    rationale: "The research artifact represents explicit research execution. When users skip /research, conversation context is sufficient - no need for a potentially empty or minimal artifact."
+
+  - decision: "Single decision point with clear outcomes"
+    rationale: "Current nested branching (5 sub-steps) has redundant paths leading to same fallback. A single check simplifies agent execution and template maintenance."
+
+# FILE STRUCTURE
+
+files_to_create: []
+
+files_to_modify:
+  - path: "src/templates/commands/plan.md"
+    change_type: "refactor"
+    description: "Rewrite Step 2c (CREATE mode) and Step 3b (UPDATE mode) with simplified research handling"
+
+# IMPLEMENTATION PHASES
+
+phase_1:
+  name: "Rewrite Step 2c for CREATE mode"
+  description: |
+    Replace the current 50+ line Step 2c with a concise ~15 line version that:
+    1. Checks for research cache
+    2. If exists and relevant: extract planning-relevant portions, delete cache
+    3. If exists but unrelated: preserve cache, skip materialization
+    4. If no cache: use conversation context to inform spec/plan (no artifact)
+
+  tasks:
+    - [x] Replace Step 2c content in plan.md with simplified version
+      spec_refs: [FR1, FR2, FR3, FR4, FR5, NFR1, NFR2]
+      files: [src/templates/commands/plan.md]
+      notes: |
+        New Step 2c content:
+
+        **Step 2c: Load research context** (if available):
+
+        Check if `.buildforce/.temp/research-cache.yaml` exists:
+        - If cache EXISTS:
+          - Read the cache and compare its `summary` and `key_findings` with the user's planning intent ($ARGUMENTS)
+          - If cache is **RELATED**: Extract only the portions relevant to this planning context into `.buildforce/sessions/{FOLDER_NAME}/research.yaml`, update `id` to "{FOLDER_NAME}-research", then delete the temp cache
+          - If cache is **UNRELATED**: Preserve cache for future use, skip to Step 2d
+        - If cache DOES NOT EXIST:
+          - Use any research context from conversation history to inform spec.yaml and plan.yaml population in Step 2e (no research.yaml artifact needed)
+          - Proceed to Step 2d
+
+  validation:
+    - [x] All phase_1 tasks completed
+    - [x] Step 2c is ~15 lines or less (excluding blank lines) - ACTUAL: 10 lines
+    - [x] Template syntax is valid markdown
+    - [x] Spec requirements covered: [FR1, FR2, FR3, FR4, FR5, NFR1, NFR2]
+
+# DEVIATION LOG
+
+deviations: []
+
+# GUIDELINE COMPLIANCE
+
+guideline_compliance:
+  strict_validations:
+    - guideline: "Template-Only Slash Commands"
+      status: "✓ PASS"
+      checked_files: [src/templates/commands/plan.md]
+      notes: "All changes are in markdown template only, no TypeScript modifications"
+
+  recommended_validations:
+    - guideline: "Error Handling in Templates"
+      status: "✓ PASS"
+      checked_files: [src/templates/commands/plan.md]
+      notes: "Step 2c uses conditional logic for file existence, no explicit error handling needed"
+
+# TESTING GUIDANCE
+
+testing:
+  automated_tests: []
+
+  manual_tests:
+    - scenario: "Test /plan with existing relevant research cache"
+      steps: |
+        1. Run /research on a topic
+        2. Run /plan for the same topic
+        3. Verify research.yaml created with relevant portions only
+        4. Verify temp cache deleted
+
+    - scenario: "Test /plan with unrelated research cache"
+      steps: |
+        1. Run /research on topic A
+        2. Run /plan for topic B (unrelated)
+        3. Verify NO research.yaml created in session
+        4. Verify temp cache preserved
+
+    - scenario: "Test /plan without prior /research"
+      steps: |
+        1. Start fresh conversation
+        2. Run /plan directly
+        3. Verify NO research.yaml artifact created
+        4. Verify spec.yaml and plan.yaml populated correctly
+
+# VALIDATION CRITERIA
+
+success_metrics:
+  - "Step 2c reduced from ~50 lines to ~15 lines"
+  - "All 5 acceptance criteria pass in manual testing"
+  - "No regression in existing /research → /plan workflow"
+
+spec_coverage:
+  - FR1: "✓ Implemented - selective extraction in Step 2c line 50"
+  - FR2: "✓ Implemented - cache preservation in Step 2c line 51"
+  - FR3: "✓ Implemented - conversation context usage in Step 2c lines 52-53"
+  - FR4: "✓ Implemented - implicit flow when no research context exists"
+  - FR5: "✓ Implemented - cache deletion in Step 2c line 50"
+  - NFR1: "✓ Implemented - Step 2c is 10 lines (under 15)"
+  - NFR2: "✓ Implemented - single decision tree with EXISTS/NOT EXISTS branches"
+
+# PROGRESS SUMMARY
+
+overall_progress:
+  phase_1: "1/1 tasks completed"
+
+current_status: |
+  Implementation complete. Step 2c reduced from ~50 lines to 10 lines.
+  All spec requirements covered. Guideline compliance validated.
+  Ready for manual testing.
+
+next_immediate_steps:
+  - "Manual test: /plan with existing relevant research cache"
+  - "Manual test: /plan with unrelated research cache"
+  - "Manual test: /plan without prior /research"
+
+# RISKS & CONSIDERATIONS
+
+risks:
+  - risk: "Agent might not extract relevant portions correctly"
+    mitigation: "Instructions emphasize semantic understanding - same approach as topic detection which is proven reliable"
+
+  - risk: "Removing conversation materialization might lose edge case coverage"
+    mitigation: "With research persistence (v3.0+), explicit /research always creates cache - conversation-only path is for users who skip /research entirely"
+
+# NOTES
+
+general_notes:
+  - "Template-only change per project guidelines (strict enforcement)"
+  - "This simplification complements the v3.1 semantic topic detection change in research.md"
+  - "The philosophical shift: research.yaml is artifact of explicit /research, not general context container"
+
+lessons_learned: []
+
+future_enhancements:
+  - "Consider similar simplification for /build research loading logic"
+  - "Add validation that research.yaml id matches session folder"

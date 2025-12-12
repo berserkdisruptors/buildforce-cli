@@ -3,7 +3,7 @@ name: "Plan Command Template"
 type: feature
 status: production
 created: 2025-01-23
-last_updated: 2025-11-26
+last_updated: 2025-12-12
 
 summary: |
   Template-based slash command that guides AI agents through creating or updating structured
@@ -77,6 +77,12 @@ design_decisions:
   - decision: "Add template structure verification instruction to Step 2c (after file population)"
     rationale: "Users reported bugs where plan.yaml files had incorrect structures, causing downstream /build issues. Explicit verification instruction directs agents to check both spec.yaml and plan.yaml structure immediately after population (optimal correction point). Leverages agent intelligence for structural checking without programmatic validation. Verification applies to CREATE mode only since UPDATE mode rarely rewrites entire file structures."
 
+  - decision: "Selective research extraction over full cache copy (v9.3)"
+    rationale: "Users may explore multiple topics before planning. Copying entire cache pollutes sessions with irrelevant research noise. Extracting only planning-relevant portions keeps sessions clean and focused while preserving unrelated cache for future use."
+
+  - decision: "No research.yaml artifact without explicit /research (v9.3)"
+    rationale: "Research artifact represents explicit /research execution. When users skip /research and go straight to /plan, conversation context is sufficient to inform spec/plan - no need for a potentially empty or minimal research.yaml artifact."
+
 evolution:
   - version: "1.0"
     date: "2025-01-07"
@@ -122,6 +128,10 @@ evolution:
     date: "2025-11-28"
     changes: "Integrated research persistence v3.0 cache promotion logic into Step 2c. CREATE mode now checks for .buildforce/.temp/research-cache.yaml first before conversation materialization. If temp cache exists: (1) Read cache content, (2) Copy to sessions/{folder}/research.yaml, (3) Update id field from 'research-cache' to '{folder}-research', (4) Delete temp cache after promotion (single-use), (5) Skip to Step 2d. Maintains backwards compatibility with conversation materialization as fallback when no cache exists. Enables seamless workflow: /research → /clear → /plan without losing findings."
 
+  - version: "9.3"
+    date: "2025-12-12"
+    changes: "Simplified Step 2c research materialization from ~50 lines to 10 lines. Key changes: (1) Replaced 'copy entire cache' with 'extract relevant portions' based on planning intent, (2) When cache is unrelated, preserve for future use instead of falling back to conversation materialization, (3) When no cache exists, use conversation context to inform spec/plan directly without creating research.yaml artifact, (4) Single decision tree replaces nested 5-step branching. Enables cleaner sessions without irrelevant research noise."
+
 related_specs:
   - redesign-spec-context-20250107120000
   - swap-timestamp-slug-order-20251024093000
@@ -133,6 +143,7 @@ related_specs:
   - rename-spec-to-plan-20251121000000
   - rename-create-spec-to-session-20251126000000
   - research-persistence-cache-20251128091500
+  - simplify-plan-research-step-20251212164500
 
 notes: |
   The /buildforce.plan command follows a 7-step workflow:
