@@ -1,6 +1,6 @@
 {
   "name": "@buildforce/cli",
-  "version": "0.0.39",
+  "version": "0.0.40",
   "description": "Buildforce CLI - Spec-Driven Development (SDD) toolkit CLI",
   "type": "module",
   "main": "dist/cli.js",
