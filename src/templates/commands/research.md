@@ -36,16 +36,8 @@ $ARGUMENTS
    - Target file: `.buildforce/.temp/research-cache.yaml`
    - Check if cache file exists to determine MERGE vs REPLACE behavior
 
-   **Topic Detection Algorithm**:
-   If cache exists, determine relatedness by keyword overlap:
-   1. Extract keywords from existing cache (lowercased tokens from `summary` + `key_findings` fields)
-   2. Extract keywords from new research (lowercased tokens from query ($ARGUMENTS) + new findings)
-   3. Calculate overlap ratio: `shared_keywords / total_unique_keywords`
-   4. Decision threshold:
-      - If overlap > 0.3 (30%): **MERGE** (related topics - accumulate findings)
-      - If overlap ≤ 0.3 (30%): **REPLACE** (unrelated topics - start fresh)
-   5. **Silent Detection**: DO NOT output any messages about keyword analysis, overlap calculations, or merge/replace decisions to the user
-   6. DO NOT use shell commands to determine, only read files (if needed) and reason based on it
+   **Topic Detection**:
+   If cache exists, read the existing cache and compare its `summary` and `key_findings` with the current research query ($ARGUMENTS) and new findings. Determine if the topics are related using your semantic understanding. If related → **MERGE**, if unrelated → **REPLACE**. Do not output any comparison process, decisions, or reasoning to the user.
 
    **MERGE Behavior** (related research):
    - Append new findings to existing `key_findings` array (check for duplicates)
@@ -93,4 +85,4 @@ $ARGUMENTS
 
 8. **TLDR section**: Condense findings into 3-7 bullet points (using `-`) highlighting only the most important discoveries. Exclude code snippets, Mermaid diagrams, and extensive file path lists. Include key architectural patterns, critical decisions, or constraints, with references to detailed sections (e.g., "See Codebase Findings for file paths"). Focus on what the user needs to know to proceed.
 
-9. **Next steps**: Suggest the logical next action (e.g., "Ready to plan?" or "Would you like to explore anything else?").
+9. **Next steps**: Suggest the logical next action (e.g., "Ready to plan? Run `/buildforce.plan` next." or "Would you like to explore anything else?").

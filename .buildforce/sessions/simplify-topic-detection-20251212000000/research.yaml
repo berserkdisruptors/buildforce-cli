@@ -1,0 +1,344 @@
+id: "simplify-topic-detection-20251212000000-research"
+created: "2025-12-01"
+last_updated: "2025-12-12"
+
+summary: |
+  Comprehensive analysis of research persistence improvements in this PR (feat/persistent-research),
+  examining the evolution from conversation-based materialization to session-aware persistence with
+  intelligent caching. The PR implements v3.0 of research persistence with single-cache YAML strategy,
+  topic detection algorithm, and .temp folder management.
+
+key_findings:
+  - "Research persistence evolved through three versions: v1.0 (cache accumulation with UX friction), v2.0 (removed caching, insufficient), v3.0 (single-cache YAML with topic detection)"
+  - "v3.0 implements session-aware persistence - writes to .buildforce/sessions/{currentSession}/research.yaml if session active, otherwise to .buildforce/.temp/research-cache.yaml"
+  - "Topic detection algorithm uses 30% keyword overlap threshold to determine MERGE (related topics accumulate) vs REPLACE (unrelated topics start fresh)"
+  - "Silent execution preserves clean UX - all file operations happen between research completion and TLDR presentation, warnings only on failure"
+  - "Cache promotion in /buildforce.plan Step 2c: checks .temp/research-cache.yaml first, promotes to session folder with id update, deletes temp cache after use"
+  - "Template-only implementation with zero TypeScript changes - all logic embedded in markdown instruction templates (strict guideline compliance)"
+  - "PR includes .temp folder addition to .gitignore on both init and upgrade commands"
+  - "Recent commits refactored specs→sessions terminology across entire codebase"
+  - "Working .temp/research-cache.yaml exists containing detailed research about the feature itself (meta!)"
+
+file_paths:
+  primary:
+    - path: "src/templates/commands/research.md"
+      relevance: "Step 7 persistence logic with 66 new lines: session-aware location detection, topic detection algorithm, MERGE vs REPLACE behavior, silent execution, graceful failure handling"
+
+    - path: "src/templates/commands/plan.md"
+      relevance: "Step 2c cache promotion logic: checks .temp/research-cache.yaml first, promotes to sessions/{folder}/research.yaml, updates id field, deletes temp cache"
+
+    - path: ".buildforce/templates/research-template.yaml"
+      relevance: "Flexible YAML template structure with optional sections (diagrams, models, snippets), intelligent condensation strategy documented"
+
+    - path: ".buildforce/context/research-persistence.yaml"
+      relevance: "Context file documenting all three evolution versions with design decisions, architecture patterns, and materialization workflows"
+
+    - path: ".buildforce/context/research-slash-command.yaml"
+      relevance: "Research command context with v3.0 evolution entry, 9 key guidelines including Step 7 persistence"
+
+    - path: ".buildforce/context/state-tracking.yaml"
+      relevance: "State tracking system using buildforce.json currentSession field to determine persistence location"
+
+  secondary:
+    - path: "src/commands/init/setup.ts"
+      relevance: "Init command creates .gitignore entry for .buildforce/.temp"
+
+    - path: "src/commands/upgrade/execution.ts"
+      relevance: "Upgrade command adds .temp to .gitignore if not present"
+
+    - path: ".gitignore"
+      relevance: "Added .buildforce/.temp entry to ignore temporary research cache"
+
+    - path: ".buildforce/sessions/research-persistence-cache-20251128091500/research.yaml"
+      relevance: "v3.0 spec session containing detailed research about the cache implementation itself"
+
+    - path: ".buildforce/.temp/research-cache.yaml"
+      relevance: "Active cache file demonstrating the feature in practice with meta-research about research persistence"
+
+mermaid_diagrams:
+  - title: "Research Persistence Evolution Timeline"
+    description: "Three-stage evolution addressing UX and functionality trade-offs"
+    diagram: |
+      ```mermaid
+      timeline
+        title Research Persistence Evolution
+
+        v1.0 (Oct 2025) : Cache Accumulation (.research-cache.md)
+                        : Three-stage pipeline (accumulation → materialization → cleanup)
+                        : UX friction from permission prompts
+
+        v2.0 (Nov 2025) : Removed Cache Accumulation
+                        : Conversation-based materialization only
+                        : Lost context management capability
+
+        v3.0 (Nov 2025) : Single-cache YAML Strategy
+                        : Session-aware persistence
+                        : Topic detection (30% overlap threshold)
+                        : Silent execution with graceful failure handling
+      ```
+
+  - title: "v3.0 Research Persistence Workflow in This PR"
+    description: "Complete flow from /buildforce.research through cache promotion to consumption"
+    diagram: |
+      ```mermaid
+      flowchart TD
+        START[/buildforce.research executed] --> CHECK_SESSION{Check buildforce.json<br/>currentSession}
+
+        CHECK_SESSION -->|Session active| SESSION_WRITE[Write to sessions/{folder}/research.yaml]
+        CHECK_SESSION -->|No session| CACHE_STRATEGY[Cache strategy]
+
+        CACHE_STRATEGY --> CHECK_CACHE{.temp/research-cache.yaml<br/>exists?}
+
+        CHECK_CACHE -->|No| CREATE_CACHE[Create research-cache.yaml<br/>with fresh content]
+        CHECK_CACHE -->|Yes| TOPIC_DETECT[Topic Detection Algorithm]
+
+        TOPIC_DETECT --> EXTRACT[Extract keywords from:<br/>1. Existing cache summary + key_findings<br/>2. New research query + findings]
+        EXTRACT --> CALCULATE[Calculate overlap ratio:<br/>shared / total_unique_keywords]
+
+        CALCULATE --> THRESHOLD{Overlap > 30%?}
+        THRESHOLD -->|Yes| MERGE[MERGE: Append new findings<br/>Merge TLDR bullets<br/>Add updates entry]
+        THRESHOLD -->|No| REPLACE[REPLACE: Drop old cache<br/>Write fresh research.yaml]
+
+        MERGE --> WRITE_SUCCESS
+        REPLACE --> WRITE_SUCCESS
+        CREATE_CACHE --> WRITE_SUCCESS
+        SESSION_WRITE --> WRITE_SUCCESS
+
+        WRITE_SUCCESS[Write Success] --> PRESENT_TLDR[Present TLDR to user]
+        WRITE_SUCCESS --> PRESENT_NEXT[Present Next Steps]
+
+        PLAN_CMD[/buildforce.plan executed] --> PLAN_CHECK{.temp/research-cache.yaml<br/>exists?}
+        PLAN_CHECK -->|Yes| PROMOTE[Promote to sessions/{folder}/research.yaml<br/>Update id field<br/>Delete temp cache]
+        PLAN_CHECK -->|No| FALLBACK[Fallback: Materialize from<br/>conversation history]
+
+        PROMOTE --> BUILD_CONSUME
+        FALLBACK --> BUILD_CONSUME
+        SESSION_WRITE -.-> BUILD_CONSUME
+
+        BUILD_CONSUME[/buildforce.build and /buildforce.complete<br/>consume research.yaml]
+
+        style SESSION_WRITE fill:#d4f4dd
+        style MERGE fill:#fff4cc
+        style REPLACE fill:#ffd4cc
+        style PROMOTE fill:#d4f4dd
+        style TOPIC_DETECT fill:#e6f3ff
+      ```
+
+  - title: "Topic Detection Algorithm Detail"
+    description: "30% keyword overlap threshold determining MERGE vs REPLACE behavior"
+    diagram: |
+      ```mermaid
+      graph TB
+        EXISTING[Existing Cache] --> EXTRACT_OLD[Extract Keywords<br/>from summary + key_findings]
+        NEW[New Research] --> EXTRACT_NEW[Extract Keywords<br/>from query + findings]
+
+        EXTRACT_OLD --> TOKENS_OLD[Lowercased Tokens:<br/>authentication, jwt, oauth2, login]
+        EXTRACT_NEW --> TOKENS_NEW[Lowercased Tokens:<br/>authentication, security, session, tokens]
+
+        TOKENS_OLD --> CALC
+        TOKENS_NEW --> CALC
+
+        CALC[Calculate Overlap] --> SHARED[Shared: authentication, tokens<br/>Count: 2]
+        CALC --> TOTAL[Total Unique:<br/>authentication, jwt, oauth2, login,<br/>security, session, tokens<br/>Count: 7]
+
+        SHARED --> RATIO
+        TOTAL --> RATIO
+
+        RATIO[Overlap Ratio:<br/>2 / 7 = 0.286 = 28.6%] --> DECISION{28.6% > 30%?}
+
+        DECISION -->|No| REPLACE_RESULT[REPLACE:<br/>Topics unrelated<br/>Start fresh cache]
+        DECISION -->|Yes| MERGE_RESULT[MERGE:<br/>Topics related<br/>Accumulate findings]
+
+        style DECISION fill:#fff4cc
+        style REPLACE_RESULT fill:#ffd4cc
+        style MERGE_RESULT fill:#d4f4dd
+      ```
+
+data_models:
+  - name: "Research Cache YAML Structure"
+    description: "Flexible structure for .buildforce/.temp/research-cache.yaml"
+    properties:
+      - name: "id"
+        type: "string"
+        required: true
+        description: "Fixed value 'research-cache' for temp cache, or '{spec-id}-research' for session files"
+
+      - name: "created"
+        type: "date (YYYY-MM-DD)"
+        required: true
+        description: "Date when cache was first created"
+
+      - name: "last_updated"
+        type: "date (YYYY-MM-DD)"
+        required: true
+        description: "Date when cache was last modified (updated on MERGE)"
+
+      - name: "summary"
+        type: "string (multi-line)"
+        required: true
+        description: "2-4 sentence overview of what was researched, updated to reflect combined scope on MERGE"
+
+      - name: "key_findings"
+        type: "array of strings"
+        required: false
+        description: "Actionable discoveries from research, appended on MERGE with deduplication"
+
+      - name: "file_paths"
+        type: "object with primary/secondary arrays"
+        required: false
+        description: "File paths discovered during codebase exploration, merged and deduplicated"
+
+      - name: "mermaid_diagrams"
+        type: "array of diagram objects"
+        required: false
+        description: "Architecture diagrams preserved verbatim, appended on MERGE"
+
+      - name: "data_models"
+        type: "array of model objects"
+        required: false
+        description: "Data structure documentation, deduplicated by model name on MERGE"
+
+      - name: "code_snippets"
+        type: "array of snippet objects"
+        required: false
+        description: "Complete code examples preserved verbatim"
+
+      - name: "architectural_decisions"
+        type: "array of decision objects"
+        required: false
+        description: "Design patterns with rationale"
+
+      - name: "tldr"
+        type: "array of strings"
+        required: true
+        description: "3-7 critical bullet points, merged and deduplicated on MERGE"
+
+      - name: "updates"
+        type: "array of update entries"
+        required: false
+        description: "History of MERGE operations with dates and summaries"
+
+    relationships:
+      - "Promoted to .buildforce/sessions/{folder}/research.yaml during /buildforce.plan execution"
+      - "Consumed by /buildforce.build and /buildforce.complete commands"
+      - "Related to buildforce.json currentSession field for session-aware persistence"
+
+  - name: "BuildforceConfig (buildforce.json)"
+    description: "JSON configuration file tracking active session state"
+    properties:
+      - name: "currentSession"
+        type: "string | null"
+        required: true
+        description: "Active session folder name (e.g., 'add-feature-20251201000000') or null if no session"
+
+      - name: "aiAssistants"
+        type: "array of strings"
+        required: true
+        description: "Selected AI assistants (e.g., ['claude'])"
+
+      - name: "scriptType"
+        type: "string"
+        required: true
+        description: "Script type (e.g., 'sh' or 'ps')"
+
+      - name: "version"
+        type: "string"
+        required: true
+        description: "CLI version or 'local' for development"
+
+    relationships:
+      - "Read by /buildforce.research to determine persistence location"
+      - "Read by /buildforce.plan to determine CREATE vs UPDATE mode"
+
+architectural_decisions:
+  - pattern: "Session-Aware Persistence Location"
+    description: "Research files written to different locations based on active session state"
+    rationale: "When session is active (currentSession != null), write directly to session folder for immediate availability. When no session (currentSession == null), use temporary cache with promotion strategy. This prevents orphaned research files and maintains clean session artifacts."
+
+  - pattern: "Topic Detection with Keyword Overlap Threshold"
+    description: "30% keyword overlap ratio determines MERGE (accumulate) vs REPLACE (start fresh) behavior"
+    rationale: "Prevents research pollution where unrelated topics contaminate existing cache. Simple keyword extraction (lowercased tokens) provides sufficient accuracy without NLP complexity. 30% threshold empirically balances related research accumulation with fresh topic detection."
+
+  - pattern: "Silent Execution with Graceful Failure Handling"
+    description: "File operations execute silently (zero user-visible messages) with warnings displayed AFTER Next Steps only on failure"
+    rationale: "Preserves v2.1 UX principle: TLDR and Next Steps must remain final visible output. Users get clean actionable summary without file operation noise. Permission prompts (if triggered) appear BEFORE TLDR to avoid interrupting final presentation. Failures don't block workflow - users warned about data loss risk after seeing results."
+
+  - pattern: "Cache Promotion in Plan Command"
+    description: "/buildforce.plan checks .temp/research-cache.yaml first, promotes to session folder, deletes temp cache"
+    rationale: "Addresses critical workflow gap where users run /clear after research-intensive sessions. Promotion ensures research findings available in session folder for /buildforce.build consumption. Automatic temp cache deletion maintains cleanliness. Fallback to conversation materialization ensures graceful degradation if no cache exists."
+
+  - pattern: "Template-Only Implementation"
+    description: "All research persistence logic embedded in markdown instruction templates, zero TypeScript changes"
+    rationale: "Maintains Buildforce CLI's architectural guideline (strict enforcement: Template-Only Slash Commands). Reduces implementation complexity, eliminates TypeScript dependency changes, ensures automatic distribution via existing release packaging. Changes limited to src/templates/commands/*.md files."
+
+  - pattern: "Flexible YAML Structure with Optional Sections"
+    description: "research-template.yaml allows variable sections based on research content type (diagrams, models, snippets optional)"
+    rationale: "Not all research produces diagrams or code snippets. Rigid template enforcement loses information or forces empty sections. Flexible structure adapts to content type: conceptual research omits diagrams, codebase exploration includes file paths, web research includes external_references. Preserves information richness without verbatim copy."
+
+  - pattern: ".temp Folder Management in Init and Upgrade"
+    description: "Both init and upgrade commands add .buildforce/.temp to .gitignore automatically"
+    rationale: "Ensures temporary research cache files never committed to repository. Consistent with local session state philosophy where buildforce.json and active work artifacts remain local. Upgrade path ensures existing projects get .temp exclusion without manual intervention."
+
+code_snippets:
+  - title: "Topic Detection Pseudocode"
+    language: "markdown"
+    description: "Algorithm for determining MERGE vs REPLACE behavior"
+    code: |
+      # Extract keywords from existing cache
+      existing_keywords = extract_keywords(cache.summary + cache.key_findings)
+
+      # Extract keywords from new research
+      new_keywords = extract_keywords(new_research.query + new_research.findings)
+
+      # Calculate overlap
+      shared = set(existing_keywords) & set(new_keywords)
+      total = set(existing_keywords) | set(new_keywords)
+      overlap_ratio = len(shared) / len(total) if total else 0
+
+      # Decision threshold
+      if overlap_ratio > 0.3:
+          return "MERGE"  # Related topics - append findings
+      else:
+          return "REPLACE"  # Unrelated topics - start fresh
+
+  - title: "Session-Aware Persistence Location Logic"
+    language: "markdown"
+    description: "Step 7 logic from research.md determining where to write"
+    code: |
+      # Step 7: Research Persistence
+
+      # Check buildforce.json for active session
+      currentSession = read_json(".buildforce/buildforce.json").currentSession
+
+      if currentSession != null:
+          # Active session - write directly to session folder
+          target_file = f".buildforce/sessions/{currentSession}/research.yaml"
+          write_research(target_file, research_data)
+      else:
+          # No active session - use temp cache strategy
+          cache_file = ".buildforce/.temp/research-cache.yaml"
+
+          if file_exists(cache_file):
+              # Cache exists - run topic detection
+              decision = run_topic_detection(cache_file, research_data)
+              if decision == "MERGE":
+                  merge_research(cache_file, research_data)
+              else:
+                  replace_research(cache_file, research_data)
+          else:
+              # No cache - create fresh
+              create_research(cache_file, research_data)
+
+tldr:
+  - "PR implements v3.0 research persistence with session-aware location detection and intelligent caching - the major evolution after v2.0 removed all caching"
+  - "Session-aware logic: writes to active session's research.yaml OR .buildforce/.temp/research-cache.yaml based on buildforce.json currentSession field"
+  - "Topic detection prevents pollution: 30% keyword overlap threshold determines MERGE (accumulate) vs REPLACE (start fresh)"
+  - "Silent execution with graceful failure: all file ops between research completion and TLDR, warnings only after Next Steps on failure"
+  - "Cache promotion in /buildforce.plan: checks temp cache first, promotes to session folder, deletes cache after successful use"
+  - "Template-only implementation: 66 new lines in research.md, updates to plan.md - zero TypeScript changes (strict guideline compliance)"
+  - ".temp folder added to .gitignore via both init and upgrade commands for clean repository state"
+  - "Currently active .temp/research-cache.yaml contains detailed research about this feature itself (meta-research!)"
+
+updates:
+  - date: "2025-12-12"
+    summary: "Merged research on recent research persistence improvements in this PR - combined historical evolution analysis with current PR state"

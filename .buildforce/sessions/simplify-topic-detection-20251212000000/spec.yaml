@@ -1,0 +1,121 @@
+version: "0.0.38"
+id: simplify-topic-detection-20251212000000
+name: "Simplify Topic Detection for Research Persistence"
+type: feature
+status: completed
+created: "2025-12-12"
+last_updated: "2025-12-12"
+
+summary: |
+  Simplify topic detection in research persistence by removing verbose keyword extraction logic
+  and adding topic relevance check during cache promotion to prevent unrelated research contamination.
+
+# INTENT / PROBLEM STATEMENT
+
+problem: |
+  Two problems exist in the current research persistence system:
+
+  1. Topic detection in /buildforce.research (Step 7) is overly prescriptive with explicit keyword
+  extraction, frequency counting, and 30% threshold calculations. This leads to verbose agent output
+  showing calculation steps, percentages, and word counts - breaking the silent execution principle.
+  The algorithmic approach is unnecessary since LLMs can natively compare semantic relatedness.
+
+  2. Cache promotion in /buildforce.plan (Step 2c) blindly promotes .temp/research-cache.yaml without
+  checking topic relevance. If users run /buildforce.research on topic A, then /buildforce.plan for
+  unrelated topic B, the cache from topic A gets promoted into topic B's session folder, polluting
+  the research context.
+
+motivation: |
+  The current keyword-based approach contradicts the agentic nature of LLMs - we're prescribing
+  mechanical calculations when models can naturally reason about semantic similarity. Simplifying
+  to a concise instruction ("compare and decide") leverages model capabilities, reduces verbosity,
+  maintains silent execution, and prevents agents from showing implementation details to users.
+
+  Adding topic detection during cache promotion closes a critical edge case where unrelated research
+  contaminates session artifacts, ensuring only relevant research context informs the planning process.
+
+# GOALS
+
+primary_goals:
+  - Replace prescriptive keyword extraction logic with simple semantic comparison instruction
+  - Add topic relevance check during cache promotion to prevent research pollution
+  - Maintain silent execution principle - zero user-visible calculation messages
+
+secondary_goals:
+  - Improve agent autonomy by trusting native reasoning capabilities
+  - Reduce template verbosity in research.md and plan.md
+
+# REQUIREMENTS
+
+functional_requirements:
+  - FR1: Replace topic detection in research.md Step 7 with concise semantic comparison instruction
+  - FR2: Instruction must delegate comparison logic entirely to the agent without prescribing calculations
+  - FR3: Add topic detection in plan.md Step 2c before cache promotion
+  - FR4: If cache topic is unrelated to current planning context, skip promotion and fall back to conversation materialization
+  - FR5: Maintain silent execution - no messages about comparison results, topic decisions, or calculations
+
+non_functional_requirements:
+  - NFR1: Template changes must preserve existing UX - TLDR and Next Steps remain final visible output
+  - NFR2: Changes must be template-only (zero TypeScript modifications) per architectural guideline
+  - NFR3: Backward compatible with existing research cache files
+
+# SCOPE
+
+in_scope:
+  - Simplify topic detection instruction in src/templates/commands/research.md Step 7
+  - Add topic detection instruction in src/templates/commands/plan.md Step 2c
+  - Remove keyword extraction, calculation, and threshold logic from both files
+  - Maintain MERGE vs REPLACE behavior based on agent's semantic comparison
+  - Update context files (research-persistence.yaml, research-slash-command.yaml)
+
+out_of_scope:
+  - Changes to research-template.yaml structure
+  - Modifications to TypeScript code or scripts
+  - Changes to .temp folder management or .gitignore
+  - Alterations to session-aware persistence location logic
+  - Updates to MERGE/REPLACE behavior details (preserve verbatim diagrams, deduplicate, etc.)
+
+# DESIGN PRINCIPLES
+
+design_principles:
+  - "Trust agent reasoning - don't prescribe mechanical calculations"
+  - "Silent execution - agents compare and decide without showing work"
+  - "Semantic understanding over syntactic matching"
+  - "Template-only changes preserve architectural consistency"
+
+# ACCEPTANCE CRITERIA
+
+acceptance_criteria:
+  - AC1: Topic detection instruction in research.md is 3-5 lines maximum (vs current 25 lines)
+  - AC2: No mention of keywords, tokens, percentages, thresholds, or calculations in instructions
+  - AC3: Cache promotion in plan.md includes topic relevance check before promotion
+  - AC4: Agents silently compare topics and decide MERGE/REPLACE without output messages
+  - AC5: Unrelated cache is not promoted - falls back to conversation materialization
+
+# ASSUMPTIONS & DEPENDENCIES
+
+assumptions:
+  - LLMs can reliably compare semantic relatedness without explicit algorithms
+  - Existing MERGE and REPLACE behavior sections remain sufficient guidance
+  - Silent execution principle is already understood by agents
+
+dependencies:
+  internal:
+    - research-slash-command: "Step 7 persistence logic being simplified"
+    - plan-command: "Step 2c cache promotion logic being enhanced"
+    - state-tracking: "buildforce.json currentSession field determines persistence location"
+  external: []
+
+# OPEN QUESTIONS
+
+open_questions: []
+
+# NOTES
+
+notes: |
+  This change addresses a philosophical mismatch: prescribing algorithmic keyword matching
+  to a reasoning model. The simplified approach is more agentic and respects LLM capabilities.
+
+  The edge case discovered during planning (cache not checked for relevance during promotion)
+  is a perfect validation of why simplification matters - the explicit algorithm created
+  a false sense of precision while missing the real problem.
