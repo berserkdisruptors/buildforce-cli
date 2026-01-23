@@ -1,0 +1,162 @@
+version: "0.0.40"
+id: context-taxonomy-align-20260123143000
+name: "Context Taxonomy Alignment"
+type: feature
+status: in-progress
+created: "2026-01-23"
+last_updated: "2026-01-23"
+
+summary: |
+  Restructure the context repository system to align with the new context taxonomy,
+  organizing context into three distinct folders: architecture/, conventions/, and
+  verification/. Migrate "guidelines" to "conventions", remove _graph.yaml, and update
+  all slash commands to work with the new structure while maintaining backward compatibility.
+
+# INTENT / PROBLEM STATEMENT
+
+problem: |
+  The current context repository structure uses a flat organization with legacy type
+  enums (module, feature, component, pattern) that don't align with the new context
+  taxonomy pillars. The "guidelines" naming is inconsistent with taxonomy terminology,
+  and _graph.yaml is an empty placeholder that adds noise. The root _index.yaml stores
+  individual context file references, making it difficult for agents to understand
+  different context categories and when to use each type.
+
+motivation: |
+  Aligning with the context taxonomy provides:
+  1. Clear separation of concerns: architecture (WHAT exists), conventions (HOW we do things),
+     verification (HOW to validate)
+  2. Better agent guidance: agents know where to look based on their current task
+  3. Consistent terminology: "conventions" replaces "guidelines" across the system
+  4. Future-proofing: structure supports adding more context types as taxonomy evolves
+  5. Cleaner codebase: remove unused _graph.yaml placeholder
+
+# GOALS
+
+primary_goals:
+  - Migrate "guidelines" feature to conventions context type with new schema and folder structure
+  - Create verification context schema based on verification-context.md research
+  - Reorganize architecture context (previously default structural+historical) into dedicated folder
+  - Update root _index.yaml to be a directory of directories, not individual files
+
+secondary_goals:
+  - Maintain backward compatibility through migration script in buildforce upgrade
+  - Update README.md to document new context taxonomy
+  - Ensure no functional changes to slash commands beyond folder paths and naming
+
+# REQUIREMENTS
+
+functional_requirements:
+  - FR1: Create src/context/conventions/_schema.yaml with type="convention" and sub_type enum (architectural-pattern, code-convention, naming-convention, testing-standard, dependency-rule, security-requirement, performance-guideline, accessibility-standard, project-quirk)
+  - FR2: Create src/context/conventions/_index.yaml to track convention context files (version 2.0)
+  - FR3: Create src/context/verification/_schema.yaml based on verification-context.md notes (version 2.0)
+  - FR4: Create src/context/verification/_index.yaml to track verification context files (version 2.0)
+  - FR5: Move src/context/_schema.yaml to src/context/architecture/_schema.yaml with type="structural" for all entries (version 2.0)
+  - FR6: Create src/context/architecture/_index.yaml to track architecture context files (version 2.0)
+  - FR7: Update src/context/_index.yaml to be a directory of context type folders with version 2.0
+  - FR8: Delete src/context/_graph.yaml from the template structure
+  - FR9: Update document.md to create conventions with type="convention" and appropriate sub_type, auto-generate filenames from convention name
+  - FR10: Update complete.md to create architecture context with type="structural", detect conventions and create with type="convention" + sub_type
+  - FR11: Update research.md to understand the new _index.yaml structure pointing to context type folders
+  - FR12: Update build.md to rename "guidelines" to "conventions" and validate against conventions/ folder
+  - FR13: Update plan.md to rename "guidelines" to "conventions" where referenced
+  - FR14: Delete src/templates/guidelines-template.yaml (content migrated to conventions schema)
+  - FR15: Update README.md to rename "guidelines" to "conventions" and add link to https://buildforce.dev/concepts/context-repository
+  - FR16: Implement version-based migration in context-migration.ts: check root _index.yaml version (1.0 → migrate, 2.0 → skip)
+  - FR17: Migration must convert existing context files to type="structural" and move to architecture/
+  - FR18: Migration must break down _guidelines.yaml into individual convention files with type="convention" and appropriate sub_type
+
+non_functional_requirements:
+  - NFR1: All existing slash command functionality must work identically after changes
+  - NFR2: Zero "guidelines" mentions in any file after migration
+  - NFR3: Migration script must handle projects with no existing _guidelines.yaml gracefully
+  - NFR4: Schema files must be well-documented with examples for AI agent consumption
+
+# SCOPE
+
+in_scope:
+  - Creating new folder structure: architecture/, conventions/, verification/
+  - Creating _schema.yaml and _index.yaml for each context type folder
+  - Updating root _index.yaml to point to context type folders
+  - Renaming "guidelines" to "conventions" in all slash commands
+  - Updating file paths in slash commands to use new folder structure
+  - Removing _graph.yaml from template structure
+  - Removing guidelines-template.yaml (content migrated to conventions schema)
+  - Updating README.md documentation
+  - Planning migration script for buildforce upgrade
+
+out_of_scope:
+  - Implementing new PR mining GitHub Actions for verification context
+  - Adding new slash command functionality
+  - Changing any slash command behavior beyond paths, naming, and type fields
+  - Supporting INTENT or OPERATIONAL context types (not part of this change)
+  - Deleting old files after migration (migration is additive, users clean up manually)
+
+# DESIGN PRINCIPLES
+
+design_principles:
+  - "Rename, don't restructure": Commands should work identically, only with new names and paths
+  - "Clear folder boundaries": Each context type folder is self-contained with its own schema and index
+  - "Schema as documentation": Schema files are the primary source of truth for AI agents
+  - "Graceful migration": buildforce upgrade handles all edge cases without data loss
+
+# ACCEPTANCE CRITERIA
+
+acceptance_criteria:
+  - AC1: No file in the codebase contains the word "guidelines" after implementation (search verification)
+  - AC2: Running /buildforce.document conventions creates files in .buildforce/context/conventions/ with type="convention" and sub_type
+  - AC3: Running /buildforce.complete captures architecture context in .buildforce/context/architecture/ with type="structural"
+  - AC4: Running /buildforce.research reads the new root _index.yaml and navigates to appropriate type folder
+  - AC5: Running /buildforce.build validates against .buildforce/context/conventions/ instead of _guidelines.yaml
+  - AC6: src/context/_graph.yaml no longer exists in the template structure
+  - AC7: buildforce upgrade on v1.0 project migrates _guidelines.yaml into individual convention files (e.g., repository-pattern.yaml, error-handling-pattern.yaml)
+  - AC8: buildforce upgrade on v1.0 project migrates context files to architecture/ with type="structural"
+  - AC9: buildforce upgrade on v2.0 project skips migration (idempotent)
+  - AC10: All _index.yaml and _schema.yaml files have version: "2.0"
+  - AC11: Each context type folder (architecture, conventions, verification) has _schema.yaml and _index.yaml
+
+# ASSUMPTIONS & DEPENDENCIES
+
+assumptions:
+  - Existing users have context repositories with version 1.0 that need migration
+  - All existing context files (module, feature, component, pattern types) map to type="structural" in architecture/
+  - Each guideline item in _guidelines.yaml maps to one convention file with appropriate sub_type
+  - The buildforce upgrade command exists and can be extended with migration logic
+
+dependencies:
+  internal:
+    - buildforce upgrade command: "Will need to implement migration logic"
+    - slash command templates: "All five templates need updates"
+  external:
+    - none
+
+# OPEN QUESTIONS
+
+open_questions: []
+
+# NOTES
+
+notes: |
+  This change aligns with the context taxonomy research findings:
+  - Structural + Historical context → architecture/ folder (type="structural")
+  - Convention context → conventions/ folder (type="convention" with sub_type)
+  - Verification context → verification/ folder (type="verification", for future GitHub Actions)
+
+  Version-based migration strategy:
+  - Context repository version stored in root _index.yaml (currently 1.0, becomes 2.0)
+  - Migration check: if version == 1.0 → migrate; if version == 2.0 → skip
+  - All _index.yaml and _schema.yaml files get version: "2.0"
+
+  Migration is additive - creates new structure and copies files, doesn't delete old.
+  Users can verify migration worked before cleaning up old files manually.
+
+  Convention sub_types map from guidelines-template.yaml sections:
+  - architectural_patterns → "architectural-pattern"
+  - code_conventions → "code-convention"
+  - naming_conventions → "naming-convention"
+  - testing_standards → "testing-standard"
+  - dependency_rules → "dependency-rule"
+  - security_requirements → "security-requirement"
+  - performance_guidelines → "performance-guideline"
+  - accessibility_standards → "accessibility-standard"
+  - project_quirks → "project-quirk"
