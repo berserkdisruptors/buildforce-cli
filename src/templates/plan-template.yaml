@@ -97,26 +97,26 @@ deviations:
   #   actual: "Used Fastify plugin system"
   #   reason: "Fastify provides better TypeScript support and performance for this use case"
 
-# GUIDELINE COMPLIANCE
+# CONVENTION COMPLIANCE
 # Track validation results for strict and recommended enforcement levels
-# This section is populated during /buildforce.build when .buildforce/context/_guidelines.yaml exists
-# Guidelines are for AI agent education - agents validate their own generated code against project conventions
+# This section is populated during /buildforce.build when .buildforce/context/conventions/ exists
+# Conventions are for AI agent education - agents validate their own generated code against project conventions
 
-guideline_compliance:
+convention_compliance:
   strict_validations:
     # Example format (remove when using):
-    # - guideline: "Repository Pattern"
+    # - convention: "Repository Pattern"
     #   status: "✓ PASS"  # or "✗ FAIL"
     #   checked_files: [src/services/UserService.ts, src/services/PostService.ts]
     #   violation:  # Only present if status is FAIL
     #     file: "src/services/UserService.ts"
     #     line: 45
-    #     issue: "Direct Prisma call violates Repository Pattern guideline (strict enforcement)"
+    #     issue: "Direct Prisma call violates Repository Pattern convention (strict enforcement)"
     #     fix: "Use UserRepository.findById(id) instead of prisma.user.findUnique()"
 
   recommended_validations:
     # Example format (remove when using):
-    # - guideline: "Error Handling Pattern"
+    # - convention: "Error Handling Pattern"
     #   status: "✓ PASS"  # or "⚠ DEVIATION"
     #   checked_files: [src/services/UserService.ts]
     #   deviation:  # Only present if status is DEVIATION
@@ -183,11 +183,11 @@ risks:
 # Capture lessons learned and future enhancement ideas
 
 general_notes:
-  - "Guideline compliance is checked during /buildforce.build execution if .buildforce/context/_guidelines.yaml exists"
-  - "Strict enforcement guidelines will fail the build if violated"
-  - "Recommended guidelines log warnings but allow build to continue"
-  - "See guideline_compliance section above for validation results"
-  - "Guidelines are for AI agent education - agents validate their own generated code against project conventions"
+  - "Convention compliance is checked during /buildforce.build execution if .buildforce/context/conventions/ exists"
+  - "Strict enforcement conventions will fail the build if violated"
+  - "Recommended conventions log warnings but allow build to continue"
+  - "See convention_compliance section above for validation results"
+  - "Conventions are for AI agent education - agents validate their own generated code against project conventions"
 
 lessons_learned:
   - "[Lesson or insight from planning/implementation]"
