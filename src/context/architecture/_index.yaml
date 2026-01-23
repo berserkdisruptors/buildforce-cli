@@ -1,0 +1,65 @@
+# Buildforce Architecture Context Index
+# This file tracks architecture context files for your project.
+# Architecture context captures WHAT exists - structural understanding of your codebase.
+
+version: "2.0"
+
+# ============================================================================
+# ARCHITECTURE INDEX FIELD DOCUMENTATION
+# ============================================================================
+#
+# Each context entry in the index has the following fields:
+#
+# REQUIRED FIELDS:
+# ----------------
+# - id (string, kebab-case):
+#     Unique identifier matching the context filename (without .yaml extension)
+#     Must be unique across all entries in this index
+#     Example: "authentication", "build-command", "error-handling"
+#
+# - file (string):
+#     Context filename (must match id field with .yaml extension)
+#     Example: "authentication.yaml", "build-command.yaml"
+#
+# - type (string):
+#     Must be "structural" for all entries in this index
+#     This replaces the legacy type enum (module, feature, component, pattern)
+#     Example: "structural"
+#
+# OPTIONAL BUT RECOMMENDED FIELDS:
+# ---------------------------------
+# - description (string, max 100 chars):
+#     Generic, stable one-liner describing WHAT this module/feature IS
+#     Focus on its identity and purpose, not implementation details
+#     Example: "User authentication system with JWT tokens and OAuth2 integration"
+#
+# - tags (array of strings):
+#     Searchable keywords for discovery
+#     Use relevant terms related to functionality, technology, domain
+#     Example: [auth, security, jwt, oauth2]
+#
+# - related_context (array of context IDs, OPTIONAL):
+#     Array of context IDs that are closely related to this context
+#     Enables agents to discover related contexts through explicit cross-references
+#
+#     **When to populate:**
+#       - Feature families (e.g., all slash commands reference slash-commands)
+#       - Dependent modules (e.g., build-command depends on plan-template)
+#       - Sibling features (e.g., research and document commands work together)
+#
+#     Example: [plan-template, iterate-plan-command, spec-command]
+#
+# ============================================================================
+#
+# MIGRATION NOTE:
+# ---------------
+# This index uses type: "structural" for all entries, replacing the legacy
+# type enum (module, feature, component, pattern). The nature of what's
+# documented is now captured through descriptive summaries rather than
+# explicit type categorization.
+#
+# ============================================================================
+
+# Architecture context entries
+# All entries must have type: structural
+contexts: []
