@@ -15,88 +15,107 @@ $ARGUMENTS
 
 First, determine which mode to use based on $ARGUMENTS:
 
-- **Guidelines Mode**: If $ARGUMENTS contains "guidelines" → Use Guidelines Workflow (see below)
-- **Scan Mode**: If $ARGUMENTS contains "scan guidelines" → Use Guidelines Scan Workflow (see below)
+- **Conventions Mode**: If $ARGUMENTS contains "conventions" → Use Conventions Workflow (see below)
+- **Scan Mode**: If $ARGUMENTS contains "scan conventions" → Use Conventions Scan Workflow (see below)
 - **Standard Mode**: Otherwise → Use Standard Context Documentation Workflow (see below)
 
 ---
 
-## Guidelines Workflow
+## Conventions Workflow
 
-**Purpose**: Create or update `.buildforce/context/_guidelines.yaml` to capture project conventions, coding standards, and architectural patterns that AI agents should follow during implementation.
+**Purpose**: Create or update convention context files in `.buildforce/context/conventions/` to capture project conventions, coding standards, and architectural patterns that AI agents should follow during implementation.
 
 **When to use**:
-- User explicitly invokes `/buildforce.document guidelines`
+- User explicitly invokes `/buildforce.document conventions`
 - Conversation discusses project conventions, patterns, or standards
 - Team wants to capture tribal knowledge for AI-assisted consistency
 
-### Guidelines Mode Steps
+### Conventions Mode Steps
 
-1. **Check for Existing Guidelines**:
-   - Check if `.buildforce/context/_guidelines.yaml` exists
-   - If exists → **UPDATE mode** (intelligent merge of new guidelines)
-   - If missing → **CREATE mode** (generate from conversation context)
+1. **Check for Existing Conventions**:
+   - Check if `.buildforce/context/conventions/` folder exists and has convention files
+   - Read `.buildforce/context/conventions/_index.yaml` to see existing conventions
+   - If relevant convention exists → **UPDATE mode** (intelligent merge of new information)
+   - If no relevant convention → **CREATE mode** (generate new convention file)
 
 2. **Analyze Conversation for Conventions**:
    - Extract conventions discussed in conversation history
-   - Identify which categories apply: architectural_patterns, code_conventions, naming_conventions, testing_standards, dependency_rules, security_requirements, performance_guidelines, accessibility_standards, project_quirks
+   - Identify which sub_type applies for each convention:
+     - architectural-pattern: High-level structural pattern (e.g., Repository Pattern, CQRS)
+     - code-convention: Specific coding standard (e.g., Error Handling, Async Patterns)
+     - naming-convention: File, variable, function naming rules
+     - testing-standard: Testing requirements and patterns
+     - dependency-rule: Dependency management and architecture layer rules
+     - security-requirement: Security-critical conventions that must be followed
+     - performance-guideline: Performance-related conventions for optimization
+     - accessibility-standard: Accessibility requirements for frontend code
+     - project-quirk: Project-specific non-standard patterns with historical context
    - For each convention identified:
      - Determine appropriate enforcement level (strict/recommended/reference)
      - Extract or create minimal example (5-10 lines max)
      - Identify reference_files in codebase that demonstrate pattern
      - List common violations if discussed
 
-3. **CREATE Mode - Generate New Guidelines File**:
-   - Load `.buildforce/templates/guidelines-template.yaml` as reference
-   - Create `.buildforce/context/_guidelines.yaml` with:
-     - version: Current CLI version
+3. **CREATE Mode - Generate New Convention File**:
+   - Load `.buildforce/context/conventions/_schema.yaml` as reference
+   - Generate filename from convention name (kebab-case, e.g., "repository-pattern.yaml")
+   - Create `.buildforce/context/conventions/{filename}.yaml` with:
+     - id: kebab-case identifier (e.g., "repository-pattern")
+     - name: Human-readable name (e.g., "Repository Pattern")
+     - type: "convention" (fixed value)
+     - sub_type: Appropriate category from enum above
+     - enforcement: strict | recommended | reference (default: recommended)
+     - created: Today's date (YYYY-MM-DD)
      - last_updated: Today's date (YYYY-MM-DD)
-     - Populate relevant category arrays with extracted conventions
-     - Use minimal example strategy (5-10 line snippets)
-     - Include reference_files arrays pointing to real implementations
-     - Set enforcement levels based on conversation context (default: recommended)
-   - **NEVER leave template comments in final file** - only include actual guidelines
+     - description: Multi-line description of the convention
+     - examples: Array of file/snippet pairs (5-10 line snippets)
+     - violations: Array of what NOT to do
+     - reference_files: Array of real codebase files demonstrating pattern
+   - **NEVER leave template comments in final file** - only include actual content
 
-4. **UPDATE Mode - Merge New Guidelines**:
-   - Read existing `.buildforce/context/_guidelines.yaml`
+4. **UPDATE Mode - Merge New Information**:
+   - Read existing convention file from `.buildforce/context/conventions/`
    - Update `last_updated` field to today's date
-   - For each new convention:
-     - Check if similar guideline already exists (avoid duplicates)
-     - Append to appropriate category array
-     - Maintain existing structure and formatting
-     - Preserve all existing guidelines
-   - If convention conflicts with existing guideline, notify user and ask for resolution
+   - For new information:
+     - Add new examples if discovered
+     - Add new violations if identified
+     - Update reference_files if new examples found
+     - Preserve existing structure and content
+   - If new information conflicts with existing convention, notify user and ask for resolution
 
-5. **Validate Guidelines Structure**:
+5. **Validate Convention Structure**:
    - Ensure YAML is valid (no syntax errors)
-   - Verify all guidelines have required fields (name/description/enforcement)
-   - Check enforcement levels are valid (strict/recommended/reference)
+   - Verify all required fields present (id, name, type, sub_type, enforcement, created, last_updated, description)
+   - Check enforcement level is valid (strict/recommended/reference)
+   - Confirm type is "convention" and sub_type is from valid enum
    - Confirm examples are minimal (5-10 lines) if present
    - Validate reference_files point to actual codebase files
 
 6. **Update Context Index** (CREATE mode only):
-   - Add entry to `.buildforce/context/_index.yaml`:
+   - Add entry to `.buildforce/context/conventions/_index.yaml`:
      ```yaml
-     - id: guidelines
-       file: _guidelines.yaml
-       type: pattern
-       description: "Project-wide conventions, standards, and coding patterns"
-       tags: [standards, conventions, patterns, enforcement, validation, project-dna]
+     - id: {convention-id}
+       file: {filename}.yaml
+       type: convention
+       sub_type: {sub-type}
+       enforcement: {enforcement-level}
+       description: "{brief description}"
+       tags: [{relevant-tags}]
      ```
 
 7. **Present Summary**:
-   - **CREATE mode**: "Created _guidelines.yaml with [N] guidelines across [M] categories"
-   - **UPDATE mode**: "Updated _guidelines.yaml - Added [N] new guidelines: [list names]"
-   - List all guidelines added/updated with enforcement levels
-   - Remind user: "These guidelines will be enforced during /buildforce.build (strict) and referenced during /buildforce.plan (all levels)"
+   - **CREATE mode**: "Created {filename}.yaml convention in conventions/ with enforcement: {level}"
+   - **UPDATE mode**: "Updated {filename}.yaml convention - Added: [list additions]"
+   - List convention details (name, sub_type, enforcement)
+   - Remind user: "This convention will be enforced during /buildforce.build (strict) and referenced during /buildforce.plan (all levels)"
 
 ---
 
-## Guidelines Scan Workflow
+## Conventions Scan Workflow
 
-**Purpose**: Bootstrap initial `_guidelines.yaml` by analyzing the entire codebase for consistent patterns. Useful for projects adopting guidelines after significant development.
+**Purpose**: Bootstrap initial conventions by analyzing the entire codebase for consistent patterns. Useful for projects adopting conventions after significant development.
 
-**When to use**: User invokes `/buildforce.document scan guidelines`
+**When to use**: User invokes `/buildforce.document scan conventions`
 
 ### Scan Mode Steps
 
@@ -117,27 +136,27 @@ First, determine which mode to use based on $ARGUMENTS:
      ```
      ## Detected Pattern: [Pattern Name]
      - Occurrence: Found in [N] files ([percentage]% consistency)
-     - Category: [architectural_patterns/code_conventions/etc]
+     - Category: [sub_type value]
      - Example files: [list 3-5 files]
      - Suggested enforcement: [recommended/strict]
-     - Preview: [show draft guideline entry]
+     - Preview: [show draft convention entry]
      ```
-   - Ask user: "Would you like to add these patterns to _guidelines.yaml? You can review and edit before confirming. (Y/n)"
+   - Ask user: "Would you like to add these patterns to conventions/? You can review and edit before confirming. (Y/n)"
 
-3. **Create Guidelines from Confirmed Patterns**:
+3. **Create Convention Files from Confirmed Patterns**:
    - If user confirms (Y):
-     - Follow CREATE Mode workflow above
-     - Use detected patterns as guideline source
+     - Follow CREATE Mode workflow above for each pattern
+     - Generate kebab-case filename from pattern name
      - Set enforcement to 'recommended' by default (user can upgrade to strict later)
      - Include reference_files from pattern analysis
    - If user declines (n):
-     - Skip guideline creation
+     - Skip convention creation
      - Optionally save analysis report for future reference
 
 4. **Present Summary**:
    - "Analyzed codebase and detected [N] consistent patterns"
-   - If confirmed: "Created _guidelines.yaml with [M] guidelines from detected patterns"
-   - If declined: "Pattern analysis complete. Run `/buildforce.document scan guidelines` again to retry, or `/buildforce.document guidelines` to manually add conventions."
+   - If confirmed: "Created [M] convention files in conventions/: [list filenames]"
+   - If declined: "Pattern analysis complete. Run `/buildforce.document scan conventions` again to retry, or `/buildforce.document conventions` to manually add conventions."
 
 ---
 
@@ -159,7 +178,8 @@ Before proceeding with standard documentation, verify sufficient context exists:
 
    Do a proactive search to determine which context files need updates or creation:
 
-   - **Read `.buildforce/context/_index.yaml`** to see all existing context files
+   - **Read `.buildforce/context/_index.yaml`** to understand context type directories
+   - **Navigate to `.buildforce/context/architecture/_index.yaml`** to see existing architecture context files
    - **Analyze conversation history** to identify which system components/features/modules/patterns to document
      - **CRITICAL**: Conversation history is the primary source since no spec.yaml/plan.yaml exists
      - Extract key design decisions, implementation details, architectural patterns, responsibilities, dependencies
@@ -177,21 +197,22 @@ Before proceeding with standard documentation, verify sufficient context exists:
    - Format: kebab-case, max 50 characters, no numeric or timestamp prefixes
    - Examples: `authentication.yaml`, `build-command.yaml`, `error-handling.yaml`, `plan-template.yaml`
    - Validate: lowercase alphanumeric and hyphens only
-   - **Check for ID conflicts**: Search `_index.yaml` to ensure generated ID doesn't already exist
+   - **Check for ID conflicts**: Search architecture/_index.yaml to ensure generated ID doesn't already exist
    - If conflict exists: Choose alternative ID (append descriptor like `-module` or `-feature`, use synonym)
 
 3. **Create/Update Context Files**:
 
    **For NEW context files**:
 
-   - Load `.buildforce/context/_schema.yaml` to understand required structure and fields
-   - Create new file at `.buildforce/context/{generated-filename}.yaml`
+   - Load `.buildforce/context/architecture/_schema.yaml` to understand required structure and fields
+   - Create new file at `.buildforce/context/architecture/{generated-filename}.yaml`
+   - Set type: "structural" (required for all architecture context)
    - Populate ALL schema sections with actual context from conversation history
    - **NEVER leave placeholder text** like "[Agent will populate]" - fill in real content or omit optional fields
 
    **For EXISTING context files**:
 
-   - Read current content from `.buildforce/context/{filename}.yaml`
+   - Read current content from `.buildforce/context/architecture/{filename}.yaml`
    - Preserve all existing values (id, created date, version history)
    - Update `last_updated` to today's date
    - Intelligently merge new information:
@@ -204,13 +225,13 @@ Before proceeding with standard documentation, verify sufficient context exists:
 
 4. **Update Context Index**:
 
-   Update `.buildforce/context/_index.yaml` with new entries:
+   Update `.buildforce/context/architecture/_index.yaml` with new entries:
 
    - For each NEW context file created, add entry:
      ```yaml
      - id: {semantic-id}
        file: {filename}.yaml
-       type: {module/feature/component/pattern}
+       type: structural
        description: {short-one-liner-description}
        tags: [{auto-generated-tags}]
        related_context: [{related-context-ids}]  # OPTIONAL
@@ -220,8 +241,8 @@ Before proceeding with standard documentation, verify sufficient context exists:
    - **Related context field** (OPTIONAL): Add array of closely related context IDs for discovery
      - Include for: feature families, dependent modules, sibling features
      - Only add significant relationships (avoid over-populating)
-     - IDs must exist in _index.yaml
-     - Example: `[slash-commands, plan-template, spec-command]`
+     - IDs must exist in architecture/_index.yaml
+     - Example: `[plan-template, iterate-plan-command, spec-command]`
    - Maintain proper YAML indentation (2 spaces per level)
    - Preserve existing entries (do not modify or delete)
    - For EXISTING context files, no index update needed (entry already exists)
@@ -245,6 +266,6 @@ Before proceeding with standard documentation, verify sufficient context exists:
    - **Related contexts updated** (if any): List filenames
    - **File size advisory** (if applicable): "Consider decomposing [filename] into smaller focused files (currently >500 lines)"
    - **Achievement summary**: 1-2 sentences describing what was documented
-   - Example: "Created authentication-module.yaml context file documenting JWT-based authentication with OAuth2 integration. Updated error-handling.yaml to include auth error patterns."
+   - Example: "Created authentication.yaml context file in architecture/ documenting JWT-based authentication with OAuth2 integration. Updated error-handling.yaml to include auth error patterns."
 
 Context: {$ARGUMENTS}

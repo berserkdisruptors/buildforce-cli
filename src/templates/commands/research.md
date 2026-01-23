@@ -13,7 +13,17 @@ $ARGUMENTS
 
 **Key guidelines**:
 
-1. **Project Context Search**: **ALWAYS start here.** Read `.buildforce/context/_index.yaml` FROM CURRENT WORKING DIRECTORY AND NEVER FROM SOMEWHERE ELSE! Search for relevant project-specific context there before any other research. This index contains references to accumulated knowledge from all completed spec-driven development sessions, organized by modules/components/features. Search the index to find relevant context file paths, then read those specific context files and load them into the context window. This is your primary source of truth about the project's architecture, patterns, and decisions.
+1. **Project Context Search**: **ALWAYS start here.** Read `.buildforce/context/_index.yaml` FROM CURRENT WORKING DIRECTORY AND NEVER FROM SOMEWHERE ELSE! This file points to three context type directories:
+   - **architecture/**: Structural context about WHAT exists (modules, features, components)
+   - **conventions/**: Convention context about HOW things are done (coding standards, patterns)
+   - **verification/**: Verification context about HOW to know if code is right (quality standards, known risks)
+
+   Navigate to the appropriate context type directory based on your research query:
+   - For architecture/structure questions → read `architecture/_index.yaml` and relevant context files
+   - For coding standards/patterns → read `conventions/_index.yaml` and relevant convention files
+   - For quality/testing standards → read `verification/_index.yaml` (if exists) and relevant files
+
+   This index contains references to accumulated knowledge from all completed spec-driven development sessions. Search the appropriate index to find relevant context file paths, then read those specific context files and load them into the context window. This is your primary source of truth about the project's architecture, patterns, and decisions.
 
 2. **Recency awareness**: If the query contains words like "current", "latest", "recent", "modern", "best practices", "2024", "2025", or "up-to-date", use web search to fetch current information—do not rely solely on training data.
 
@@ -76,7 +86,7 @@ $ARGUMENTS
    - Continue to Step 8 (TLDR) and Step 9 (Next Steps) normally
    - AFTER presenting Next Steps, display warning message:
      ```
-     ⚠ Research was not persisted due to permission denial.
+     Research was not persisted due to permission denial.
      If you run /clear, research context will be lost.
      Re-run /buildforce.research to recreate findings after /clear.
      ```
