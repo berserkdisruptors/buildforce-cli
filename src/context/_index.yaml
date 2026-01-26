@@ -55,8 +55,8 @@ context_types:
       Structural context about WHAT exists in the codebase.
       Contains understanding of modules, features, components, and their relationships.
       All entries have type: structural.
-    index_file: "_index.yaml"
-    schema_file: "_schema.yaml"
+    index_file: "architecture/_index.yaml"
+    schema_file: "architecture/_schema.yaml"
 
   conventions:
     path: "conventions/"
@@ -64,8 +64,8 @@ context_types:
       Convention context about HOW things are done here.
       Contains coding standards, architectural patterns, and project practices.
       All entries have type: convention with a sub_type for categorization.
-    index_file: "_index.yaml"
-    schema_file: "_schema.yaml"
+    index_file: "conventions/_index.yaml"
+    schema_file: "conventions/_schema.yaml"
 
   verification:
     path: "verification/"
@@ -73,5 +73,5 @@ context_types:
       Verification context about HOW to know if code is right.
       Contains quality standards, test expectations, review checklists, and known risks.
       All entries have type: verification with source field (mined, manual, hybrid).
-    index_file: "_index.yaml"
-    schema_file: "_schema.yaml"
+    index_file: "verification/_index.yaml"
+    schema_file: "verification/_schema.yaml"

@@ -4,7 +4,7 @@ name: "Context Taxonomy Alignment"
 type: feature
 status: in-progress
 created: "2026-01-23"
-last_updated: "2026-01-23"
+last_updated: "2026-01-26"
 
 summary: |
   Restructure the context repository system to align with the new context taxonomy,
@@ -65,6 +65,9 @@ functional_requirements:
   - FR16: Implement version-based migration in context-migration.ts: check root _index.yaml version (1.0 → migrate, 2.0 → skip)
   - FR17: Migration must convert existing context files to type="structural" and move to architecture/
   - FR18: Migration must break down _guidelines.yaml into individual convention files with type="convention" and appropriate sub_type
+  - FR19: Migration must copy existing context files (*.yaml excluding _index.yaml, _schema.yaml, _graph.yaml, _guidelines.yaml) from root .buildforce/context/ to .buildforce/context/architecture/ with type="structural"
+  - FR20: Migration must copy entries from existing .buildforce/context/_index.yaml to .buildforce/context/architecture/_index.yaml, converting type to "structural"
+  - FR21: Migration must properly resolve template source paths using path.join(templateSourceDir, ".buildforce", "context") instead of src/context (since upgrade uses extracted release ZIP)
 
 non_functional_requirements:
   - NFR1: All existing slash command functionality must work identically after changes
@@ -114,6 +117,9 @@ acceptance_criteria:
   - AC9: buildforce upgrade on v2.0 project skips migration (idempotent)
   - AC10: All _index.yaml and _schema.yaml files have version: "2.0"
   - AC11: Each context type folder (architecture, conventions, verification) has _schema.yaml and _index.yaml
+  - AC12: buildforce upgrade on v1.0 project copies _schema.yaml and _index.yaml files to architecture/, conventions/, verification/ folders
+  - AC13: buildforce upgrade on v1.0 project migrates existing context files (*.yaml) from root context/ to architecture/ with type="structural"
+  - AC14: buildforce upgrade on v1.0 project migrates entries from root _index.yaml to architecture/_index.yaml with type converted to "structural"
 
 # ASSUMPTIONS & DEPENDENCIES
 

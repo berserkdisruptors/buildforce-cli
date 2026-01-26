@@ -5,7 +5,7 @@ spec_id: "context-taxonomy-align-20260123143000"
 type: implementation-plan
 status: in-progress
 created: "2026-01-23"
-last_updated: "2026-01-23"
+last_updated: "2026-01-26"
 
 # ARCHITECTURE OVERVIEW
 
@@ -374,6 +374,88 @@ phase_4:
     - [x] Migration failures don't break upgrade command
     - [x] Spec requirements covered: [FR16, FR17, FR18, NFR3]
 
+phase_5:
+  name: "Complete Migration - Context Files and Schema/Index Copy"
+  description: |
+    Complete the migration implementation to address missing functionality:
+    1. Fix template source path resolution (use .buildforce/context instead of src/context)
+    2. Copy _schema.yaml and _index.yaml from template to architecture/, conventions/, verification/
+    3. Migrate existing context files from root context/ to architecture/ with type="structural"
+    4. Migrate entries from root _index.yaml to architecture/_index.yaml
+
+  tasks:
+    - [ ] Fix template source path resolution in migrateContextStructure
+      spec_refs: [FR21]
+      files: [src/commands/upgrade/context-migration.ts]
+      notes: |
+        Current code uses: path.join(templateSourceDir, "src", "context")
+        Should use: path.join(templateSourceDir, ".buildforce", "context")
+        The templateSourceDir is the extracted release ZIP which has .buildforce/context/, not src/context/
+
+    - [ ] Implement proper _schema.yaml and _index.yaml copy for all context type folders
+      spec_refs: [AC12]
+      files: [src/commands/upgrade/context-migration.ts]
+      notes: |
+        After fixing the path, ensure:
+        - architecture/_schema.yaml and architecture/_index.yaml are copied from template
+        - conventions/_schema.yaml and conventions/_index.yaml are copied from template
+        - verification/_schema.yaml and verification/_index.yaml are copied from template
+
+        NOTE: For architecture/_index.yaml, we copy the template first (empty contexts array),
+        then the next task merges user's existing context entries into it.
+
+        Root _index.yaml replacement with v2.0 format happens LAST (after user data is migrated).
+
+    - [ ] Implement existing context files migration to architecture/
+      spec_refs: [FR19, AC13]
+      files: [src/commands/upgrade/context-migration.ts]
+      notes: |
+        For each *.yaml file in root context/ (excluding _index.yaml, _schema.yaml, _graph.yaml, _guidelines.yaml):
+        1. Read the file
+        2. If it has a type field, set type: "structural"
+        3. Copy to architecture/ folder
+        4. Delete original file from root context/
+
+    - [ ] Implement _index.yaml entries migration to architecture/_index.yaml
+      spec_refs: [FR20, AC14]
+      files: [src/commands/upgrade/context-migration.ts]
+      notes: |
+        CRITICAL: This must happen BEFORE replacing root _index.yaml with v2.0 format!
+
+        Order of operations:
+        1. Read root _index.yaml contexts array (v1.0 format has contexts array)
+        2. For each entry, convert type to "structural"
+        3. Merge entries into architecture/_index.yaml contexts array
+        4. Preserve existing entries in architecture/_index.yaml if any
+        5. Only AFTER this succeeds, replace root _index.yaml with v2.0 format
+
+        This ensures we don't lose user context data during migration.
+
+    - [ ] Clean up migrated files from root context/ folder
+      spec_refs: [FR19, FR20]
+      files: [src/commands/upgrade/context-migration.ts]
+      notes: |
+        After successful migration, the root context/ folder should only contain:
+        - _index.yaml (NEW v2.0 format pointing to architecture/, conventions/, verification/)
+        - architecture/ folder with migrated context files
+        - conventions/ folder with migrated convention files
+        - verification/ folder (with _schema.yaml and _index.yaml, no context files initially)
+
+        Files to remove from root context/ after migration:
+        - _schema.yaml (legacy - now exists in architecture/_schema.yaml)
+        - _graph.yaml (legacy placeholder - no longer used)
+        - Individual *.yaml context files (moved to architecture/)
+
+        DO NOT delete root _index.yaml - it gets REPLACED with v2.0 format (already handled)
+
+  validation:
+    - [ ] All phase_5 tasks completed
+    - [ ] Template schema/index files are copied to architecture/, conventions/, verification/
+    - [ ] Existing context files are migrated to architecture/ with type="structural"
+    - [ ] Root _index.yaml entries are merged into architecture/_index.yaml
+    - [ ] Old root-level context files are deleted after migration
+    - [ ] Spec requirements covered: [FR19, FR20, FR21, AC12, AC13, AC14]
+
 # DEVIATION LOG
 
 deviations:
@@ -396,6 +478,20 @@ deviations:
     actual: "Migration now deletes original _guidelines.yaml after successful conversion, no .bak files created"
     reason: "User requested 100% confidence in migration with no backup files. Migration should be clean and deterministic."
     resolution_date: "2026-01-26"
+
+  - phase: "phase_4"
+    task: "Template source path resolution"
+    original: "Use path.join(templateSourceDir, 'src', 'context') to find template schema/index files"
+    actual: "Path was incorrect - template source in extracted ZIP uses .buildforce/context/, not src/context/"
+    reason: "The upgrade command extracts release ZIP which has .buildforce/ folder structure, not src/ development structure. This caused schema/index files to not be copied."
+    resolution_date: "pending - Phase 5"
+
+  - phase: "phase_4"
+    task: "Implement context files to architecture/ migration"
+    original: "Copy existing context files to architecture/ and convert type to 'structural'"
+    actual: "Only folder creation was implemented, no file migration"
+    reason: "Initial implementation marked as deviation, but full migration is required per FR19. Phase 5 addresses this gap."
+    resolution_date: "pending - Phase 5"
 
 # CONVENTION COMPLIANCE
 # Track validation results for strict and recommended enforcement levels
@@ -479,48 +575,52 @@ success_metrics:
   - "Architecture files have type='structural'"
 
 spec_coverage:
-  - FR1: "⏳ Phase 1: Task 1 - conventions schema with sub_type enum"
-  - FR2: "⏳ Phase 1: Task 2 - conventions index (version 2.0)"
-  - FR3: "⏳ Phase 1: Task 3 - verification schema (version 2.0)"
-  - FR4: "⏳ Phase 1: Task 4 - verification index (version 2.0)"
-  - FR5: "⏳ Phase 1: Task 5 - architecture schema with type=structural"
-  - FR6: "⏳ Phase 1: Task 6 - architecture index (version 2.0)"
-  - FR7: "⏳ Phase 1: Task 7 - root index (version 2.0, directory format)"
-  - FR8: "⏳ Phase 1: Task 8 - delete _graph.yaml"
-  - FR9: "⏳ Phase 2: Task 1 - document.md with type + sub_type"
-  - FR10: "⏳ Phase 2: Task 2 - complete.md with type=structural"
-  - FR11: "⏳ Phase 2: Task 3 - research.md navigation"
-  - FR12: "⏳ Phase 2: Task 4 - build.md conventions validation"
-  - FR13: "⏳ Phase 2: Task 5 - plan.md rename"
-  - FR14: "⏳ Phase 2: Task 7 - delete guidelines-template.yaml"
-  - FR15: "⏳ Phase 3: Task 1 - README.md"
-  - FR16: "⏳ Phase 4: Tasks 1,4,5,6 - version-based migration"
-  - FR17: "⏳ Phase 4: Task 3 - convert context files to type=structural"
-  - FR18: "⏳ Phase 4: Task 2 - break down _guidelines.yaml"
-  - NFR1: "⏳ Phase 2: All tasks - functionality preserved"
-  - NFR2: "⏳ Phase 2 & 3: All tasks - no guideline mentions"
-  - NFR3: "⏳ Phase 4: Task 7 - edge cases"
-  - NFR4: "⏳ Phase 1: All tasks - well-documented schemas with version 2.0"
+  - FR1: "✓ Phase 1: Task 1 - conventions schema with sub_type enum"
+  - FR2: "✓ Phase 1: Task 2 - conventions index (version 2.0)"
+  - FR3: "✓ Phase 1: Task 3 - verification schema (version 2.0)"
+  - FR4: "✓ Phase 1: Task 4 - verification index (version 2.0)"
+  - FR5: "✓ Phase 1: Task 5 - architecture schema with type=structural"
+  - FR6: "✓ Phase 1: Task 6 - architecture index (version 2.0)"
+  - FR7: "✓ Phase 1: Task 7 - root index (version 2.0, directory format)"
+  - FR8: "✓ Phase 1: Task 8 - delete _graph.yaml"
+  - FR9: "✓ Phase 2: Task 1 - document.md with type + sub_type"
+  - FR10: "✓ Phase 2: Task 2 - complete.md with type=structural"
+  - FR11: "✓ Phase 2: Task 3 - research.md navigation"
+  - FR12: "✓ Phase 2: Task 4 - build.md conventions validation"
+  - FR13: "✓ Phase 2: Task 5 - plan.md rename"
+  - FR14: "✓ Phase 2: Task 7 - delete guidelines-template.yaml"
+  - FR15: "✓ Phase 3: Task 1 - README.md"
+  - FR16: "✓ Phase 4: Tasks 1,4,5,6 - version-based migration"
+  - FR17: "✓ Phase 4: Task 3 - convert context files to type=structural (partial)"
+  - FR18: "✓ Phase 4: Task 2 - break down _guidelines.yaml"
+  - FR19: "⏳ Phase 5: Task 3 - migrate context files to architecture/"
+  - FR20: "⏳ Phase 5: Task 4 - migrate _index.yaml entries to architecture/_index.yaml"
+  - FR21: "⏳ Phase 5: Task 1 - fix template source path resolution"
+  - NFR1: "✓ Phase 2: All tasks - functionality preserved"
+  - NFR2: "✓ Phase 2 & 3: All tasks - no guideline mentions"
+  - NFR3: "✓ Phase 4: Task 7 - edge cases"
+  - NFR4: "✓ Phase 1: All tasks - well-documented schemas with version 2.0"
 
 # PROGRESS SUMMARY
 
 overall_progress:
-  phase_1: "0/8 tasks completed"
-  phase_2: "0/7 tasks completed"
-  phase_3: "0/1 tasks completed"
-  phase_4: "0/7 tasks completed"
+  phase_1: "8/8 tasks completed"
+  phase_2: "7/7 tasks completed"
+  phase_3: "1/1 tasks completed"
+  phase_4: "7/7 tasks completed"
+  phase_5: "0/5 tasks completed"
 
 current_status: |
-  Plan updated with user clarifications:
-  - Version-based migration (1.0 → 2.0)
-  - Convention files use type="convention" with sub_type enum
-  - Architecture files use type="structural"
-  - _guidelines.yaml breaks down into individual convention files
-  Ready to begin implementation with Phase 1.
+  Phases 1-4 completed. Phase 5 added to address gaps in migration:
+  - Template source path resolution is incorrect (uses src/context instead of .buildforce/context)
+  - _schema.yaml and _index.yaml files not being copied to context type folders
+  - Existing context files not being migrated from root to architecture/
+  - Root _index.yaml entries not being migrated to architecture/_index.yaml
 
 next_immediate_steps:
-  - "Create src/context/conventions/_schema.yaml"
-  - "Create src/context/conventions/_index.yaml"
+  - "Fix template source path in context-migration.ts (line 462)"
+  - "Implement context file migration to architecture/ with type='structural'"
+  - "Implement _index.yaml entries migration to architecture/_index.yaml"
 
 # RISKS & CONSIDERATIONS
 
