@@ -426,14 +426,18 @@ export async function migrateContextFilesToArchitecture(
 
     for (const filename of contextFiles) {
       const sourcePath = path.join(contextPath, filename);
-      const destPath = path.join(architecturePath, filename);
+      // Normalize .yml to .yaml extension for consistency
+      const destFilename = filename.endsWith(".yml")
+        ? filename.replace(/\.yml$/, ".yaml")
+        : filename;
+      const destPath = path.join(architecturePath, destFilename);
 
       try {
         // Skip if it's a directory
         const stat = await fs.stat(sourcePath);
         if (stat.isDirectory()) continue;
 
-        // Skip if destination already exists
+        // Skip if destination already exists (check both original and normalized names)
         if (await fs.pathExists(destPath)) {
           result.errors.push(`Skipping ${filename} - already exists in architecture/`);
           continue;
@@ -468,7 +472,8 @@ export async function migrateContextFilesToArchitecture(
         // Delete the original file after successful copy
         await fs.remove(sourcePath);
 
-        result.files.push(filename);
+        // Track with normalized filename (.yaml extension)
+        result.files.push(destFilename);
       } catch (e: any) {
         result.errors.push(`Error migrating ${filename}: ${e.message}`);
       }
@@ -530,10 +535,15 @@ export async function migrateIndexEntriesToArchitecture(
         continue;
       }
 
+      // Normalize .yml to .yaml extension for consistency
+      const normalizedFile = entry.file.endsWith(".yml")
+        ? entry.file.replace(/\.yml$/, ".yaml")
+        : entry.file;
+
       // Convert entry to new format with type="structural"
       const newEntry: NewArchitectureEntry = {
         id: entry.id,
-        file: entry.file,
+        file: normalizedFile,
         type: "structural",
       };
 
@@ -554,12 +564,56 @@ export async function migrateIndexEntriesToArchitecture(
       result.entries++;
     }
 
-    // Write updated architecture/_index.yaml
-    const yamlContent = YAML.stringify(archIndex, {
-      lineWidth: 100,
-      defaultKeyType: "PLAIN",
-    });
-    await fs.writeFile(archIndexPath, yamlContent, "utf8");
+    // Write updated architecture/_index.yaml with preserved formatting
+    // Read the existing file to preserve header/documentation
+    let outputContent: string;
+    if (await fs.pathExists(archIndexPath)) {
+      const existingContent = await fs.readFile(archIndexPath, "utf8");
+      // Find where contexts: section starts and preserve everything before it
+      const contextsMatch = existingContent.match(/^([\s\S]*?)(contexts:\s*\[?\]?\s*)$/m);
+      if (contextsMatch) {
+        const header = contextsMatch[1];
+        // Build contexts section with blank lines between entries for readability
+        const entriesYaml = archIndex.contexts
+          .map((ctx) => {
+            const lines = [`  - id: ${ctx.id}`, `    file: ${ctx.file}`, `    type: ${ctx.type}`];
+            if (ctx.description) {
+              lines.push(`    description: "${ctx.description.replace(/"/g, '\\"')}"`);
+            }
+            if (ctx.tags && ctx.tags.length > 0) {
+              lines.push(`    tags: [${ctx.tags.join(", ")}]`);
+            }
+            if (ctx.related_context && ctx.related_context.length > 0) {
+              lines.push(`    related_context: [${ctx.related_context.join(", ")}]`);
+            }
+            return lines.join("\n");
+          })
+          .join("\n\n"); // Blank line between entries
+        outputContent = header + "contexts:\n" + entriesYaml + "\n";
+      } else {
+        // Fallback to YAML.stringify if structure doesn't match
+        outputContent = YAML.stringify(archIndex, { lineWidth: 100, defaultKeyType: "PLAIN" });
+      }
+    } else {
+      // No existing file, create with proper formatting
+      const entriesYaml = archIndex.contexts
+        .map((ctx) => {
+          const lines = [`  - id: ${ctx.id}`, `    file: ${ctx.file}`, `    type: ${ctx.type}`];
+          if (ctx.description) {
+            lines.push(`    description: "${ctx.description.replace(/"/g, '\\"')}"`);
+          }
+          if (ctx.tags && ctx.tags.length > 0) {
+            lines.push(`    tags: [${ctx.tags.join(", ")}]`);
+          }
+          if (ctx.related_context && ctx.related_context.length > 0) {
+            lines.push(`    related_context: [${ctx.related_context.join(", ")}]`);
+          }
+          return lines.join("\n");
+        })
+        .join("\n\n");
+      outputContent = `version: "2.0"\n\ncontexts:\n${entriesYaml}\n`;
+    }
+    await fs.writeFile(archIndexPath, outputContent, "utf8");
   } catch (e: any) {
     result.errors.push(`Error migrating index entries: ${e.message}`);
   }
