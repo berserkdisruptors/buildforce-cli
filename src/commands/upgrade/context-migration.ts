@@ -379,6 +379,187 @@ export async function migrateGuidelinesFile(
 }
 
 /**
+ * Entry from v1.0 _index.yaml contexts array
+ */
+interface OldIndexEntry {
+  id: string;
+  file: string;
+  type: string;
+  description?: string;
+  tags?: string[];
+  related_context?: string[];
+}
+
+/**
+ * New architecture _index.yaml entry structure
+ */
+interface NewArchitectureEntry {
+  id: string;
+  file: string;
+  type: "structural";
+  description?: string;
+  tags?: string[];
+  related_context?: string[];
+}
+
+/**
+ * Migrate existing context files from root context/ to architecture/
+ * Converts type field to "structural" for all files
+ */
+export async function migrateContextFilesToArchitecture(
+  contextPath: string,
+  architecturePath: string,
+  todayDate: string
+): Promise<{ files: string[]; errors: string[] }> {
+  const result = { files: [] as string[], errors: [] as string[] };
+
+  try {
+    // Get all .yaml files in root context/ directory
+    const items = await fs.readdir(contextPath);
+    const contextFiles = items.filter((item) => {
+      // Only .yaml files, exclude special files and directories
+      if (!item.endsWith(".yaml")) return false;
+      if (item.startsWith("_")) return false; // Skip _index.yaml, _schema.yaml, _graph.yaml, _guidelines.yaml
+      return true;
+    });
+
+    for (const filename of contextFiles) {
+      const sourcePath = path.join(contextPath, filename);
+      const destPath = path.join(architecturePath, filename);
+
+      try {
+        // Skip if it's a directory
+        const stat = await fs.stat(sourcePath);
+        if (stat.isDirectory()) continue;
+
+        // Skip if destination already exists
+        if (await fs.pathExists(destPath)) {
+          result.errors.push(`Skipping ${filename} - already exists in architecture/`);
+          continue;
+        }
+
+        // Read the file content
+        const content = await fs.readFile(sourcePath, "utf8");
+        const parsed = YAML.parse(content);
+
+        if (parsed && typeof parsed === "object") {
+          // Update type to "structural" and last_updated date
+          parsed.type = "structural";
+          parsed.last_updated = todayDate;
+
+          // Write to architecture/ folder
+          const yamlContent = YAML.stringify(parsed, {
+            lineWidth: 100,
+            defaultKeyType: "PLAIN",
+          });
+          await fs.writeFile(destPath, yamlContent, "utf8");
+
+          // Delete the original file after successful copy
+          await fs.remove(sourcePath);
+
+          result.files.push(filename);
+        } else {
+          result.errors.push(`Invalid YAML structure in ${filename}`);
+        }
+      } catch (e: any) {
+        result.errors.push(`Error migrating ${filename}: ${e.message}`);
+      }
+    }
+  } catch (e: any) {
+    result.errors.push(`Error reading context directory: ${e.message}`);
+  }
+
+  return result;
+}
+
+/**
+ * Migrate entries from root _index.yaml to architecture/_index.yaml
+ * Converts type to "structural" for all entries
+ */
+export async function migrateIndexEntriesToArchitecture(
+  rootIndexPath: string,
+  archIndexPath: string
+): Promise<{ entries: number; errors: string[] }> {
+  const result = { entries: 0, errors: [] as string[] };
+
+  try {
+    // Read root _index.yaml (v1.0 format with contexts array)
+    if (!(await fs.pathExists(rootIndexPath))) {
+      return result;
+    }
+
+    const rootContent = await fs.readFile(rootIndexPath, "utf8");
+    const rootIndex = YAML.parse(rootContent);
+
+    if (!rootIndex || !Array.isArray(rootIndex.contexts)) {
+      return result;
+    }
+
+    // Read architecture/_index.yaml
+    let archIndex: { version: string; contexts: NewArchitectureEntry[] };
+    if (await fs.pathExists(archIndexPath)) {
+      const archContent = await fs.readFile(archIndexPath, "utf8");
+      archIndex = YAML.parse(archContent);
+      if (!archIndex || !Array.isArray(archIndex.contexts)) {
+        archIndex = { version: "2.0", contexts: [] };
+      }
+    } else {
+      archIndex = { version: "2.0", contexts: [] };
+    }
+
+    // Migrate each entry, converting type to "structural"
+    // Skip entries that reference special files (_guidelines.yaml)
+    for (const entry of rootIndex.contexts as OldIndexEntry[]) {
+      // Skip _guidelines.yaml entry - this goes to conventions/
+      if (entry.file === "_guidelines.yaml" || entry.id === "guidelines") {
+        continue;
+      }
+
+      // Check if entry already exists in architecture index
+      const exists = archIndex.contexts.some((ctx) => ctx.id === entry.id);
+      if (exists) {
+        result.errors.push(`Skipping entry ${entry.id} - already exists in architecture/_index.yaml`);
+        continue;
+      }
+
+      // Convert entry to new format with type="structural"
+      const newEntry: NewArchitectureEntry = {
+        id: entry.id,
+        file: entry.file,
+        type: "structural",
+      };
+
+      if (entry.description) {
+        newEntry.description = entry.description;
+      }
+      if (entry.tags && Array.isArray(entry.tags)) {
+        newEntry.tags = entry.tags;
+      }
+      if (entry.related_context && Array.isArray(entry.related_context)) {
+        // Filter out references to guidelines - they should reference conventions if needed
+        newEntry.related_context = entry.related_context.filter(
+          (ref) => ref !== "guidelines"
+        );
+      }
+
+      archIndex.contexts.push(newEntry);
+      result.entries++;
+    }
+
+    // Write updated architecture/_index.yaml
+    const yamlContent = YAML.stringify(archIndex, {
+      lineWidth: 100,
+      defaultKeyType: "PLAIN",
+    });
+    await fs.writeFile(archIndexPath, yamlContent, "utf8");
+  } catch (e: any) {
+    result.errors.push(`Error migrating index entries: ${e.message}`);
+  }
+
+  return result;
+}
+
+/**
  * Migrate context structure from version 1.0 to 2.0
  *
  * This function:
@@ -386,7 +567,10 @@ export async function migrateGuidelinesFile(
  * 2. Creates architecture/, conventions/, verification/ folders with schemas
  * 3. Copies new schema and index files from the template source
  * 4. Breaks down _guidelines.yaml into individual convention files
- * 5. Updates root _index.yaml to version 2.0 directory format
+ * 5. Migrates existing context files to architecture/ with type="structural"
+ * 6. Migrates _index.yaml entries to architecture/_index.yaml
+ * 7. Updates root _index.yaml to version 2.0 directory format
+ * 8. Cleans up old files from root context/
  */
 export async function migrateContextStructure(
   projectPath: string,
@@ -459,7 +643,8 @@ export async function migrateContextStructure(
     result.actions.push("Created context type folders: architecture/, conventions/, verification/");
 
     // Copy schema files from template
-    const templateContextPath = path.join(templateSourceDir, "src", "context");
+    // NOTE: The templateSourceDir is the extracted release ZIP which has .buildforce/context/, not src/context/
+    const templateContextPath = path.join(templateSourceDir, ".buildforce", "context");
 
     // Copy architecture schema and index
     const archSchemaTemplatePath = path.join(templateContextPath, "architecture", "_schema.yaml");
@@ -537,7 +722,43 @@ export async function migrateContextStructure(
       result.actions.push("No _guidelines.yaml found to migrate");
     }
 
-    // Copy new root _index.yaml from template
+    // Migrate existing context files to architecture/ folder
+    // This happens BEFORE replacing root _index.yaml so we can read the old entries
+    const contextFilesResult = await migrateContextFilesToArchitecture(
+      contextPath,
+      architecturePath,
+      todayDate
+    );
+
+    if (contextFilesResult.files.length > 0) {
+      result.actions.push(
+        `Migrated ${contextFilesResult.files.length} context files to architecture/: ${contextFilesResult.files.slice(0, 5).join(", ")}${contextFilesResult.files.length > 5 ? "..." : ""}`
+      );
+    }
+
+    if (contextFilesResult.errors.length > 0) {
+      result.errors.push(...contextFilesResult.errors);
+    }
+
+    // Migrate _index.yaml entries to architecture/_index.yaml
+    // This MUST happen BEFORE replacing root _index.yaml with v2.0 format
+    const archIndexPath = path.join(architecturePath, "_index.yaml");
+    const indexEntriesResult = await migrateIndexEntriesToArchitecture(
+      rootIndexPath,
+      archIndexPath
+    );
+
+    if (indexEntriesResult.entries > 0) {
+      result.actions.push(
+        `Migrated ${indexEntriesResult.entries} index entries to architecture/_index.yaml`
+      );
+    }
+
+    if (indexEntriesResult.errors.length > 0) {
+      result.errors.push(...indexEntriesResult.errors);
+    }
+
+    // Copy new root _index.yaml from template (AFTER migrating entries!)
     const rootIndexTemplatePath = path.join(templateContextPath, "_index.yaml");
     if (await fs.pathExists(rootIndexTemplatePath)) {
       await fs.copy(rootIndexTemplatePath, rootIndexPath);
