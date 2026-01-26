@@ -84,6 +84,133 @@ function getTodayDate(): string {
 }
 
 /**
+ * Format a string value for YAML output
+ * Uses block scalar (|) for multi-line strings, quotes for strings with special chars
+ */
+function formatYamlValue(value: string, indent: number = 0): string {
+  const indentStr = "  ".repeat(indent);
+
+  // Check if multi-line
+  if (value.includes("\n")) {
+    const lines = value.split("\n").map((line) => indentStr + "  " + line);
+    return "|\n" + lines.join("\n");
+  }
+
+  // Check if needs quoting (contains special chars)
+  if (value.includes(":") || value.includes("#") || value.includes("'") || value.includes('"')) {
+    return `"${value.replace(/"/g, '\\"')}"`;
+  }
+
+  return value;
+}
+
+/**
+ * Serialize an _index.yaml file with proper formatting
+ * Preserves header from existing file and adds blank lines between entries
+ *
+ * @param existingContent - Existing file content (to preserve header/documentation)
+ * @param entries - Array of entries to serialize
+ * @param entrySerializer - Function to convert each entry to YAML lines
+ * @param fallbackHeader - Header to use if no existing content
+ */
+function serializeIndexFile<T>(
+  existingContent: string | null,
+  entries: T[],
+  entrySerializer: (entry: T) => string[],
+  fallbackHeader: string = 'version: "2.0"\n\n'
+): string {
+  // Serialize entries with blank lines between them
+  const entriesYaml = entries
+    .map((entry) => entrySerializer(entry).map((line) => "  " + line).join("\n"))
+    .join("\n\n");
+
+  if (existingContent) {
+    // Find where contexts: section starts and preserve everything before it
+    const contextsMatch = existingContent.match(/^([\s\S]*?)(contexts:\s*\[?\]?\s*)$/m);
+    if (contextsMatch) {
+      const header = contextsMatch[1];
+      return header + "contexts:\n" + entriesYaml + "\n";
+    }
+  }
+
+  // Fallback: create new file with header
+  return fallbackHeader + "contexts:\n" + entriesYaml + "\n";
+}
+
+/**
+ * Serialize a convention file to YAML with proper formatting
+ * Uses block scalars for multi-line strings and adds blank lines between sections
+ */
+function serializeConventionFile(convention: NewConventionFile): string {
+  const lines: string[] = [];
+
+  // Required fields
+  lines.push(`id: ${convention.id}`);
+  lines.push(`name: "${convention.name}"`);
+  lines.push(`type: ${convention.type}`);
+  lines.push(`sub_type: ${convention.sub_type}`);
+  lines.push(`enforcement: ${convention.enforcement}`);
+  lines.push(`created: "${convention.created}"`);
+  lines.push(`last_updated: "${convention.last_updated}"`);
+  lines.push("");
+
+  // Description (may be multi-line)
+  lines.push(`description: ${formatYamlValue(convention.description, 0)}`);
+
+  // Optional fields with blank lines between sections
+  if (convention.examples && convention.examples.length > 0) {
+    lines.push("");
+    lines.push("examples:");
+    for (const ex of convention.examples) {
+      lines.push(`  - file: "${ex.file}"`);
+      if (ex.snippet.includes("\n")) {
+        lines.push(`    snippet: |`);
+        for (const snippetLine of ex.snippet.split("\n")) {
+          lines.push(`      ${snippetLine}`);
+        }
+      } else {
+        lines.push(`    snippet: "${ex.snippet.replace(/"/g, '\\"')}"`);
+      }
+    }
+  }
+
+  if (convention.violations && convention.violations.length > 0) {
+    lines.push("");
+    lines.push("violations:");
+    for (const v of convention.violations) {
+      if (v.includes("\n")) {
+        lines.push(`  - |`);
+        for (const vLine of v.split("\n")) {
+          lines.push(`    ${vLine}`);
+        }
+      } else {
+        lines.push(`  - "${v.replace(/"/g, '\\"')}"`);
+      }
+    }
+  }
+
+  if (convention.reference_files && convention.reference_files.length > 0) {
+    lines.push("");
+    lines.push("reference_files:");
+    for (const rf of convention.reference_files) {
+      lines.push(`  - "${rf.replace(/"/g, '\\"')}"`);
+    }
+  }
+
+  if (convention.template) {
+    lines.push("");
+    lines.push(`template: ${formatYamlValue(convention.template, 0)}`);
+  }
+
+  if (convention.migration_guide) {
+    lines.push("");
+    lines.push(`migration_guide: ${formatYamlValue(convention.migration_guide, 0)}`);
+  }
+
+  return lines.join("\n") + "\n";
+}
+
+/**
  * Convert a string to kebab-case for use as file ID
  */
 function toKebabCase(str: string): string {
@@ -325,11 +452,8 @@ export async function migrateGuidelinesFile(
         continue;
       }
 
-      const yamlContent = YAML.stringify(convention, {
-        lineWidth: 100,
-        defaultKeyType: "PLAIN",
-        defaultStringType: "QUOTE_DOUBLE",
-      });
+      // Use custom serializer for proper YAML formatting (block scalars, blank lines)
+      const yamlContent = serializeConventionFile(convention);
 
       await fs.writeFile(filePath, yamlContent, "utf8");
       result.files.push(filename);
@@ -365,7 +489,19 @@ export async function migrateGuidelinesFile(
             }
           }
 
-          await fs.writeFile(indexPath, YAML.stringify(index, { lineWidth: 100 }), "utf8");
+          // Write with preserved formatting using generic serializer
+          const outputContent = serializeIndexFile(
+            indexContent,
+            index.contexts,
+            (ctx: { id: string; file: string; sub_type: string; enforcement: string; description: string }) => [
+              `- id: ${ctx.id}`,
+              `  file: ${ctx.file}`,
+              `  sub_type: ${ctx.sub_type}`,
+              `  enforcement: ${ctx.enforcement}`,
+              `  description: "${ctx.description.replace(/"/g, '\\"')}"`,
+            ]
+          );
+          await fs.writeFile(indexPath, outputContent, "utf8");
         }
       } catch (e: any) {
         result.errors.push(`Error updating conventions/_index.yaml: ${e.message}`);
@@ -564,55 +700,28 @@ export async function migrateIndexEntriesToArchitecture(
       result.entries++;
     }
 
-    // Write updated architecture/_index.yaml with preserved formatting
-    // Read the existing file to preserve header/documentation
-    let outputContent: string;
-    if (await fs.pathExists(archIndexPath)) {
-      const existingContent = await fs.readFile(archIndexPath, "utf8");
-      // Find where contexts: section starts and preserve everything before it
-      const contextsMatch = existingContent.match(/^([\s\S]*?)(contexts:\s*\[?\]?\s*)$/m);
-      if (contextsMatch) {
-        const header = contextsMatch[1];
-        // Build contexts section with blank lines between entries for readability
-        const entriesYaml = archIndex.contexts
-          .map((ctx) => {
-            const lines = [`  - id: ${ctx.id}`, `    file: ${ctx.file}`, `    type: ${ctx.type}`];
-            if (ctx.description) {
-              lines.push(`    description: "${ctx.description.replace(/"/g, '\\"')}"`);
-            }
-            if (ctx.tags && ctx.tags.length > 0) {
-              lines.push(`    tags: [${ctx.tags.join(", ")}]`);
-            }
-            if (ctx.related_context && ctx.related_context.length > 0) {
-              lines.push(`    related_context: [${ctx.related_context.join(", ")}]`);
-            }
-            return lines.join("\n");
-          })
-          .join("\n\n"); // Blank line between entries
-        outputContent = header + "contexts:\n" + entriesYaml + "\n";
-      } else {
-        // Fallback to YAML.stringify if structure doesn't match
-        outputContent = YAML.stringify(archIndex, { lineWidth: 100, defaultKeyType: "PLAIN" });
+    // Write updated architecture/_index.yaml with preserved formatting using generic serializer
+    const existingContent = (await fs.pathExists(archIndexPath))
+      ? await fs.readFile(archIndexPath, "utf8")
+      : null;
+
+    const outputContent = serializeIndexFile(
+      existingContent,
+      archIndex.contexts,
+      (ctx: NewArchitectureEntry) => {
+        const lines = [`- id: ${ctx.id}`, `  file: ${ctx.file}`, `  type: ${ctx.type}`];
+        if (ctx.description) {
+          lines.push(`  description: "${ctx.description.replace(/"/g, '\\"')}"`);
+        }
+        if (ctx.tags && ctx.tags.length > 0) {
+          lines.push(`  tags: [${ctx.tags.join(", ")}]`);
+        }
+        if (ctx.related_context && ctx.related_context.length > 0) {
+          lines.push(`  related_context: [${ctx.related_context.join(", ")}]`);
+        }
+        return lines;
       }
-    } else {
-      // No existing file, create with proper formatting
-      const entriesYaml = archIndex.contexts
-        .map((ctx) => {
-          const lines = [`  - id: ${ctx.id}`, `    file: ${ctx.file}`, `    type: ${ctx.type}`];
-          if (ctx.description) {
-            lines.push(`    description: "${ctx.description.replace(/"/g, '\\"')}"`);
-          }
-          if (ctx.tags && ctx.tags.length > 0) {
-            lines.push(`    tags: [${ctx.tags.join(", ")}]`);
-          }
-          if (ctx.related_context && ctx.related_context.length > 0) {
-            lines.push(`    related_context: [${ctx.related_context.join(", ")}]`);
-          }
-          return lines.join("\n");
-        })
-        .join("\n\n");
-      outputContent = `version: "2.0"\n\ncontexts:\n${entriesYaml}\n`;
-    }
+    );
     await fs.writeFile(archIndexPath, outputContent, "utf8");
   } catch (e: any) {
     result.errors.push(`Error migrating index entries: ${e.message}`);
