@@ -1,9 +1,9 @@
 id: upgrade-command
 name: Upgrade Command
-type: feature
+type: structural
 status: production
 created: 2025-10-28
-last_updated: 2025-12-01
+last_updated: "2026-01-26"
 
 summary: |
   Slash command for upgrading existing Buildforce projects to the latest templates, scripts,

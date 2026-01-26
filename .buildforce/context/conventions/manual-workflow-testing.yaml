@@ -1,0 +1,26 @@
+id: manual-workflow-testing
+name: "Manual Workflow Testing"
+type: convention
+sub_type: testing-standard
+enforcement: recommended
+created: "2026-01-26"
+last_updated: "2026-01-26"
+
+description: |
+  Since slash commands are templates interpreted by AI, automated unit tests
+  have limited value. Primary testing strategy is end-to-end workflow testing:
+  run actual commands and verify output files match expected structure.
+  
+
+examples:
+  - file: "example"
+    snippet: |
+      # Test /plan workflow
+      1. Run /plan for new feature
+      2. Verify spec.yaml created with correct schema
+      3. Check plan.yaml contains all required sections
+      4. Validate YAML syntax with yamllint
+      
+
+reference_files:
+  - "src/templates/plan-template.yaml (validation section)"

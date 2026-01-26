@@ -1,0 +1,197 @@
+# Buildforce Architecture Context Index
+# This file tracks architecture context files for your project.
+# Architecture context captures WHAT exists - structural understanding of your codebase.
+
+version: "2.0"
+
+# ============================================================================
+# ARCHITECTURE INDEX FIELD DOCUMENTATION
+# ============================================================================
+#
+# Each context entry in the index has the following fields:
+#
+# REQUIRED FIELDS:
+# ----------------
+# - id (string, kebab-case):
+#     Unique identifier matching the context filename (without .yaml extension)
+#     Must be unique across all entries in this index
+#     Example: "authentication", "build-command", "error-handling"
+#
+# - file (string):
+#     Context filename (must match id field with .yaml extension)
+#     Example: "authentication.yaml", "build-command.yaml"
+#
+# - type (string):
+#     Must be "structural" for all entries in this index
+#     This replaces the legacy type enum (module, feature, component, pattern)
+#     Example: "structural"
+#
+# OPTIONAL BUT RECOMMENDED FIELDS:
+# ---------------------------------
+# - description (string, max 100 chars):
+#     Generic, stable one-liner describing WHAT this module/feature IS
+#     Focus on its identity and purpose, not implementation details
+#     Example: "User authentication system with JWT tokens and OAuth2 integration"
+#
+# - tags (array of strings):
+#     Searchable keywords for discovery
+#     Use relevant terms related to functionality, technology, domain
+#     Example: [auth, security, jwt, oauth2]
+#
+# - related_context (array of context IDs, OPTIONAL):
+#     Array of context IDs that are closely related to this context
+#     Enables agents to discover related contexts through explicit cross-references
+#
+#     **When to populate:**
+#       - Feature families (e.g., all slash commands reference slash-commands)
+#       - Dependent modules (e.g., build-command depends on plan-template)
+#       - Sibling features (e.g., research and document commands work together)
+#
+#     Example: [plan-template, iterate-plan-command, spec-command]
+#
+# ============================================================================
+#
+# MIGRATION NOTE:
+# ---------------
+# This index uses type: "structural" for all entries, replacing the legacy
+# type enum (module, feature, component, pattern). The nature of what's
+# documented is now captured through descriptive summaries rather than
+# explicit type categorization.
+#
+# ============================================================================
+
+# Architecture context entries
+# All entries must have type: structural
+contexts:
+  - id: slash-commands
+    file: slash-commands.yaml
+    type: structural
+    description: "Core slash command system enabling spec-driven development workflow for AI agents"
+    tags: [core, workflow, agents]
+    related_context: [research-slash-command, plan-command, build-command, complete-command, document-command, plan-template, cli-architecture]
+
+  - id: research-slash-command
+    file: research-slash-command.yaml
+    type: structural
+    description: "Slash command for gathering context from project knowledge, codebase, and external sources"
+    tags: [core, workflow, research, context-gathering]
+    related_context: [slash-commands, cli-architecture, document-command]
+
+  - id: build-command
+    file: build-command.yaml
+    type: structural
+    description: "Slash command for implementing features following spec and plan with progress tracking"
+    tags: [slash-command, build, command-iteration, compression, workflow-enhancement, script-execution]
+    related_context: [slash-commands, plan-template, plan-command]
+
+  - id: plan-template
+    file: plan-template.yaml
+    type: structural
+    description: "YAML template structure for implementation plans with task tracking and validation"
+    tags: [template, plan-template, build-agent, progress-tracking, checkbox-tracking, deviation-logging, spec-traceability, workflow-enhancement]
+    related_context: [build-command, plan-command, slash-commands]
+
+  - id: document-command
+    file: document-command.yaml
+    type: structural
+    description: "Enhanced /document command with /complete UX patterns, empty context detection, and completion summaries"
+    tags: [slash-command, document, context-creation, template-only, kebab-case-naming, intelligent-merge, auto-detection, workflow-utility, ux-enhancement]
+    related_context: [slash-commands, complete-command, cli-architecture, research-slash-command]
+
+  - id: readme-documentation
+    file: readme-documentation.yaml
+    type: structural
+    description: "Primary documentation for Buildforce CLI covering installation, workflow, and contribution"
+    tags: [documentation, readme, onboarding, spec-driven-development, philosophy, installation, quick-start, workflow, slash-commands, troubleshooting, contribution-guidelines, roadmap, changelog]
+    related_context: [cli-architecture, slash-commands]
+
+  - id: plan-command
+    file: plan-command.yaml
+    type: structural
+    description: "Template-based /buildforce.plan command for creating/updating specifications and plans with state-based CREATE vs UPDATE logic"
+    tags: [slash-command, plan, template-only, state-tracking, timestamp-naming, agent-driven, workflow-core]
+    related_context: [slash-commands, plan-template, complete-command]
+
+  - id: complete-command
+    file: complete-command.yaml
+    type: structural
+    description: "Template-only /complete command for finalizing specs with agent-driven context file management"
+    tags: [slash-command, complete, template-only, context-management, semantic-naming, intelligent-merge, workflow-core]
+    related_context: [slash-commands, plan-command, document-command]
+
+  - id: upgrade-command
+    file: upgrade-command.yaml
+    type: structural
+    description: "Slash command for upgrading projects to latest templates while preserving user content"
+    tags: [slash-command, upgrade, template-upgrade, preservation, dry-run, atomic-operations, backward-compatibility, workflow-utility]
+    related_context: [slash-commands, cli-architecture, plan-command, complete-command, local-artifact-resolution]
+
+  - id: cli-architecture
+    file: cli-architecture.yaml
+    type: structural
+    description: "Comprehensive CLI architecture with template distribution, context management, and multi-agent support"
+    tags: [core, architecture, cli, commander, github-releases, context-system, agent-support, initialization, workflow-foundation]
+    related_context: [slash-commands, document-command, research-slash-command, plan-command, plan-template, upgrade-command, local-artifact-resolution]
+
+  - id: research-persistence
+    file: research-persistence.yaml
+    type: structural
+    description: "Conversation-based research materialization system enabling structured research.yaml artifacts"
+    tags: [research, persistence, materialization, conversation-based, workflow-enhancement, template-only]
+    related_context: [research-slash-command, plan-command, build-command, complete-command]
+
+  - id: local-artifact-resolution
+    file: local-artifact-resolution.yaml
+    type: structural
+    description: "Local artifact resolution system for offline workflows and faster testing iterations"
+    tags: [artifact-resolution, offline-support, local-development, testing, glob-pattern, workflow-utility]
+    related_context: [cli-architecture, upgrade-command]
+
+  - id: examples-command
+    file: examples-command.yaml
+    type: structural
+    description: "Interactive CLI command for displaying workflow examples extracted dynamically from README.md"
+    tags: [cli-command, workflow, examples, interactive, documentation, discoverability]
+    related_context: [cli-architecture, readme-documentation]
+
+  - id: session-management-cli
+    file: session-management-cli.yaml
+    type: structural
+    description: "Interactive CLI command for managing and switching between active development sessions"
+    tags: [cli-command, session-management, interactive, inquirer, workflow, state-tracking]
+    related_context: [cli-architecture, state-tracking, plan-command]
+
+  - id: yaml-extension-standard
+    file: yaml-extension-standard.yaml
+    type: structural
+    description: "Codebase standard enforcing .yaml extension for all YAML files to eliminate inconsistency"
+    tags: [pattern, standard, yaml, file-extensions, consistency, breaking-change, codebase-wide]
+    related_context: [cli-architecture, plan-command, build-command, complete-command, document-command, research-slash-command]
+
+  - id: state-tracking
+    file: state-tracking.yaml
+    type: structural
+    description: "JSON-based state tracking using buildforce.json to manage active spec sessions"
+    tags: [core, state-management, buildforce-json, configuration, workflow-foundation]
+    related_context: [plan-command, research-persistence, complete-command, cli-architecture]
+
+  - id: template-versioning
+    file: template-versioning.yaml
+    type: structural
+    description: "Automatic version injection for templates in release workflow with pre-commit strategy"
+    tags: [release-workflow, templates, versioning, github-actions, automation, workflow-enhancement]
+    related_context: [cli-architecture, plan-template, upgrade-command]
+
+  - id: commit-enforcement
+    file: commit-enforcement.yaml
+    type: structural
+    description: "Commit message and branch naming enforcement using commitlint, husky, and GitHub Actions"
+    tags: [commit-enforcement, conventional-commits, commitlint, husky, commitizen, git-hooks, branch-naming, github-actions, contribution-standards, developer-experience]
+    related_context: [readme-documentation, cli-architecture]
+
+  - id: command-naming-standard
+    file: command-naming-standard.yaml
+    type: structural
+    description: "Slash command naming convention using /buildforce.* prefix for namespace isolation"
+    tags: [pattern, naming-convention, slash-commands, namespace-isolation, documentation-consistency]
+    related_context: [slash-commands, readme-documentation, cli-architecture]

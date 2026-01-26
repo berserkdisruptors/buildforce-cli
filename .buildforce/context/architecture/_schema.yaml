@@ -1,0 +1,206 @@
+# Architecture Context Schema
+# Version: 2.0
+# This schema defines the structure for architecture context files.
+# Architecture context captures WHAT exists - structural understanding of modules, features, and components.
+#
+# This schema replaces the legacy _schema.yaml that used type enum (module, feature, component, pattern).
+# All architecture context files now use type: "structural" to align with the context taxonomy.
+#
+# USAGE:
+#   - Created by: /buildforce.complete (after implementing a feature)
+#   - Referenced by: /buildforce.research, /buildforce.plan, /buildforce.build
+#
+# PURPOSE:
+#   Architecture context helps agents understand:
+#   - What modules, features, and components exist
+#   - How they're structured and organized
+#   - What dependencies they have
+#   - How they've evolved over time
+
+version: "2.0"
+
+# Required fields for all architecture context files
+required_fields:
+  - id              # Unique identifier (kebab-case)
+  - name            # Human-readable name
+  - type            # Must be "structural" (fixed value)
+  - status          # in-development | production | deprecated
+  - created         # ISO date (YYYY-MM-DD)
+  - last_updated    # ISO date (YYYY-MM-DD)
+  - summary         # Multi-line description (use | for literal block)
+
+# Optional but recommended fields
+optional_fields:
+  - responsibilities    # List of key responsibilities
+  - dependencies        # Internal and external dependencies
+  - files               # Primary and secondary file paths
+  - interfaces          # Exported functions/APIs (if applicable)
+  - evolution           # Version history with dates and changes
+  - design_decisions    # Key design decisions with rationale
+  - related_specs       # Links to spec files
+  - notes               # Additional context or future considerations
+
+# Field descriptions and examples
+
+id:
+  description: "Unique identifier for this context (used in _index.yaml)"
+  format: "kebab-case"
+  example: "authentication"
+
+name:
+  description: "Human-readable name"
+  format: "String with proper capitalization"
+  example: "Authentication Module"
+
+type:
+  description: "Context type identifier - always 'structural' for architecture context"
+  value: "structural"
+  note: |
+    This replaces the legacy type enum (module, feature, component, pattern).
+    All architecture context now uses type: structural to align with context taxonomy.
+    The nature of what's documented (module vs feature vs component) is captured
+    implicitly through the summary and responsibilities fields.
+
+status:
+  description: "Current state of the implementation"
+  values:
+    - in-development: "Active development"
+    - production: "Deployed and stable"
+    - deprecated: "Scheduled for removal or replacement"
+  example: "production"
+
+created:
+  description: "Date when this context was first created"
+  format: "ISO date (YYYY-MM-DD)"
+  example: "2025-01-15"
+
+last_updated:
+  description: "Date when this context was last modified"
+  format: "ISO date (YYYY-MM-DD)"
+  example: "2025-09-20"
+
+summary:
+  description: "Multi-line description of what this context covers"
+  format: "Use | for literal block to preserve formatting"
+  example: |
+    JWT-based authentication with OAuth2 social login support.
+    Handles session management and token refresh.
+
+responsibilities:
+  description: "List of key responsibilities or capabilities"
+  format: "YAML list with concise descriptions"
+  example:
+    - JWT token generation and validation
+    - OAuth2 integration (Google, GitHub)
+    - Session lifecycle management
+
+dependencies:
+  description: "Internal project dependencies and external packages"
+  structure:
+    internal:
+      format: "module-name: 'Description of relationship'"
+      example:
+        - user-management: "Retrieves user data for token generation"
+    external:
+      format: "package-name: 'version'"
+      example:
+        - jsonwebtoken: "^9.0.0"
+
+files:
+  description: "File paths organized by importance"
+  structure:
+    primary:
+      description: "Core implementation files"
+      example:
+        - src/auth/jwt.service.ts
+    secondary:
+      description: "Supporting files (middleware, utilities)"
+      example:
+        - src/middleware/auth.middleware.ts
+
+interfaces:
+  description: "Exported functions, APIs, or contracts (optional)"
+  structure:
+    exports:
+      format: "List of function signatures or API endpoints"
+      example:
+        - name: "generateToken"
+          signature: "(userId: string, claims: object) => string"
+
+evolution:
+  description: "Version history with dates and change descriptions"
+  format: "List of version entries"
+  example:
+    - version: "1.0"
+      date: "2025-01-15"
+      changes: "Initial implementation"
+    - version: "2.0"
+      date: "2025-09-20"
+      changes: "Migrated to refresh token pattern"
+
+design_decisions:
+  description: "Key design decisions with rationale"
+  structure:
+    - decision: "What was decided"
+      rationale: "Why it was decided"
+  example:
+    - decision: "Use JWT over session cookies"
+      rationale: "Stateless authentication scales better for microservices architecture"
+
+related_specs:
+  description: "Links to specification files that led to this implementation"
+  format: "List of spec file names or paths"
+  example:
+    - spec-2024-11-auth-refresh-tokens.md
+    - spec-2025-01-oauth-integration.md
+
+notes:
+  description: "Additional context, future considerations, or important details"
+  format: "Multi-line text (use | for literal block)"
+  example: |
+    Future consideration: Add biometric authentication support.
+    Current token expiry: 1 hour (refresh: 30 days)
+
+# Example architecture context file structure
+example_file: |
+  # authentication.yaml
+  id: authentication
+  name: "Authentication Module"
+  type: structural
+  status: production
+  created: "2025-01-15"
+  last_updated: "2025-09-20"
+
+  summary: |
+    JWT-based authentication with OAuth2 social login support.
+    Handles session management and token refresh.
+
+  responsibilities:
+    - JWT token generation and validation
+    - OAuth2 integration (Google, GitHub)
+    - Session lifecycle management
+
+  dependencies:
+    internal:
+      - user-management: "Retrieves user data for token generation"
+    external:
+      - jsonwebtoken: "^9.0.0"
+      - passport: "^0.7.0"
+
+  files:
+    primary:
+      - src/auth/jwt.service.ts
+      - src/auth/oauth.service.ts
+    secondary:
+      - src/middleware/auth.middleware.ts
+      - src/utils/token-utils.ts
+
+  design_decisions:
+    - decision: "Use JWT over session cookies"
+      rationale: "Stateless authentication scales better for microservices architecture"
+    - decision: "Implement refresh token rotation"
+      rationale: "Improves security by limiting token exposure window"
+
+  notes: |
+    Future consideration: Add biometric authentication support.
+    Current token expiry: 1 hour (refresh: 30 days)

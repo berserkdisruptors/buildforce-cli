@@ -1,9 +1,9 @@
 id: document-command
 name: "/document Slash Command - Context File Creation Without Specs"
-type: feature
+type: structural
 status: production
 created: "2025-10-10"
-last_updated: "2025-10-27"
+last_updated: "2026-01-26"
 
 summary: |
   Slash command that enables direct context file creation for existing functionality without

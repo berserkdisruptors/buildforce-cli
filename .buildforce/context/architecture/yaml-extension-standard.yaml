@@ -1,9 +1,9 @@
 id: yaml-extension-standard
 name: "YAML Extension Standardization"
-type: pattern
+type: structural
 status: production
 created: "2025-11-03"
-last_updated: "2025-11-03"
+last_updated: "2026-01-26"
 
 summary: |
   Codebase-wide standard requiring all YAML files to use .yaml extension exclusively,

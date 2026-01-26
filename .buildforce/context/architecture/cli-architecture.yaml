@@ -1,9 +1,9 @@
 id: cli-architecture
 name: Buildforce CLI Architecture
-type: module
+type: structural
 status: production
 created: 2025-10-27
-last_updated: 2026-01-26
+last_updated: "2026-01-26"
 
 summary: |
   Comprehensive architecture of the Buildforce CLI tool - a Node.js-based command-line

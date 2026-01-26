@@ -1,421 +1,77 @@
-version: "1.0"
+# Buildforce Context Repository Index
+# This file serves as the entry point to your project's context repository.
+# It points to three context type directories, each serving a different purpose.
+
+version: "2.0"
 
 # ============================================================================
-# CONTEXT INDEX FIELD DOCUMENTATION
+# CONTEXT TAXONOMY OVERVIEW
 # ============================================================================
 #
-# Each context entry in the index has the following fields:
+# The context repository is organized into three directories, each aligned
+# with the context taxonomy pillars that AI agents need most:
 #
-# REQUIRED FIELDS:
-# ----------------
-# - id (string, kebab-case):
-#     Unique identifier matching the context filename (without .yaml extension)
-#     Must be unique across all entries in this index
-#     Example: "authentication", "build-command", "error-handling"
+# 1. ARCHITECTURE (architecture/)
+#    Answers: WHAT exists already?
+#    Contains: Structural understanding of modules, features, and components
+#    Used by: /buildforce.research, /buildforce.plan, /buildforce.build
 #
-# - file (string):
-#     Context filename (must match id field with .yaml extension)
-#     Example: "authentication.yaml", "build-command.yaml"
+# 2. CONVENTIONS (conventions/)
+#    Answers: HOW do we do things here?
+#    Contains: Coding standards, patterns, and practices
+#    Used by: /buildforce.plan, /buildforce.build (validation)
 #
-# - type (enum):
-#     Category of the context for organization
-#     Valid values: module | feature | component | pattern
-#       - module: High-level system module (e.g., authentication, payment)
-#       - feature: Specific feature within a module (e.g., OAuth login)
-#       - component: Reusable UI or code component
-#       - pattern: Design pattern or architectural decision
-#     Example: "feature"
+# 3. VERIFICATION (verification/)
+#    Answers: HOW do I know it's right?
+#    Contains: Quality standards, test expectations, known risks
+#    Used by: /buildforce.build (self-review), PR Review Actions
 #
-# OPTIONAL BUT RECOMMENDED FIELDS:
-# ---------------------------------
-# - description (string, max 100 chars):
-#     Generic, stable one-liner describing WHAT this component/feature/module IS
-#     Focus on its identity and purpose, not implementation details or achievements
-#     Should remain relevant across versions and evolution
-#     Example: "User authentication system with JWT tokens and OAuth2 integration"
+# For more details on the context taxonomy, see:
+# https://buildforce.dev/concepts/context-repository
 #
-# - tags (array of strings):
-#     Searchable keywords for discovery
-#     Use relevant terms related to functionality, technology, domain
-#     Example: [auth, security, jwt, oauth2]
+# ============================================================================
+# NAVIGATING THE CONTEXT REPOSITORY
+# ============================================================================
 #
-# - related_context (array of context IDs, OPTIONAL):
-#     Array of context IDs that are closely related to this context
-#     Enables agents to discover related contexts through explicit cross-references
+# Each context type directory contains:
+#   - _schema.yaml: Field definitions and validation rules for context files
+#   - _index.yaml: Registry of context files in that directory
+#   - *.yaml: Individual context files following the schema
 #
-#     **When to populate:**
-#       - Feature families (e.g., all slash commands reference slash-commands)
-#       - Dependent modules (e.g., build-command depends on plan-template)
-#       - Sibling features (e.g., research and document commands work together)
-#
-#     **Usage guidelines:**
-#       - Only include contexts that are closely related or have direct dependencies
-#       - Avoid over-populating—focus on significant relationships
-#       - IDs must exist in this _index.yaml file (no validation enforced)
-#       - Bidirectional relationships recommended for discoverability
-#         (if A references B, B should reference A)
-#
-#     Example: [plan-template, iterate-plan-command, plan-command]
+# To find context:
+#   1. Determine what type of context you need (architecture, convention, verification)
+#   2. Navigate to that directory's _index.yaml
+#   3. Find relevant context files by id, tags, or description
+#   4. Read the full context file for detailed information
 #
 # ============================================================================
 
-contexts:
-  - id: slash-commands
-    file: slash-commands.yaml
-    type: module
-    description: "Core slash command system enabling spec-driven development workflow for AI agents"
-    tags: [core, workflow, agents]
-    related_context:
-      [
-        research-slash-command,
-        plan-command,
-        build-command,
-        complete-command,
-        document-command,
-        plan-template,
-        cli-architecture,
-      ]
+# Context type directories
+# Each directory is self-contained with its own schema and index
+context_types:
+  architecture:
+    path: "architecture/"
+    description: |
+      Structural context about WHAT exists in the codebase.
+      Contains understanding of modules, features, components, and their relationships.
+      All entries have type: structural.
+    index_file: "architecture/_index.yaml"
+    schema_file: "architecture/_schema.yaml"
 
-  - id: research-slash-command
-    file: research-slash-command.yaml
-    type: feature
-    description: "Slash command for gathering context from project knowledge, codebase, and external sources"
-    tags: [core, workflow, research, context-gathering]
-    related_context: [slash-commands, cli-architecture, document-command]
+  conventions:
+    path: "conventions/"
+    description: |
+      Convention context about HOW things are done here.
+      Contains coding standards, architectural patterns, and project practices.
+      All entries have type: convention with a sub_type for categorization.
+    index_file: "conventions/_index.yaml"
+    schema_file: "conventions/_schema.yaml"
 
-  - id: build-command
-    file: build-command.yaml
-    type: feature
-    description: "Slash command for implementing features following spec and plan with progress tracking"
-    tags:
-      [
-        slash-command,
-        build,
-        command-iteration,
-        compression,
-        workflow-enhancement,
-        script-execution,
-      ]
-    related_context: [slash-commands, plan-template, plan-command]
-
-  - id: plan-template
-    file: plan-template.yaml
-    type: feature
-    description: "YAML template structure for implementation plans with task tracking and validation"
-    tags:
-      [
-        template,
-        plan-template,
-        build-agent,
-        progress-tracking,
-        checkbox-tracking,
-        deviation-logging,
-        spec-traceability,
-        workflow-enhancement,
-      ]
-    related_context: [build-command, plan-command, slash-commands]
-
-  - id: document-command
-    file: document-command.yaml
-    type: feature
-    description: "Enhanced /document command with /complete UX patterns, empty context detection, and completion summaries"
-    tags:
-      [
-        slash-command,
-        document,
-        context-creation,
-        template-only,
-        kebab-case-naming,
-        intelligent-merge,
-        auto-detection,
-        workflow-utility,
-        ux-enhancement,
-      ]
-    related_context:
-      [
-        slash-commands,
-        complete-command,
-        cli-architecture,
-        research-slash-command,
-      ]
-
-  - id: readme-documentation
-    file: readme-documentation.yaml
-    type: feature
-    description: "Primary documentation for Buildforce CLI covering installation, workflow, and contribution"
-    tags:
-      [
-        documentation,
-        readme,
-        onboarding,
-        spec-driven-development,
-        philosophy,
-        installation,
-        quick-start,
-        workflow,
-        slash-commands,
-        troubleshooting,
-        contribution-guidelines,
-        roadmap,
-        changelog,
-      ]
-    related_context: [cli-architecture, slash-commands]
-
-  - id: plan-command
-    file: plan-command.yaml
-    type: feature
-    description: "Template-based /buildforce.plan command for creating/updating specifications and plans with state-based CREATE vs UPDATE logic"
-    tags:
-      [
-        slash-command,
-        plan,
-        template-only,
-        state-tracking,
-        timestamp-naming,
-        agent-driven,
-        workflow-core,
-      ]
-    related_context: [slash-commands, plan-template, complete-command]
-
-  - id: complete-command
-    file: complete-command.yaml
-    type: feature
-    description: "Template-only /complete command for finalizing specs with agent-driven context file management"
-    tags:
-      [
-        slash-command,
-        complete,
-        template-only,
-        context-management,
-        semantic-naming,
-        intelligent-merge,
-        workflow-core,
-      ]
-    related_context: [slash-commands, plan-command, document-command]
-
-  - id: upgrade-command
-    file: upgrade-command.yaml
-    type: feature
-    description: "Slash command for upgrading projects to latest templates while preserving user content"
-    tags:
-      [
-        slash-command,
-        upgrade,
-        template-upgrade,
-        preservation,
-        dry-run,
-        atomic-operations,
-        backward-compatibility,
-        workflow-utility,
-      ]
-    related_context:
-      [
-        slash-commands,
-        cli-architecture,
-        plan-command,
-        complete-command,
-        local-artifact-resolution,
-      ]
-
-  - id: cli-architecture
-    file: cli-architecture.yaml
-    type: module
-    description: "Comprehensive CLI architecture with template distribution, context management, and multi-agent support"
-    tags:
-      [
-        core,
-        architecture,
-        cli,
-        commander,
-        github-releases,
-        context-system,
-        agent-support,
-        initialization,
-        workflow-foundation,
-      ]
-    related_context:
-      [
-        slash-commands,
-        document-command,
-        research-slash-command,
-        plan-command,
-        plan-template,
-        upgrade-command,
-        local-artifact-resolution,
-      ]
-
-  - id: research-persistence
-    file: research-persistence.yaml
-    type: feature
-    description: "Conversation-based research materialization system enabling structured research.yaml artifacts"
-    tags:
-      [
-        research,
-        persistence,
-        materialization,
-        conversation-based,
-        workflow-enhancement,
-        template-only,
-      ]
-    related_context:
-      [research-slash-command, plan-command, build-command, complete-command]
-
-  - id: local-artifact-resolution
-    file: local-artifact-resolution.yaml
-    type: feature
-    description: "Local artifact resolution system for offline workflows and faster testing iterations"
-    tags:
-      [
-        artifact-resolution,
-        offline-support,
-        local-development,
-        testing,
-        glob-pattern,
-        workflow-utility,
-      ]
-    related_context: [cli-architecture, upgrade-command]
-
-  - id: examples-command
-    file: examples-command.yml
-    type: feature
-    description: "Interactive CLI command for displaying workflow examples extracted dynamically from README.md"
-    tags:
-      [
-        cli-command,
-        workflow,
-        examples,
-        interactive,
-        documentation,
-        discoverability,
-      ]
-    related_context: [cli-architecture, readme-documentation]
-
-  - id: session-management-cli
-    file: session-management-cli.yaml
-    type: feature
-    description: "Interactive CLI command for managing and switching between active development sessions"
-    tags:
-      [
-        cli-command,
-        session-management,
-        interactive,
-        inquirer,
-        workflow,
-        state-tracking,
-      ]
-    related_context: [cli-architecture, state-tracking, plan-command]
-
-  - id: yaml-extension-standard
-    file: yaml-extension-standard.yaml
-    type: pattern
-    description: "Codebase standard enforcing .yaml extension for all YAML files to eliminate inconsistency"
-    tags:
-      [
-        pattern,
-        standard,
-        yaml,
-        file-extensions,
-        consistency,
-        breaking-change,
-        codebase-wide,
-      ]
-    related_context:
-      [
-        cli-architecture,
-        plan-command,
-        build-command,
-        complete-command,
-        document-command,
-        research-slash-command,
-      ]
-
-  - id: state-tracking
-    file: state-tracking.yaml
-    type: feature
-    description: "JSON-based state tracking using buildforce.json to manage active spec sessions"
-    tags:
-      [
-        core,
-        state-management,
-        buildforce-json,
-        configuration,
-        workflow-foundation,
-      ]
-    related_context:
-      [plan-command, research-persistence, complete-command, cli-architecture]
-
-  - id: template-versioning
-    file: template-versioning.yml
-    type: feature
-    description: "Automatic version injection for templates in release workflow with pre-commit strategy"
-    tags:
-      [
-        release-workflow,
-        templates,
-        versioning,
-        github-actions,
-        automation,
-        workflow-enhancement,
-      ]
-    related_context: [cli-architecture, plan-template, upgrade-command]
-
-  - id: commit-enforcement
-    file: commit-enforcement.yaml
-    type: feature
-    description: "Commit message and branch naming enforcement using commitlint, husky, and GitHub Actions"
-    tags:
-      [
-        commit-enforcement,
-        conventional-commits,
-        commitlint,
-        husky,
-        commitizen,
-        git-hooks,
-        branch-naming,
-        github-actions,
-        contribution-standards,
-        developer-experience,
-      ]
-    related_context: [readme-documentation, cli-architecture]
-
-  - id: guidelines
-    file: _guidelines.yaml
-    type: pattern
-    description: "Project-wide conventions, standards, and coding patterns for AI agent education"
-    tags:
-      [
-        standards,
-        conventions,
-        patterns,
-        enforcement,
-        validation,
-        project-dna,
-        ai-education,
-      ]
-    related_context:
-      [
-        document-command,
-        plan-command,
-        build-command,
-        complete-command,
-        plan-template,
-      ]
-
-  - id: command-naming-standard
-    file: command-naming-standard.yaml
-    type: pattern
-    description: "Slash command naming convention using /buildforce.* prefix for namespace isolation"
-    tags:
-      [
-        pattern,
-        naming-convention,
-        slash-commands,
-        namespace-isolation,
-        documentation-consistency,
-      ]
-    related_context:
-      [
-        slash-commands,
-        readme-documentation,
-        cli-architecture,
-      ]
+  verification:
+    path: "verification/"
+    description: |
+      Verification context about HOW to know if code is right.
+      Contains quality standards, test expectations, review checklists, and known risks.
+      All entries have type: verification with source field (mined, manual, hybrid).
+    index_file: "verification/_index.yaml"
+    schema_file: "verification/_schema.yaml"

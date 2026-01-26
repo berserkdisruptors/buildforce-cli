@@ -1,9 +1,9 @@
 id: complete-command
 name: "Complete Command Template"
-type: feature
+type: structural
 status: production
 created: 2025-01-23
-last_updated: 2025-11-21
+last_updated: "2026-01-26"
 
 summary: |
   Template-only slash command that guides AI agents through finalizing specs by creating

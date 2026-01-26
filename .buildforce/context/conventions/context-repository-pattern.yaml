@@ -1,0 +1,27 @@
+id: context-repository-pattern
+name: "Context Repository Pattern"
+type: convention
+sub_type: architectural-pattern
+enforcement: recommended
+created: "2026-01-26"
+last_updated: "2026-01-26"
+
+description: |
+  Project knowledge lives in .buildforce/context/ as YAML files. Each context file
+  captures a specific aspect of the project (glossary, API patterns, architecture).
+  Context files are registered in _index.yaml with descriptive tags for discovery.
+  This creates a "living documentation" system that evolves with the project.
+  
+
+examples:
+  - file: ".buildforce/context/_glossary.yaml"
+    snippet: |
+      version: "0.0.33"
+      terms:
+        - term: "spec"
+          definition: "Structured YAML file capturing WHAT needs to be built"
+      
+
+reference_files:
+  - ".buildforce/context/_index.yaml"
+  - ".buildforce/context/_glossary.yaml"

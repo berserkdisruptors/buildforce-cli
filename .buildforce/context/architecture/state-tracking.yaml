@@ -1,9 +1,9 @@
 id: state-tracking
 name: "State Tracking System"
-type: feature
+type: structural
 status: production
 created: 2025-10-29
-last_updated: 2025-11-26
+last_updated: "2026-01-26"
 
 summary: |
   JSON-based state tracking system using buildforce.json to manage active spec sessions,

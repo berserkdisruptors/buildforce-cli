@@ -1,9 +1,9 @@
 id: examples-command
 name: Examples Command
-type: feature
+type: structural
 status: production
 created: 2025-11-01
-last_updated: 2025-11-01
+last_updated: "2026-01-26"
 
 summary: |
   Interactive CLI command (`buildforce examples`) that presents workflow examples from README.md.

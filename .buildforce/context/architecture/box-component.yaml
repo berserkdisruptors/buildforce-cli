@@ -1,9 +1,9 @@
 id: box-component
 name: Box Component Utility
-type: component
+type: structural
 status: production
 created: "2025-01-31"
-last_updated: "2025-01-31"
+last_updated: "2026-01-26"
 
 summary: |
   Shared box utility component for creating standardized terminal boxes across all CLI commands. Wraps the boxen library with consistent styling using the official Buildforce CLI branding color (#D3FFCA). Eliminates code duplication and ensures visual consistency across help output, examples, init command, and all future commands.

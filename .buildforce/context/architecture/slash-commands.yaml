@@ -1,9 +1,9 @@
 id: slash-commands
 name: "Slash Commands System"
-type: module
+type: structural
 status: production
 created: "2025-01-15"
-last_updated: "2025-10-10"
+last_updated: "2026-01-26"
 
 summary: |
   Spec-driven development workflow implemented via 4 core slash commands plus 1 utility command.

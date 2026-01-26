@@ -1,9 +1,9 @@
 id: build-command
 name: "Iterate and Complete /build Slash Command"
-type: feature
+type: structural
 status: completed
 created: 2025-10-08
-last_updated: 2025-12-02
+last_updated: "2026-01-26"
 
 summary: |
   The /build slash command with dual-mode operation: Full Workflow Mode (with active session) and

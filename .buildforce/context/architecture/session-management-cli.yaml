@@ -1,9 +1,9 @@
 id: session-management-cli
 name: "CLI Session Management"
-type: feature
+type: structural
 status: production
 created: 2025-11-25
-last_updated: 2025-11-25
+last_updated: "2026-01-26"
 
 summary: |
   Interactive CLI command for managing and switching between active development sessions

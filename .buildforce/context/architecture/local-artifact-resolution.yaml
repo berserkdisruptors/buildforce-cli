@@ -1,9 +1,9 @@
 id: local-artifact-resolution
 name: Local Artifact Resolution
-type: feature
+type: structural
 status: production
 created: 2025-10-28
-last_updated: 2025-10-28
+last_updated: "2026-01-26"
 
 summary: |
   Local artifact resolution system that enables init and upgrade commands to use pre-built

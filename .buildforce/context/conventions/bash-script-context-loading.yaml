@@ -1,0 +1,26 @@
+id: bash-script-context-loading
+name: "Bash Script Context Loading"
+type: convention
+sub_type: code-convention
+enforcement: strict
+created: "2026-01-26"
+last_updated: "2026-01-26"
+
+description: |
+  All bash scripts in .buildforce/scripts/bash/ must be called from the current
+  working directory (project root), never from nested directories. Scripts use
+  relative paths from project root. This ensures consistent behavior regardless
+  of where buildforce is invoked.
+  
+
+reference_files:
+  - ".buildforce/scripts/bash/get-spec-paths.sh"
+  - ".buildforce/scripts/bash/create-session-files.sh"
+
+template: |
+  # Good - called from project root
+  .buildforce/scripts/bash/get-spec-paths.sh --json
+  
+  # Bad - assumes nested directory context
+  cd .buildforce/scripts && bash ./get-spec-paths.sh
+  

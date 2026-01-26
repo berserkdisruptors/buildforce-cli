@@ -1,9 +1,9 @@
 id: plan-template
 name: "Enhanced Plan Template for Build Agent Execution"
-type: feature
+type: structural
 status: production
 created: 2025-10-09
-last_updated: 2025-10-09
+last_updated: "2026-01-26"
 
 summary: |
   Enhanced plan-template.yaml optimized for AI build agent execution during /build commands.

@@ -1,0 +1,23 @@
+id: buildforcejson-replaces-current-spec
+name: "buildforce.json replaces .current-spec"
+type: convention
+sub_type: project-quirk
+enforcement: recommended
+created: "2026-01-26"
+last_updated: "2026-01-26"
+
+description: |
+  The CLI previously tracked current spec using .current-spec file. This has been
+  migrated to buildforce.json for better structure and extensibility. Legacy code
+  may still reference .current-spec in comments/docs, but all new code must use
+  buildforce.json state tracking.
+  
+
+reference_files:
+  - "buildforce.json (current state tracking)"
+
+migration_guide: |
+  When updating old templates or docs, replace references to .current-spec with
+  buildforce.json. The migration is complete, but historical context helps explain
+  why both terms appear in discussions.
+  

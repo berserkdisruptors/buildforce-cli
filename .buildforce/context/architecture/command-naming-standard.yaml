@@ -1,9 +1,9 @@
 id: command-naming-standard
 name: "Command Naming Standard"
-type: pattern
+type: structural
 status: production
 created: "2025-11-21"
-last_updated: "2025-11-21"
+last_updated: "2026-01-26"
 
 summary: |
   Standardized slash command naming convention using /buildforce.* prefix across all
