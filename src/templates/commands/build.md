@@ -1,5 +1,5 @@
 ---
-version: "0.0.41"
+version: "0.0.42"
 description: Build the code changes required for the current spec following the plan, with progress tracking, deviation logging, and iterative refinement.
 ---
 
