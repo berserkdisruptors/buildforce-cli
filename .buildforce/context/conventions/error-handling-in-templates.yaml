@@ -1,0 +1,23 @@
+id: error-handling-in-templates
+name: "Error Handling in Templates"
+type: convention
+sub_type: code-convention
+enforcement: recommended
+created: "2026-01-26"
+last_updated: "2026-01-26"
+
+description: |
+  Slash command templates must include error handling instructions for AI agents.
+  Use "NEVER proceed if script fails" pattern with actionable user guidance.
+  This prevents silent failures when prerequisites are missing.
+  
+
+reference_files:
+  - "src/templates/commands/build.md"
+  - "src/templates/commands/complete.md"
+
+template: |
+  Run `.buildforce/scripts/bash/get-spec-paths.sh --json` FROM CURRENT WORKING DIRECTORY.
+  **NEVER proceed** if script fails - display error, explain .buildforce directory not found,
+  suggest: 1) check if in buildforce root directory, 2) run `buildforce init .` if needed.
+  

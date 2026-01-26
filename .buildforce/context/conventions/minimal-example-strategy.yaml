@@ -1,0 +1,18 @@
+id: minimal-example-strategy
+name: "Minimal Example Strategy"
+type: convention
+sub_type: project-quirk
+enforcement: recommended
+created: "2026-01-26"
+last_updated: "2026-01-26"
+
+description: |
+  Context files and templates use 5-10 line code snippets instead of verbose
+  examples. Full implementations are referenced via reference_files arrays.
+  This prevents context window bloat while providing actionable guidance.
+  AI agents can read reference files on-demand during /build if they need
+  detailed examples.
+  
+
+reference_files:
+  - ".buildforce/templates/guidelines-template.yaml"

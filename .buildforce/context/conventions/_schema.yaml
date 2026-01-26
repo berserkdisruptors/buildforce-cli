@@ -1,0 +1,171 @@
+# Convention Context Schema
+# Version: 2.0
+# This schema defines the structure for convention context files.
+# Conventions capture HOW we do things in this project - coding standards, patterns, and practices.
+#
+# IMPORTANT: These conventions are for AI agent education during /buildforce.build, NOT linting rules
+# for human developers. The AI agent validates its own generated code against these patterns.
+#
+# USAGE:
+#   - Create via: /buildforce.document conventions
+#   - Referenced by: /buildforce.plan (planning context), /buildforce.build (validation)
+#
+# ENFORCEMENT LEVELS:
+#   - strict: MUST follow. Build fails on violations. Use for critical conventions.
+#   - recommended: SHOULD follow. Logs warnings on deviations. Use for best practices.
+#   - reference: Context only. No validation. Use for informational patterns.
+
+version: "2.0"
+
+# Required fields for all convention files
+required_fields:
+  - id                # Unique identifier (kebab-case, e.g., "repository-pattern")
+  - name              # Human-readable name (e.g., "Repository Pattern")
+  - type              # Must be "convention" (fixed value)
+  - sub_type          # Category of convention (see enum below)
+  - enforcement       # strict | recommended | reference
+  - created           # ISO date (YYYY-MM-DD)
+  - last_updated      # ISO date (YYYY-MM-DD)
+  - description       # Multi-line description of the convention
+
+# Optional but recommended fields
+optional_fields:
+  - examples          # Code examples showing correct implementation
+  - violations        # Examples of what NOT to do
+  - reference_files   # Real files in codebase that demonstrate this convention
+  - template          # Code template for implementing this convention
+  - migration_guide   # Notes for transitioning from old pattern (for project_quirks)
+
+# Field definitions
+
+id:
+  description: "Unique identifier for this convention (used in _index.yaml)"
+  format: "kebab-case"
+  example: "repository-pattern"
+
+name:
+  description: "Human-readable name"
+  format: "String with proper capitalization"
+  example: "Repository Pattern"
+
+type:
+  description: "Context type identifier - always 'convention' for this schema"
+  value: "convention"
+  note: "This is a fixed value - all files in conventions/ must have type: convention"
+
+sub_type:
+  description: "Category of convention for organization and agent context"
+  values:
+    - architectural-pattern: "High-level structural pattern (e.g., Repository Pattern, CQRS)"
+    - code-convention: "Specific coding standard (e.g., Error Handling, Async Patterns)"
+    - naming-convention: "File, variable, function naming rules"
+    - testing-standard: "Testing requirements and patterns"
+    - dependency-rule: "Dependency management and architecture layer rules"
+    - security-requirement: "Security-critical conventions that must be followed"
+    - performance-guideline: "Performance-related conventions for optimization"
+    - accessibility-standard: "Accessibility requirements for frontend code"
+    - project-quirk: "Project-specific non-standard patterns with historical context"
+  example: "architectural-pattern"
+
+enforcement:
+  description: "How strictly this convention should be enforced"
+  values:
+    - strict: "MUST follow. Build fails on violations. Use for critical conventions."
+    - recommended: "SHOULD follow. Logs warnings on deviations. Use for best practices."
+    - reference: "Context only. No validation. Use for informational patterns."
+  example: "strict"
+
+created:
+  description: "Date when this convention was first documented"
+  format: "ISO date (YYYY-MM-DD)"
+  example: "2025-01-15"
+
+last_updated:
+  description: "Date when this convention was last modified"
+  format: "ISO date (YYYY-MM-DD)"
+  example: "2025-09-20"
+
+description:
+  description: "Detailed description of the convention and its rationale"
+  format: "Use | for literal block to preserve formatting"
+  example: |
+    All database access must go through repository classes, never direct ORM calls.
+    Repositories encapsulate query logic and provide clean domain interfaces.
+
+examples:
+  description: "Code examples showing correct implementation"
+  format: "Array of file/snippet pairs"
+  example:
+    - file: "src/repositories/UserRepository.ts"
+      snippet: |
+        class UserRepository {
+          async findById(id: string): Promise<User | null> {
+            return this.prisma.user.findUnique({ where: { id } })
+          }
+        }
+
+violations:
+  description: "Examples of what NOT to do - helps agent avoid common mistakes"
+  format: "Array of violation descriptions"
+  example:
+    - "Direct prisma.user.findUnique() calls in service layer"
+    - "Business logic mixed with data access code"
+
+reference_files:
+  description: "Real files in codebase that demonstrate this convention"
+  format: "Array of file paths"
+  example:
+    - "src/repositories/UserRepository.ts"
+    - "src/repositories/PostRepository.ts"
+
+template:
+  description: "Code template for implementing this convention"
+  format: "Multi-line code block"
+  example: |
+    try {
+      await operation()
+    } catch (error) {
+      if (error instanceof SpecificError) {
+        throw new DomainError('Context', { cause: error })
+      }
+      throw error
+    }
+
+migration_guide:
+  description: "Notes for transitioning from old pattern (primarily for project_quirks)"
+  format: "Multi-line text explaining how/when to migrate away from this pattern"
+  example: |
+    Once legacy system is decommissioned (target: Q3 2025), migrate to standard
+    Prisma transaction pattern with automatic commit on success.
+
+# Example convention file structure
+example_file: |
+  # repository-pattern.yaml
+  id: repository-pattern
+  name: "Repository Pattern"
+  type: convention
+  sub_type: architectural-pattern
+  enforcement: strict
+  created: "2025-01-15"
+  last_updated: "2025-09-20"
+
+  description: |
+    All database access must go through repository classes, never direct ORM calls.
+    Repositories encapsulate query logic and provide clean domain interfaces.
+
+  examples:
+    - file: "src/repositories/UserRepository.ts"
+      snippet: |
+        class UserRepository {
+          async findById(id: string): Promise<User | null> {
+            return this.prisma.user.findUnique({ where: { id } })
+          }
+        }
+
+  violations:
+    - "Direct prisma.user.findUnique() calls in service layer"
+    - "Business logic mixed with data access code"
+
+  reference_files:
+    - "src/repositories/UserRepository.ts"
+    - "src/repositories/PostRepository.ts"

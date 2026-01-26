@@ -1,0 +1,32 @@
+id: template-only-slash-commands
+name: "Template-Only Slash Commands"
+type: convention
+sub_type: architectural-pattern
+enforcement: strict
+created: "2026-01-26"
+last_updated: "2026-01-26"
+
+description: |
+  All slash commands are implemented as markdown templates in src/templates/commands/,
+  NOT as TypeScript code. The CLI infrastructure reads these templates and passes them
+  to Claude AI agents for execution. This keeps the CLI thin and puts all logic in
+  AI-interpretable instructions.
+  
+
+examples:
+  - file: "src/templates/commands/plan.md"
+    snippet: |
+      # /plan command template
+      User input: $ARGUMENTS
+      **Your task**: Create structured plan...
+      
+
+violations:
+  - "Adding command logic to TypeScript CLI code instead of templates"
+  - "Creating command handlers in src/commands/ directory"
+
+reference_files:
+  - "src/templates/commands/plan.md"
+  - "src/templates/commands/build.md"
+  - "src/templates/commands/document.md"
+  - "src/templates/commands/complete.md"

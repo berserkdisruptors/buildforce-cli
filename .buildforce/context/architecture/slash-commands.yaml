@@ -1,0 +1,162 @@
+id: slash-commands
+name: "Slash Commands System"
+type: structural
+status: production
+created: "2025-01-15"
+last_updated: "2026-01-26"
+
+summary: |
+  Spec-driven development workflow implemented via 4 core slash commands plus 1 utility command.
+  Core workflow: Research → Spec → Build → Complete lifecycle.
+  Utility: Document command for creating context files without specs.
+  Commands are instruction templates that enhance user queries with workflow-specific context.
+  All commands now follow proven compact pattern with numbered guidelines and script-based discovery.
+
+responsibilities:
+  - Context gathering and project knowledge retrieval (RESEARCH - see research-slash-command.yaml for details, 27 lines)
+  - Intent materialization into specifications (SPEC - creates/updates both spec.yaml and plan.yaml)
+  - Guided implementation with progress tracking and deviation logging (BUILD - see 002-build-command.yaml for details, 32 lines)
+  - Final validation and completion confirmation (COMPLETE - 44 lines)
+  - Context file creation for existing functionality without specs (DOCUMENT - see 005-new-document-slash.yaml for details, 29 lines)
+
+dependencies:
+  internal:
+    - context-repository: "RESEARCH searches .buildforce/context/_index.yaml for accumulated knowledge; DOCUMENT creates/updates context files; COMPLETE generates context files for completed specs"
+    - cli-architecture: "Slash commands initialized via project templates distributed by the CLI"
+  external:
+    - None (pure instruction templates for Claude Code)
+
+files:
+  primary:
+    - src/templates/commands/research.md
+    - src/templates/commands/plan.md
+    - src/templates/commands/build.md
+    - src/templates/commands/complete.md
+    - src/templates/commands/document.md
+  secondary:
+    - .buildforce/context/_index.yaml (searched by RESEARCH, updated by DOCUMENT and COMPLETE)
+
+workflow:
+  sequence:
+    - command: "/research"
+      purpose: "Gather context for spec-driven development session"
+      input: "User query (what to research)"
+      output: "Structured report with project context, file paths, architecture diagrams, data models"
+      key_features:
+        - "Searches .buildforce/context/_index.yaml first (accumulated knowledge)"
+        - "Detects recency indicators � uses web search"
+        - "Produces Mermaid diagrams for codebase queries"
+        - "Explicit file path lists (saves manual @ references)"
+
+    - command: "/buildforce.plan"
+      purpose: "Materialize user intent into specification (WHAT) and plan (HOW)"
+      input: "User intent (the concrete incremental change)"
+      output: "Spec (WHAT) and Plan (HOW) with requirements, scope, decisions, phases"
+      key_features:
+        - "Validates prerequisite context (suggests /research if needed)"
+        - "Asks up to 3 clarifying questions if intent is vague"
+        - "Ensures requirements are testable and measurable"
+        - "Generates plan.yaml alongside spec.yaml using plan-template"
+
+    - command: "/build"
+      purpose: "Execute implementation following spec+plan"
+      input: "Iteration-specific instructions (optional)"
+      output: "Implementation + deviation log + testing guidance"
+      key_features:
+        - "Executes `.buildforce/scripts/bash/get-spec-paths.sh --json` for FEATURE_DIR discovery"
+        - "Loads spec.yaml and plan.yaml from FEATURE_DIR into context"
+        - "Tracks progress step-by-step with visible checklist"
+        - "Logs deviations from original plan (e.g., library swaps)"
+        - "Validates against BOTH spec requirements AND plan adherence"
+        - "Verifies code quality (compiles, tests pass, no obvious gaps)"
+        - "Provides testing guidance (what to test, how to test, test results)"
+        - "Supports multiple iterations with refinement"
+
+    - command: "/complete"
+      purpose: "Finalize feature and validate intent match"
+      input: "None (optional final notes)"
+      output: "Completion report with validation, deviations, files modified"
+      key_features:
+        - "Validates all spec requirements implemented"
+        - "Reviews deviation log across all /build iterations"
+        - "Generates comprehensive completion report"
+        - "Requires explicit user confirmation"
+
+  utility_commands:
+    - command: "/document"
+      purpose: "Create or update context files for existing functionality without specs"
+      input: "Topic or module to document (information assumed in context window)"
+      output: "Context file + _index.yaml update + related context updates"
+      key_features:
+        - "Operates independently of spec-driven workflow (no spec/plan/build required)"
+        - "Template-only (no script execution like /research)"
+        - "Auto-detects context type (module/feature/component/pattern)"
+        - "Generates snake-case filenames (2-3 words, NO numeric prefixes)"
+        - "Detects and resolves ID conflicts automatically"
+        - "Supports CREATE mode (new files) and UPDATE mode (intelligent merge)"
+        - "Auto-generates tags for _index.yaml from topic analysis"
+        - "Automatically updates related context files with cross-references"
+        - "Uses 7 numbered guidelines with ALWAYS/NEVER emphasis (29 lines)"
+
+design_principles:
+  - "Compact but powerful: Enhance user queries without teaching build agents HOW to work"
+  - "Context-first: Always search project context repository before other research"
+  - "Incremental: Focus on single, focused changes, not complete rewrites"
+  - "Traceable: Log deviations, track progress, validate against spec"
+  - "Iterative: Support refinement at every stage (spec, plan, build)"
+
+evolution:
+  - version: "1.0"
+    date: "2025-01-15"
+    changes: "Initial implementation of 5-command workflow with project context search"
+
+  - version: "1.1"
+    date: "2025-10-08"
+    changes: "Completed BUILD command with 7 guidelines, script-based discovery, dual validation, testing guidance (32 lines, 75% reduction)"
+
+  - version: "1.2"
+    date: "2025-10-09"
+    changes: "Enhanced plan-template.yaml v1.0 with checkbox tracking, spec_refs, deviation logging, validation checklists"
+
+  - version: "2.0"
+    date: "2025-10-10"
+    changes: "Spec now owns plan creation/update; /plan command retired. Workflow simplified to 4 core commands."
+
+  - version: "2.1"
+    date: "2025-10-10"
+    changes: "Added /document utility command (29 lines) for creating context files without specs. Enables documenting existing functionality, legacy code, and architectural patterns independently of spec-driven workflow. Template-only with 7 guidelines, snake-case naming, intelligent merge, auto-detection."
+
+related_specs:
+  - "slash-commands-20250101120000 (initial system design)"
+  - "build-command-20250102120000 (BUILD command implementation)"
+  - "plan-template-20250103120000 (enhanced plan template)"
+  - "new-document-slash-20250105120000 (DOCUMENT command implementation)"
+
+notes: |
+  Key innovation: .buildforce/context repository as primary knowledge source.
+  RESEARCH command is foundationprovides context for all subsequent commands.
+  Each command expects $ARGUMENTS (Claude Code compatible).
+
+  Compression achievements (v2.1):
+  - /research: 27 lines (68% reduction) - 7 guidelines ✅
+  - /buildforce.plan: 347 lines (iterated with structured workflow) ✅
+  - /build: 32 lines (75% reduction) - 7 guidelines ✅
+  - /complete: 44 lines (iterated with structured workflow) ✅
+  - /document: 29 lines - 7 guidelines ✅ (new utility command)
+
+  All commands following proven compact pattern:
+  - YAML frontmatter with script execution (where applicable)
+  - User input section with $ARGUMENTS
+  - Context explanation
+  - Numbered guidelines (RESEARCH/PLAN/BUILD/DOCUMENT use 7 guidelines)
+  - ALWAYS/NEVER bold emphasis for critical instructions
+  - No verbose HOW-TO explanations
+  - Context reference at bottom
+
+  System now production-ready with complete 5-command core workflow + 1 utility command.
+
+  /document vs /complete context creation:
+  - /complete: Creates context files for specs completed through full workflow (research → spec → plan → build → complete)
+  - /document: Creates context files for existing functionality WITHOUT specs (legacy code, discovered patterns, architectural decisions)
+  - Both follow _schema.yaml structure, update _index.yaml, maintain cross-references
+  - /research reads context, /document writes context (natural complement)

@@ -1,0 +1,224 @@
+id: context-taxonomy-align-20260123143000-research
+created: "2026-01-23"
+last_updated: "2026-01-23"
+
+summary: |
+  Research on the current context repository structure, init scripts that set up the structure,
+  legacy context types (module, feature, component, pattern), and the new context taxonomy from
+  agentic-context-taxonomy.md which proposes six pillars: Intent, Structural, Convention,
+  Historical, Operational, and Verification context.
+
+key_findings:
+  - finding: "Context repository structure uses _index.yaml as central registry with individual .yaml context files"
+    details: |
+      Current structure in .buildforce/context/:
+      - _index.yaml: Central registry with id, file, type, description, tags, related_context
+      - _schema.yaml: Field definitions and validation rules for context files
+      - _graph.yaml: Empty file (placeholder for future graph visualization)
+      - _guidelines.yaml: Project conventions and coding patterns
+      - Individual context files: {semantic-name}.yaml following _schema.yaml structure
+
+  - finding: "Init structure is set via template extraction, not programmatic generation"
+    details: |
+      The init command (src/commands/init/setup.ts) downloads pre-built ZIP templates from
+      GitHub Releases and extracts them. Templates include src/context/_index.yaml and
+      src/context/_schema.yaml with empty contexts array. No programmatic generation of
+      context structure - it's purely template-based extraction.
+
+  - finding: "Legacy context types are: module, feature, component, pattern"
+    details: |
+      Current type enum in _schema.yaml and _index.yaml:
+      - module: High-level system module (e.g., authentication, slash-commands, cli-architecture)
+      - feature: Specific feature within a module (e.g., build-command, plan-command)
+      - component: Reusable UI or code component
+      - pattern: Design pattern or architectural decision (e.g., yaml-extension-standard)
+      These types are used for organization in _index.yaml and individual context files.
+
+  - finding: "New taxonomy proposes six context pillars mapped to core questions"
+    details: |
+      From agentic-context-taxonomy.md:
+      1. INTENT: WHAT should I build? (Goal, Acceptance Criteria, Non-goals, Motivation)
+      2. STRUCTURAL: WHAT exists already? (Architecture, Patterns, Dependencies, Boundaries, Data Flow, API Contracts)
+      3. CONVENTION: HOW do we do things here? (Code Style, Design Patterns, Error Handling, Testing Approach, Documentation, Commit Conventions)
+      4. HISTORICAL: WHY are things the way they are? (Decisions Made, Decisions Rejected, Evolution, Bug Patterns, Workarounds)
+      5. OPERATIONAL: WHAT happens in production? (Constraints, Failure Modes, Performance Baselines, Security Boundaries)
+      6. VERIFICATION: HOW do I know it's right? (Quality Criteria, Test Strategy, Review Checklist, Acceptance Tests, Compliance Rules, Known Risks)
+
+  - finding: "Critical insight: agents can discover WHAT but not WHY"
+    details: |
+      The taxonomy emphasizes that agents can reverse-engineer structural context from code,
+      but cannot discover historical context (decisions, rejections, rationale). This is the
+      key gap the context system should address - capturing WHY context that cannot be
+      discovered through codebase analysis alone.
+
+  - finding: "To introduce new structure, modify template files in src/context/"
+    details: |
+      Files to modify for new context structure:
+      1. src/context/_index.yaml - Update type enum and field documentation
+      2. src/context/_schema.yaml - Update required/optional fields and type values
+      3. src/templates/commands/document.md - Update context file creation logic
+      4. src/templates/commands/complete.md - Update context file creation logic
+      The CLI doesn't programmatically enforce schema - it's template and instruction-driven.
+
+file_paths:
+  primary:
+    - .buildforce/context/_index.yaml
+    - .buildforce/context/_guidelines.yaml
+    - src/context/_index.yaml
+    - src/context/_schema.yaml
+    - src/templates/guidelines-template.yaml
+    - src/templates/commands/document.md
+    - src/templates/commands/complete.md
+    - src/templates/commands/research.md
+    - src/templates/commands/build.md
+    - src/templates/commands/plan.md
+    - .buildforce/.temp/verification-context.md
+  secondary:
+    - src/commands/init/setup.ts
+    - src/commands/init/index.ts
+    - src/lib/extract.ts
+    - src/utils/config.ts
+    - README.md
+
+mermaid_diagrams:
+  - title: "Current Context Repository Structure"
+    diagram: |
+      graph TD
+          subgraph ".buildforce/context/"
+              INDEX["_index.yaml<br/>(Central Registry)"]
+              SCHEMA["_schema.yaml<br/>(Field Definitions)"]
+              GUIDELINES["_guidelines.yaml<br/>(Conventions)"]
+              GRAPH["_graph.yaml<br/>(Empty/Future)"]
+
+              subgraph "Context Files"
+                  MOD1["slash-commands.yaml<br/>type: module"]
+                  MOD2["cli-architecture.yaml<br/>type: module"]
+                  FEAT1["build-command.yaml<br/>type: feature"]
+                  FEAT2["plan-command.yaml<br/>type: feature"]
+                  PAT1["yaml-extension-standard.yaml<br/>type: pattern"]
+              end
+          end
+
+          INDEX --> MOD1
+          INDEX --> MOD2
+          INDEX --> FEAT1
+          INDEX --> FEAT2
+          INDEX --> PAT1
+          SCHEMA -.->|defines structure| MOD1
+          SCHEMA -.->|defines structure| FEAT1
+
+  - title: "New Context Taxonomy Structure"
+    diagram: |
+      graph TD
+          subgraph ".buildforce/context/"
+              ROOT_INDEX["_index.yaml<br/>(Directory of Directories)"]
+
+              subgraph "architecture/"
+                  ARCH_INDEX["_index.yaml"]
+                  ARCH_SCHEMA["_schema.yaml"]
+                  ARCH_FILES["*.yaml files<br/>type: architecture"]
+              end
+
+              subgraph "conventions/"
+                  CONV_INDEX["_index.yaml"]
+                  CONV_SCHEMA["_schema.yaml"]
+                  CONV_FILES["*.yaml files<br/>type: convention"]
+              end
+
+              subgraph "verification/"
+                  VER_INDEX["_index.yaml"]
+                  VER_SCHEMA["_schema.yaml"]
+                  VER_FILES["*.yaml files<br/>type: verification"]
+              end
+          end
+
+          ROOT_INDEX --> ARCH_INDEX
+          ROOT_INDEX --> CONV_INDEX
+          ROOT_INDEX --> VER_INDEX
+
+data_models:
+  - name: "New Root _index.yaml Structure"
+    schema: |
+      version: string
+      context_types:
+        architecture:
+          path: "architecture/"
+          description: string
+          index_file: "_index.yaml"
+        conventions:
+          path: "conventions/"
+          description: string
+          index_file: "_index.yaml"
+        verification:
+          path: "verification/"
+          description: string
+          index_file: "_index.yaml"
+
+  - name: "Architecture Context Schema"
+    schema: |
+      # Required fields
+      id: string (kebab-case)
+      name: string (human-readable)
+      type: "architecture" (fixed)
+      status: enum [in-development | production | deprecated]
+      created: date (YYYY-MM-DD)
+      last_updated: date (YYYY-MM-DD)
+      summary: string (multi-line)
+
+      # Optional fields (carried from legacy schema)
+      responsibilities: array<string>
+      dependencies: object
+      files: object
+      evolution: array
+      design_decisions: array
+      notes: string
+
+  - name: "Convention Context Schema"
+    schema: |
+      # Required fields
+      id: string (kebab-case)
+      name: string (human-readable)
+      type: "convention" (fixed)
+      category: enum [architectural_patterns | code_conventions | naming_conventions |
+                      testing_standards | dependency_rules | security_requirements |
+                      performance_guidelines | accessibility_standards | project_quirks]
+      enforcement: enum [strict | recommended | reference]
+      created: date (YYYY-MM-DD)
+      last_updated: date (YYYY-MM-DD)
+
+      # Optional fields
+      description: string (multi-line)
+      examples: array
+      violations: array
+      reference_files: array
+      template: string
+
+  - name: "Verification Context Schema"
+    schema: |
+      # Required fields
+      id: string (kebab-case)
+      name: string (human-readable)
+      type: "verification" (fixed)
+      source: enum [mined | manual | hybrid]
+      created: date (YYYY-MM-DD)
+      last_updated: date (YYYY-MM-DD)
+
+      # Optional fields
+      quality_standards: array<{standard, description, enforcement, confidence}>
+      test_expectations: object
+      review_checklist: array<{item, frequency, example_comment}>
+      compliance_requirements: array<{requirement, description, applies_to, enforcement}>
+      known_risks: array<{module, risk, mitigation, occurrences, last_flagged}>
+
+tldr:
+  - "Context repository uses _index.yaml as registry with type enum: module, feature, component, pattern"
+  - "Init structure comes from template extraction (src/context/), not programmatic generation"
+  - "To change structure: modify src/context/_index.yaml, src/context/_schema.yaml, and command templates"
+  - "New taxonomy proposes 6 pillars: Intent, Structural, Convention, Historical, Operational, Verification"
+  - "Key gap: agents discover WHAT (structural) but cannot discover WHY (historical) - this is the value proposition"
+  - "Current types map roughly: module/feature/component → Structural, pattern → Convention/Historical"
+  - "Taxonomy emphasizes captureability: Structural/Convention highest (~85%), Operational lowest (~35%)"
+
+updates:
+  - date: "2026-01-23"
+    summary: "Materialized from research-cache for context taxonomy alignment planning"

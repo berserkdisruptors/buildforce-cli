@@ -1,0 +1,107 @@
+# Buildforce Convention Context Index
+# This file tracks convention context files for your project.
+# Conventions capture HOW we do things - coding standards, patterns, and practices.
+
+version: "2.0"
+
+# ============================================================================
+# CONVENTION INDEX FIELD DOCUMENTATION
+# ============================================================================
+#
+# Each context entry in the index has the following fields:
+#
+# REQUIRED FIELDS:
+# ----------------
+# - id (string, kebab-case):
+#     Unique identifier matching the context filename (without .yaml extension)
+#     Must be unique across all entries in this index
+#     Example: "repository-pattern", "error-handling-pattern"
+#
+# - file (string):
+#     Context filename (must match id field with .yaml extension)
+#     Example: "repository-pattern.yaml", "error-handling-pattern.yaml"
+#
+# - type (string):
+#     Must be "convention" for all entries in this index
+#     Example: "convention"
+#
+# - sub_type (enum):
+#     Category of the convention
+#     Valid values: architectural-pattern | code-convention | naming-convention |
+#                   testing-standard | dependency-rule | security-requirement |
+#                   performance-guideline | accessibility-standard | project-quirk
+#     Example: "architectural-pattern"
+#
+# - enforcement (enum):
+#     How strictly this convention should be enforced
+#     Valid values: strict | recommended | reference
+#     Example: "strict"
+#
+# OPTIONAL BUT RECOMMENDED FIELDS:
+# ---------------------------------
+# - description (string, max 100 chars):
+#     Brief description of what this convention covers
+#     Example: "Database access through repository classes only"
+#
+# - tags (array of strings):
+#     Searchable keywords for discovery
+#     Example: [database, repository, data-access]
+#
+# ============================================================================
+
+# Convention entries
+# All entries must have type: convention
+contexts:
+  - id: template-only-slash-commands
+    file: template-only-slash-commands.yaml
+    sub_type: architectural-pattern
+    enforcement: strict
+    description: "Template-Only Slash Commands"
+
+  - id: context-repository-pattern
+    file: context-repository-pattern.yaml
+    sub_type: architectural-pattern
+    enforcement: recommended
+    description: "Context Repository Pattern"
+
+  - id: bash-script-context-loading
+    file: bash-script-context-loading.yaml
+    sub_type: code-convention
+    enforcement: strict
+    description: "Bash Script Context Loading"
+
+  - id: error-handling-in-templates
+    file: error-handling-in-templates.yaml
+    sub_type: code-convention
+    enforcement: recommended
+    description: "Error Handling in Templates"
+
+  - id: manual-workflow-testing
+    file: manual-workflow-testing.yaml
+    sub_type: testing-standard
+    enforcement: recommended
+    description: "Manual Workflow Testing"
+
+  - id: template-only-changes-preferred
+    file: template-only-changes-preferred.yaml
+    sub_type: dependency-rule
+    enforcement: recommended
+    description: "Template-Only Changes Preferred"
+
+  - id: buildforcejson-replaces-current-spec
+    file: buildforcejson-replaces-current-spec.yaml
+    sub_type: project-quirk
+    enforcement: recommended
+    description: "buildforce.json replaces .current-spec"
+
+  - id: minimal-example-strategy
+    file: minimal-example-strategy.yaml
+    sub_type: project-quirk
+    enforcement: recommended
+    description: "Minimal Example Strategy"
+
+  - id: naming-conventions
+    file: naming-conventions.yaml
+    sub_type: naming-convention
+    enforcement: recommended
+    description: "Naming Conventions"

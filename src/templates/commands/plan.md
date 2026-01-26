@@ -56,16 +56,16 @@ The text the user typed after `/buildforce.plan` in the triggering message **is*
      - Use any research context from conversation history to inform spec.yaml and plan.yaml population in Step 2e (no research.yaml artifact needed)
      - Proceed to Step 2d
 
-   **Step 2d: Load project guidelines** (if available):
+   **Step 2d: Load project conventions** (if available):
 
-   Guidelines provide project-specific conventions that must be followed during implementation.
+   Conventions provide project-specific standards that must be followed during implementation.
 
-   - Check if `.buildforce/context/_guidelines.yaml` exists
-   - If exists, read and parse guidelines:
+   - Check if `.buildforce/context/conventions/` folder exists
+   - If exists, read `.buildforce/context/conventions/_index.yaml` and load relevant convention files:
      - Treat as HIGHEST PRIORITY context for plan generation
-     - Reference specific guidelines when making technical decisions
+     - Reference specific conventions when making technical decisions
      - Consider enforcement levels: strict (MUST follow), recommended (SHOULD follow), reference (context only)
-   - If missing, continue without guidelines (backward compatible)
+   - If missing or empty, continue without conventions (backward compatible)
 
    **Step 2e: Populate both spec.yaml and plan.yaml**:
 
@@ -91,11 +91,11 @@ The text the user typed after `/buildforce.plan` in the triggering message **is*
 
    - Load `src/templates/plan-template.yaml` to understand structure
    - Populate with architecture, technical decisions, implementation phases, tasks (HOW content)
-   - **If _guidelines.yaml was loaded**: Reference specific guidelines in your plan:
+   - **If conventions were loaded**: Reference specific conventions in your plan:
      - In `decisions` section: Cite relevant architectural patterns or code conventions
      - In `technology_stack`: Align with dependency_rules if present
-     - In phase task `notes`: Call out strict enforcement guidelines that must be followed
-     - Example: "Phase 1 tasks must follow Repository Pattern guideline (strict enforcement)"
+     - In phase task `notes`: Call out strict enforcement conventions that must be followed
+     - Example: "Phase 1 tasks must follow Repository Pattern convention (strict enforcement)"
    - Set spec_id = "{FOLDER_NAME}", link tasks to spec requirements via spec_refs
    - Include technology choices, design patterns, file structure, testing strategy
    - Focus on HOW to implement the requirements from spec.yaml
@@ -114,16 +114,16 @@ The text the user typed after `/buildforce.plan` in the triggering message **is*
      - Use research context when analyzing update requirements
      - This ensures updates align with prior research findings
 
-   **Step 3b: Load project guidelines** (if available):
+   **Step 3b: Load project conventions** (if available):
 
-   Guidelines provide project-specific conventions that must be followed during implementation.
+   Conventions provide project-specific standards that must be followed during implementation.
 
-   - Check if `.buildforce/context/_guidelines.yaml` exists
-   - If exists, read and parse guidelines:
+   - Check if `.buildforce/context/conventions/` folder exists
+   - If exists, read `.buildforce/context/conventions/_index.yaml` and load relevant convention files:
      - Treat as HIGHEST PRIORITY context when updating plans
-     - Reference specific guidelines when making technical decisions
+     - Reference specific conventions when making technical decisions
      - Consider enforcement levels when updating plan.yaml
-   - If missing, continue without guidelines (backward compatible)
+   - If missing or empty, continue without conventions (backward compatible)
 
    **Step 3c: Intelligent routing** - Determine which file(s) to update based on user input:
 

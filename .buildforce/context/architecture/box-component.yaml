@@ -1,0 +1,76 @@
+id: box-component
+name: Box Component Utility
+type: structural
+status: production
+created: "2025-01-31"
+last_updated: "2026-01-26"
+
+summary: |
+  Shared box utility component for creating standardized terminal boxes across all CLI commands. Wraps the boxen library with consistent styling using the official Buildforce CLI branding color (#D3FFCA). Eliminates code duplication and ensures visual consistency across help output, examples, init command, and all future commands.
+
+responsibilities:
+  - Provide standardized box creation function for all CLI commands
+  - Maintain consistent border color using branding color #D3FFCA
+  - Support customizable options (title, padding, borderColor, width)
+  - Enable error boxes with red borders for critical state visibility
+  - Centralize box styling logic in single source of truth
+
+dependencies:
+  internal:
+    - constants: "MINT_COLOR constant from src/constants.ts used for title styling"
+    - cli-architecture: "Part of CLI visual system, follows branding color standards"
+  external:
+    - boxen: "^7.1.1 - Terminal box library with border, padding, title, and color support"
+
+files:
+  primary:
+    - src/utils/box.ts
+
+  secondary:
+    - src/cli.ts
+    - src/commands/examples.ts
+    - src/commands/init/output.ts
+    - src/commands/init/validation.ts
+    - src/commands/init/setup.ts
+
+interfaces:
+  exports:
+    - name: "createBox"
+      signature: "(content: string | string[], options?: BoxOptions) => string"
+      description: "Creates a standardized terminal box with branding color (#D3FFCA) border by default"
+      
+    - name: "BoxOptions"
+      signature: "interface { title?: string; padding?: number; borderColor?: string; width?: number; }"
+      description: "Configuration options for box creation"
+
+design_decisions:
+  - decision: "Use boxen library instead of custom implementation"
+    rationale: "More flexible styling options, better cross-platform support, rounded borders provide modern appearance. Eliminates need for custom box-drawing character implementations that were duplicated across files."
+
+  - decision: "Default border color to #D3FFCA (branding color)"
+    rationale: "Ensures all boxes use official Buildforce CLI branding color for cohesive visual identity. Can be overridden for error states (red) or special cases (magenta for debug)."
+
+  - decision: "Centralize in src/utils/box.ts"
+    rationale: "Follows existing project patterns (utils/ directory for utility functions). Single source of truth for box styling eliminates duplication and ensures consistency."
+
+  - decision: "Support both string and array content"
+    rationale: "Flexible content input allows either single string or array of lines. Arrays are automatically joined with newlines for convenience."
+
+evolution:
+  - version: "1.0"
+    date: "2025-01-31"
+    changes: "Initial implementation. Created shared createBox utility to replace custom boxSection implementations. Standardized all box borders to use branding color #D3FFCA. Migrated cli.ts, examples.ts, and all init command files to use shared utility."
+
+related_specs:
+  - "standardize-lined-boxes-20250131000000"
+
+notes: |
+  Usage Guidelines:
+  - Always use createBox() for new box components (never create custom implementations)
+  - Default border color is #D3FFCA (branding color) - do not override unless for errors
+  - Error boxes should use { borderColor: "red" } for critical state visibility
+  - Debug boxes may use { borderColor: "magenta" } for diagnostic information
+  - Width constraints are supported for help text formatting (max 70 chars recommended)
+  
+  The box component is part of the CLI's visual identity system. All boxes across all commands should use this utility to maintain consistency.
+

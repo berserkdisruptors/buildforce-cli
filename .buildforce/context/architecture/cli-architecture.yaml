@@ -1,0 +1,523 @@
+id: cli-architecture
+name: Buildforce CLI Architecture
+type: structural
+status: production
+created: 2025-10-27
+last_updated: "2026-01-26"
+
+summary: |
+  Comprehensive architecture of the Buildforce CLI tool - a Node.js-based command-line
+  interface that initializes spec-driven development projects with template distribution
+  via GitHub Releases or local artifacts, context management systems, and multi-agent support
+  for 11+ AI assistants. Supports offline workflows through local artifact resolution.
+
+responsibilities:
+  - Project initialization with agent-specific templates
+  - Template distribution and extraction from GitHub Releases or local artifacts
+  - Local artifact resolution for offline workflows and testing
+  - Context/knowledge management system for accumulated learning
+  - Progress tracking and user interaction flows
+  - AI assistant detection and configuration
+  - Git repository initialization and management
+  - Script permission setup for POSIX systems
+  - Project configuration persistence and management via buildforce.json
+  - Project upgrade capabilities with preservation of user content
+
+dependencies:
+  internal:
+    - slash-commands: "Core workflow commands initialized via project templates"
+    - document-command: "Context file creation system for knowledge capture"
+    - research-slash-command: "Context discovery and research capabilities"
+    - spec-command: "Specification template system"
+    - plan-template: "Implementation planning structure"
+    - upgrade-command: "Project upgrade system for keeping templates current"
+    - local-artifact-resolution: "Local artifact discovery and resolution system"
+  external:
+    - commander: "^12.0.0 - CLI framework for argument parsing"
+    - chalk: "^5.4.1 - Terminal color output"
+    - inquirer: "^10.2.3 - Interactive user prompts"
+    - axios: "^1.7.9 - GitHub API HTTP client"
+    - adm-zip: "^0.5.18 - Template ZIP extraction"
+    - fs-extra: "^11.2.0 - File system utilities"
+    - ora: "^8.2.0 - Progress spinners"
+    - boxen: "^8.0.1 - Terminal boxes"
+    - which: "^5.0.0 - Executable detection"
+    - cli-table3: "^0.6.5 - Table formatting"
+    - glob: "^10.3.10 - Pattern matching for local artifact discovery"
+
+files:
+  primary:
+    - src/cli.ts
+    - src/commands/init/index.ts
+    - src/commands/init/setup.ts
+    - src/commands/upgrade/index.ts
+    - src/commands/upgrade/validation.ts
+    - src/commands/upgrade/execution.ts
+    - src/commands/upgrade/context-migration.ts
+    - src/commands/session/index.ts
+    - src/commands/session/utils.ts
+    - src/lib/github.ts
+    - src/lib/extract.ts
+    - src/lib/local-artifacts.ts
+    - src/lib/step-tracker.ts
+    - src/config/agents.ts
+    - src/context/_index.yaml
+    - src/context/architecture/_index.yaml
+    - src/context/architecture/_schema.yaml
+    - src/context/conventions/_index.yaml
+    - src/context/conventions/_schema.yaml
+    - src/context/verification/_index.yaml
+    - src/context/verification/_schema.yaml
+    - .github/workflows/scripts/create-release-packages.sh
+  secondary:
+    - src/commands/init/validation.ts
+    - src/commands/init/output.ts
+    - src/commands/check.ts
+    - src/lib/interactive.ts
+    - src/utils/tools.ts
+    - src/utils/permissions.ts
+    - src/utils/git.ts
+    - src/utils/github.ts
+    - src/utils/commands.ts
+    - src/utils/config.ts
+    - src/types.ts
+    - src/constants.ts
+    - src/scripts/powershell/get-spec-paths.ps1
+    - src/scripts/powershell/common.ps1
+
+interfaces:
+  exports:
+    - name: "buildforce [project-name]"
+      signature: "CLI command with options: --ai, --script, --here, --local, --force, --no-git, --skip-tls, --debug, --github-token"
+      description: "Initializes a new Buildforce project with specified AI assistant and script type"
+
+    - name: "buildforce upgrade"
+      signature: "CLI command with options: --ai, --script, --local, --dry-run, --debug, --github-token, --skip-tls"
+      description: "Upgrades project templates to latest version while preserving context and specs"
+
+    - name: "buildforce check"
+      signature: "CLI diagnostic command"
+      description: "Verifies installed tools (git, AI assistants, IDEs)"
+
+    - name: "buildforce session"
+      signature: "CLI interactive command"
+      description: "Displays interactive picker for switching between active development sessions"
+
+design_decisions:
+  - decision: "Template distribution via GitHub Releases"
+    rationale: "Centralized, versioned distribution allows template updates independent of CLI version. Simplifies template management and supports authentication for private repositories."
+
+  - decision: "Context-driven knowledge management with YAML files"
+    rationale: "Human-readable, hierarchical structure enables AI agents to discover and reference accumulated knowledge across sessions. Related context cross-references improve discoverability."
+
+  - decision: "Commander.js as CLI framework"
+    rationale: "Mature library with TypeScript support, robust argument parsing, and built-in help generation. Industry standard for Node.js CLIs."
+
+  - decision: "Agent folder segregation"
+    rationale: "Prevents credential leakage between different AI assistants. Allows agent-specific configuration and customization while maintaining security boundaries."
+
+  - decision: "Step-based progress tracking system"
+    rationale: "Provides clear user feedback during long-running operations. Supports error recovery, status visualization, and live updates for transparency."
+
+  - decision: "ZIP-based template extraction with merge support"
+    rationale: "Single artifact format simplifies distribution. Merge capability allows initialization in existing directories without overwriting user files."
+
+  - decision: "YAML for specifications and plans"
+    rationale: "More readable than JSON for humans and AI agents. Better suited for multi-line content and hierarchical structures. Easier to parse and validate."
+
+  - decision: "Persist configuration in buildforce.json during init"
+    rationale: "Enables upgrade command to auto-detect project settings (AI assistant, script type) without re-prompting users. Single source of truth for project configuration."
+
+  - decision: "Upgrade command preserves user content (.buildforce/context/ and .buildforce/sessions/)"
+    rationale: "User-created content represents significant investment and must never be modified during upgrades. Only system files (templates, scripts, commands) are updated. The sessions folder (formerly specs) stores development session artifacts including spec.yaml, plan.yaml, and research.yaml files."
+
+  - decision: "Support local artifact resolution via --local flag"
+    rationale: "Enables offline workflows, local testing during development, and faster iteration cycles. Developers can test locally-built artifacts without publishing to GitHub Releases."
+
+  - decision: "Centralized banner rendering with consistent 3-line format across all CLI entry points"
+    rationale: "All commands (init, upgrade, check, examples, --help) display identical banner format (figlet title, tagline, instruction) for cohesive user experience. Centralized in generateBanner() function eliminates duplication and ensures visual consistency."
+
+  - decision: "Standardized branding color (#D3FFCA) for all non-error UI elements"
+    rationale: "Cohesive visual identity achieved through single color standard. Branding color (#D3FFCA) is centralized in constants.ts as MINT_COLOR and GREEN_COLOR (both use #D3FFCA) and used consistently across all CLI output: help formatting, banners, interactive menus, warnings, info messages, box borders, and status indicators. This is the official branding color for Buildforce CLI. Error colors (red/magenta) remain distinct for critical failure states to ensure visibility and user safety."
+
+  - decision: "Shared box utility component for visual consistency"
+    rationale: "Created centralized createBox utility in src/utils/box.ts that wraps boxen library with standardized #D3FFCA border color. Eliminates code duplication (removed custom boxSection from cli.ts and examples.ts), ensures consistent rounded appearance across all commands, and provides single source of truth for box styling. All commands (init, help, examples) now use shared utility for unified visual experience."
+  
+  - decision: "Nest BuildForce commands in buildforce/ subdirectory"
+    rationale: "Provides namespace isolation to prevent collision with user-defined custom commands. All 11 agents deploy commands to {agent-folder}/commands/buildforce/ (or prompts/buildforce/ for Copilot), improving discoverability and following common organizational patterns. Users can easily distinguish BuildForce commands from their own."
+  
+  - decision: "Prefix BuildForce commands with buildforce. in flat directory"
+    rationale: "Provides namespace isolation without subdirectory nesting. All 11 agents deploy commands with buildforce. prefix (e.g., buildforce.plan.md) to {agent-folder}/commands/ (or prompts/ for Copilot). Flat structure simplifies discovery while preventing collision with user-defined commands. Dot notation in invocation (/buildforce.plan) is intuitive and widely recognized in CLI systems."
+
+architecture_patterns:
+  entry_point: |
+    CLI Entry: src/cli.ts
+    - Commander.js parses arguments
+    - Routes to command handlers
+    - Displays standardized 3-line banner (figlet title, tagline, instruction) via generateBanner()
+    
+    Banner Display:
+    - All CLI entry points use consistent 3-line format via showBanner() function
+    - Centralized banner generation in src/lib/interactive.ts (generateBanner())
+    - Format: figlet "BUILDFORCE" title (white), tagline (branding color #D3FFCA), instruction (dim gray)
+    - All lines centered based on terminal width (process.stdout.columns || 80)
+
+    Box Components:
+    - Shared box utility in src/utils/box.ts with createBox() function
+    - Standardized boxen-based implementation with #D3FFCA border color default
+    - Used across all commands: CLI help (cli.ts), examples (examples.ts), init output (init/output.ts, init/validation.ts, init/setup.ts)
+    - Supports title, padding, borderColor (default #D3FFCA), and width options
+    - Error boxes override borderColor to "red" for critical state visibility
+    - Eliminated code duplication by removing custom boxSection implementations
+
+    Color System:
+    - Standard branding color (#D3FFCA) defined in src/constants.ts as MINT_COLOR and GREEN_COLOR
+    - All non-error UI elements use #D3FFCA: help text, banners, interactive menus, warnings, info messages, box borders, status indicators
+    - #D3FFCA is the official Buildforce CLI branding color and must be used for all future green color usage
+    - Error colors (red/magenta) preserved for error states to maintain critical visual distinction
+    - Box borders use hex code "#D3FFCA" via shared createBox utility default
+    - Import MINT_COLOR or GREEN_COLOR from constants.ts across all files requiring color output
+
+    Main Command: buildforce [project-name]
+    - Accepts positional project name or --here flag
+    - Supports . as shorthand for current directory
+    - Options: --ai, --script, --local, --ignore-agent-tools, --no-git, --force, --skip-tls, --debug, --github-token
+
+    Diagnostic Command: buildforce check
+    - Verifies tool installations (git, AI assistants, IDEs)
+    - Uses StepTracker for visual output
+
+    Session Management Command: buildforce session
+    - Interactive picker for switching between active development sessions
+    - Uses inquirer for arrow key navigation and selection
+    - Derives active sessions from .buildforce/sessions/ + spec.yaml status filtering
+
+  initialization_flow: |
+    1. Input Validation (validation.ts)
+       - validateProjectSetup() - Checks name/path conflicts
+       - validateAiAssistant() - Verifies AI choice
+       - validateScriptType() - Verifies script type
+       - checkAgentTool() - Confirms AI agent installed
+
+    2. User Interaction (interactive.ts)
+       - showBanner() - Standardized 3-line banner display (figlet title, tagline, instruction)
+       - generateBanner() - Shared banner generation function for all CLI entry points
+       - selectWithArrows() - Interactive menu
+       - Collect AI assistant and script type
+
+    3. Project Setup (setup.ts)
+       - If --local flag provided:
+         * resolveLocalArtifact() - Find matching ZIP in local directory
+         * Pass localZipPath to download function
+       - downloadTemplateFromGithub() - Fetch template ZIP (GitHub or local)
+       - downloadAndExtractTemplate() - Extract and merge files
+       - ensureExecutableScripts() - Set permissions on .sh files
+       - createConfigContent() - Generate buildforce.json
+       - updateGitignore() - Add .buildforce/buildforce.json and .buildforce/.temp entries
+       - initGitRepo() - Initialize git with first commit
+
+    4. Output Display (output.ts)
+       - displaySetupInfo() - Show project details
+       - displayAgentSecurityNotice() - Security warnings
+       - displayNextSteps() - Workflow guidance
+
+  template_distribution: |
+    GitHub Release Integration:
+    - API: GitHub REST API /repos/{owner}/{repo}/releases
+    - Authentication: Optional Bearer token (GH_TOKEN or GITHUB_TOKEN)
+    - Asset Pattern: buildforce-cli-template-{aiAssistant}-{scriptType}.zip
+    - Headers: Accept application/vnd.github+json + application/octet-stream
+
+    Template Structure:
+    - .buildforce/context/ - Context management system
+    - .buildforce/sessions/ - Development session artifacts (spec.yaml, plan.yaml, research.yaml)
+    - .buildforce/scripts/ - Automation scripts
+    - .buildforce/templates/ - Local templates
+    - buildforce.json - Project configuration with aiAssistant, scriptType, version, sessionsFolder
+    - Agent folders (.claude/, .github/, etc.) - Agent-specific files with commands nested in buildforce/ subdirectory
+
+    Extraction Flow:
+    1. Download ZIP to temp directory
+    2. Extract to temp location
+    3. Detect nested directory structure
+    4. Copy files to project path (merge mode)
+    5. Clean up temp files
+
+  context_management: |
+    Directory Structure (v2.0 - Context Taxonomy):
+    .buildforce/context/
+      ├── _index.yaml - Directory of context type folders (v2.0)
+      ├── architecture/
+      │   ├── _index.yaml - Architecture context registry
+      │   ├── _schema.yaml - Field definitions for structural context
+      │   └── *.yaml - Architecture context files (type: structural)
+      ├── conventions/
+      │   ├── _index.yaml - Convention context registry
+      │   ├── _schema.yaml - Field definitions for convention context
+      │   └── *.yaml - Convention context files (type: convention)
+      └── verification/
+          ├── _index.yaml - Verification context registry
+          ├── _schema.yaml - Field definitions for verification context
+          └── *.yaml - Verification context files (type: verification)
+
+    Context Taxonomy Pillars:
+    1. ARCHITECTURE (architecture/): WHAT exists already?
+       - Contains structural understanding of modules, features, and components
+       - All entries use type: "structural" (replaces legacy module/feature/component/pattern)
+       - Created by: /buildforce.complete
+       - Used by: /buildforce.research, /buildforce.plan, /buildforce.build
+
+    2. CONVENTIONS (conventions/): HOW do we do things here?
+       - Contains coding standards, patterns, and practices
+       - All entries use type: "convention" with sub_type field
+       - sub_type values: architectural-pattern, code-convention, naming-convention,
+         testing-standard, dependency-rule, security-requirement, performance-guideline,
+         accessibility-standard, project-quirk
+       - enforcement levels: strict | recommended | reference
+       - Created by: /buildforce.document conventions, /buildforce.complete (auto-detection)
+       - Used by: /buildforce.build (validation)
+
+    3. VERIFICATION (verification/): HOW do I know it's right?
+       - Contains quality standards, test expectations, review checklists, known risks
+       - All entries use type: "verification" with source field (mined | manual | hybrid)
+       - Created by: PR mining GitHub Actions, manual documentation
+       - Used by: /buildforce.build (self-review), PR Review Actions
+
+    Root Index Structure (_index.yaml v2.0):
+    - version: "2.0"
+    - context_types: Object pointing to type folders
+      - architecture: {path, description, index_file, schema_file}
+      - conventions: {path, description, index_file, schema_file}
+      - verification: {path, description, index_file, schema_file}
+
+    Architecture Context File Structure:
+    - id, name (required)
+    - type: "structural" (fixed value)
+    - status: in-development | production | deprecated
+    - created, last_updated
+    - summary, responsibilities
+    - dependencies (internal/external)
+    - files (primary/secondary)
+    - interfaces (exports)
+    - evolution (version history)
+    - design_decisions, related_specs, notes
+
+    Migration (v1.0 → v2.0):
+    - Handled by context-migration.ts during buildforce upgrade
+    - Version check: reads root _index.yaml version (1.0 → migrate, 2.0 → skip)
+    - Migrates existing context files to architecture/ with type="structural"
+    - Migrates _guidelines.yaml to individual convention files with type="convention"
+    - Copies schema/index files from templates to all type folders
+    - Clean migration: deletes original files after successful copy
+
+  agent_configuration: |
+    Supported Assistants (11+):
+    - Claude → .claude/commands/buildforce.*.md
+    - Copilot → .github/prompts/buildforce.*.prompt.md
+    - Cursor → .cursor/commands/buildforce.*.md
+    - Gemini → .gemini/commands/buildforce.*.toml
+    - Qwen → .qwen/commands/buildforce.*.toml
+    - Windsurf → .windsurf/workflows/buildforce.*.md
+    - Kilocode → .kilocode/workflows/buildforce.*.md
+    - Auggie → .augment/commands/buildforce.*.md
+    - Roo → .roo/commands/buildforce.*.md
+    - OpenCode → .opencode/command/buildforce.*.md
+    - Codex → .codex/prompts/buildforce.*.md
+
+    Command Deployment Structure:
+    - All BuildForce commands use buildforce. prefix in flat directory
+    - Format varies by agent: .md (Claude, Cursor), .toml (Gemini, Qwen), .prompt.md (Copilot)
+    - 5 slash commands deployed: research, spec, build, complete, document
+    - Namespace isolation via filename prefix prevents collision with user-defined commands
+    - Invocation pattern: /buildforce.plan, /buildforce.research, /buildforce.build, etc.
+
+    Detection Mechanism:
+    - Uses which(tool) to find executables in PATH
+    - Special handling for Claude CLI (~/.claude/local/claude)
+    - Validates agent availability before setup
+
+    Configuration:
+    - Each agent gets dedicated folder for credentials/config
+    - Security notice recommends .gitignore for agent folders
+    - Agent-specific slash command prompts in templates
+
+  progress_tracking: |
+    StepTracker Class:
+    - Hierarchical step tracking with status states
+    - States: pending, running, done, error, skipped
+    - Color-coded output (green ✓, red ✗, green ○ for running/skipped)
+    - Title displayed in branding color (#D3FFCA)
+    - Supports live refresh callbacks
+    - Non-emoji symbols for universal compatibility
+
+    Usage Pattern:
+    1. tracker.add(key, label) → pending
+    2. tracker.start(key, detail) → running
+    3. tracker.complete(key, detail) → done
+    4. tracker.error(key, detail) → error
+    5. tracker.skip(key, detail) → skipped
+    6. tracker.render() → colored terminal output
+
+core_modules:
+  commands:
+    - "init/index.ts - Main orchestrator for project initialization"
+    - "init/validation.ts - Input validation for project setup"
+    - "init/setup.ts - Core execution of initialization steps"
+    - "init/output.ts - User-facing messaging and guidance"
+    - "upgrade/index.ts - Main orchestrator for project upgrades"
+    - "upgrade/validation.ts - Prerequisite validation for upgrades"
+    - "upgrade/execution.ts - Selective file replacement and upgrade execution"
+    - "session/index.ts - Interactive session switcher with inquirer picker"
+    - "session/utils.ts - Session discovery and filtering utilities"
+    - "check.ts - Diagnostic tool verification command"
+
+  libraries:
+    - "github.ts - GitHub Release API integration and authentication"
+    - "extract.ts - ZIP extraction and project file merging"
+    - "local-artifacts.ts - Local artifact resolution and pattern matching"
+    - "step-tracker.ts - Hierarchical progress visualization"
+    - "interactive.ts - User interaction utilities (menus, banners, centralized banner generation)"
+
+  shared_components:
+    - "box.ts - Standardized box component utility for visual consistency"
+
+  utilities:
+    - "tools.ts - Tool detection in PATH"
+    - "permissions.ts - Script executability management"
+    - "git.ts - Git repository operations"
+    - "github.ts - GitHub token authentication"
+    - "commands.ts - Shell command execution wrapper"
+    - "config.ts - Configuration file read/write (buildforce.json management)"
+    - "box.ts - Shared box component utility with standardized #D3FFCA borders"
+
+  configuration:
+    - "agents.ts - AI assistant definitions and folder mappings"
+    - "constants.ts - Tagline, repository metadata, and centralized MINT_COLOR/GREEN_COLOR exports (both use #D3FFCA branding color)"
+    - "types.ts - TypeScript interfaces and type definitions"
+
+workflow_integration: |
+  The CLI initializes projects with templates containing:
+
+  1. Slash Command Prompts:
+     - /research - Context gathering from .buildforce/context/_index.yaml
+     - /buildforce.plan - Requirements specification and planning with spec-template.yaml and plan-template.yaml
+     - /build - Execution with progress tracking
+     - /document - Context file creation/updates
+     - /complete - Finalization and validation
+
+  2. YAML Templates:
+     - spec-template.yaml - Structured requirements definition
+     - plan-template.yaml - Phase-based implementation plan
+
+  3. Context System:
+     - _index.yaml - Context registry
+     - _schema.yaml - Schema validation
+     - *.yaml - Individual context files
+
+  4. Shell Scripts:
+     - Automation scripts in .buildforce/scripts/
+
+  5. Configuration:
+     - buildforce.json - Project configuration (aiAssistant, scriptType, version)
+     - Agent folders - AI-specific settings
+
+  6. Upgrade System:
+     - buildforce upgrade - Update templates to latest version
+     - Preserves user content (.buildforce/context/, .buildforce/sessions/)
+     - Auto-detects configuration from buildforce.json (including sessionsFolder field)
+     - Supports dry-run and override flags
+
+  This creates a complete Spec-Driven Development workflow where AI assistants have:
+  - Structured guidance through slash commands
+  - Persistent knowledge via context files
+  - Clear implementation phases
+  - Cross-session learning capabilities
+  - Seamless upgrade path for new features and improvements
+
+evolution:
+  - version: "1.0"
+    date: "2025-10-27"
+    changes: "Initial architecture documentation covering CLI structure, template distribution, context management, agent support, and workflow integration"
+
+  - version: "1.1"
+    date: "2025-10-28"
+    changes: "Added upgrade command, buildforce.json configuration persistence (aiAssistant, scriptType, version), and enhanced init command to save project settings"
+
+  - version: "1.2"
+    date: "2025-10-28"
+    changes: "Added local artifact resolution system with --local flag for init and upgrade commands, enabling offline workflows and faster local testing"
+
+  - version: "1.3"
+    date: "2025-01-30"
+    changes: "Standardized banner display across all CLI entry points. Created centralized generateBanner() function with 3-line format (figlet title, tagline, instruction). Removed unused ASCII art BANNER constant. All commands now display consistent banner for cohesive UX."
+
+  - version: "1.4"
+    date: "2025-10-31"
+    changes: "Standardized color scheme to mint (#3EB489) across all CLI UI elements. Centralized MINT_COLOR constant in constants.ts and replaced 25+ yellow and 20+ cyan color instances across 14 files. Updated boxen border colors to mint hex codes. Maintained error colors (red/magenta) for critical failure states. Achieved cohesive visual identity throughout CLI output."
+
+  - version: "1.5"
+    date: "2025-01-31"
+    changes: "Standardized lined-boxes visual component across all CLI commands. Created shared createBox utility in src/utils/box.ts using boxen library with standardized styling. Migrated all commands (cli.ts, examples.ts, init command files) to use shared utility. Eliminated code duplication by removing custom boxSection implementations. All boxes now use consistent rounded appearance and unified styling."
+
+  - version: "1.6"
+    date: "2025-01-31"
+    changes: "Established #D3FFCA as the official Buildforce CLI branding color. Updated MINT_COLOR from #3EB489 to #D3FFCA in constants.ts. Both MINT_COLOR and GREEN_COLOR now use #D3FFCA. Updated all box borders, text highlighting, and UI elements to use #D3FFCA. This branding color must be used for all future green color usage across the CLI. Maintained error colors (red/magenta) for critical states."
+
+  - version: "1.7"
+    date: "2025-11-04"
+    changes: "Implemented nested command structure: all BuildForce commands now deploy to buildforce/ subdirectory within agent folders (e.g., .claude/commands/buildforce/). Modified generate_commands() function in create-release-packages.sh to create buildforce/ subdirectory and update output paths. Fixed validate_subset() return code bug. Verified across all 11 agents × 2 script variants (22 combinations)."
+
+  - version: "1.4"
+    date: "2025-11-04"
+    changes: "Reverted to prefix-based command naming: all BuildForce commands now use buildforce. prefix in flat directory structure (e.g., .claude/commands/buildforce.spec.md). Modified generate_commands() function to remove buildforce/ subdirectory creation and output commands with prefix-based naming (buildforce.$name.$ext). Updated all command template files to use /buildforce.* invocation pattern (dot notation instead of colon). Verified across all 11 agents × 2 script variants (22 combinations). Flat structure simplifies discovery while maintaining namespace isolation."
+
+  - version: "1.8"
+    date: "2025-11-21"
+    changes: "Renamed folder structure from .buildforce/specs to .buildforce/sessions to better reflect its purpose as session-based development tracking. Updated BuildforceConfig interface field from specsFolder to sessionsFolder. Modified all scripts (bash and PowerShell), command templates (plan.md, complete.md), and user-facing output to reference new path. Variable names updated for consistency (SPECS_DIR→SESSIONS_DIR, $specsDir→$sessionsDir). This terminology change aligns with the ephemeral, workflow-oriented nature of development sessions."
+
+  - version: "1.9"
+    date: "2025-11-25"
+    changes: "Added 'buildforce session' CLI command with interactive picker for switching between active development sessions. Implemented session discovery from filesystem (.buildforce/sessions/) with status filtering (draft/in-progress). Renamed currentSpec to currentSession throughout codebase (TypeScript, bash, PowerShell, templates, docs) for terminology consistency. Session command uses inquirer for familiar arrow key navigation pattern, matching init command UX."
+
+  - version: "2.0"
+    date: "2025-12-01"
+    changes: "Extended .gitignore update logic in init command to include .buildforce/.temp entry for temporary file exclusion. Init now adds both .buildforce/buildforce.json and .buildforce/.temp with idempotent checks to prevent duplication. Includes debug logging for transparency. Upgrade command also updated to add .temp entry during upgrade process."
+
+  - version: "2.1"
+    date: "2026-01-26"
+    changes: "Implemented Context Taxonomy Alignment - restructured context repository to use three folders (architecture/, conventions/, verification/) aligned with context taxonomy pillars. Renamed 'guidelines' to 'conventions' throughout codebase. Added version-based migration system in context-migration.ts. Updated all slash command templates. Root _index.yaml now points to context type folders (v2.0 format). Created comprehensive schemas for each context type with type fields (structural, convention, verification)."
+
+related_specs:
+  - "standardize-cli-title-display-20250130220000"
+  - "standardize-color-scheme-mint-20251031011544"
+  - "standardize-lined-boxes-20250131000000"
+  - "nest-commands-buildforce-folder-20251030085832"
+  - "revert-to-prefix-naming-20251104000000"
+  - "cleanup-spec-kit-references-20250122143052"
+  - "rename-specs-to-sessions-20251121160000"
+  - "add-cli-session-management-20251125000000"
+  - "add-temp-folder-gitignore-upgrade-20251201000000"
+  - "context-taxonomy-align-20260123143000"
+
+notes: |
+  Key architectural strengths:
+  - Template-based initialization reduces setup friction
+  - Context management enables cross-session learning
+  - Agent folder segregation maintains security boundaries
+  - GitHub Release distribution allows independent template updates
+  - Local artifact resolution supports offline development and testing
+  - Step tracking provides transparent progress feedback
+  - Cohesive visual identity through standardized branding color (#D3FFCA)
+  - Shared box utility component ensures consistent visual styling across all commands
+
+  Branding consistency:
+  - PowerShell and bash implementations maintain consistent error message wording
+  - Dead code removed to reduce maintenance overhead
+
+  Future considerations:
+  - Plugin system for custom workflow extensions
+  - Local template caching to reduce GitHub API calls
+  - Multi-template composition for complex project structures
+  - Context validation and schema enforcement tooling
+  - Template versioning and migration utilities
+  - Automated local artifact building with --local-build flag

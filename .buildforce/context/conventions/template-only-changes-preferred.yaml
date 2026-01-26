@@ -1,0 +1,14 @@
+id: template-only-changes-preferred
+name: "Template-Only Changes Preferred"
+type: convention
+sub_type: dependency-rule
+enforcement: recommended
+created: "2026-01-26"
+last_updated: "2026-01-26"
+
+description: |
+  When implementing new features, prefer modifying markdown templates over
+  adding TypeScript dependencies. This keeps the CLI lightweight and reduces
+  installation size. Only add npm packages when template-based solution is
+  not feasible.
+  

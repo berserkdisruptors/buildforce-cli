@@ -42,7 +42,7 @@ $ARGUMENTS
 
    **S4. Confirm (MANDATORY)**: **ALWAYS** ask user to confirm before proceeding. Display: "Ready to implement. Proceed? (Y/n)" and **WAIT for user response**. **NEVER proceed without explicit user confirmation.** If user declines, ask what they'd like to change.
 
-   **S5. Implement**: Execute the confirmed plan. Apply guideline #8 (\_guidelines.yaml compliance) during implementation.
+   **S5. Implement**: Execute the confirmed plan. Apply guideline #8 (convention compliance) during implementation.
 
    **S6. Present Summary**: After implementation, present structured summary:
 
@@ -59,7 +59,7 @@ $ARGUMENTS
 
    **SKIP context for**: Typo fixes, single-line bug fixes, import reordering, comment updates, formatting changes.
 
-   If creating context: Create `.buildforce/context/{kebab-case-name}.yaml` following `_schema.yaml` structure, then update `.buildforce/context/_index.yaml` with new entry.
+   If creating context: Create `.buildforce/context/architecture/{kebab-case-name}.yaml` with type: "structural" following `architecture/_schema.yaml` structure, then update `.buildforce/context/architecture/_index.yaml` with new entry.
 
    **End of Standalone Mode** - Do not proceed to guidelines 2-8.
 
@@ -93,49 +93,49 @@ $ARGUMENTS
 
 7. **Iterative Refinement**: Expect multiple `/buildforce.build` iterations. Each time `/buildforce.build` is called, determine if this is the first implementation or a subsequent refinement based on $ARGUMENTS. Track deviations across all iterations. Ensure each iteration converges toward the user's desired outcome based on their feedback.
 
-8. **Guideline Compliance Validation** (AI Agent Self-Check):
+8. **Convention Compliance Validation** (AI Agent Self-Check):
 
-   After completing implementation but before final validation, check code against project guidelines:
+   After completing implementation but before final validation, check code against project conventions:
 
-   **Load Guidelines**:
+   **Load Conventions**:
 
-   - Check if `.buildforce/context/_guidelines.yaml` exists
-   - If missing: Skip validation and proceed to final validation
-   - If exists: Read and parse all guideline categories
+   - Check if `.buildforce/context/conventions/` folder exists
+   - If missing or empty: Skip validation and proceed to final validation
+   - If exists: Read `.buildforce/context/conventions/_index.yaml` and load all convention files
 
-   **IMPORTANT Context**: These guidelines are for AI agent education, NOT linting rules for human developers. You are validating YOUR OWN generated code against project conventions to maintain consistency.
+   **IMPORTANT Context**: These conventions are for AI agent education, NOT linting rules for human developers. You are validating YOUR OWN generated code against project conventions to maintain consistency.
 
-   **Validate Strict Enforcement Guidelines**:
-   For each guideline with `enforcement: strict`:
+   **Validate Strict Enforcement Conventions**:
+   For each convention with `enforcement: strict`:
 
-   1. **Analyze implemented code** against the guideline pattern
+   1. **Analyze implemented code** against the convention pattern
    2. **Check for violations** in files you created or modified
-   3. **Fail immediately on violations**: Any violation of a strict guideline fails the build immediately
-   4. **Record results** in plan.yaml `guideline_compliance.strict_validations`:
+   3. **Fail immediately on violations**: Any violation of a strict convention fails the build immediately
+   4. **Record results** in plan.yaml `convention_compliance.strict_validations`:
       ```yaml
-      - guideline: "Repository Pattern"
+      - convention: "Repository Pattern"
         status: "✓ PASS" # or "✗ FAIL"
         checked_files:
           [src/services/UserService.ts, src/services/PostService.ts]
         violation: # Only if FAIL
           file: "src/services/UserService.ts"
           line: 45
-          issue: "Direct Prisma call violates Repository Pattern guideline (strict enforcement)"
+          issue: "Direct Prisma call violates Repository Pattern convention (strict enforcement)"
           fix: "Use UserRepository.findById(id) instead of prisma.user.findUnique()"
       ```
    5. **If violations found**:
       - Report all violations with file/line/issue/fix details
       - **HALT build immediately** - do not proceed to testing
-      - User must fix violations or downgrade guideline to 'recommended' before continuing
+      - User must fix violations or downgrade convention to 'recommended' before continuing
 
-   **Check Recommended Enforcement Guidelines**:
-   For each guideline with `enforcement: recommended`:
+   **Check Recommended Enforcement Conventions**:
+   For each convention with `enforcement: recommended`:
 
    1. **Analyze implemented code** for deviations from pattern
    2. **DO NOT fail build** for recommended deviations
-   3. **Log deviations** in plan.yaml `guideline_compliance.recommended_validations`:
+   3. **Log deviations** in plan.yaml `convention_compliance.recommended_validations`:
       ```yaml
-      - guideline: "Error Handling Pattern"
+      - convention: "Error Handling Pattern"
         status: "✓ PASS" # or "⚠ DEVIATION"
         checked_files: [src/services/UserService.ts]
         deviation: # Only if DEVIATION
@@ -143,9 +143,9 @@ $ARGUMENTS
           actual: "Used generic error handling with single catch block"
           reason: "Legacy code integration required generic error boundary for compatibility"
       ```
-   4. **Continue with build** - recommended guidelines are advisory only
+   4. **Continue with build** - recommended conventions are advisory only
 
-   **Reference Guidelines** (`enforcement: reference`):
+   **Reference Conventions** (`enforcement: reference`):
 
    - These are informational only - no validation required
    - Agent should be aware of them when making implementation decisions
@@ -156,7 +156,7 @@ $ARGUMENTS
    When presenting validation results, use clear formatting:
 
    ```
-   ## Guideline Compliance Check
+   ## Convention Compliance Check
 
    ✓ PASS: Repository Pattern (strict) - 3 files checked
    ✗ FAIL: Database Transaction Flow (strict) - Violation in src/services/OrderService.ts:67
@@ -167,6 +167,6 @@ $ARGUMENTS
       Reason: Generic catch block used for backward compatibility with legacy system
    ```
 
-   **Performance Consideration**: Keep validation focused on modified files only. Do not scan entire codebase unless guideline explicitly requires it.
+   **Performance Consideration**: Keep validation focused on modified files only. Do not scan entire codebase unless convention explicitly requires it.
 
 Context: {$ARGUMENTS}

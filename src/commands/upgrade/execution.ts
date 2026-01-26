@@ -8,6 +8,7 @@ import { downloadTemplateFromGithub } from "../../lib/github.js";
 import { saveBuildforceConfig } from "../../utils/config.js";
 import { AGENT_FOLDER_MAP, MINT_COLOR } from "../../constants.js";
 import { resolveLocalArtifact } from "../../lib/local-artifacts.js";
+import { migrateContextStructure } from "./context-migration.js";
 
 /**
  * Execute the upgrade process
@@ -52,6 +53,7 @@ export async function executeUpgrade(
     ["replace-commands", "Replace slash commands"],
     ["replace-templates", "Replace templates"],
     ["replace-scripts", "Replace scripts"],
+    ["migrate-context", "Migrate context structure"],
     ["update-config", "Update buildforce.json"],
     ["cleanup", "Cleanup"],
     ["final", "Finalize"],
@@ -228,6 +230,7 @@ export async function executeUpgrade(
         tracker.complete("replace-scripts", "would create .buildforce/scripts/");
       }
 
+      tracker.skip("migrate-context", "dry-run mode");
       tracker.skip("update-config", "dry-run mode");
       tracker.skip("cleanup", "dry-run mode");
       tracker.complete("final", "preview complete");
@@ -298,6 +301,38 @@ export async function executeUpgrade(
         tracker.complete("replace-scripts", ".buildforce/scripts/");
       } else {
         tracker.skip("replace-scripts", "no scripts in release");
+      }
+
+      // Migrate context structure (v1.0 → v2.0)
+      tracker.start("migrate-context");
+      try {
+        const migrationResult = await migrateContextStructure(projectPath, firstSourceDir);
+
+        if (migrationResult.skipped) {
+          tracker.skip("migrate-context", migrationResult.actions[0] || "already at v2.0");
+        } else if (migrationResult.migrated) {
+          tracker.complete("migrate-context", `${migrationResult.actions.length} actions`);
+          if (debug && migrationResult.actions.length > 0) {
+            console.log(chalk.gray("\n[DEBUG] Migration actions:"));
+            for (const action of migrationResult.actions) {
+              console.log(chalk.gray(`  - ${action}`));
+            }
+          }
+          if (migrationResult.errors.length > 0) {
+            console.log(chalk.yellow("\nMigration warnings:"));
+            for (const error of migrationResult.errors) {
+              console.log(chalk.yellow(`  - ${error}`));
+            }
+          }
+        } else {
+          tracker.skip("migrate-context", "no context to migrate");
+        }
+      } catch (migrationError: any) {
+        // Don't fail the upgrade if migration fails - just warn
+        tracker.skip("migrate-context", `error: ${migrationError.message}`);
+        if (debug) {
+          console.log(chalk.yellow(`\n[DEBUG] Migration error: ${migrationError.message}`));
+        }
       }
 
       // Update buildforce.json with version metadata

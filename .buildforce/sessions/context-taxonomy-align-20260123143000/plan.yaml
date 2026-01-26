@@ -1,0 +1,643 @@
+version: "0.0.40"
+id: context-taxonomy-align-20260123143000-plan
+name: "Implementation Plan for Context Taxonomy Alignment"
+spec_id: "context-taxonomy-align-20260123143000"
+type: implementation-plan
+status: completed
+created: "2026-01-23"
+last_updated: "2026-01-26"
+
+# ARCHITECTURE OVERVIEW
+
+approach: |
+  The implementation follows a "rename and reorganize" strategy with four main phases:
+  1. Create new folder structure with schemas and indexes for each context type
+  2. Update slash command templates to use new paths and rename "guidelines" to "conventions"
+  3. Update documentation (README.md)
+  4. Clean up deprecated files and implement migration script
+
+  Key principle: Commands work identically to before, only folder paths and terminology change.
+  This ensures backward compatibility while aligning with the new context taxonomy.
+
+technology_stack:
+  - YAML files for schema definitions and context indexes
+  - Markdown templates for slash commands
+  - TypeScript for context migration module in buildforce upgrade command
+
+decisions:
+  - decision: "Use three context type folders: architecture/, conventions/, verification/"
+    rationale: |
+      Maps directly to taxonomy pillars agents need most: Structural+Historical (architecture),
+      Convention (conventions), and Verification. Excludes Intent (handled by spec.yaml),
+      Operational (out of scope for now).
+
+  - decision: "Root _index.yaml becomes directory of directories, not file registry"
+    rationale: |
+      Enables agents to understand context categories at a glance and navigate to the right
+      type folder based on their current task (building vs. researching vs. validating).
+
+  - decision: "Version-based migration: check _index.yaml version (1.0 → migrate, 2.0 → skip)"
+    rationale: |
+      Using version field as migration trigger is cleaner than checking for specific files/conditions.
+      Makes migration idempotent and future-proof for additional migrations.
+
+  - decision: "Architecture context files use type='structural', conventions use type='convention' with sub_type"
+    rationale: |
+      Aligns with taxonomy terminology. sub_type for conventions enables granular categorization
+      (code-convention, naming-convention, etc.) while keeping main type consistent.
+
+  - decision: "Migration breaks down _guidelines.yaml into individual convention files"
+    rationale: |
+      Each guideline item becomes its own file (e.g., repository-pattern.yaml, error-handling-pattern.yaml).
+      This aligns with how /buildforce.document conventions will create new conventions going forward.
+
+  - decision: "Migration is additive - creates new structure, copies files, doesn't delete old"
+    rationale: |
+      Safer migration path. Users can verify migration worked correctly before cleaning up.
+      Reduces risk of data loss for projects with significant accumulated context.
+
+  - decision: "All _index.yaml and _schema.yaml files get version: '2.0'"
+    rationale: |
+      Consistent versioning across all schema files enables future migrations.
+      Root _index.yaml version is the migration trigger check point.
+
+# FILE STRUCTURE
+
+files_to_create:
+  - src/context/architecture/_schema.yaml
+  - src/context/architecture/_index.yaml
+  - src/context/conventions/_schema.yaml
+  - src/context/conventions/_index.yaml
+  - src/context/verification/_schema.yaml
+  - src/context/verification/_index.yaml
+  - src/commands/upgrade/context-migration.ts
+
+files_to_modify:
+  - path: "src/context/_index.yaml"
+    change_type: "rewrite"
+    description: "Transform from file registry to directory of context type folders"
+
+  - path: "src/templates/commands/document.md"
+    change_type: "edit"
+    description: "Rename 'guidelines' to 'conventions', update file paths to conventions/ folder"
+
+  - path: "src/templates/commands/complete.md"
+    change_type: "edit"
+    description: "Rename 'guidelines' to 'conventions', update context paths to architecture/ folder"
+
+  - path: "src/templates/commands/research.md"
+    change_type: "edit"
+    description: "Update to read new _index.yaml structure and navigate to type folders"
+
+  - path: "src/templates/commands/build.md"
+    change_type: "edit"
+    description: "Rename 'guidelines' to 'conventions', update validation paths"
+
+  - path: "src/templates/commands/plan.md"
+    change_type: "edit"
+    description: "Rename 'guidelines' to 'conventions' if referenced"
+
+  - path: "src/templates/plan-template.yaml"
+    change_type: "edit"
+    description: "Rename 'guideline' references to 'convention'"
+
+  - path: "README.md"
+    change_type: "edit"
+    description: "Rename guidelines to conventions and add context repository link"
+
+  - path: "src/commands/upgrade/execution.ts"
+    change_type: "edit"
+    description: "Add context migration step after template replacement"
+
+files_to_delete:
+  - src/context/_graph.yaml
+  - src/context/_schema.yaml (moved to architecture/)
+  - src/templates/guidelines-template.yaml (migrated to conventions schema)
+
+# IMPLEMENTATION PHASES
+
+phase_1:
+  name: "Create New Context Type Folders and Schemas"
+  description: |
+    Create the three new context type folders (architecture, conventions, verification)
+    with their respective _schema.yaml and _index.yaml files. This establishes the new
+    structure without modifying existing functionality.
+
+  tasks:
+    - [x] Create src/context/conventions/_schema.yaml with type="convention" and sub_type enum
+      spec_refs: [FR1]
+      files: [src/context/conventions/_schema.yaml]
+      notes: |
+        Version: 2.0
+        Required fields: type="convention" (fixed), sub_type (enum)
+        sub_type enum values:
+          - architectural-pattern
+          - code-convention
+          - naming-convention
+          - testing-standard
+          - dependency-rule
+          - security-requirement
+          - performance-guideline
+          - accessibility-standard
+          - project-quirk
+        Include enforcement field (strict|recommended|reference)
+        Include examples, violations, reference_files arrays
+
+    - [x] Create src/context/conventions/_index.yaml with version 2.0
+      spec_refs: [FR2]
+      files: [src/context/conventions/_index.yaml]
+      notes: |
+        Version: 2.0
+        Document that entries must have type: convention
+        Empty contexts array initially
+
+    - [x] Create src/context/verification/_schema.yaml based on verification-context.md
+      spec_refs: [FR3]
+      files: [src/context/verification/_schema.yaml]
+      notes: |
+        Version: 2.0
+        Required fields: type="verification" (fixed)
+        Include: quality_standards, test_expectations, review_checklist, compliance_requirements, known_risks
+        Source field: mined | manual | hybrid
+
+    - [x] Create src/context/verification/_index.yaml with version 2.0
+      spec_refs: [FR4]
+      files: [src/context/verification/_index.yaml]
+      notes: |
+        Version: 2.0
+        Document that entries must have type: verification
+        Empty contexts array initially
+
+    - [x] Create src/context/architecture/_schema.yaml with type="structural"
+      spec_refs: [FR5]
+      files: [src/context/architecture/_schema.yaml]
+      notes: |
+        Version: 2.0
+        Required fields: type="structural" (fixed)
+        Based on current _schema.yaml but updated for architecture context
+        Remove old type enum (module, feature, component, pattern)
+
+    - [x] Create src/context/architecture/_index.yaml with version 2.0
+      spec_refs: [FR6]
+      files: [src/context/architecture/_index.yaml]
+      notes: |
+        Version: 2.0
+        Document that entries must have type: structural
+        Explain that architecture context captures structural and historical understanding
+        Empty contexts array initially
+
+    - [x] Update src/context/_index.yaml to directory format with version 2.0
+      spec_refs: [FR7]
+      files: [src/context/_index.yaml]
+      notes: |
+        Version: 2.0
+        Replace contexts array with context_types object:
+          architecture: {path, description, index_file}
+          conventions: {path, description, index_file}
+          verification: {path, description, index_file}
+
+    - [x] Delete src/context/_graph.yaml
+      spec_refs: [FR8]
+      files: [src/context/_graph.yaml]
+      notes: "Remove empty placeholder file"
+
+  validation:
+    - [x] All phase_1 tasks completed
+    - [x] New folder structure exists: architecture/, conventions/, verification/
+    - [x] Each folder has _schema.yaml and _index.yaml with version: "2.0"
+    - [x] Root _index.yaml has version: "2.0" and points to context type folders
+    - [x] _graph.yaml is deleted
+    - [x] Spec requirements covered: [FR1, FR2, FR3, FR4, FR5, FR6, FR7, FR8]
+
+phase_2:
+  name: "Update Slash Command Templates"
+  description: |
+    Rename all "guidelines" references to "conventions" and update file paths
+    to use the new folder structure. This is pure find-replace with path updates,
+    no functional changes to command behavior.
+
+  tasks:
+    - [x] Update document.md - conventions workflow with type + sub_type
+      spec_refs: [FR9, NFR1, NFR2]
+      files: [src/templates/commands/document.md]
+      notes: |
+        Key changes:
+        - "Guidelines Mode" → "Conventions Mode"
+        - Create files in .buildforce/context/conventions/
+        - Each convention file must have type: "convention" and sub_type field
+        - Auto-generate filenames from convention name (e.g., repository-pattern.yaml)
+        - Read _schema.yaml from conventions/ folder for structure
+        - Update _index.yaml in conventions/ folder
+
+    - [x] Update complete.md - architecture context with type="structural"
+      spec_refs: [FR10, NFR1, NFR2]
+      files: [src/templates/commands/complete.md]
+      notes: |
+        Key changes:
+        - Create architecture context in .buildforce/context/architecture/
+        - All architecture context files use type: "structural"
+        - Rename "guidelines" to "conventions" throughout
+        - Pattern detection creates convention files with type + sub_type
+
+    - [x] Update research.md - navigate new _index.yaml structure
+      spec_refs: [FR11, NFR1]
+      files: [src/templates/commands/research.md]
+      notes: |
+        Key changes:
+        - Read root _index.yaml which points to context type folders
+        - Primarily navigate to architecture/_index.yaml for context
+        - Optionally check conventions/ and verification/ based on query type
+
+    - [x] Update build.md - conventions validation
+      spec_refs: [FR12, NFR1, NFR2]
+      files: [src/templates/commands/build.md]
+      notes: |
+        Key changes:
+        - Validate against .buildforce/context/conventions/ folder
+        - Read individual convention files (not single _guidelines.yaml)
+        - guideline_compliance → convention_compliance
+        - Rename all "guideline" references to "convention"
+
+    - [x] Update plan.md - rename guideline references
+      spec_refs: [FR13, NFR1, NFR2]
+      files: [src/templates/commands/plan.md]
+      notes: "Search and replace 'guideline' → 'convention' throughout"
+
+    - [x] Update plan-template.yaml - rename to convention_compliance
+      spec_refs: [NFR2]
+      files: [src/templates/plan-template.yaml]
+      notes: "guideline_compliance → convention_compliance in template"
+
+    - [x] Delete src/templates/guidelines-template.yaml
+      spec_refs: [FR14]
+      files: [src/templates/guidelines-template.yaml]
+      notes: "Content migrated to conventions/_schema.yaml"
+
+  validation:
+    - [x] All phase_2 tasks completed
+    - [x] grep -r "guideline" src/templates/ returns no results (except valid sub_type enum value and instruction text)
+    - [x] grep -r "guideline" src/context/ returns no results (except valid sub_type enum values)
+    - [x] document.md creates conventions with type + sub_type
+    - [x] complete.md creates architecture with type="structural"
+    - [x] Spec requirements covered: [FR9, FR10, FR11, FR12, FR13, FR14, NFR1, NFR2]
+
+phase_3:
+  name: "Update Documentation"
+  description: |
+    Minimal README.md updates: rename "guidelines" to "conventions" throughout and
+    add reference link to context repository documentation for deeper understanding.
+
+  tasks:
+    - [x] Update README.md - rename guidelines to conventions and add context repo link
+      spec_refs: [FR15, NFR2]
+      files: [README.md]
+      notes: |
+        Minimal changes only:
+        - Replace all "guidelines" with "conventions"
+        - Replace "_guidelines.yaml" with "conventions/"
+        - Add link to https://buildforce.dev/concepts/context-repository for context taxonomy details
+        - Do NOT add extensive documentation about context taxonomy
+
+  validation:
+    - [x] All phase_3 tasks completed
+    - [x] grep "guideline" README.md returns no results
+    - [x] Reference link to buildforce.dev/concepts/context-repository is present
+    - [x] Spec requirements covered: [FR15]
+
+phase_4:
+  name: "Migration Script Implementation"
+  description: |
+    Implement version-based migration in src/commands/upgrade/context-migration.ts.
+    Migration triggers when root _index.yaml has version 1.0, skips when version 2.0.
+    Runs after templates are replaced and creates new folder structure while preserving old files.
+
+  tasks:
+    - [x] Create src/commands/upgrade/context-migration.ts module with version check
+      spec_refs: [FR16, NFR3]
+      files: [src/commands/upgrade/context-migration.ts]
+      notes: |
+        Implemented with MigrationResult interface and version check logic.
+
+    - [x] Implement _guidelines.yaml breakdown into individual convention files
+      spec_refs: [FR18, NFR3]
+      files: [src/commands/upgrade/context-migration.ts]
+      notes: |
+        DEVIATION: Simplified to folder/schema copy only, no YAML parsing for individual file breakdown.
+        Users with existing _guidelines.yaml will need to manually migrate to conventions/.
+        Reason: Project uses regex-based YAML parsing, full YAML library would be a new dependency.
+
+    - [x] Implement context files to architecture/ migration with type conversion
+      spec_refs: [FR17, NFR3]
+      files: [src/commands/upgrade/context-migration.ts]
+      notes: |
+        DEVIATION: Simplified to folder/schema copy only, no automatic file migration.
+        Users with existing context files will need to manually move to architecture/.
+        Reason: Project uses regex-based YAML parsing, avoiding complex YAML transformations.
+
+    - [x] Implement verification/ folder creation
+      spec_refs: [FR16, NFR3]
+      files: [src/commands/upgrade/context-migration.ts]
+      notes: "Implemented - creates folder and copies schema/index from template"
+
+    - [x] Implement root _index.yaml update to version 2.0
+      spec_refs: [FR16, NFR3]
+      files: [src/commands/upgrade/context-migration.ts]
+      notes: "Implemented - backs up old _index.yaml and copies new v2.0 format from template"
+
+    - [x] Integrate migration into upgrade execution flow
+      spec_refs: [FR16, NFR3]
+      files: [src/commands/upgrade/execution.ts]
+      notes: |
+        Implemented with:
+        - New step in steps array: ["migrate-context", "Migrate context structure"]
+        - Migration runs after replace-scripts, before update-config
+        - Graceful error handling - migration failures don't break upgrade
+        - Debug logging for detailed action output
+
+    - [x] Handle edge cases in migration
+      spec_refs: [NFR3]
+      files: [src/commands/upgrade/context-migration.ts]
+      notes: |
+        Implemented edge case handling:
+        - No .buildforce/context/ folder → skip migration entirely
+        - Version 2.0 already → skip migration (idempotent)
+        - No _index.yaml → create new structure
+        - Partial migration state → detect and resume/complete
+        - Migration errors → log and continue
+
+  validation:
+    - [x] All phase_4 tasks completed
+    - [x] Version check correctly identifies 1.0 vs 2.0
+    - [x] Migration creates new folder structure (architecture/, conventions/, verification/)
+    - [x] Migration is idempotent (running twice doesn't duplicate)
+    - [x] Migration is clean (original _guidelines.yaml deleted after successful conversion)
+    - [x] Migration failures don't break upgrade command
+    - [x] Spec requirements covered: [FR16, FR17, FR18, NFR3]
+
+phase_5:
+  name: "Complete Migration - Context Files and Schema/Index Copy"
+  description: |
+    Complete the migration implementation to address missing functionality:
+    1. Fix template source path resolution (use .buildforce/context instead of src/context)
+    2. Copy _schema.yaml and _index.yaml from template to architecture/, conventions/, verification/
+    3. Migrate existing context files from root context/ to architecture/ with type="structural"
+    4. Migrate entries from root _index.yaml to architecture/_index.yaml
+
+  tasks:
+    - [x] Fix template source path resolution in migrateContextStructure
+      spec_refs: [FR21]
+      files: [src/commands/upgrade/context-migration.ts]
+      notes: |
+        Changed from: path.join(templateSourceDir, "src", "context")
+        To: path.join(templateSourceDir, ".buildforce", "context")
+        The templateSourceDir is the extracted release ZIP which has .buildforce/context/, not src/context/
+
+    - [x] Implement proper _schema.yaml and _index.yaml copy for all context type folders
+      spec_refs: [AC12]
+      files: [src/commands/upgrade/context-migration.ts]
+      notes: |
+        Implementation already existed, just needed path fix.
+        - architecture/_schema.yaml and architecture/_index.yaml copied from template
+        - conventions/_schema.yaml and conventions/_index.yaml copied from template
+        - verification/_schema.yaml and verification/_index.yaml copied from template
+
+    - [x] Implement existing context files migration to architecture/
+      spec_refs: [FR19, AC13]
+      files: [src/commands/upgrade/context-migration.ts]
+      notes: |
+        Implemented migrateContextFilesToArchitecture() function:
+        - Reads all *.yaml files from root context/ (excluding special files)
+        - Converts type field to "structural"
+        - Updates last_updated date
+        - Copies to architecture/ folder
+        - Deletes original file after successful copy
+
+    - [x] Implement _index.yaml entries migration to architecture/_index.yaml
+      spec_refs: [FR20, AC14]
+      files: [src/commands/upgrade/context-migration.ts]
+      notes: |
+        Implemented migrateIndexEntriesToArchitecture() function:
+        - Reads root _index.yaml contexts array (v1.0 format)
+        - Converts each entry type to "structural"
+        - Merges entries into architecture/_index.yaml
+        - Filters out "guidelines" entry (goes to conventions/)
+        - Runs BEFORE replacing root _index.yaml with v2.0 format
+
+    - [x] Clean up migrated files from root context/ folder
+      spec_refs: [FR19, FR20]
+      files: [src/commands/upgrade/context-migration.ts]
+      notes: |
+        Cleanup implemented in migrateContextStructure():
+        - Context files deleted after migration to architecture/
+        - _schema.yaml deleted from root (moved to architecture/)
+        - _graph.yaml deleted if mostly empty
+        - _guidelines.yaml deleted after convention migration
+        - Root _index.yaml replaced with v2.0 format
+
+  validation:
+    - [x] All phase_5 tasks completed
+    - [x] Template schema/index files are copied to architecture/, conventions/, verification/
+    - [x] Existing context files are migrated to architecture/ with type="structural"
+    - [x] Root _index.yaml entries are merged into architecture/_index.yaml
+    - [x] Old root-level context files are deleted after migration
+    - [x] Spec requirements covered: [FR19, FR20, FR21, AC12, AC13, AC14]
+
+# DEVIATION LOG
+
+deviations:
+  - phase: "phase_4"
+    task: "Implement _guidelines.yaml breakdown"
+    original: "Parse _guidelines.yaml sections and create individual convention files"
+    actual: "RESOLVED - Full implementation with yaml library (v2.7.0) added as dependency"
+    reason: "User requested full YAML parsing capability. Added 'yaml' package and implemented migrateGuidelinesFile() function that parses all guideline sections and creates individual convention files."
+    resolution_date: "2026-01-23"
+
+  - phase: "phase_4"
+    task: "Implement context files to architecture/ migration"
+    original: "Automatically migrate existing context files to architecture/ with type conversion"
+    actual: "Simplified to folder/schema creation only"
+    reason: "Users with existing context will migrate manually or via /buildforce.complete. Architecture context migration is less critical than guidelines breakdown since context files are project-specific."
+
+  - phase: "phase_4"
+    task: "Remove backup file creation and delete original _guidelines.yaml"
+    original: "Migration is additive - creates backup files (_guidelines.yaml.v1.bak, _index.yaml.v1.bak)"
+    actual: "Migration now deletes original _guidelines.yaml after successful conversion, no .bak files created"
+    reason: "User requested 100% confidence in migration with no backup files. Migration should be clean and deterministic."
+    resolution_date: "2026-01-26"
+
+  - phase: "phase_4"
+    task: "Template source path resolution"
+    original: "Use path.join(templateSourceDir, 'src', 'context') to find template schema/index files"
+    actual: "RESOLVED - Fixed path to use .buildforce/context/ in Phase 5"
+    reason: "The upgrade command extracts release ZIP which has .buildforce/ folder structure, not src/ development structure. This caused schema/index files to not be copied."
+    resolution_date: "2026-01-26"
+
+  - phase: "phase_4"
+    task: "Implement context files to architecture/ migration"
+    original: "Copy existing context files to architecture/ and convert type to 'structural'"
+    actual: "RESOLVED - Implemented migrateContextFilesToArchitecture() and migrateIndexEntriesToArchitecture() in Phase 5"
+    reason: "Initial implementation marked as deviation, but full migration is required per FR19. Phase 5 addresses this gap with complete implementation."
+    resolution_date: "2026-01-26"
+
+  - phase: "phase_5"
+    task: "Context file migration - file extension and formatting"
+    original: "Migration only handled .yaml files and used YAML.stringify() which stripped blank lines"
+    actual: "RESOLVED - Extended to handle both .yaml and .yml extensions, use regex replacement to preserve original formatting"
+    reason: "User testing revealed 3 .yml files left behind and reformatted YAML losing blank lines between sections. Fixed to preserve 1:1 formatting."
+    resolution_date: "2026-01-26"
+
+# CONVENTION COMPLIANCE
+# Track validation results for strict and recommended enforcement levels
+# This section is populated during /buildforce.build when .buildforce/context/conventions/ exists
+
+convention_compliance:
+  strict_validations: []
+  recommended_validations: []
+
+# TESTING GUIDANCE
+
+testing:
+  automated_tests: []
+
+  manual_tests:
+    - scenario: "Test /buildforce.document conventions workflow"
+      steps: |
+        1. Run /buildforce.document conventions in a test project
+        2. Verify files are created in .buildforce/context/conventions/
+        3. Verify _index.yaml in conventions/ is updated
+        4. Verify no files created at root context level
+
+    - scenario: "Test /buildforce.complete workflow"
+      steps: |
+        1. Create a spec with /buildforce.plan
+        2. Implement with /buildforce.build
+        3. Run /buildforce.complete
+        4. Verify context files created in .buildforce/context/architecture/
+        5. Verify no files created at root context level
+
+    - scenario: "Test /buildforce.research workflow"
+      steps: |
+        1. Run /buildforce.research on a topic
+        2. Verify it reads new _index.yaml structure
+        3. Verify it navigates to architecture/_index.yaml for context
+        4. Verify research results include relevant context
+
+    - scenario: "Test /buildforce.build convention validation"
+      steps: |
+        1. Create conventions in .buildforce/context/conventions/
+        2. Run /buildforce.build
+        3. Verify convention compliance check runs
+        4. Verify it reads from conventions/ not _guidelines.yaml
+
+    - scenario: "Test buildforce upgrade migration on v1.0 project"
+      steps: |
+        1. Create project with old structure (version 1.0, _guidelines.yaml, context files)
+        2. Run buildforce upgrade
+        3. Verify conventions/ folder created
+        4. Verify _guidelines.yaml broken down into individual files (e.g., repository-pattern.yaml)
+        5. Verify each convention file has type: "convention" and appropriate sub_type
+        6. Verify architecture/ folder created
+        7. Verify old context files copied to architecture/ with type: "structural"
+        8. Verify verification/ folder created with empty structure
+        9. Verify root _index.yaml updated to version 2.0
+
+    - scenario: "Test buildforce upgrade on already migrated v2.0 project"
+      steps: |
+        1. Create project with new structure (version 2.0)
+        2. Run buildforce upgrade
+        3. Verify migration step is skipped
+        4. Verify no duplicate files created
+        5. Verify existing context files unchanged
+
+    - scenario: "Verify no guidelines mentions remain"
+      steps: |
+        1. Run: grep -r "guideline" src/
+        2. Verify no matches in templates or context files
+        3. Run: grep -r "guideline" README.md
+        4. Verify no matches in documentation
+
+# VALIDATION CRITERIA
+
+success_metrics:
+  - "Zero matches for 'guidelines' in src/ and README.md (case-insensitive)"
+  - "All five slash commands work with new folder structure"
+  - "All _index.yaml and _schema.yaml files have version: '2.0'"
+  - "Migration correctly handles v1.0 → v2.0 transition"
+  - "Migration is idempotent (v2.0 projects skip migration)"
+  - "Convention files have type='convention' and appropriate sub_type"
+  - "Architecture files have type='structural'"
+
+spec_coverage:
+  - FR1: "✓ Phase 1: Task 1 - conventions schema with sub_type enum"
+  - FR2: "✓ Phase 1: Task 2 - conventions index (version 2.0)"
+  - FR3: "✓ Phase 1: Task 3 - verification schema (version 2.0)"
+  - FR4: "✓ Phase 1: Task 4 - verification index (version 2.0)"
+  - FR5: "✓ Phase 1: Task 5 - architecture schema with type=structural"
+  - FR6: "✓ Phase 1: Task 6 - architecture index (version 2.0)"
+  - FR7: "✓ Phase 1: Task 7 - root index (version 2.0, directory format)"
+  - FR8: "✓ Phase 1: Task 8 - delete _graph.yaml"
+  - FR9: "✓ Phase 2: Task 1 - document.md with type + sub_type"
+  - FR10: "✓ Phase 2: Task 2 - complete.md with type=structural"
+  - FR11: "✓ Phase 2: Task 3 - research.md navigation"
+  - FR12: "✓ Phase 2: Task 4 - build.md conventions validation"
+  - FR13: "✓ Phase 2: Task 5 - plan.md rename"
+  - FR14: "✓ Phase 2: Task 7 - delete guidelines-template.yaml"
+  - FR15: "✓ Phase 3: Task 1 - README.md"
+  - FR16: "✓ Phase 4: Tasks 1,4,5,6 - version-based migration"
+  - FR17: "✓ Phase 4: Task 3 + Phase 5: Task 3 - convert context files to type=structural"
+  - FR18: "✓ Phase 4: Task 2 - break down _guidelines.yaml"
+  - FR19: "✓ Phase 5: Task 3 - migrate context files to architecture/"
+  - FR20: "✓ Phase 5: Task 4 - migrate _index.yaml entries to architecture/_index.yaml"
+  - FR21: "✓ Phase 5: Task 1 - fix template source path resolution"
+  - NFR1: "✓ Phase 2: All tasks - functionality preserved"
+  - NFR2: "✓ Phase 2 & 3: All tasks - no guideline mentions"
+  - NFR3: "✓ Phase 4: Task 7 - edge cases"
+  - NFR4: "✓ Phase 1: All tasks - well-documented schemas with version 2.0"
+
+# PROGRESS SUMMARY
+
+overall_progress:
+  phase_1: "8/8 tasks completed"
+  phase_2: "7/7 tasks completed"
+  phase_3: "1/1 tasks completed"
+  phase_4: "7/7 tasks completed"
+  phase_5: "5/5 tasks completed"
+
+current_status: |
+  All phases completed! Implementation summary:
+  - Phase 5 addressed all migration gaps with new functions:
+    - Fixed template source path (.buildforce/context instead of src/context)
+    - migrateContextFilesToArchitecture() - migrates *.yaml files with type="structural"
+    - migrateIndexEntriesToArchitecture() - merges entries into architecture/_index.yaml
+  - Clean migration: original files deleted after successful copy/conversion
+  - Proper ordering: entries migrated BEFORE root _index.yaml replaced with v2.0 format
+
+next_immediate_steps:
+  - "Ready for /buildforce.complete - create context files for this implementation"
+
+# RISKS & CONSIDERATIONS
+
+risks:
+  - risk: "Breaking existing projects that use _guidelines.yaml"
+    mitigation: "Migration script in buildforce upgrade handles migration automatically"
+
+  - risk: "Missing guideline references during rename"
+    mitigation: "Use grep to verify zero matches for 'guideline' after implementation"
+
+  - risk: "Slash commands not finding new folder structure"
+    mitigation: "Manual testing of all five commands after implementation"
+
+# NOTES
+
+general_notes:
+  - "Convention compliance is checked during /buildforce.build execution if .buildforce/context/conventions/ exists"
+  - "Strict enforcement conventions will fail the build if violated"
+  - "Recommended conventions log warnings but allow build to continue"
+  - "Conventions are for AI agent education - agents validate their own generated code against project conventions"
+
+lessons_learned: []
+
+future_enhancements:
+  - "Add PR mining GitHub Action to populate verification/ context"
+  - "Add context type auto-detection to suggest where new context should go"
+  - "Add cross-reference validation between context types"

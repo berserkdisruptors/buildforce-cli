@@ -1,66 +1,77 @@
-# Buildforce Context Index
-# This file tracks context and memory for your project
+# Buildforce Context Repository Index
+# This file serves as the entry point to your project's context repository.
+# It points to three context type directories, each serving a different purpose.
 
-version: 1.0
+version: "2.0"
 
 # ============================================================================
-# CONTEXT INDEX FIELD DOCUMENTATION
+# CONTEXT TAXONOMY OVERVIEW
 # ============================================================================
 #
-# Each context entry in the index has the following fields:
+# The context repository is organized into three directories, each aligned
+# with the context taxonomy pillars that AI agents need most:
 #
-# REQUIRED FIELDS:
-# ----------------
-# - id (string, kebab-case):
-#     Unique identifier matching the context filename (without .yaml extension)
-#     Must be unique across all entries in this index
-#     Example: "authentication", "build-command", "error-handling"
+# 1. ARCHITECTURE (architecture/)
+#    Answers: WHAT exists already?
+#    Contains: Structural understanding of modules, features, and components
+#    Used by: /buildforce.research, /buildforce.plan, /buildforce.build
 #
-# - file (string):
-#     Context filename (must match id field with .yaml extension)
-#     Example: "authentication.yaml", "build-command.yaml"
+# 2. CONVENTIONS (conventions/)
+#    Answers: HOW do we do things here?
+#    Contains: Coding standards, patterns, and practices
+#    Used by: /buildforce.plan, /buildforce.build (validation)
 #
-# - type (enum):
-#     Category of the context for organization
-#     Valid values: module | feature | component | pattern
-#       - module: High-level system module (e.g., authentication, payment)
-#       - feature: Specific feature within a module (e.g., OAuth login)
-#       - component: Reusable UI or code component
-#       - pattern: Design pattern or architectural decision
-#     Example: "feature"
+# 3. VERIFICATION (verification/)
+#    Answers: HOW do I know it's right?
+#    Contains: Quality standards, test expectations, known risks
+#    Used by: /buildforce.build (self-review), PR Review Actions
 #
-# OPTIONAL BUT RECOMMENDED FIELDS:
-# ---------------------------------
-# - description (string, max 100 chars):
-#     Generic, stable one-liner describing WHAT this component/feature/module IS
-#     Focus on its identity and purpose, not implementation details or achievements
-#     Should remain relevant across versions and evolution
-#     Example: "User authentication system with JWT tokens and OAuth2 integration"
+# For more details on the context taxonomy, see:
+# https://buildforce.dev/concepts/context-repository
 #
-# - tags (array of strings):
-#     Searchable keywords for discovery
-#     Use relevant terms related to functionality, technology, domain
-#     Example: [auth, security, jwt, oauth2]
+# ============================================================================
+# NAVIGATING THE CONTEXT REPOSITORY
+# ============================================================================
 #
-# - related_context (array of context IDs, OPTIONAL):
-#     Array of context IDs that are closely related to this context
-#     Enables agents to discover related contexts through explicit cross-references
+# Each context type directory contains:
+#   - _schema.yaml: Field definitions and validation rules for context files
+#   - _index.yaml: Registry of context files in that directory
+#   - *.yaml: Individual context files following the schema
 #
-#     **When to populate:**
-#       - Feature families (e.g., all slash commands reference slash-commands)
-#       - Dependent modules (e.g., build-command depends on plan-template)
-#       - Sibling features (e.g., research and document commands work together)
-#
-#     **Usage guidelines:**
-#       - Only include contexts that are closely related or have direct dependencies
-#       - Avoid over-populating—focus on significant relationships
-#       - IDs must exist in this _index.yaml file (no validation enforced)
-#       - Bidirectional relationships recommended for discoverability
-#         (if A references B, B should reference A)
-#
-#     Example: [plan-template, iterate-plan-command, spec-command]
+# To find context:
+#   1. Determine what type of context you need (architecture, convention, verification)
+#   2. Navigate to that directory's _index.yaml
+#   3. Find relevant context files by id, tags, or description
+#   4. Read the full context file for detailed information
 #
 # ============================================================================
 
-# Context entries
-contexts: []
+# Context type directories
+# Each directory is self-contained with its own schema and index
+context_types:
+  architecture:
+    path: "architecture/"
+    description: |
+      Structural context about WHAT exists in the codebase.
+      Contains understanding of modules, features, components, and their relationships.
+      All entries have type: structural.
+    index_file: "architecture/_index.yaml"
+    schema_file: "architecture/_schema.yaml"
+
+  conventions:
+    path: "conventions/"
+    description: |
+      Convention context about HOW things are done here.
+      Contains coding standards, architectural patterns, and project practices.
+      All entries have type: convention with a sub_type for categorization.
+    index_file: "conventions/_index.yaml"
+    schema_file: "conventions/_schema.yaml"
+
+  verification:
+    path: "verification/"
+    description: |
+      Verification context about HOW to know if code is right.
+      Contains quality standards, test expectations, review checklists, and known risks.
+      All entries have type: verification with source field (mined, manual, hybrid).
+    index_file: "verification/_index.yaml"
+    schema_file: "verification/_schema.yaml"

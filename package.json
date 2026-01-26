@@ -60,7 +60,8 @@
     "gradient-string": "^2.0.2",
     "log-symbols": "^6.0.0",
     "ora": "^8.0.1",
-    "which": "^4.0.0"
+    "which": "^4.0.0",
+    "yaml": "^2.7.0"
   },
   "devDependencies": {
     "@commitlint/cli": "^20.1.0",

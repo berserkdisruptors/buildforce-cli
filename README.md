@@ -44,7 +44,7 @@ Context persists in version-controlled YAML files alongside your code, so your p
 | Requirements exist only in conversation       | User intent captured in `spec.yaml` with acceptance criteria             |
 | Plans exist only in specific modes            | The captured intent is automatically converted into a plan for iteration |
 | Implementation deviations go untracked        | Deviations logged with rationale (Original → Actual → Reason)            |
-| Architectural decisions forgotten             | Decisions preserved, searchable, and enforced via `_guidelines.yaml`     |
+| Architectural decisions forgotten             | Decisions preserved, searchable, and enforced via conventions/           |
 | Knowledge lives in individual developer heads | Shared context repository for team-wide knowledge                        |
 | Each feature starts from scratch              | Each feature builds on accumulated project context                       |
 
@@ -149,10 +149,10 @@ Buildforce uses slash commands inside AI assistant conversations to orchestrate 
 **What happens at each command:**
 
 - `/buildforce.research`: Searches `.buildforce/context/` for accumulated knowledge, explores codebase patterns, and fetches external info if needed.
-- `/buildforce.plan`: Materializes user intent into structured requirements (functional, non-functional, acceptance criteria) saved as `spec.yaml` and actionable plan saved as `plan.yaml`. Loads `_guidelines.yaml` as highest-priority context.
-- `/buildforce.build`: Executes plan phases sequentially, updates progress, and logs deviations from the plan. Validates code compliance against guidelines if `_guidelines.yaml` exists.
+- `/buildforce.plan`: Materializes user intent into structured requirements (functional, non-functional, acceptance criteria) saved as `spec.yaml` and actionable plan saved as `plan.yaml`. Loads conventions from `conventions/` as highest-priority context.
+- `/buildforce.build`: Executes plan phases sequentially, updates progress, and logs deviations from the plan. Validates code compliance against conventions if `conventions/` folder exists.
 - `/buildforce.complete`: Validates that all requirements are met, generates context files from the work done, and updates the context repository.
-- `/buildforce.document`: Standalone utility for documenting existing code. Use `/buildforce.document guidelines` to capture project conventions.
+- `/buildforce.document`: Standalone utility for documenting existing code. Use `/buildforce.document conventions` to capture project conventions.
 
 **Workflow scenarios:**
 
@@ -174,9 +174,9 @@ Buildforce uses slash commands inside AI assistant conversations to orchestrate 
    /buildforce.research [topic] → /buildforce.document [module]
    ```
 
-4. **Guidelines workflow** (capture and enforce conventions):
+4. **Conventions workflow** (capture and enforce conventions):
    ```
-   /buildforce.document guidelines → /buildforce.plan [feature] → /buildforce.build → /buildforce.complete
+   /buildforce.document conventions → /buildforce.plan [feature] → /buildforce.build → /buildforce.complete
    ```
 
 5. **Standalone workflow** (quick ad-hoc changes without session):
@@ -334,19 +334,19 @@ Creates or updates structured context files in your project's knowledge reposito
 
 **Pro tip**: Prepare context window first (read files, discuss architecture) before running `/buildforce.document`. The command analyzes conversation history to extract documentation.
 
-**Guidelines Mode**: Capture project-wide conventions and coding standards using `/buildforce.document guidelines`. Creates or updates `_guidelines.yaml` with architectural patterns, naming conventions, and code standards that AI agents enforce during `/buildforce.build`. Three workflows available:
+**Conventions Mode**: Capture project-wide conventions and coding standards using `/buildforce.document conventions`. Creates individual convention files in `conventions/` folder with architectural patterns, naming conventions, and code standards that AI agents enforce during `/buildforce.build`. Two workflows available:
 
 ```
-/buildforce.document guidelines
+/buildforce.document conventions
 ```
 
-Creates or updates guidelines from conversation (manual mode). Discuss conventions in chat, then run command to capture them.
+Creates or updates conventions from conversation (manual mode). Discuss conventions in chat, then run command to capture them as individual files.
 
 ```
-/buildforce.document scan guidelines
+/buildforce.document scan conventions
 ```
 
-Bootstrap initial guidelines by analyzing existing codebase patterns (scan mode). Detects consistent patterns across 5+ files with 95%+ consistency.
+Bootstrap initial conventions by analyzing existing codebase patterns (scan mode). Detects consistent patterns across 5+ files with 95%+ consistency.
 
 **Enforcement levels**:
 
@@ -354,7 +354,7 @@ Bootstrap initial guidelines by analyzing existing codebase patterns (scan mode)
 - **recommended**: Logs warnings only (use for best practices)
 - **reference**: Context only, no validation (use for informational patterns)
 
-Guidelines are loaded during `/buildforce.plan` (as planning context), validated during `/buildforce.build` (code compliance check), and can auto-evolve via `/buildforce.complete` (pattern detection).
+Conventions are loaded during `/buildforce.plan` (as planning context), validated during `/buildforce.build` (code compliance check), and can auto-evolve via `/buildforce.complete` (pattern detection).
 
 ---
 

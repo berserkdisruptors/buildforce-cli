@@ -1,0 +1,110 @@
+id: command-naming-standard
+name: "Command Naming Standard"
+type: structural
+status: production
+created: "2025-11-21"
+last_updated: "2026-01-26"
+
+summary: |
+  Standardized slash command naming convention using /buildforce.* prefix across all
+  user-facing documentation, templates, and code. Ensures namespace isolation and prevents
+  command name collisions across multiple AI assistant platforms.
+
+responsibilities:
+  - Enforce consistent /buildforce.* prefix for all five core commands
+  - Prevent command naming inconsistencies in documentation and templates
+  - Maintain namespace isolation via buildforce. prefix pattern
+  - Ensure user-facing content displays correct command syntax
+
+design_decisions:
+  - decision: "Use /buildforce.* prefix for all slash commands"
+    rationale: |
+      Provides namespace isolation without subdirectory nesting. Flat structure simplifies
+      discovery while preventing naming conflicts. Documented in cli-architecture.yaml:136.
+      Dot notation is intuitive and widely recognized in CLI systems.
+
+  - decision: "Prioritize user-facing files for naming consistency"
+    rationale: |
+      README.md and src/commands/examples.ts directly impact user experience and onboarding.
+      Inconsistent command references in these files cause confusion and reduce trust in
+      documentation accuracy.
+
+  - decision: "Update templates to guide AI agent behavior"
+    rationale: |
+      Template files (commands/*.md, *.yaml) guide AI agent execution. Consistent command
+      references in templates ensure agents use correct syntax when presenting instructions
+      to users or executing workflows.
+
+  - decision: "Preserve historical spec folders as immutable archives"
+    rationale: |
+      Completed spec folders document work as it was done. Updating historical references
+      would compromise archive integrity and create confusion about what commands were
+      actually used during that implementation.
+
+canonical_commands:
+  - /buildforce.research: "Gather context from project knowledge, codebase, and external sources"
+  - /buildforce.plan: "Define requirements and create structured specification with implementation plan"
+  - /buildforce.build: "Execute implementation following spec and plan with progress tracking"
+  - /buildforce.complete: "Finalize spec by creating context files and clearing spec state"
+  - /buildforce.document: "Document existing functionality without full spec-driven workflow"
+
+files:
+  primary:
+    - path: "README.md"
+      relevance: "Primary documentation showing correct command syntax to users"
+
+    - path: "src/commands/examples.ts"
+      relevance: "CLI output displaying workflow examples with command sequences"
+
+  secondary:
+    - path: "src/templates/commands/build.md"
+      relevance: "Build command template with context descriptions"
+
+    - path: "src/templates/commands/complete.md"
+      relevance: "Complete command template with context descriptions"
+
+    - path: "src/templates/commands/document.md"
+      relevance: "Document command template with context descriptions"
+
+    - path: "src/templates/commands/research.md"
+      relevance: "Research command template with context descriptions"
+
+    - path: "src/templates/plan-template.yaml"
+      relevance: "Plan template with command references in comments"
+
+    - path: "src/templates/guidelines-template.yaml"
+      relevance: "Guidelines template with command references in documentation"
+
+    - path: "src/templates/research-template.yaml"
+      relevance: "Research template with command references in comments"
+
+dependencies:
+  internal:
+    - cli-architecture: "Defines buildforce.* namespace pattern and invocation conventions"
+    - slash-commands: "Core command definitions and workflow documentation"
+
+evolution:
+  - version: "1.0"
+    date: "2025-11-21"
+    changes: |
+      Initial enforcement of /buildforce.* naming standard across codebase.
+      Updated 9 files outside .buildforce/ to use consistent command prefix.
+      Eliminated all old unprefixed command references (/plan, /build, /complete, /document, /research).
+
+related_specs:
+  - fix-command-naming-inconsistencies-20251121120000
+
+notes: |
+  This standard addresses technical debt from incomplete command rename transitions.
+  The buildforce. prefix provides protection against command name collisions across
+  11 different AI assistant platforms (Claude Code, Cursor, Codex CLI, Gemini CLI,
+  GitHub Copilot, Windsurf, Kilo Code, Roo Code, Auggie CLI, and others).
+
+  Files within .buildforce/ folder are excluded from this standard to preserve
+  historical accuracy in archive artifacts. Context files may use old command
+  references when documenting legacy implementations.
+
+  Pattern validation:
+  - User-facing files (README, CLI output) must use /buildforce.* format
+  - Template files must use /buildforce.* in context descriptions and comments
+  - Historical spec folders remain unchanged as point-in-time snapshots

@@ -1,0 +1,198 @@
+# Verification Context Schema
+# Version: 2.0
+# This schema defines the structure for verification context files.
+# Verification context answers: "HOW do I know it's right?"
+#
+# IMPORTANT: Verification context is human-originated, not code-derivable.
+# It captures quality standards, test expectations, and known risks that
+# agents cannot infer from code alone.
+#
+# SOURCE OPTIONS:
+#   - mined: Derived from PR comment analysis (GitHub Action)
+#   - manual: Manually documented by the team
+#   - hybrid: Combination of mining with human curation
+#
+# PRIMARY USE CASES:
+#   - CLI /build self-review: Pre-flight check before presenting to user
+#   - PR Review Action: Official verification gate before merge
+#   - Agent self-evaluation: What makes code "good enough" here?
+
+version: "2.0"
+
+# Required fields for all verification files
+required_fields:
+  - id                # Unique identifier (kebab-case)
+  - name              # Human-readable name
+  - type              # Must be "verification" (fixed value)
+  - source            # mined | manual | hybrid
+  - created           # ISO date (YYYY-MM-DD)
+  - last_updated      # ISO date (YYYY-MM-DD)
+
+# Optional fields - populate based on what's known
+optional_fields:
+  - quality_standards       # What makes code "good enough" to submit
+  - test_expectations       # How to prove the code works
+  - review_checklist        # What reviewers actually check
+  - compliance_requirements # Regulatory or organizational requirements
+  - known_risks             # Module-specific problem areas
+
+# Field definitions
+
+id:
+  description: "Unique identifier for this verification context"
+  format: "kebab-case"
+  example: "project-verification-standards"
+
+name:
+  description: "Human-readable name"
+  format: "String with proper capitalization"
+  example: "Project Verification Standards"
+
+type:
+  description: "Context type identifier - always 'verification' for this schema"
+  value: "verification"
+  note: "This is a fixed value - all files in verification/ must have type: verification"
+
+source:
+  description: "How this verification context was populated"
+  values:
+    - mined: "Derived from PR comment analysis by GitHub Action"
+    - manual: "Manually documented by the team"
+    - hybrid: "Combination of mining results with human curation"
+  example: "hybrid"
+
+created:
+  description: "Date when this verification context was first created"
+  format: "ISO date (YYYY-MM-DD)"
+  example: "2025-01-15"
+
+last_updated:
+  description: "Date when this verification context was last modified"
+  format: "ISO date (YYYY-MM-DD)"
+  example: "2025-09-20"
+
+# Optional field definitions
+
+quality_standards:
+  description: "What makes code 'good enough' to submit for review"
+  format: "Array of standard objects"
+  fields:
+    - standard: "Name of the quality standard"
+    - description: "What this standard requires"
+    - enforcement: "strict | recommended (strict = block PR, recommended = warn)"
+    - confidence: "0.0-1.0, from mining: percentage of PRs rejected without this"
+  example:
+    - standard: "Test coverage for public interfaces"
+      description: "All public methods and exported functions require unit tests"
+      enforcement: strict
+      confidence: 0.89
+
+test_expectations:
+  description: "How to prove the code works - patterns for different test types"
+  format: "Object with test type categories"
+  structure:
+    unit_tests:
+      when_required: "String describing when unit tests are needed"
+      patterns: "String describing expected test patterns"
+    integration_tests:
+      when_required: "String describing when integration tests are needed"
+      patterns: "String describing expected test patterns"
+    e2e_tests:
+      when_required: "String describing when e2e tests are needed"
+      patterns: "String describing expected test patterns"
+  example:
+    unit_tests:
+      when_required: "Business logic, utility functions, data transformations"
+      patterns: "Jest with describe/it blocks, mock external dependencies"
+    integration_tests:
+      when_required: "API endpoints, database operations, external service calls"
+      patterns: "Supertest for APIs, test containers for databases"
+
+review_checklist:
+  description: "What reviewers actually check - derived from PR comment patterns"
+  format: "Array of checklist items"
+  fields:
+    - item: "What reviewers look for"
+    - frequency: "0.0-1.0, how often this is mentioned in reviews"
+    - example_comment: "Example of what reviewers write"
+  example:
+    - item: "Error handling"
+      frequency: 0.24
+      example_comment: "Please add error handling for the edge case when..."
+    - item: "Test coverage"
+      frequency: 0.19
+      example_comment: "Can you add tests for this new function?"
+
+compliance_requirements:
+  description: "Regulatory or organizational requirements that must be followed"
+  format: "Array of compliance requirement objects"
+  fields:
+    - requirement: "Name of the compliance requirement"
+    - description: "What this requirement mandates"
+    - applies_to: "What code/areas this applies to"
+    - enforcement: "strict | recommended"
+  example:
+    - requirement: "GDPR - Personal data handling"
+      description: "PII must not be logged, must be encrypted at rest"
+      applies_to: "Any code handling user data"
+      enforcement: strict
+
+known_risks:
+  description: "Module-specific problem areas - derived from historical issues"
+  format: "Array of known risk objects"
+  fields:
+    - module: "File path or glob pattern for affected module"
+    - risk: "Description of the risk/problem"
+    - mitigation: "How to avoid the problem"
+    - occurrences: "Number of times this was flagged"
+    - last_flagged: "ISO date of last occurrence"
+  example:
+    - module: "src/services/UserService.ts"
+      risk: "N+1 query patterns when loading user relationships"
+      mitigation: "Always use eager loading or explicit batch queries"
+      occurrences: 6
+      last_flagged: "2025-03-15"
+
+# Example verification file structure
+example_file: |
+  # project-verification-standards.yaml
+  id: project-verification-standards
+  name: "Project Verification Standards"
+  type: verification
+  source: hybrid
+  created: "2025-01-15"
+  last_updated: "2025-09-20"
+
+  quality_standards:
+    - standard: "Test coverage for public interfaces"
+      description: "All public methods and exported functions require unit tests"
+      enforcement: strict
+      confidence: 0.89
+
+    - standard: "Error handling completeness"
+      description: "All async operations must have explicit error handling"
+      enforcement: recommended
+      confidence: 0.71
+
+  test_expectations:
+    unit_tests:
+      when_required: "Business logic, utility functions, data transformations"
+      patterns: "Jest with describe/it blocks, mock external dependencies"
+    integration_tests:
+      when_required: "API endpoints, database operations, external service calls"
+      patterns: "Supertest for APIs, test containers for databases"
+
+  review_checklist:
+    - item: "Error handling"
+      frequency: 0.24
+      example_comment: "Please add error handling for the edge case when..."
+    - item: "Test coverage"
+      frequency: 0.19
+      example_comment: "Can you add tests for this new function?"
+
+  known_risks:
+    - module: "src/services/UserService.ts"
+      risk: "N+1 query patterns when loading user relationships"
+      mitigation: "Always use eager loading or explicit batch queries"
+      occurrences: 6
+      last_flagged: "2025-03-15"

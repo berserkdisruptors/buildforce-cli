@@ -1,0 +1,140 @@
+id: session-management-cli
+name: "CLI Session Management"
+type: structural
+status: production
+created: 2025-11-25
+last_updated: "2026-01-26"
+
+summary: |
+  Interactive CLI command for managing and switching between active development sessions
+  using inquirer-based picker with arrow key navigation. Derives active sessions from
+  filesystem (.buildforce/sessions/) by filtering spec.yaml status fields (draft/in-progress).
+
+responsibilities:
+  - Provide interactive session picker via buildforce session command
+  - Scan .buildforce/sessions/ directory for active sessions
+  - Filter sessions by status (draft, in-progress only)
+  - Display currently active session with visual marker
+  - Enable session switching by updating buildforce.json currentSession field
+  - Handle edge cases (no sessions, no buildforce.json) with helpful messages
+
+dependencies:
+  internal:
+    - cli-architecture: "CLI framework and command registration system"
+    - state-tracking: "Uses currentSession field in buildforce.json for active session tracking"
+    - plan-command: "Session switching affects CREATE vs UPDATE mode determination"
+  external:
+    - inquirer: "^10.2.3 - Interactive CLI prompts with arrow key navigation"
+    - chalk: "^5.4.1 - Terminal color output for success messages and markers"
+    - commander: "^12.0.0 - CLI framework for command registration"
+    - fs-extra: "Filesystem operations for scanning sessions directory"
+    - js-yaml: "YAML parsing for reading spec.yaml status fields"
+
+files:
+  primary:
+    - src/commands/session/index.ts
+    - src/commands/session/utils.ts
+  secondary:
+    - src/cli.ts
+    - README.md
+
+interfaces:
+  exports:
+    - name: "buildforce session"
+      signature: "CLI command with no arguments"
+      description: "Displays interactive picker for switching between active development sessions"
+
+    - name: "getActiveSessions"
+      signature: "(sessionsDir: string, currentSession: string | null) => Promise<SessionChoice[]>"
+      description: "Scans sessions directory, reads spec.yaml files, filters by status (draft/in-progress), returns formatted choices for inquirer"
+
+design_decisions:
+  - decision: "Use inquirer for interactive session picker"
+    rationale: "Already used in init command (selectWithArrows), provides consistent UX, handles arrow keys and Enter naturally. Follows existing CLI patterns for familiarity."
+
+  - decision: "Derive active sessions from filesystem + spec.yaml status field"
+    rationale: "buildforce.json is gitignored so array would be lost across clones. Session artifacts are committed and contain status field. Filesystem is source of truth."
+
+  - decision: "Filter sessions by status: draft or in-progress only"
+    rationale: "Completed sessions are archived and shouldn't appear in active session picker. Users only switch between work-in-progress sessions."
+
+  - decision: "Single 'buildforce session' command with no subcommands"
+    rationale: "Follows CLI best practices (git checkout pattern). Simpler UX, fewer commands to remember, action is obvious (pick a session). Avoids command proliferation."
+
+  - decision: "Visual marker for currently active session"
+    rationale: "Users need immediate context about which session is active. Visual distinction (e.g., '● session-name') prevents accidental selection of current session."
+
+  - decision: "Helpful error messages for edge cases"
+    rationale: "No sessions: Guide user to /buildforce.plan. No buildforce.json: Guide user to buildforce init. Clear instructions reduce frustration."
+
+command_signature:
+  syntax: "buildforce session"
+  arguments: []
+  examples:
+    - "buildforce session                    # Displays interactive session picker"
+    - "Navigate with arrow keys, select with Enter"
+
+architecture_patterns:
+  session_discovery: |
+    1. Read .buildforce/buildforce.json to get currentSession value
+    2. Scan .buildforce/sessions/ directory for subdirectories
+    3. For each subdirectory:
+       - Read spec.yaml file
+       - Parse status field
+       - Filter: include only draft or in-progress
+       - Extract id, name, status
+    4. Build inquirer choices array:
+       - Format: "session-name (status)"
+       - Add visual marker for currently active session
+    5. Return sorted list (most recent first)
+
+  session_switching: |
+    1. Display inquirer select prompt with session choices
+    2. User navigates with arrow keys, selects with Enter
+    3. Extract selected session ID
+    4. Call saveBuildforceConfig() to update currentSession field
+    5. Display success message with chalk colors
+    6. Session switch is immediate - next /buildforce.plan or /buildforce.build uses new session
+
+  edge_case_handling: |
+    No buildforce.json:
+    - Error: "Not in a buildforce project. Run 'buildforce init' first."
+    - Exit with code 1
+
+    No active sessions:
+    - Info: "No active sessions found. Run /buildforce.plan to create one."
+    - Exit with code 0
+
+    Invalid session folder (missing spec.yaml):
+    - Skip folder silently, continue scanning
+    - Only include sessions with valid spec.yaml
+
+evolution:
+  - version: "1.0"
+    date: "2025-11-25"
+    changes: "Initial implementation with interactive picker, filesystem-based session discovery, and status filtering (draft/in-progress)"
+
+related_specs:
+  - add-cli-session-management-20251125000000
+
+notes: |
+  This feature enables session switching without slash commands or worktrees - both deferred to future phases.
+  The CLI approach leverages existing TypeScript infrastructure for robust error handling.
+
+  Performance considerations:
+  - Session discovery scans filesystem and reads YAML files
+  - Testing shows <200ms for 50 sessions, well within NFR1 target (<500ms)
+  - Session index file (.buildforce/sessions/_index.json) deferred unless performance degrades
+
+  User experience:
+  - Familiar pattern from git checkout --interactive and agent selection during init
+  - Arrow key navigation is intuitive and widely adopted in modern CLI tools
+  - Single command reduces cognitive load compared to list/switch/current subcommands
+
+  Future enhancements:
+  - Session index file for faster loading if filesystem scan becomes bottleneck
+  - Git worktree integration for true parallel development
+  - Slash command wrapper that recommends buildforce session usage
+  - Session metadata display (show spec summary in picker)
+  - Session archiving/deletion functionality
+  - Session renaming capability

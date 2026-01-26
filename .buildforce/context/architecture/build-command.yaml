@@ -1,0 +1,238 @@
+id: build-command
+name: "Iterate and Complete /build Slash Command"
+type: structural
+status: completed
+created: 2025-10-08
+last_updated: "2026-01-26"
+
+summary: |
+  The /build slash command with dual-mode operation: Full Workflow Mode (with active session) and
+  Standalone Mode (no session). Full Workflow Mode follows spec/plan files with progress tracking,
+  deviation logging, and validation. Standalone Mode enables quick ad-hoc implementations with
+  exploration, planning, confirmation, and optional context creation - preserving buildforce benefits
+  without requiring the full spec-driven workflow.
+
+  Key innovation: Automatic mode detection based on SPEC_DIR state - same command, intelligent behavior.
+
+responsibilities:
+  full_workflow_mode:
+    - Execute script-based SPEC_DIR discovery using get-spec-paths.sh --json
+    - Load spec.yaml, plan.yaml, and research.yaml (if exists) from SPEC_DIR
+    - Track progress via task checkboxes in plan.yaml
+    - Log deviations in Original → Actual → Reason format
+    - Validate against both spec requirements AND plan steps
+    - Check _guidelines.yaml compliance (strict/recommended enforcement)
+    - Provide testing guidance with PR-submission mindset
+    - Support iterative refinement across multiple /build invocations
+    - Update status from draft to in-progress on first build
+
+  standalone_mode:
+    - Activate automatically when SPEC_DIR is empty (no active session)
+    - Display mode indicator for user visibility
+    - Prompt for goal if $ARGUMENTS is empty
+    - Perform quick codebase exploration to identify affected files
+    - Present simple plan (Goal, Files, Approach, Risks) before implementation
+    - Ask clarifying questions only if ambiguity is high (max 2)
+    - Request user confirmation before proceeding
+    - Apply _guidelines.yaml compliance during implementation
+    - Present structured summary with testing guidance
+    - Create context file if change is significant (agent-determined)
+
+dependencies:
+  internal:
+    - slash-commands: "Part of 5-command spec-driven workflow (SPEC, RESEARCH, PLAN, BUILD, COMPLETE)"
+    - research-slash-command: "Used as structural template for compact guideline format (28 lines)"
+    - get-spec-paths.sh: "Script for reliable FEATURE_DIR discovery and file verification"
+    - research-persistence: "Loads research.yaml alongside spec.yaml and plan.yaml for implementation context"
+  external:
+    - None (instruction template for Claude Code agents)
+
+files:
+  primary:
+    - src/templates/commands/build.md (rewritten from 116 to 29 lines)
+  secondary:
+    - .buildforce/specs/002-build-command/spec.yaml (spec defining requirements)
+    - .buildforce/specs/002-build-command/plan.yaml (plan detailing implementation steps)
+    - src/scripts/bash/get-spec-paths.sh (executed for FEATURE_DIR discovery)
+
+command_signature:
+  syntax: "/build [instructions]"
+  arguments:
+    - name: "instructions"
+      type: "string"
+      required: false
+      description: "Implementation goal (standalone mode) or iteration-specific instructions (full mode)"
+  examples:
+    full_workflow_mode:
+      - "/build"
+      - "/build change axios to fetch for HTTP requests"
+      - "/build add validation for empty email input"
+    standalone_mode:
+      - "/build add logging to the init command"
+      - "/build fix the typo in the error message"
+      - "/build add retry logic to API calls"
+
+key_guidelines:
+  mode_detection:
+    - name: "Script Execution & Mode Detection"
+      priority: 1
+      description: "Run get-spec-paths.sh --json, parse SPEC_DIR. If empty → Standalone Mode (S1-S7). If path → Full Workflow Mode (2-8)."
+
+  standalone_mode:
+    - name: "S1. Quick Exploration"
+      description: "Search for affected files, assess impact level. Suggest /buildforce.spec for complex changes."
+    - name: "S2. Present Plan"
+      description: "Show Goal, Files to Modify, Approach, Risks before implementing."
+    - name: "S3. Clarify if Ambiguous"
+      description: "Ask up to 2 questions if multiple approaches exist. Skip if clear."
+    - name: "S4. Confirm (MANDATORY)"
+      description: "ALWAYS request user confirmation and WAIT for response. NEVER proceed without explicit confirmation."
+    - name: "S5. Implement"
+      description: "Execute plan with guideline #8 compliance."
+    - name: "S6. Present Summary"
+      description: "Show Goal, Approach, Files Changed, Deviations, Testing, Context Updated."
+    - name: "S7. Update Context Repository"
+      description: "Create context file if change is significant (new pattern, module, architecture)."
+
+  full_workflow_mode:
+    - name: "Progress Tracking"
+      priority: 2
+      description: "Update task checkboxes in plan as work progresses."
+    - name: "Follow the Plan"
+      priority: 3
+      description: "Execute steps sequentially. Parse $ARGUMENTS for iteration instructions."
+    - name: "Deviation Logging"
+      priority: 4
+      description: "Log in plan.yaml: Original → Actual → Reason format."
+    - name: "Validate Against Spec & Plan"
+      priority: 5
+      description: "Cross-check against BOTH spec requirements AND plan steps."
+    - name: "Code Quality & Testing Guidance"
+      priority: 6
+      description: "Verify code compiles, run tests, provide testing guidance."
+    - name: "Iterative Refinement"
+      priority: 7
+      description: "Support multiple /build iterations with deviation tracking."
+    - name: "Guideline Compliance Validation"
+      priority: 8
+      description: "Check code against _guidelines.yaml (strict/recommended enforcement)."
+
+design_decisions:
+  - decision: "Automatic mode detection based on SPEC_DIR state"
+    rationale: "Same command with intelligent behavior. No flags required. Lower friction for quick tasks while preserving full workflow for complex features."
+
+  - decision: "Standalone mode activates when SPEC_DIR is empty"
+    rationale: "Natural branching point - SPEC_DIR empty means no active session. Agent infers user intent from context rather than requiring explicit mode selection."
+
+  - decision: "S1-S7 guidelines for standalone mode"
+    rationale: "Clear separation between standalone (S1-S7) and full mode (2-8). Preserves buildforce benefits (explore → plan → implement → document) in compressed form."
+
+  - decision: "Agent-determined context creation"
+    rationale: "Avoids context bloat from trivial changes. Agent has full visibility of changes and applies significance heuristics (new patterns, modules, >3 files)."
+
+  - decision: "Suggest but don't block for complex changes"
+    rationale: "Users know their codebase best. Agent suggests /buildforce.spec for complex changes but allows ad-hoc if user prefers. Preserves flexibility."
+
+  - decision: "Script-based SPEC_DIR discovery using get-spec-paths.sh"
+    rationale: "Reliable absolute paths. Script verifies files exist. Same detection mechanism supports mode branching."
+
+  - decision: "Dual validation (spec + plan) in full mode"
+    rationale: "Ensures implementation meets requirements AND follows planned approach (or logs deviations)."
+
+  - decision: "Testing guidance with PR mindset"
+    rationale: "Agents should verify code quality like submitting a PR. User tests after agent ensures nothing obviously broken."
+
+  - decision: "Shared guideline #8 compliance for both modes"
+    rationale: "Project guidelines should apply regardless of mode. Code quality is mode-independent."
+
+standalone_mode:
+  trigger: "SPEC_DIR is empty (no active session)"
+  flow: "Explore → Plan → Clarify (optional) → Confirm → Implement → Summarize → Context (optional)"
+  guidelines: "S1-S7"
+  context_creation:
+    create_when:
+      - "New pattern introduced (e.g., retry logic, validation approach)"
+      - "New module/component created"
+      - "Architectural change made"
+      - "External integration added"
+      - ">3 files modified cohesively"
+    skip_for:
+      - "Typo fixes"
+      - "Single-line bug fixes"
+      - "Import reordering"
+      - "Comment updates"
+      - "Formatting changes"
+  summary_format:
+    - "Goal: [what was implemented]"
+    - "Approach: [how it was done]"
+    - "Files Changed: [list with descriptions]"
+    - "Deviations: [changes from plan, or None]"
+    - "Testing: [what to verify]"
+    - "Context Updated: [Yes/No - file name]"
+
+full_workflow_mode:
+  trigger: "SPEC_DIR contains path (active session)"
+  flow: "Load artifacts → Track progress → Follow plan → Log deviations → Validate → Test guidance"
+  guidelines: "2-8"
+  iteration_workflow:
+    first_iteration:
+      trigger: "No $ARGUMENTS or initial implementation request"
+      action: "Execute plan from beginning, track progress, log deviations"
+      output: "Implementation + deviation log + testing guidance"
+    subsequent_iterations:
+      trigger: "$ARGUMENTS contains refinement instructions"
+      action: "Parse instructions, apply changes, track deviations"
+      output: "Updated implementation + cumulative deviation log + testing guidance"
+
+script_execution_details:
+  script_path: ".buildforce/scripts/bash/get-spec-paths.sh"
+  flags: "--json"
+  json_response_format: |
+    {
+      "SPEC_DIR": "/absolute/path/to/.buildforce/specs/002-build-command"
+    }
+  usage: "Execute script, parse JSON, extract SPEC_DIR, load spec.yaml and plan.yaml from SPEC_DIR"
+  verification: "Script verifies spec.yaml and plan.yaml exist before returning (exits with error if missing)"
+
+evolution:
+  - version: "1.0"
+    date: "2025-10-08"
+    changes: "Initial 116-line verbose BUILD command with 10 execution steps + 11 behavior rules"
+  - version: "2.0"
+    date: "2025-10-09"
+    changes: "Compressed to 29 lines with 7 guidelines, script-based discovery, dual validation, testing guidance. 75% reduction achieved."
+  - version: "3.0"
+    date: "2025-10-28"
+    changes: "Added research persistence integration. Updated guideline 1 (Script Execution & Context Loading) to load research.yaml alongside spec.yaml and plan.yaml. Template increased from 29 to 41 lines. research.yaml provides implementation context: file paths, mermaid diagrams, data models, code snippets, architectural decisions, TLDR."
+  - version: "4.0"
+    date: "2025-11-21"
+    changes: "Added status lifecycle management. Extended guideline #1 to update status field from draft→in-progress and last_updated field after loading spec/plan artifacts. Update only occurs if status is draft (supports multiple build iterations). Template increased from 41 to 43 lines (2-line addition)."
+  - version: "5.0"
+    date: "2025-12-02"
+    changes: "Added Standalone Mode for ad-hoc implementations. Dual-mode operation: Full Workflow Mode (with active session, guidelines 2-8) and Standalone Mode (no session, guidelines S1-S7). Standalone mode provides quick explore → plan → confirm → implement → summarize flow with optional context creation. Same command, intelligent mode detection based on SPEC_DIR state. Template increased from 43 to ~90 lines."
+
+related_specs:
+  - "build-command-20250102120000"
+  - "slash-commands-20250101120000 (context for 5-command workflow)"
+  - "research-persistence-intelligent-20251027213207"
+  - "add-status-lifecycle-updates-20251121140000"
+  - "standalone-build-mode-20251202174500"
+
+notes: |
+  Dual-mode build command that adapts to context. Full Workflow Mode for spec-driven development,
+  Standalone Mode for quick ad-hoc implementations.
+
+  Key capabilities:
+  - Automatic mode detection based on SPEC_DIR state (no flags required)
+  - Full Workflow Mode: progress tracking, deviation logging, dual validation, testing guidance
+  - Standalone Mode: quick explore → plan → confirm → implement → summarize flow
+  - Shared _guidelines.yaml compliance checking across both modes
+  - Agent-determined context creation for significant standalone changes
+
+  Standalone Mode benefits:
+  - Preserves buildforce approach (explore, plan, implement, document) in compressed form
+  - Enables quick changes without full spec-driven ceremony
+  - Suggests (but doesn't block) full workflow for complex changes
+  - Creates context files for patterns/modules worth preserving
+
+  Design principle: "Same command, intelligent behavior based on context"
