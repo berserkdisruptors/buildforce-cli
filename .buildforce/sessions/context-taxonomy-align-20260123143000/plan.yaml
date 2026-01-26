@@ -370,7 +370,7 @@ phase_4:
     - [x] Version check correctly identifies 1.0 vs 2.0
     - [x] Migration creates new folder structure (architecture/, conventions/, verification/)
     - [x] Migration is idempotent (running twice doesn't duplicate)
-    - [x] Migration is additive (old files preserved via backup)
+    - [x] Migration is clean (original _guidelines.yaml deleted after successful conversion)
     - [x] Migration failures don't break upgrade command
     - [x] Spec requirements covered: [FR16, FR17, FR18, NFR3]
 
@@ -389,6 +389,13 @@ deviations:
     original: "Automatically migrate existing context files to architecture/ with type conversion"
     actual: "Simplified to folder/schema creation only"
     reason: "Users with existing context will migrate manually or via /buildforce.complete. Architecture context migration is less critical than guidelines breakdown since context files are project-specific."
+
+  - phase: "phase_4"
+    task: "Remove backup file creation and delete original _guidelines.yaml"
+    original: "Migration is additive - creates backup files (_guidelines.yaml.v1.bak, _index.yaml.v1.bak)"
+    actual: "Migration now deletes original _guidelines.yaml after successful conversion, no .bak files created"
+    reason: "User requested 100% confidence in migration with no backup files. Migration should be clean and deterministic."
+    resolution_date: "2026-01-26"
 
 # CONVENTION COMPLIANCE
 # Track validation results for strict and recommended enforcement levels

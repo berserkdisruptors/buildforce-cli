@@ -528,23 +528,13 @@ export async function migrateContextStructure(
         result.errors.push(...guidelinesResult.errors);
       }
 
-      // Backup the old _guidelines.yaml (don't delete it)
-      const backupPath = path.join(contextPath, "_guidelines.yaml.v1.bak");
-      if (!(await fs.pathExists(backupPath))) {
-        await fs.copy(guidelinesPath, backupPath);
-        result.actions.push("Backed up _guidelines.yaml to _guidelines.yaml.v1.bak");
+      // Delete original _guidelines.yaml after successful migration
+      if (guidelinesResult.files.length > 0) {
+        await fs.remove(guidelinesPath);
+        result.actions.push("Deleted original _guidelines.yaml after successful migration");
       }
     } else {
       result.actions.push("No _guidelines.yaml found to migrate");
-    }
-
-    // Backup and update root _index.yaml
-    if (await fs.pathExists(rootIndexPath)) {
-      const backupPath = path.join(contextPath, "_index.yaml.v1.bak");
-      if (!(await fs.pathExists(backupPath))) {
-        await fs.copy(rootIndexPath, backupPath);
-        result.actions.push("Backed up _index.yaml to _index.yaml.v1.bak");
-      }
     }
 
     // Copy new root _index.yaml from template
