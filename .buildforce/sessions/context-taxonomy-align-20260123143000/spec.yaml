@@ -2,7 +2,7 @@ version: "0.0.40"
 id: context-taxonomy-align-20260123143000
 name: "Context Taxonomy Alignment"
 type: feature
-status: in-progress
+status: completed
 created: "2026-01-23"
 last_updated: "2026-01-26"
 

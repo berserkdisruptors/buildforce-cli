@@ -3,7 +3,7 @@ name: Buildforce CLI Architecture
 type: module
 status: production
 created: 2025-10-27
-last_updated: 2025-12-01
+last_updated: 2026-01-26
 
 summary: |
   Comprehensive architecture of the Buildforce CLI tool - a Node.js-based command-line
@@ -53,6 +53,7 @@ files:
     - src/commands/upgrade/index.ts
     - src/commands/upgrade/validation.ts
     - src/commands/upgrade/execution.ts
+    - src/commands/upgrade/context-migration.ts
     - src/commands/session/index.ts
     - src/commands/session/utils.ts
     - src/lib/github.ts
@@ -60,6 +61,13 @@ files:
     - src/lib/local-artifacts.ts
     - src/lib/step-tracker.ts
     - src/config/agents.ts
+    - src/context/_index.yaml
+    - src/context/architecture/_index.yaml
+    - src/context/architecture/_schema.yaml
+    - src/context/conventions/_index.yaml
+    - src/context/conventions/_schema.yaml
+    - src/context/verification/_index.yaml
+    - src/context/verification/_schema.yaml
     - .github/workflows/scripts/create-release-packages.sh
   secondary:
     - src/commands/init/validation.ts
@@ -236,29 +244,71 @@ architecture_patterns:
     5. Clean up temp files
 
   context_management: |
-    Directory Structure:
+    Directory Structure (v2.0 - Context Taxonomy):
     .buildforce/context/
-      ├── _index.yaml - Central registry
-      ├── _schema.yaml - Field definitions
-      └── *.yaml - Context files
+      ├── _index.yaml - Directory of context type folders (v2.0)
+      ├── architecture/
+      │   ├── _index.yaml - Architecture context registry
+      │   ├── _schema.yaml - Field definitions for structural context
+      │   └── *.yaml - Architecture context files (type: structural)
+      ├── conventions/
+      │   ├── _index.yaml - Convention context registry
+      │   ├── _schema.yaml - Field definitions for convention context
+      │   └── *.yaml - Convention context files (type: convention)
+      └── verification/
+          ├── _index.yaml - Verification context registry
+          ├── _schema.yaml - Field definitions for verification context
+          └── *.yaml - Verification context files (type: verification)
 
-    Index Structure (_index.yaml):
-    - id: kebab-case unique identifier
-    - file: filename (matches id + .yaml)
-    - type: module | feature | component | pattern
-    - description: one-liner (max 100 chars)
-    - tags: searchable keywords
-    - related_context: cross-reference array (optional)
+    Context Taxonomy Pillars:
+    1. ARCHITECTURE (architecture/): WHAT exists already?
+       - Contains structural understanding of modules, features, and components
+       - All entries use type: "structural" (replaces legacy module/feature/component/pattern)
+       - Created by: /buildforce.complete
+       - Used by: /buildforce.research, /buildforce.plan, /buildforce.build
 
-    Context File Structure:
-    - id, name, type, status
+    2. CONVENTIONS (conventions/): HOW do we do things here?
+       - Contains coding standards, patterns, and practices
+       - All entries use type: "convention" with sub_type field
+       - sub_type values: architectural-pattern, code-convention, naming-convention,
+         testing-standard, dependency-rule, security-requirement, performance-guideline,
+         accessibility-standard, project-quirk
+       - enforcement levels: strict | recommended | reference
+       - Created by: /buildforce.document conventions, /buildforce.complete (auto-detection)
+       - Used by: /buildforce.build (validation)
+
+    3. VERIFICATION (verification/): HOW do I know it's right?
+       - Contains quality standards, test expectations, review checklists, known risks
+       - All entries use type: "verification" with source field (mined | manual | hybrid)
+       - Created by: PR mining GitHub Actions, manual documentation
+       - Used by: /buildforce.build (self-review), PR Review Actions
+
+    Root Index Structure (_index.yaml v2.0):
+    - version: "2.0"
+    - context_types: Object pointing to type folders
+      - architecture: {path, description, index_file, schema_file}
+      - conventions: {path, description, index_file, schema_file}
+      - verification: {path, description, index_file, schema_file}
+
+    Architecture Context File Structure:
+    - id, name (required)
+    - type: "structural" (fixed value)
+    - status: in-development | production | deprecated
     - created, last_updated
     - summary, responsibilities
     - dependencies (internal/external)
     - files (primary/secondary)
     - interfaces (exports)
     - evolution (version history)
-    - notes (additional context)
+    - design_decisions, related_specs, notes
+
+    Migration (v1.0 → v2.0):
+    - Handled by context-migration.ts during buildforce upgrade
+    - Version check: reads root _index.yaml version (1.0 → migrate, 2.0 → skip)
+    - Migrates existing context files to architecture/ with type="structural"
+    - Migrates _guidelines.yaml to individual convention files with type="convention"
+    - Copies schema/index files from templates to all type folders
+    - Clean migration: deletes original files after successful copy
 
   agent_configuration: |
     Supported Assistants (11+):
@@ -433,6 +483,10 @@ evolution:
     date: "2025-12-01"
     changes: "Extended .gitignore update logic in init command to include .buildforce/.temp entry for temporary file exclusion. Init now adds both .buildforce/buildforce.json and .buildforce/.temp with idempotent checks to prevent duplication. Includes debug logging for transparency. Upgrade command also updated to add .temp entry during upgrade process."
 
+  - version: "2.1"
+    date: "2026-01-26"
+    changes: "Implemented Context Taxonomy Alignment - restructured context repository to use three folders (architecture/, conventions/, verification/) aligned with context taxonomy pillars. Renamed 'guidelines' to 'conventions' throughout codebase. Added version-based migration system in context-migration.ts. Updated all slash command templates. Root _index.yaml now points to context type folders (v2.0 format). Created comprehensive schemas for each context type with type fields (structural, convention, verification)."
+
 related_specs:
   - "standardize-cli-title-display-20250130220000"
   - "standardize-color-scheme-mint-20251031011544"
@@ -443,6 +497,7 @@ related_specs:
   - "rename-specs-to-sessions-20251121160000"
   - "add-cli-session-management-20251125000000"
   - "add-temp-folder-gitignore-upgrade-20251201000000"
+  - "context-taxonomy-align-20260123143000"
 
 notes: |
   Key architectural strengths:
