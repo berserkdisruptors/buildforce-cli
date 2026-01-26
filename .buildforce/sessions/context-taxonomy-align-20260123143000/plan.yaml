@@ -479,6 +479,13 @@ deviations:
     reason: "Initial implementation marked as deviation, but full migration is required per FR19. Phase 5 addresses this gap with complete implementation."
     resolution_date: "2026-01-26"
 
+  - phase: "phase_5"
+    task: "Context file migration - file extension and formatting"
+    original: "Migration only handled .yaml files and used YAML.stringify() which stripped blank lines"
+    actual: "RESOLVED - Extended to handle both .yaml and .yml extensions, use regex replacement to preserve original formatting"
+    reason: "User testing revealed 3 .yml files left behind and reformatted YAML losing blank lines between sections. Fixed to preserve 1:1 formatting."
+    resolution_date: "2026-01-26"
+
 # CONVENTION COMPLIANCE
 # Track validation results for strict and recommended enforcement levels
 # This section is populated during /buildforce.build when .buildforce/context/conventions/ exists

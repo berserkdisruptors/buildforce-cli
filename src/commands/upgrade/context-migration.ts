@@ -405,6 +405,7 @@ interface NewArchitectureEntry {
 /**
  * Migrate existing context files from root context/ to architecture/
  * Converts type field to "structural" for all files
+ * Preserves original YAML formatting (blank lines, comments, structure)
  */
 export async function migrateContextFilesToArchitecture(
   contextPath: string,
@@ -414,11 +415,11 @@ export async function migrateContextFilesToArchitecture(
   const result = { files: [] as string[], errors: [] as string[] };
 
   try {
-    // Get all .yaml files in root context/ directory
+    // Get all .yaml and .yml files in root context/ directory
     const items = await fs.readdir(contextPath);
     const contextFiles = items.filter((item) => {
-      // Only .yaml files, exclude special files and directories
-      if (!item.endsWith(".yaml")) return false;
+      // Include both .yaml and .yml files, exclude special files and directories
+      if (!item.endsWith(".yaml") && !item.endsWith(".yml")) return false;
       if (item.startsWith("_")) return false; // Skip _index.yaml, _schema.yaml, _graph.yaml, _guidelines.yaml
       return true;
     });
@@ -439,28 +440,35 @@ export async function migrateContextFilesToArchitecture(
         }
 
         // Read the file content
-        const content = await fs.readFile(sourcePath, "utf8");
+        let content = await fs.readFile(sourcePath, "utf8");
+
+        // Verify it's valid YAML before modifying
         const parsed = YAML.parse(content);
-
-        if (parsed && typeof parsed === "object") {
-          // Update type to "structural" and last_updated date
-          parsed.type = "structural";
-          parsed.last_updated = todayDate;
-
-          // Write to architecture/ folder
-          const yamlContent = YAML.stringify(parsed, {
-            lineWidth: 100,
-            defaultKeyType: "PLAIN",
-          });
-          await fs.writeFile(destPath, yamlContent, "utf8");
-
-          // Delete the original file after successful copy
-          await fs.remove(sourcePath);
-
-          result.files.push(filename);
-        } else {
+        if (!parsed || typeof parsed !== "object") {
           result.errors.push(`Invalid YAML structure in ${filename}`);
+          continue;
         }
+
+        // Use regex to update type field while preserving formatting
+        // Match type: followed by any value (quoted or unquoted)
+        const typeRegex = /^(type:\s*)(?:"[^"]*"|'[^']*'|\S+)(\s*)$/m;
+        if (typeRegex.test(content)) {
+          content = content.replace(typeRegex, `$1structural$2`);
+        }
+
+        // Update last_updated field while preserving formatting
+        const lastUpdatedRegex = /^(last_updated:\s*)(?:"[^"]*"|'[^']*'|\S+)(\s*)$/m;
+        if (lastUpdatedRegex.test(content)) {
+          content = content.replace(lastUpdatedRegex, `$1"${todayDate}"$2`);
+        }
+
+        // Write to architecture/ folder (preserving original formatting)
+        await fs.writeFile(destPath, content, "utf8");
+
+        // Delete the original file after successful copy
+        await fs.remove(sourcePath);
+
+        result.files.push(filename);
       } catch (e: any) {
         result.errors.push(`Error migrating ${filename}: ${e.message}`);
       }
