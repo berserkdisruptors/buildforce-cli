@@ -1,5 +1,5 @@
 ---
-version: "0.0.40"
+version: "0.0.41"
 description: Create or update a structured specification (spec.yaml) and implementation plan (plan.yaml) that capture WHAT needs to be built and HOW to build it.
 scripts:
   sh: bash src/scripts/bash/create-session-files.sh --folder-name "{FOLDER_NAME}" --json

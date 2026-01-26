@@ -10,6 +10,7 @@ import { sessionCommand } from "./commands/session/index.js";
 import { generateBanner } from "./lib/interactive.js";
 import { MINT_COLOR, TAGLINE } from "./constants.js";
 import { createBox } from "./utils/box.js";
+import { getPackageVersion } from "./utils/package-info.js";
 
 const program = new Command();
 
@@ -17,7 +18,7 @@ program
   .name("buildforce")
   .usage("[command] [options]")
   .description(TAGLINE)
-  .version("1.0.0")
+  .version(getPackageVersion())
   .enablePositionalOptions();
 
 // --- Custom help formatting -------------------------------------------------
