@@ -1,5 +1,5 @@
 ---
-version: "0.0.40"
+version: "0.0.41"
 description: Create or update context files for existing functionality without requiring a spec-driven development session.
 ---
 
