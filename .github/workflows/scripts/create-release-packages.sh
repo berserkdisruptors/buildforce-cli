@@ -42,12 +42,23 @@ generate_commands() {
   mkdir -p "$output_dir"
   for template in src/templates/commands/*.md; do
     [[ -f "$template" ]] || continue
-    local name description script_command body
+    local name description script_command body agents_field
     name=$(basename "$template" .md)
-    
+
     # Normalize line endings
     file_content=$(tr -d '\r' < "$template")
-    
+
+    # Check for agent-specific command filtering
+    # If 'agents:' field exists in frontmatter, only include if current agent is in the list
+    agents_field=$(printf '%s\n' "$file_content" | awk '/^agents:/ {sub(/^agents:[[:space:]]*/, ""); print; exit}' 2>/dev/null || true)
+    if [[ -n "$agents_field" ]]; then
+      # agents_field looks like "[claude]" or "[claude, cursor]" - check if current agent is included
+      if ! echo "$agents_field" | grep -qE "(^|[\[,[:space:]])$agent([\],[:space:]]|$)"; then
+        echo "Skipping $name for $agent (agent-specific: $agents_field)"
+        continue
+      fi
+    fi
+
     # Extract description and script command from YAML frontmatter
     description=$(printf '%s\n' "$file_content" | awk '/^description:/ {sub(/^description:[[:space:]]*/, ""); print; exit}' 2>/dev/null || true)
     script_command=$(printf '%s\n' "$file_content" | awk -v sv="$script_variant" '/^[[:space:]]*'"$script_variant"':[[:space:]]*/ {sub(/^[[:space:]]*'"$script_variant"':[[:space:]]*/, ""); print; exit}' 2>/dev/null || true)
@@ -60,12 +71,13 @@ generate_commands() {
     # Replace {SCRIPT} placeholder with the script command
     body=$(printf '%s\n' "$file_content" | sed "s|{SCRIPT}|${script_command}|g")
     
-    # Remove the scripts: section from frontmatter while preserving YAML structure
+    # Remove the scripts: section and agents: field from frontmatter while preserving YAML structure
     body=$(printf '%s\n' "$body" | awk '
       /^---$/ { print; if (++dash_count == 1) in_frontmatter=1; else in_frontmatter=0; next }
       in_frontmatter && /^scripts:$/ { skip_scripts=1; next }
       in_frontmatter && /^[a-zA-Z].*:/ && skip_scripts { skip_scripts=0 }
       in_frontmatter && skip_scripts && /^[[:space:]]/ { next }
+      in_frontmatter && /^agents:/ { next }
       { print }
     ')
     
