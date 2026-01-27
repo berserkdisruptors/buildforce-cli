@@ -8,7 +8,7 @@ import { downloadTemplateFromGithub } from "../../lib/github.js";
 import { saveBuildforceConfig } from "../../utils/config.js";
 import { AGENT_FOLDER_MAP, MINT_COLOR } from "../../constants.js";
 import { resolveLocalArtifact } from "../../lib/local-artifacts.js";
-import { migrateContextStructure, migrate21 } from "./context-migration.js";
+import { createMigrationRunner } from "./migrations/registry.js";
 
 /**
  * Execute the upgrade process
@@ -303,51 +303,33 @@ export async function executeUpgrade(
         tracker.skip("replace-scripts", "no scripts in release");
       }
 
-      // Migrate context structure (v1.0 → v2.0 → v2.1)
+      // Migrate context structure using MigrationRunner
+      // The runner automatically detects current version and runs all needed migrations
       tracker.start("migrate-context");
       try {
-        const allActions: string[] = [];
-        const allErrors: string[] = [];
-        let anyMigrated = false;
+        const runner = createMigrationRunner();
+        const migrationResult = await runner.run(projectPath, firstSourceDir);
 
-        // First: v1.0 → v2.0 migration
-        const v20Result = await migrateContextStructure(projectPath, firstSourceDir);
-        if (v20Result.migrated) {
-          anyMigrated = true;
-          allActions.push(...v20Result.actions);
-        }
-        if (v20Result.errors.length > 0) {
-          allErrors.push(...v20Result.errors);
-        }
-
-        // Second: v2.0 → v2.1 migration
-        const v21Result = await migrate21(projectPath, firstSourceDir);
-        if (v21Result.migrated) {
-          anyMigrated = true;
-          allActions.push(...v21Result.actions);
-        }
-        if (v21Result.errors.length > 0) {
-          allErrors.push(...v21Result.errors);
-        }
-
-        // Report results
-        if (anyMigrated) {
-          tracker.complete("migrate-context", `${allActions.length} actions`);
-          if (debug && allActions.length > 0) {
+        if (migrationResult.migrated) {
+          const migratedVersions = migrationResult.appliedMigrations.join(" → ");
+          tracker.complete(
+            "migrate-context",
+            `${migrationResult.fromVersion || "1.0"} → ${migrationResult.toVersion} (${migratedVersions})`
+          );
+          if (debug && migrationResult.actions.length > 0) {
             console.log(chalk.gray("\n[DEBUG] Migration actions:"));
-            for (const action of allActions) {
-              console.log(chalk.gray(`  - ${action}`));
+            for (const action of migrationResult.actions) {
+              console.log(chalk.gray(`  ${action}`));
             }
           }
-          if (allErrors.length > 0) {
+          if (migrationResult.errors.length > 0) {
             console.log(chalk.yellow("\nMigration warnings:"));
-            for (const error of allErrors) {
+            for (const error of migrationResult.errors) {
               console.log(chalk.yellow(`  - ${error}`));
             }
           }
-        } else if (v20Result.skipped && v21Result.skipped) {
-          // Both migrations skipped - report the v2.1 status
-          tracker.skip("migrate-context", v21Result.actions[0] || "already at v2.1");
+        } else if (migrationResult.alreadyLatest) {
+          tracker.skip("migrate-context", `already at v${migrationResult.toVersion}`);
         } else {
           tracker.skip("migrate-context", "no context to migrate");
         }
