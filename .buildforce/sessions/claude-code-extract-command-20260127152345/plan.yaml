@@ -70,7 +70,7 @@ decisions:
 
 files_to_create:
   - src/templates/commands/extract.md
-  - src/context/_extraction-progress-template.yaml
+  - src/context/extraction-progress-template.yaml
 
 files_to_modify:
   - path: ".github/workflows/scripts/create-release-packages.sh"
@@ -131,9 +131,9 @@ phase_1:
       files: [src/templates/commands/extract.md]
       notes: "Verification domain mining; returns proposals"
 
-    - [x] Create _extraction-progress-template.yaml for miner coordination
+    - [x] Create extraction-progress-template.yaml for miner coordination
       spec_refs: [FR5]
-      files: [src/context/_extraction-progress-template.yaml]
+      files: [src/context/extraction-progress-template.yaml]
       notes: "Template for per-iteration mining plans"
 
   validation:
@@ -257,14 +257,45 @@ deviations:
     actual: "Sub-agents invoked via Task tool with subagent_type: Explore"
     reason: "Claude Code uses Task tool for sub-agents, not @ syntax. Updated template to reflect actual Claude Code capabilities."
 
+  - original: "Agent-specific filtering regex: grep -qE with complex pattern"
+    actual: "Agent-specific filtering: grep -qw (word boundary matching)"
+    reason: "Original regex had a bug causing extract.md to be excluded from claude packages. The complex character class pattern didn't match [claude] correctly. Fixed with simpler word boundary matching."
+
+  - original: "extraction-progress-template.yaml in src/context/"
+    actual: "extraction-progress-template.yaml moved to src/templates/"
+    reason: "User clarified the template should be in .buildforce/templates/ after upgrade, not in .buildforce/context/. Moved to src/templates/ so it gets copied to the correct location."
+
+  - original: "Minimal comments in v2.1 _index.yaml"
+    actual: "Restored full context taxonomy documentation with v2.1 coverage map section"
+    reason: "User feedback: the context taxonomy comments explaining 'why these domains?' were important documentation. Restored taxonomy overview and added new section explaining v2.1 coverage map functionality."
+
+  - original: "Sub-agent prompts embedded inline in extract.md"
+    actual: "Sub-agents in separate files: src/templates/agents/cm-{1,2,3}-*.md"
+    reason: "Claude Code sub-agents must be separate markdown files in .claude/agents/ directory with proper frontmatter (name, description, tools, model). Updated packaging script to generate agents folder for claude packages only. Each miner now has its own file with full prompt."
+
+  - original: "migrate21 sets coverage=100 for migrated entries"
+    actual: "migrate21 sets coverage=0 for all domains (unchanged from initialization)"
+    reason: "User feedback: coverage numbers should only be calculated by /buildforce.extract after analyzing the actual codebase. Migrated entries are 'existing context' but don't represent codebase coverage. Removed the artificial 100% coverage assignment for domains with items."
+
+  - original: "Hardcoded migrations in context-migration.ts with manual orchestration in execution.ts"
+    actual: "MigrationRunner pattern with separate migration files (v2.0.ts, v2.1.ts) and registry"
+    reason: |
+      User feedback: The approach of adding new migrate functions and manually chaining them in execution.ts was 'ugly' and not scalable.
+      Refactored to use a database-migration-inspired pattern:
+      - MigrationRunner class that detects current version and runs all needed migrations sequentially
+      - Each migration in its own file with standard Migration interface (version, description, execute)
+      - Registry file that imports and registers all migrations in version order
+      - No tracking table needed - just checks _index.yaml version field
+      New structure: src/commands/upgrade/migrations/{index,runner,registry,v2.0,v2.1}.ts
+
 # CONVENTION COMPLIANCE
 
 convention_compliance:
   strict_validations:
     - convention: "Template-Only Slash Commands"
       status: "✓ PASS"
-      checked_files: [src/templates/commands/extract.md]
-      notes: "Extract command implemented as markdown template, no TypeScript handlers"
+      checked_files: [src/templates/commands/extract.md, src/templates/agents/cm-1-structural.md, src/templates/agents/cm-2-convention.md, src/templates/agents/cm-3-verification.md]
+      notes: "Extract command and Context Miner sub-agents implemented as markdown templates, no TypeScript handlers"
 
     - convention: "Bash Script Context Loading"
       status: "✓ PASS"
