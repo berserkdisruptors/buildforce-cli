@@ -1253,31 +1253,17 @@ export async function migrate21(
       }
     }
 
-    // Update summary counts
+    // Update summary counts with migrated item counts
+    // NOTE: Coverage percentages are NOT calculated here - they are set to 0
+    // because coverage can only be meaningfully calculated by /buildforce.extract
+    // after analyzing the actual codebase. Migrated entries count as "existing"
+    // but don't represent coverage of the codebase.
     v21Index.summary.total_items = totalEntriesMigrated;
     v21Index.summary.extracted_items = totalEntriesMigrated;
 
-    // Calculate coverage percentages if there are items
-    const structuralItems = v21Index.domains.structural.items.length;
-    const conventionsItems = v21Index.domains.conventions.items.length;
-    const verificationItems = v21Index.domains.verification.items.length;
-
-    if (structuralItems > 0) {
-      v21Index.domains.structural.coverage = 100;
-      v21Index.domains.structural.average_depth = "shallow";
-    }
-    if (conventionsItems > 0) {
-      v21Index.domains.conventions.coverage = 100;
-      v21Index.domains.conventions.average_depth = "shallow";
-    }
-    if (verificationItems > 0) {
-      v21Index.domains.verification.coverage = 100;
-      v21Index.domains.verification.average_depth = "shallow";
-    }
-
-    if (totalEntriesMigrated > 0) {
-      v21Index.summary.overall_coverage = 100;
-    }
+    // Coverage percentages remain at 0 - will be calculated by /extract
+    // The items are migrated but coverage requires codebase analysis
+    // Domain coverage and average_depth also remain at their initial 0/"none" values
 
     // Write the updated root _index.yaml
     const yamlContent = YAML.stringify(v21Index, {
