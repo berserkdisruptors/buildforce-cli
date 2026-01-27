@@ -1,0 +1,152 @@
+version: "0.0.42"
+id: claude-code-extract-command-20260127152345
+name: "Claude Code Extract Command with Sub-Agents"
+type: feature
+status: in-progress
+created: "2026-01-27"
+last_updated: "2026-01-27"
+
+summary: |
+  Implement the /buildforce.extract command as a Claude Code-specific feature that uses sub-agents
+  (Context Miners) to iteratively extract and persist context from fresh codebases. This is the first
+  agent-specific slash command, requiring schema migration to v2.1 and updates to the release
+  packaging system.
+
+# INTENT / PROBLEM STATEMENT
+
+problem: |
+  Fresh repositories have no context repository, making it difficult for AI agents to understand
+  the codebase structure, conventions, and verification practices. Users must manually document
+  context or rely on agents' limited ability to infer patterns from code alone. The "cold start"
+  problem significantly reduces the effectiveness of spec-driven development on new projects.
+
+motivation: |
+  The /buildforce.extract command solves the cold start problem by enabling iterative, interactive
+  context extraction. Using Claude Code's unique sub-agent capability (Task tool), it can deploy
+  specialized Context Miners in parallel to extract structural, convention, and verification
+  context. This dramatically accelerates context repository population while ensuring high-quality,
+  validated context files.
+
+# GOALS
+
+primary_goals:
+  - Implement /buildforce.extract as a Claude Code-only slash command with sub-agent orchestration
+  - Create the extract.md command template with Context Manager + Miner architecture
+  - Migrate context schema from v2.0 to v2.1 with coverage map support in root _index.yaml
+  - Update release packaging to handle agent-specific commands
+
+secondary_goals:
+  - Remove deprecated domain-specific _index.yaml files (architecture/_index.yaml, etc.) via migration
+  - Consolidate context tracking into root _index.yaml as the single source of truth
+  - Enable iterative depth extraction (none → shallow → moderate → deep)
+  - Support session state preservation across /clear operations
+
+# REQUIREMENTS
+
+functional_requirements:
+  - FR1: Create src/templates/commands/extract.md as a Claude Code-specific slash command template
+  - FR2: Template must define Context Manager behavior for codebase scanning and _index.yaml management
+  - FR3: Template must define three Context Miner sub-agent prompts (cm-1-structural, cm-2-convention, cm-3-verification)
+  - FR4: First run must scan codebase and create/update _index.yaml with discovered items (status=discovered, depth=none)
+  - FR5: Subsequent runs must interpret user prompts and generate focused mining plans
+  - FR6: Miners must return proposals validated by Context Manager before writing to context files
+  - FR7: Root _index.yaml must serve as both context index AND coverage map (dual purpose)
+  - FR8: Migration from v2.0 to v2.1 must remove domain-specific _index.yaml files and migrate entries to root
+  - FR9: Release packaging must conditionally include extract.md only for Claude Code packages
+  - FR10: CLI upgrade command must detect v2.0 → v2.1 migration need and execute automatically
+  - FR11: CLI init command must create v2.1 schema for new projects
+
+non_functional_requirements:
+  - NFR1: Extract command template must be 200 lines or less (template-only constraint)
+  - NFR2: Sub-agent prompts must be self-contained and not require external context loading
+  - NFR3: Migration must be idempotent (safe to run multiple times)
+  - NFR4: Migration must preserve existing context file contents (only index structure changes)
+  - NFR5: Backward compatibility - v1.0 → v2.1 migration must work (skip intermediate v2.0 state)
+
+# SCOPE
+
+in_scope:
+  - New extract.md command template for Claude Code
+  - Context schema migration v2.0 → v2.1 in context-migration.ts
+  - Updates to create-release-packages.sh for agent-specific commands
+  - Updates to root _index.yaml template with coverage map fields
+  - Removal of domain-specific _index.yaml files from templates
+  - Updates to upgrade CLI command for v2.1 migration
+  - Updates to init CLI command for v2.1 schema
+  - New _extraction-progress.yaml template files for miner coordination
+
+out_of_scope:
+  - Implementation of extract command for other agents (gemini, cursor, etc.)
+  - GitHub Action for automated context extraction on repository events
+  - Historical context mining (WHY questions - requires PR analysis)
+  - Web-based context extraction UI
+  - Changes to existing slash commands (research, plan, build, complete, document)
+
+# DESIGN PRINCIPLES
+
+design_principles:
+  - "Template-Only Changes Preferred: Minimize TypeScript changes, maximize template intelligence"
+  - "Single Source of Truth: Root _index.yaml is THE authoritative context registry"
+  - "Idempotent Operations: All migrations and extractions must be safe to repeat"
+  - "Agent-Specific Isolation: Claude Code features don't affect other agent packages"
+  - "Progressive Disclosure: Iterative depth model allows users to control extraction scope"
+
+# ACCEPTANCE CRITERIA
+
+acceptance_criteria:
+  - AC1: /buildforce.extract command available only in Claude Code packages (not in gemini, cursor, etc.)
+  - AC2: First run creates root _index.yaml with codebase_profile and domains.*.items arrays
+  - AC3: Context Miners can be invoked via @cm-1-structural, @cm-2-convention, @cm-3-verification
+  - AC4: Running upgrade on v2.0 project migrates to v2.1 and removes architecture/_index.yaml, conventions/_index.yaml, verification/_index.yaml
+  - AC5: Running init creates v2.1 schema with unified root _index.yaml (no domain-specific indexes)
+  - AC6: Release ZIP for claude-sh contains extract.md; release ZIP for gemini-sh does not
+  - AC7: Migration from v1.0 → v2.1 works correctly (skips v2.0 intermediate state)
+
+# ASSUMPTIONS & DEPENDENCIES
+
+assumptions:
+  - Claude Code sub-agent capability (Task tool) is stable and available
+  - Users running /buildforce.extract are using Claude Code specifically
+  - Context taxonomy (architecture, conventions, verification) is finalized from PR b966dd0
+  - Domain-specific _index.yaml files have no user-specific customizations that need preservation
+
+dependencies:
+  internal:
+    - context-migration.ts: "Add v2.0 → v2.1 migration logic"
+    - create-release-packages.sh: "Add agent-specific command handling"
+    - src/templates/context/: "Update template structure for v2.1"
+  external:
+    - Claude Code: "Task tool for sub-agent spawning"
+
+# OPEN QUESTIONS (RESOLVED)
+
+open_questions: []
+
+resolved_questions:
+  - question: "Q1: Should the three Context Miners run in parallel or sequentially?"
+    answer: "Parallel execution - faster performance, Context Manager handles coordination"
+
+  - question: "Q2: What should happen if a user runs /buildforce.extract on a non-Claude agent?"
+    answer: "Command simply not available in non-Claude packages - filtered at build time"
+
+  - question: "Q3: Should _extraction-progress.yaml files be persisted or ephemeral?"
+    answer: "Ephemeral - deleted after each iteration completes"
+
+  - question: "Q4: How should conflicts be handled if a miner's proposal contradicts existing context?"
+    answer: "Context Manager responsibility - miners return proposals only, CM decides how to merge intelligently"
+
+  - question: "Q5: Should the schema version update be semantic (breaking) or minor (compatible)?"
+    answer: "Minor version 2.1 - backward compatible. Migration must handle both v1.0 → v2.1 (direct) and v2.0 → v2.1 (migrate entries from domain _index.yaml files back to root)"
+
+# NOTES
+
+notes: |
+  This is the first agent-specific feature in buildforce-cli. The pattern established here will
+  inform future agent-specific features. Key considerations:
+
+  1. Release packaging conditional logic should be clean and extensible
+  2. Migration code should handle both v1.0 → v2.1 and v2.0 → v2.1 paths
+  3. Template structure for sub-agent prompts will set precedent for future multi-agent commands
+  4. The extract command is specifically designed for Claude Code's Task tool capability
+
+  Research reference: .buildforce/sessions/claude-code-extract-command-20260127152345/research.yaml
