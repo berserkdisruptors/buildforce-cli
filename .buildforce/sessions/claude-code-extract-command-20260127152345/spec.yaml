@@ -2,9 +2,9 @@ version: "0.0.42"
 id: claude-code-extract-command-20260127152345
 name: "Claude Code Extract Command with Sub-Agents"
 type: feature
-status: in-progress
+status: completed
 created: "2026-01-27"
-last_updated: "2026-01-27"
+last_updated: "2026-01-28"
 
 summary: |
   Implement the /buildforce.extract command as a Claude Code-specific feature that uses sub-agents

@@ -3,9 +3,9 @@ id: claude-code-extract-command-20260127152345-plan
 name: "Implementation Plan for Claude Code Extract Command"
 spec_id: "claude-code-extract-command-20260127152345"
 type: implementation-plan
-status: in-progress
+status: completed
 created: "2026-01-27"
-last_updated: "2026-01-27"
+last_updated: "2026-01-28"
 
 # ARCHITECTURE OVERVIEW
 

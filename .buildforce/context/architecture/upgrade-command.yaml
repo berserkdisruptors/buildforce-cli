@@ -3,7 +3,7 @@ name: Upgrade Command
 type: structural
 status: production
 created: 2025-10-28
-last_updated: "2026-01-26"
+last_updated: "2026-01-28"
 
 summary: |
   Slash command for upgrading existing Buildforce projects to the latest templates, scripts,
@@ -45,7 +45,11 @@ files:
     - src/commands/upgrade/index.ts
     - src/commands/upgrade/validation.ts
     - src/commands/upgrade/execution.ts
+    - src/commands/upgrade/migrations/runner.ts
+    - src/commands/upgrade/migrations/registry.ts
   secondary:
+    - src/commands/upgrade/migrations/v2.0.ts
+    - src/commands/upgrade/migrations/v2.1.ts
     - src/cli.ts
     - src/utils/config.ts
     - src/types.ts
@@ -261,11 +265,16 @@ evolution:
     date: "2025-12-01"
     changes: "Added .gitignore update logic to ensure .buildforce/.temp entry is present during upgrade. Follows init's pattern with idempotent check to prevent duplication. Includes debug logging for transparency. Placed after config update step to maintain logical cohesion."
 
+  - version: "1.4"
+    date: "2026-01-28"
+    changes: "Refactored migration system to MigrationRunner pattern. Each migration now lives in its own file (migrations/v2.0.ts, migrations/v2.1.ts) with standard interface. MigrationRunner detects current version and runs all needed migrations sequentially. v2.1 migration consolidates domain-specific _index.yaml files into root _index.yaml and supports /buildforce.extract coverage map functionality."
+
 related_specs:
   - add-upgrade-command-20251027000000
   - add-local-flag-init-upgrade-20251028143052
   - upgrade-ai-prompt-20251125143052
   - add-temp-folder-gitignore-upgrade-20251201000000
+  - claude-code-extract-command-20260127152345
 
 notes: |
   The upgrade command is a critical feature for maintaining Buildforce projects over time.

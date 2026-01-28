@@ -3,12 +3,13 @@ name: "Slash Commands System"
 type: structural
 status: production
 created: "2025-01-15"
-last_updated: "2026-01-26"
+last_updated: "2026-01-28"
 
 summary: |
-  Spec-driven development workflow implemented via 4 core slash commands plus 1 utility command.
+  Spec-driven development workflow implemented via 4 core slash commands plus 2 utility commands.
   Core workflow: Research → Spec → Build → Complete lifecycle.
   Utility: Document command for creating context files without specs.
+  Utility: Extract command (Claude Code only) for bootstrapping context repositories from fresh codebases.
   Commands are instruction templates that enhance user queries with workflow-specific context.
   All commands now follow proven compact pattern with numbered guidelines and script-based discovery.
 
@@ -33,8 +34,12 @@ files:
     - src/templates/commands/build.md
     - src/templates/commands/complete.md
     - src/templates/commands/document.md
+    - src/templates/commands/extract.md
   secondary:
-    - .buildforce/context/_index.yaml (searched by RESEARCH, updated by DOCUMENT and COMPLETE)
+    - src/templates/agents/cm-1-structural.md
+    - src/templates/agents/cm-2-convention.md
+    - src/templates/agents/cm-3-verification.md
+    - .buildforce/context/_index.yaml (searched by RESEARCH, updated by DOCUMENT, COMPLETE, and EXTRACT)
 
 workflow:
   sequence:
@@ -98,6 +103,20 @@ workflow:
         - "Automatically updates related context files with cross-references"
         - "Uses 7 numbered guidelines with ALWAYS/NEVER emphasis (29 lines)"
 
+    - command: "/buildforce.extract"
+      purpose: "Bootstrap context repository from fresh codebases (Claude Code only)"
+      input: "Optional focus prompt for targeted extraction"
+      output: "Context files + _index.yaml coverage map updates"
+      key_features:
+        - "Claude Code only (uses Task tool for sub-agent spawning)"
+        - "Context Manager + Context Miners architecture"
+        - "Parallel extraction across architecture, conventions, verification domains"
+        - "Iterative depth model (none → shallow → moderate → deep)"
+        - "Miners return proposals validated by Context Manager before writing"
+        - "Root _index.yaml serves as both index AND coverage map"
+        - "Solves cold start problem for new repositories"
+        - "Template: 167 lines with embedded sub-agent prompts"
+
 design_principles:
   - "Compact but powerful: Enhance user queries without teaching build agents HOW to work"
   - "Context-first: Always search project context repository before other research"
@@ -126,11 +145,16 @@ evolution:
     date: "2025-10-10"
     changes: "Added /document utility command (29 lines) for creating context files without specs. Enables documenting existing functionality, legacy code, and architectural patterns independently of spec-driven workflow. Template-only with 7 guidelines, snake-case naming, intelligent merge, auto-detection."
 
+  - version: "2.2"
+    date: "2026-01-28"
+    changes: "Added /buildforce.extract command (Claude Code only) for bootstrapping context repositories from fresh codebases. Uses Context Manager + Context Miners sub-agent architecture with parallel extraction. Implements iterative depth model and coverage map in _index.yaml. First agent-specific slash command."
+
 related_specs:
   - "slash-commands-20250101120000 (initial system design)"
   - "build-command-20250102120000 (BUILD command implementation)"
   - "plan-template-20250103120000 (enhanced plan template)"
   - "new-document-slash-20250105120000 (DOCUMENT command implementation)"
+  - "claude-code-extract-command-20260127152345 (EXTRACT command implementation)"
 
 notes: |
   Key innovation: .buildforce/context repository as primary knowledge source.
