@@ -13,17 +13,17 @@ $ARGUMENTS
 
 **Key guidelines**:
 
-1. **Project Context Search**: **ALWAYS start here.** Read `.buildforce/context/_index.yaml` FROM CURRENT WORKING DIRECTORY AND NEVER FROM SOMEWHERE ELSE! This file points to three context type directories:
-   - **architecture/**: Structural context about WHAT exists (modules, features, components)
-   - **conventions/**: Convention context about HOW things are done (coding standards, patterns)
-   - **verification/**: Verification context about HOW to know if code is right (quality standards, known risks)
+1. **Project Context Search**: **ALWAYS start here.** Read `.buildforce/context/_index.yaml` FROM CURRENT WORKING DIRECTORY AND NEVER FROM SOMEWHERE ELSE! This unified index contains all context entries organized by domain:
+   - **domains.architecture.items[]**: Structural context about WHAT exists (modules, features, components) - files in `architecture/`
+   - **domains.conventions.items[]**: Convention context about HOW things are done (coding standards, patterns) - files in `conventions/`
+   - **domains.verification.items[]**: Verification context about HOW to know if code is right (quality standards, known risks) - files in `verification/`
 
-   Navigate to the appropriate context type directory based on your research query:
-   - For architecture/structure questions → read `architecture/_index.yaml` and relevant context files
-   - For coding standards/patterns → read `conventions/_index.yaml` and relevant convention files
-   - For quality/testing standards → read `verification/_index.yaml` (if exists) and relevant files
+   Navigate to the appropriate domain based on your research query:
+   - For architecture/structure questions → search `domains.architecture.items` for relevant entries, then read context files from `architecture/`
+   - For coding standards/patterns → search `domains.conventions.items` for relevant entries, then read context files from `conventions/`
+   - For quality/testing standards → search `domains.verification.items` for relevant entries, then read context files from `verification/`
 
-   This index contains references to accumulated knowledge from all completed spec-driven development sessions. Search the appropriate index to find relevant context file paths, then read those specific context files and load them into the context window. This is your primary source of truth about the project's architecture, patterns, and decisions.
+   This index contains references to accumulated knowledge from all completed spec-driven development sessions. Search the appropriate domain's items array to find relevant context file paths, then read those specific context files and load them into the context window. This is your primary source of truth about the project's architecture, patterns, and decisions.
 
 2. **Recency awareness**: If the query contains words like "current", "latest", "recent", "modern", "best practices", "2024", "2025", or "up-to-date", use web search to fetch current information—do not rely solely on training data.
 

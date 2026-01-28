@@ -34,7 +34,7 @@ First, determine which mode to use based on $ARGUMENTS:
 
 1. **Check for Existing Conventions**:
    - Check if `.buildforce/context/conventions/` folder exists and has convention files
-   - Read `.buildforce/context/conventions/_index.yaml` to see existing conventions
+   - Read `.buildforce/context/_index.yaml` and check `domains.conventions.items` to see existing conventions
    - If relevant convention exists → **UPDATE mode** (intelligent merge of new information)
    - If no relevant convention → **CREATE mode** (generate new convention file)
 
@@ -92,16 +92,18 @@ First, determine which mode to use based on $ARGUMENTS:
    - Validate reference_files point to actual codebase files
 
 6. **Update Context Index** (CREATE mode only):
-   - Add entry to `.buildforce/context/conventions/_index.yaml`:
+   - Add entry to `.buildforce/context/_index.yaml` `domains.conventions.items`:
      ```yaml
      - id: {convention-id}
-       file: {filename}.yaml
+       file: conventions/{filename}.yaml
        type: convention
+       status: extracted
+       depth: shallow
+       description: "{brief description}"
        sub_type: {sub-type}
        enforcement: {enforcement-level}
-       description: "{brief description}"
-       tags: [{relevant-tags}]
      ```
+   - Update `summary.total_items` and `summary.extracted_items` counts
 
 7. **Present Summary**:
    - **CREATE mode**: "Created {filename}.yaml convention in conventions/ with enforcement: {level}"
@@ -178,8 +180,11 @@ Before proceeding with standard documentation, verify sufficient context exists:
 
    Do a proactive search to determine which context files need updates or creation:
 
-   - **Read `.buildforce/context/_index.yaml`** to understand context type directories
-   - **Navigate to `.buildforce/context/architecture/_index.yaml`** to see existing architecture context files
+   - **Read `.buildforce/context/_index.yaml`** - this unified index contains all context entries:
+     - `domains.architecture.items[]` - architecture context entries (files in `architecture/`)
+     - `domains.conventions.items[]` - convention context entries (files in `conventions/`)
+     - `domains.verification.items[]` - verification context entries (files in `verification/`)
+   - **Search `domains.architecture.items`** to see existing architecture context files
    - **Analyze conversation history** to identify which system components/features/modules/patterns to document
      - **CRITICAL**: Conversation history is the primary source since no spec.yaml/plan.yaml exists
      - Extract key design decisions, implementation details, architectural patterns, responsibilities, dependencies
@@ -197,7 +202,7 @@ Before proceeding with standard documentation, verify sufficient context exists:
    - Format: kebab-case, max 50 characters, no numeric or timestamp prefixes
    - Examples: `authentication.yaml`, `build-command.yaml`, `error-handling.yaml`, `plan-template.yaml`
    - Validate: lowercase alphanumeric and hyphens only
-   - **Check for ID conflicts**: Search architecture/_index.yaml to ensure generated ID doesn't already exist
+   - **Check for ID conflicts**: Search `_index.yaml` `domains.architecture.items` to ensure generated ID doesn't already exist
    - If conflict exists: Choose alternative ID (append descriptor like `-module` or `-feature`, use synonym)
 
 3. **Create/Update Context Files**:
@@ -225,13 +230,15 @@ Before proceeding with standard documentation, verify sufficient context exists:
 
 4. **Update Context Index**:
 
-   Update `.buildforce/context/architecture/_index.yaml` with new entries:
+   Update `.buildforce/context/_index.yaml` `domains.architecture.items` with new entries:
 
-   - For each NEW context file created, add entry:
+   - For each NEW context file created, add entry to `domains.architecture.items[]`:
      ```yaml
      - id: {semantic-id}
-       file: {filename}.yaml
+       file: architecture/{filename}.yaml
        type: structural
+       status: extracted
+       depth: shallow
        description: {short-one-liner-description}
        tags: [{auto-generated-tags}]
        related_context: [{related-context-ids}]  # OPTIONAL
@@ -241,8 +248,9 @@ Before proceeding with standard documentation, verify sufficient context exists:
    - **Related context field** (OPTIONAL): Add array of closely related context IDs for discovery
      - Include for: feature families, dependent modules, sibling features
      - Only add significant relationships (avoid over-populating)
-     - IDs must exist in architecture/_index.yaml
+     - IDs must exist in `domains.architecture.items`
      - Example: `[plan-template, iterate-plan-command, spec-command]`
+   - **Update summary counts**: Increment `summary.total_items` and `summary.extracted_items`
    - Maintain proper YAML indentation (2 spaces per level)
    - Preserve existing entries (do not modify or delete)
    - For EXISTING context files, no index update needed (entry already exists)

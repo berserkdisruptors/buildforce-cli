@@ -79,7 +79,7 @@ codebase_profile:
 # Items are discovered during codebase scan and populated during extraction.
 
 domains:
-  structural:
+  architecture:
     description: |
       Structural context about WHAT exists in the codebase.
       Contains understanding of modules, features, components, and their relationships.
