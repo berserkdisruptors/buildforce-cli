@@ -61,28 +61,7 @@ Read `.buildforce/context/_index.yaml` FROM CURRENT WORKING DIRECTORY.
 
 ### 3.1 Generate Plans
 
-Create `_extraction-progress.yaml` in each domain folder using this structure:
-
-```yaml
-# Example: .buildforce/context/architecture/_extraction-progress.yaml
-status: in-progress
-iteration: 1
-target_items:
-  - id: auth-service
-    name: Authentication Service
-    current_depth: none
-    target_depth: shallow
-    priority: high
-    notes: ""
-verification_criteria:
-  - Can I explain the primary purpose of auth-service?
-  - What are the main dependencies?
-tasks:
-  - task: Analyze auth-service structure and purpose
-    status: pending
-    findings: ""
-last_checkpoint: null
-```
+Create `_extraction-progress.yaml` in each domain folder using the `.buildforce/templates/extraction-progress-template.yaml` template.
 
 ### 3.2 Deploy All Three Miners in Parallel
 
@@ -90,15 +69,15 @@ Use the Task tool to spawn all three Context Miner sub-agents **simultaneously**
 
 **IMPORTANT**: Deploy all miners in a single message with three parallel Task tool calls:
 
-1. **cm-1-structural**: Mines architecture/structural context
+1. **buildforce-cm1**: Mines architecture/structural context
    - Reads plan from `.buildforce/context/architecture/_extraction-progress.yaml`
    - Returns proposals for structural context files
 
-2. **cm-2-convention**: Mines convention/standards context
+2. **buildforce-cm2**: Mines convention/standards context
    - Reads plan from `.buildforce/context/conventions/_extraction-progress.yaml`
    - Returns proposals for convention context files
 
-3. **cm-3-verification**: Mines verification/quality context
+3. **buildforce-cm3**: Mines verification/quality context
    - Reads plan from `.buildforce/context/verification/_extraction-progress.yaml`
    - Returns proposals for verification context files
 
