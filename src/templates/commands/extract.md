@@ -89,12 +89,44 @@ Each miner will:
 ### 3.3 Validate & Write Proposals
 
 After all miners return:
+
 1. **Validate** proposals against _index.yaml (check for duplicates, verify reasoning)
+
 2. **Merge** conflicts intelligently (prefer deeper depth, combine insights)
+
 3. **Write** approved context files to domain folders
+
+   For EACH contribution from miners:
+   - If `action: create` → Write new file to domain folder
+   - If `action: update` → Replace existing file with proposed content
+   - Log each write: `"Wrote {file} ({action})"`
+
 4. **Update** _index.yaml (status, depth, coverage %)
+
 5. **Add** new discoveries to _index.yaml
-6. **Cleanup**: Delete `_extraction-progress.yaml` files after iteration
+
+### 3.4 Verify Materialization
+
+**BEFORE cleanup**, verify all contributions were written:
+
+```
+### Files Written This Iteration
+| File | Action | Status |
+|------|--------|--------|
+| {file1} | create | done |
+| {file2} | update | done |
+...
+
+Total contributions from miners: {N}
+Total files written: {M}
+```
+
+**If N ≠ M**: STOP. List missing files and complete writes before proceeding.
+
+### 3.5 Cleanup
+
+Only after verification passes:
+- Delete `_extraction-progress.yaml` files from all domain folders
 
 ## Step 4: Present Summary
 
