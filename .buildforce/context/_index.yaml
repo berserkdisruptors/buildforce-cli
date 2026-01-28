@@ -1,19 +1,19 @@
-# Buildforce Context Repository Index
-# This file serves as the entry point to your project's context repository.
-# It points to three context type directories, each serving a different purpose.
+# Buildforce Context Repository Index & Coverage Map
+# This file serves as both the context index AND the context coverage map.
+# Version 2.1: Unified structure with domain items tracking for /buildforce.extract
 
-version: "2.0"
+version: "2.1"
 
 # ============================================================================
 # CONTEXT TAXONOMY OVERVIEW
 # ============================================================================
 #
-# The context repository is organized into three directories, each aligned
-# with the context taxonomy pillars that AI agents need most:
+# The context repository is organized into three domains, each aligned with
+# the context taxonomy pillars that AI agents need most:
 #
 # 1. ARCHITECTURE (architecture/)
 #    Answers: WHAT exists already?
-#    Contains: Structural understanding of modules, features, and components
+#    Contains: Structural understanding of modules, features, components, and their relationships
 #    Used by: /buildforce.research, /buildforce.plan, /buildforce.build
 #
 # 2. CONVENTIONS (conventions/)
@@ -27,51 +27,357 @@ version: "2.0"
 #    Used by: /buildforce.build (self-review), PR Review Actions
 #
 # For more details on the context taxonomy, see:
-# https://buildforce.dev/concepts/context-repository
+# https://buildforce.dev/concepts/context-taxonomy
 #
 # ============================================================================
-# NAVIGATING THE CONTEXT REPOSITORY
+# VERSION 2.1: COVERAGE MAP FUNCTIONALITY
 # ============================================================================
 #
-# Each context type directory contains:
-#   - _schema.yaml: Field definitions and validation rules for context files
-#   - _index.yaml: Registry of context files in that directory
-#   - *.yaml: Individual context files following the schema
+# In v2.1, this file also serves as a coverage map for /buildforce.extract.
+# Each domain tracks:
+#   - items[]: Discovered and extracted context items with status/depth
+#   - coverage: Percentage of items that have been extracted
+#   - average_depth: Overall extraction depth (none|shallow|moderate|deep)
 #
-# To find context:
-#   1. Determine what type of context you need (architecture, convention, verification)
-#   2. Navigate to that directory's _index.yaml
-#   3. Find relevant context files by id, tags, or description
-#   4. Read the full context file for detailed information
+# Item structure:
+#   - id: unique-item-id
+#   - file: path/to/context-file.yaml
+#   - type: structural|convention|verification
+#   - description: Brief description of the item
+#   - tags: [optional, categorization, tags]
+#   - related_context: [references-to-other-items]
+#   - status: discovered | in-progress | extracted
+#   - depth: none | shallow | moderate | deep
+#
+# The /buildforce.extract command uses this coverage map to:
+#   1. Track what has been discovered in the codebase
+#   2. Track what has been extracted and to what depth
+#   3. Recommend focus areas for subsequent extraction iterations
 #
 # ============================================================================
 
-# Context type directories
-# Each directory is self-contained with its own schema and index
-context_types:
+# Timestamps (populated by /buildforce.extract on first run)
+generated_at: null
+last_updated: 2026-01-28
+
+# ============================================================================
+# CODEBASE PROFILE
+# ============================================================================
+# Populated by /buildforce.extract during initial codebase scan.
+# Provides high-level overview of the project for AI agents.
+
+codebase_profile:
+  languages: [] # e.g., [typescript, python]
+  frameworks: [] # e.g., [express, react, fastapi]
+  project_type: null # e.g., "full-stack monorepo", "cli tool", "library"
+  scale: null # e.g., "small (~5k LOC)", "medium (~45k LOC)"
+
+# ============================================================================
+# CONTEXT DOMAINS
+# ============================================================================
+# Each domain tracks both schema reference AND extracted items.
+# Items are discovered during codebase scan and populated during extraction.
+
+domains:
   architecture:
-    path: "architecture/"
     description: |
       Structural context about WHAT exists in the codebase.
       Contains understanding of modules, features, components, and their relationships.
-      All entries have type: structural.
-    index_file: "architecture/_index.yaml"
-    schema_file: "architecture/_schema.yaml"
+    schema: architecture/_schema.yaml
+    coverage: 0
+    average_depth: none
+    items:
+      - id: slash-commands
+        file: architecture/slash-commands.yaml
+        type: structural
+        status: extracted
+        depth: shallow
+        description: Core slash command system enabling spec-driven development workflow for AI agents
+        tags: [ core, workflow, agents ]
+        related_context: [ research-slash-command, plan-command, build-command, complete-command, document-command, plan-template, cli-architecture ]
+
+      - id: research-slash-command
+        file: architecture/research-slash-command.yaml
+        type: structural
+        status: extracted
+        depth: shallow
+        description: Slash command for gathering context from project knowledge, codebase, and external sources
+        tags: [ core, workflow, research, context-gathering ]
+        related_context: [ slash-commands, cli-architecture, document-command ]
+
+      - id: build-command
+        file: architecture/build-command.yaml
+        type: structural
+        status: extracted
+        depth: shallow
+        description: Slash command for implementing features following spec and plan with progress tracking
+        tags: [ slash-command, build, command-iteration, compression, workflow-enhancement, script-execution ]
+        related_context: [ slash-commands, plan-template, plan-command ]
+
+      - id: plan-template
+        file: architecture/plan-template.yaml
+        type: structural
+        status: extracted
+        depth: shallow
+        description: YAML template structure for implementation plans with task tracking and validation
+        tags: [ template, plan-template, build-agent, progress-tracking, checkbox-tracking, deviation-logging, spec-traceability, workflow-enhancement ]
+        related_context: [ build-command, plan-command, slash-commands ]
+
+      - id: document-command
+        file: architecture/document-command.yaml
+        type: structural
+        status: extracted
+        depth: shallow
+        description: Enhanced /document command with /complete UX patterns, empty context detection, and completion summaries
+        tags: [ slash-command, document, context-creation, template-only, kebab-case-naming, intelligent-merge, auto-detection, workflow-utility, ux-enhancement ]
+        related_context: [ slash-commands, complete-command, cli-architecture, research-slash-command ]
+
+      - id: readme-documentation
+        file: architecture/readme-documentation.yaml
+        type: structural
+        status: extracted
+        depth: shallow
+        description: Primary documentation for Buildforce CLI covering installation, workflow, and contribution
+        tags: [ documentation, readme, onboarding, spec-driven-development, philosophy, installation, quick-start, workflow, slash-commands, troubleshooting, contribution-guidelines, roadmap, changelog ]
+        related_context: [ cli-architecture, slash-commands ]
+
+      - id: plan-command
+        file: architecture/plan-command.yaml
+        type: structural
+        status: extracted
+        depth: shallow
+        description: Template-based /buildforce.plan command for creating/updating specifications and plans with state-based CREATE vs UPDATE logic
+        tags: [ slash-command, plan, template-only, state-tracking, timestamp-naming, agent-driven, workflow-core ]
+        related_context: [ slash-commands, plan-template, complete-command ]
+
+      - id: complete-command
+        file: architecture/complete-command.yaml
+        type: structural
+        status: extracted
+        depth: shallow
+        description: Template-only /complete command for finalizing specs with agent-driven context file management
+        tags: [ slash-command, complete, template-only, context-management, semantic-naming, intelligent-merge, workflow-core ]
+        related_context: [ slash-commands, plan-command, document-command ]
+
+      - id: upgrade-command
+        file: architecture/upgrade-command.yaml
+        type: structural
+        status: extracted
+        depth: shallow
+        description: Slash command for upgrading projects to latest templates while preserving user content
+        tags: [ slash-command, upgrade, template-upgrade, preservation, dry-run, atomic-operations, backward-compatibility, workflow-utility ]
+        related_context: [ slash-commands, cli-architecture, plan-command, complete-command, local-artifact-resolution ]
+
+      - id: cli-architecture
+        file: architecture/cli-architecture.yaml
+        type: structural
+        status: extracted
+        depth: shallow
+        description: Comprehensive CLI architecture with template distribution, context management, and multi-agent support
+        tags: [ core, architecture, cli, commander, github-releases, context-system, agent-support, initialization, workflow-foundation ]
+        related_context: [ slash-commands, document-command, research-slash-command, plan-command, plan-template, upgrade-command, local-artifact-resolution ]
+
+      - id: research-persistence
+        file: architecture/research-persistence.yaml
+        type: structural
+        status: extracted
+        depth: shallow
+        description: Conversation-based research materialization system enabling structured research.yaml artifacts
+        tags: [ research, persistence, materialization, conversation-based, workflow-enhancement, template-only ]
+        related_context: [ research-slash-command, plan-command, build-command, complete-command ]
+
+      - id: local-artifact-resolution
+        file: architecture/local-artifact-resolution.yaml
+        type: structural
+        status: extracted
+        depth: shallow
+        description: Local artifact resolution system for offline workflows and faster testing iterations
+        tags: [ artifact-resolution, offline-support, local-development, testing, glob-pattern, workflow-utility ]
+        related_context: [ cli-architecture, upgrade-command ]
+
+      - id: examples-command
+        file: architecture/examples-command.yaml
+        type: structural
+        status: extracted
+        depth: shallow
+        description: Interactive CLI command for displaying workflow examples extracted dynamically from README.md
+        tags: [ cli-command, workflow, examples, interactive, documentation, discoverability ]
+        related_context: [ cli-architecture, readme-documentation ]
+
+      - id: session-management-cli
+        file: architecture/session-management-cli.yaml
+        type: structural
+        status: extracted
+        depth: shallow
+        description: Interactive CLI command for managing and switching between active development sessions
+        tags: [ cli-command, session-management, interactive, inquirer, workflow, state-tracking ]
+        related_context: [ cli-architecture, state-tracking, plan-command ]
+
+      - id: yaml-extension-standard
+        file: architecture/yaml-extension-standard.yaml
+        type: structural
+        status: extracted
+        depth: shallow
+        description: Codebase standard enforcing .yaml extension for all YAML files to eliminate inconsistency
+        tags: [ pattern, standard, yaml, file-extensions, consistency, breaking-change, codebase-wide ]
+        related_context: [ cli-architecture, plan-command, build-command, complete-command, document-command, research-slash-command ]
+
+      - id: state-tracking
+        file: architecture/state-tracking.yaml
+        type: structural
+        status: extracted
+        depth: shallow
+        description: JSON-based state tracking using buildforce.json to manage active spec sessions
+        tags: [ core, state-management, buildforce-json, configuration, workflow-foundation ]
+        related_context: [ plan-command, research-persistence, complete-command, cli-architecture ]
+
+      - id: template-versioning
+        file: architecture/template-versioning.yaml
+        type: structural
+        status: extracted
+        depth: shallow
+        description: Automatic version injection for templates in release workflow with pre-commit strategy
+        tags: [ release-workflow, templates, versioning, github-actions, automation, workflow-enhancement ]
+        related_context: [ cli-architecture, plan-template, upgrade-command ]
+
+      - id: commit-enforcement
+        file: architecture/commit-enforcement.yaml
+        type: structural
+        status: extracted
+        depth: shallow
+        description: Commit message and branch naming enforcement using commitlint, husky, and GitHub Actions
+        tags: [ commit-enforcement, conventional-commits, commitlint, husky, commitizen, git-hooks, branch-naming, github-actions, contribution-standards, developer-experience ]
+        related_context: [ readme-documentation, cli-architecture ]
+
+      - id: command-naming-standard
+        file: architecture/command-naming-standard.yaml
+        type: structural
+        status: extracted
+        depth: shallow
+        description: Slash command naming convention using /buildforce.* prefix for namespace isolation
+        tags: [ pattern, naming-convention, slash-commands, namespace-isolation, documentation-consistency ]
+        related_context: [ slash-commands, readme-documentation, cli-architecture ]
 
   conventions:
-    path: "conventions/"
     description: |
       Convention context about HOW things are done here.
       Contains coding standards, architectural patterns, and project practices.
-      All entries have type: convention with a sub_type for categorization.
-    index_file: "conventions/_index.yaml"
-    schema_file: "conventions/_schema.yaml"
+    schema: conventions/_schema.yaml
+    coverage: 0
+    average_depth: none
+    items:
+      - id: template-only-slash-commands
+        file: conventions/template-only-slash-commands.yaml
+        type: convention
+        status: extracted
+        depth: shallow
+        description: Template-Only Slash Commands
+        sub_type: architectural-pattern
+        enforcement: strict
+
+      - id: context-repository-pattern
+        file: conventions/context-repository-pattern.yaml
+        type: convention
+        status: extracted
+        depth: shallow
+        description: Context Repository Pattern
+        sub_type: architectural-pattern
+        enforcement: recommended
+
+      - id: bash-script-context-loading
+        file: conventions/bash-script-context-loading.yaml
+        type: convention
+        status: extracted
+        depth: shallow
+        description: Bash Script Context Loading
+        sub_type: code-convention
+        enforcement: strict
+
+      - id: error-handling-in-templates
+        file: conventions/error-handling-in-templates.yaml
+        type: convention
+        status: extracted
+        depth: shallow
+        description: Error Handling in Templates
+        sub_type: code-convention
+        enforcement: recommended
+
+      - id: manual-workflow-testing
+        file: conventions/manual-workflow-testing.yaml
+        type: convention
+        status: extracted
+        depth: shallow
+        description: Manual Workflow Testing
+        sub_type: testing-standard
+        enforcement: recommended
+
+      - id: template-only-changes-preferred
+        file: conventions/template-only-changes-preferred.yaml
+        type: convention
+        status: extracted
+        depth: shallow
+        description: Template-Only Changes Preferred
+        sub_type: dependency-rule
+        enforcement: recommended
+
+      - id: buildforcejson-replaces-current-spec
+        file: conventions/buildforcejson-replaces-current-spec.yaml
+        type: convention
+        status: extracted
+        depth: shallow
+        description: buildforce.json replaces .current-spec
+        sub_type: project-quirk
+        enforcement: recommended
+
+      - id: minimal-example-strategy
+        file: conventions/minimal-example-strategy.yaml
+        type: convention
+        status: extracted
+        depth: shallow
+        description: Minimal Example Strategy
+        sub_type: project-quirk
+        enforcement: recommended
+
+      - id: naming-conventions
+        file: conventions/naming-conventions.yaml
+        type: convention
+        status: extracted
+        depth: shallow
+        description: Naming Conventions
+        sub_type: naming-convention
+        enforcement: recommended
+    # Convention items also include: sub_type, enforcement
 
   verification:
-    path: "verification/"
     description: |
       Verification context about HOW to know if code is right.
       Contains quality standards, test expectations, review checklists, and known risks.
-      All entries have type: verification with source field (mined, manual, hybrid).
-    index_file: "verification/_index.yaml"
-    schema_file: "verification/_schema.yaml"
+    schema: verification/_schema.yaml
+    coverage: 0
+    average_depth: none
+    items: []
+    # Verification items also include: source (mined | manual | hybrid)
+
+    # ============================================================================
+    # AGGREGATE SUMMARY
+    # ============================================================================
+    # Computed metrics across all domains. Updated after each extraction iteration.
+
+summary:
+  overall_coverage: 0
+  total_items: 28
+  extracted_items: 28
+  iterations_completed: 0
+
+# ============================================================================
+# EXTRACTION STATE
+# ============================================================================
+# Tracks state between /buildforce.extract invocations.
+# Enables continuation after /clear or session restart.
+
+extraction:
+  needs_clarification: [] # Questions that emerged during extraction
+  recommended_focus: [] # Suggested items for next iteration
+  # Format: - id: item-id
+  #           reason: "Why this item should be prioritized"
+  new_discoveries: [] # Items found but not yet in items arrays
