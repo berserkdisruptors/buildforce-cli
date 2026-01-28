@@ -3,7 +3,7 @@ name: Buildforce CLI Architecture
 type: structural
 status: production
 created: 2025-10-27
-last_updated: "2026-01-26"
+last_updated: "2026-01-28"
 
 summary: |
   Comprehensive architecture of the Buildforce CLI tool - a Node.js-based command-line
@@ -487,6 +487,10 @@ evolution:
     date: "2026-01-26"
     changes: "Implemented Context Taxonomy Alignment - restructured context repository to use three folders (architecture/, conventions/, verification/) aligned with context taxonomy pillars. Renamed 'guidelines' to 'conventions' throughout codebase. Added version-based migration system in context-migration.ts. Updated all slash command templates. Root _index.yaml now points to context type folders (v2.0 format). Created comprehensive schemas for each context type with type fields (structural, convention, verification)."
 
+  - version: "2.2"
+    date: "2026-01-28"
+    changes: "Added agent-specific command filtering in release packaging. Templates can include 'agents: [claude]' in YAML frontmatter to restrict distribution to specific agents. Updated create-release-packages.sh generate_commands() function to parse frontmatter and filter templates. First use case: extract.md command for Claude Code only. Also added MigrationRunner pattern for database-migration-inspired upgrade system with separate migration files (v2.0.ts, v2.1.ts) and registry."
+
 related_specs:
   - "standardize-cli-title-display-20250130220000"
   - "standardize-color-scheme-mint-20251031011544"
@@ -498,6 +502,7 @@ related_specs:
   - "add-cli-session-management-20251125000000"
   - "add-temp-folder-gitignore-upgrade-20251201000000"
   - "context-taxonomy-align-20260123143000"
+  - "claude-code-extract-command-20260127152345"
 
 notes: |
   Key architectural strengths:

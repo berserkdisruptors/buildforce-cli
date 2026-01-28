@@ -258,6 +258,15 @@ domains:
         tags: [ pattern, naming-convention, slash-commands, namespace-isolation, documentation-consistency ]
         related_context: [ slash-commands, readme-documentation, cli-architecture ]
 
+      - id: extract-command
+        file: architecture/extract-command.yaml
+        type: structural
+        status: extracted
+        depth: shallow
+        description: Claude Code-specific slash command for iterative context extraction from fresh codebases
+        tags: [ slash-command, extract, context-mining, sub-agents, claude-code-only, coverage-map ]
+        related_context: [ slash-commands, cli-architecture, upgrade-command ]
+
   conventions:
     description: |
       Convention context about HOW things are done here.
@@ -365,8 +374,8 @@ domains:
 
 summary:
   overall_coverage: 0
-  total_items: 28
-  extracted_items: 28
+  total_items: 29
+  extracted_items: 29
   iterations_completed: 0
 
 # ============================================================================
