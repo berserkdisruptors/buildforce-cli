@@ -68,7 +68,7 @@ Return your findings as YAML proposals:
 
 ```yaml
 contributions:
-  - action: create | append | refine
+  - action: create | update
     target_item: {id from plan}
     file: architecture/{id}.yaml
     depth_achieved: shallow | moderate | deep
