@@ -86,7 +86,7 @@ contributions:
 new_discoveries:
   - id: {new-item-id}
     name: {Item Name}
-    domain: structural
+    domain: architecture
     notes: Found during analysis, not in original plan
 
 questions_for_user:

@@ -135,7 +135,7 @@ export const migration21: Migration = {
           last_updated: today,
           codebase_profile: { languages: [], frameworks: [], project_type: null, scale: null },
           domains: {
-            structural: { description: "Structural context.", schema: "architecture/_schema.yaml", coverage: 0, average_depth: "none", items: [] },
+            architecture: { description: "Structural context.", schema: "architecture/_schema.yaml", coverage: 0, average_depth: "none", items: [] },
             conventions: { description: "Convention context.", schema: "conventions/_schema.yaml", coverage: 0, average_depth: "none", items: [] },
             verification: { description: "Verification context.", schema: "verification/_schema.yaml", coverage: 0, average_depth: "none", items: [] },
           },
@@ -148,7 +148,7 @@ export const migration21: Migration = {
       doc.setIn(["last_updated"], today);
 
       // Collect migrated items for each domain
-      const structuralItems: DomainItem[] = [];
+      const architectureItems: DomainItem[] = [];
       const conventionItems: DomainItem[] = [];
       const verificationItems: DomainItem[] = [];
       let totalEntriesMigrated = 0;
@@ -179,7 +179,7 @@ export const migration21: Migration = {
                 if (entry.related_context && entry.related_context.length > 0) {
                   item.related_context = entry.related_context;
                 }
-                structuralItems.push(item);
+                architectureItems.push(item);
                 totalEntriesMigrated++;
               }
               result.actions.push(
@@ -293,8 +293,8 @@ export const migration21: Migration = {
       };
 
       // Set items arrays in document
-      if (structuralItems.length > 0) {
-        doc.setIn(["domains", "structural", "items"], createItemsSeq(structuralItems));
+      if (architectureItems.length > 0) {
+        doc.setIn(["domains", "architecture", "items"], createItemsSeq(architectureItems));
       }
       if (conventionItems.length > 0) {
         doc.setIn(["domains", "conventions", "items"], createItemsSeq(conventionItems));
