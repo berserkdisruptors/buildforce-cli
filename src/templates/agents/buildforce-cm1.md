@@ -1,5 +1,5 @@
 ---
-name: cm-1-structural
+name: buildforce-cm1
 description: Context Miner for structural/architecture context. Extracts understanding of modules, features, components, and their relationships. Use when mining structural context during /buildforce.extract iterations.
 tools: Read, Glob, Grep
 model: haiku

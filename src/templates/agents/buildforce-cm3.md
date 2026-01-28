@@ -1,5 +1,5 @@
 ---
-name: cm-3-verification
+name: buildforce-cm3
 description: Context Miner for verification context. Extracts quality standards, test expectations, and known risks. Use when mining verification context during /buildforce.extract iterations.
 tools: Read, Glob, Grep
 model: haiku

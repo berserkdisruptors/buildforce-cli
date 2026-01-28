@@ -1,5 +1,5 @@
 ---
-name: cm-2-convention
+name: buildforce-cm2
 description: Context Miner for convention context. Extracts coding standards, patterns, and practices. Use when mining convention context during /buildforce.extract iterations.
 tools: Read, Glob, Grep
 model: haiku
