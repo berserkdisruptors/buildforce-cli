@@ -1,6 +1,6 @@
 import fs from "fs-extra";
 import path from "path";
-import YAML from "yaml";
+import YAML, { Document, YAMLSeq } from "yaml";
 import { Migration, MigrationResult, getTodayDate } from "./index.js";
 
 /**
@@ -52,7 +52,7 @@ export const migration21: Migration = {
   version: "2.1",
   description: "Migrate to v2.1 unified coverage map (consolidate domain indexes into root)",
 
-  async execute(projectPath: string, _templateSourceDir: string): Promise<MigrationResult> {
+  async execute(projectPath: string, templateSourceDir: string): Promise<MigrationResult> {
     const result: MigrationResult = {
       migrated: false,
       skipped: false,
@@ -115,53 +115,42 @@ export const migration21: Migration = {
 
     try {
       const today = getTodayDate();
-      const v21Index: any = {
-        version: "2.1",
-        type: "context-index",
-        generated_at: null,
-        last_updated: today,
-        codebase_profile: {
-          languages: [],
-          frameworks: [],
-          project_type: null,
-          scale: null,
-        },
-        domains: {
-          structural: {
-            description: "Structural context about WHAT exists in the codebase.",
-            schema: "architecture/_schema.yaml",
-            coverage: 0,
-            average_depth: "none",
-            items: [],
-          },
-          conventions: {
-            description: "Convention context about HOW things are done here.",
-            schema: "conventions/_schema.yaml",
-            coverage: 0,
-            average_depth: "none",
-            items: [],
-          },
-          verification: {
-            description: "Verification context about HOW to know if code is right.",
-            schema: "verification/_schema.yaml",
-            coverage: 0,
-            average_depth: "none",
-            items: [],
-          },
-        },
-        summary: {
-          overall_coverage: 0,
-          total_items: 0,
-          extracted_items: 0,
-          iterations_completed: 0,
-        },
-        extraction: {
-          needs_clarification: [],
-          recommended_focus: [],
-          new_discoveries: [],
-        },
-      };
 
+      // Load the v2.1 template from source - this preserves all comments and formatting
+      // In release packages, the template is at .buildforce/context/_index.yaml
+      const templatePath = path.join(templateSourceDir, ".buildforce", "context", "_index.yaml");
+      let templateContent: string;
+      let doc: Document;
+
+      if (await fs.pathExists(templatePath)) {
+        templateContent = await fs.readFile(templatePath, "utf8");
+        // Use parseDocument to preserve comments
+        doc = YAML.parseDocument(templateContent);
+      } else {
+        // Fallback: create minimal structure if template not found
+        result.errors.push("Template src/context/_index.yaml not found - using minimal structure");
+        doc = new Document({
+          version: "2.1",
+          generated_at: null,
+          last_updated: today,
+          codebase_profile: { languages: [], frameworks: [], project_type: null, scale: null },
+          domains: {
+            structural: { description: "Structural context.", schema: "architecture/_schema.yaml", coverage: 0, average_depth: "none", items: [] },
+            conventions: { description: "Convention context.", schema: "conventions/_schema.yaml", coverage: 0, average_depth: "none", items: [] },
+            verification: { description: "Verification context.", schema: "verification/_schema.yaml", coverage: 0, average_depth: "none", items: [] },
+          },
+          summary: { overall_coverage: 0, total_items: 0, extracted_items: 0, iterations_completed: 0 },
+          extraction: { needs_clarification: [], recommended_focus: [], new_discoveries: [] },
+        });
+      }
+
+      // Update last_updated
+      doc.setIn(["last_updated"], today);
+
+      // Collect migrated items for each domain
+      const structuralItems: DomainItem[] = [];
+      const conventionItems: DomainItem[] = [];
+      const verificationItems: DomainItem[] = [];
       let totalEntriesMigrated = 0;
 
       // Migrate entries from domain-specific _index.yaml files if they exist
@@ -174,9 +163,13 @@ export const migration21: Migration = {
 
             if (archIndex?.contexts && Array.isArray(archIndex.contexts)) {
               for (const entry of archIndex.contexts as V20DomainEntry[]) {
+                // Prefix file path with architecture/ folder
+                const filePath = entry.file.startsWith("architecture/")
+                  ? entry.file
+                  : `architecture/${entry.file}`;
                 const item: DomainItem = {
                   id: entry.id,
-                  file: entry.file,
+                  file: filePath,
                   type: entry.type || "structural",
                   status: "extracted",
                   depth: "shallow",
@@ -186,7 +179,7 @@ export const migration21: Migration = {
                 if (entry.related_context && entry.related_context.length > 0) {
                   item.related_context = entry.related_context;
                 }
-                v21Index.domains.structural.items.push(item);
+                structuralItems.push(item);
                 totalEntriesMigrated++;
               }
               result.actions.push(
@@ -209,9 +202,13 @@ export const migration21: Migration = {
 
             if (convIndex?.contexts && Array.isArray(convIndex.contexts)) {
               for (const entry of convIndex.contexts as V20DomainEntry[]) {
+                // Prefix file path with conventions/ folder
+                const filePath = entry.file.startsWith("conventions/")
+                  ? entry.file
+                  : `conventions/${entry.file}`;
                 const item: DomainItem = {
                   id: entry.id,
-                  file: entry.file,
+                  file: filePath,
                   type: entry.type || "convention",
                   status: "extracted",
                   depth: "shallow",
@@ -223,7 +220,7 @@ export const migration21: Migration = {
                 }
                 if (entry.sub_type) item.sub_type = entry.sub_type;
                 if (entry.enforcement) item.enforcement = entry.enforcement;
-                v21Index.domains.conventions.items.push(item);
+                conventionItems.push(item);
                 totalEntriesMigrated++;
               }
               result.actions.push(
@@ -246,9 +243,13 @@ export const migration21: Migration = {
 
             if (verIndex?.contexts && Array.isArray(verIndex.contexts)) {
               for (const entry of verIndex.contexts as V20DomainEntry[]) {
+                // Prefix file path with verification/ folder
+                const filePath = entry.file.startsWith("verification/")
+                  ? entry.file
+                  : `verification/${entry.file}`;
                 const item: DomainItem = {
                   id: entry.id,
-                  file: entry.file,
+                  file: filePath,
                   type: entry.type || "verification",
                   status: "extracted",
                   depth: "shallow",
@@ -259,7 +260,7 @@ export const migration21: Migration = {
                   item.related_context = entry.related_context;
                 }
                 if (entry.source) item.source = entry.source;
-                v21Index.domains.verification.items.push(item);
+                verificationItems.push(item);
                 totalEntriesMigrated++;
               }
               result.actions.push(
@@ -275,23 +276,64 @@ export const migration21: Migration = {
         }
       }
 
-      // Update summary counts
-      v21Index.summary.total_items = totalEntriesMigrated;
-      v21Index.summary.extracted_items = totalEntriesMigrated;
+      // Update the document with migrated items
+      // Create items sequences with proper formatting
+      const createItemsSeq = (items: DomainItem[]): YAMLSeq => {
+        const seq = new YAMLSeq();
+        for (let i = 0; i < items.length; i++) {
+          const item = items[i];
+          const itemDoc = doc.createNode(item);
+          if (i > 0) {
+            // Add blank line before each item (except first)
+            (itemDoc as any).spaceBefore = true;
+          }
+          seq.add(itemDoc);
+        }
+        return seq;
+      };
 
-      // Write the updated root _index.yaml
-      const yamlContent = YAML.stringify(v21Index, {
-        indent: 2,
-        lineWidth: 0,
+      // Set items arrays in document
+      if (structuralItems.length > 0) {
+        doc.setIn(["domains", "structural", "items"], createItemsSeq(structuralItems));
+      }
+      if (conventionItems.length > 0) {
+        doc.setIn(["domains", "conventions", "items"], createItemsSeq(conventionItems));
+      }
+      if (verificationItems.length > 0) {
+        doc.setIn(["domains", "verification", "items"], createItemsSeq(verificationItems));
+      }
+
+      // Update summary counts
+      doc.setIn(["summary", "total_items"], totalEntriesMigrated);
+      doc.setIn(["summary", "extracted_items"], totalEntriesMigrated);
+
+      // Set flow style for arrays that should be inline: tags, related_context, languages, frameworks, etc.
+      YAML.visit(doc, {
+        Pair(_, pair) {
+          const key = pair.key;
+          if (key && typeof key === "object" && "value" in key) {
+            const keyValue = key.value;
+            if (
+              keyValue === "tags" ||
+              keyValue === "related_context" ||
+              keyValue === "languages" ||
+              keyValue === "frameworks" ||
+              keyValue === "needs_clarification" ||
+              keyValue === "recommended_focus" ||
+              keyValue === "new_discoveries"
+            ) {
+              if (pair.value && pair.value instanceof YAMLSeq) {
+                pair.value.flow = true;
+              }
+            }
+          }
+        },
       });
 
-      const header = `# Buildforce Context Repository Index & Coverage Map
-# This file serves as both the context index AND the extraction coverage map.
-# Version 2.1: Unified structure with domain items tracking for /buildforce.extract
-
-`;
-      await fs.writeFile(rootIndexPath, header + yamlContent, "utf8");
-      result.actions.push("Updated root _index.yaml to version 2.1 format");
+      // Write to file - template already has all comments preserved
+      const yamlContent = doc.toString({ lineWidth: 0 });
+      await fs.writeFile(rootIndexPath, yamlContent, "utf8");
+      result.actions.push("Updated root _index.yaml to version 2.1 format (preserving template comments)");
 
       if (totalEntriesMigrated > 0) {
         result.actions.push(`Total entries migrated to domains.*.items[]: ${totalEntriesMigrated}`);

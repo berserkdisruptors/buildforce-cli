@@ -165,8 +165,9 @@ build_variant() {
 
   if [[ -d src/templates ]]; then
     mkdir -p "$SPEC_DIR/templates"
-    # Copy template files, excluding commands subdirectory
-    find src/templates -type f -not -path "src/templates/commands/*" | while read -r file; do
+    # Copy template files, excluding commands and agents subdirectories
+    # (commands go to agent-specific folders, agents go to .claude/agents/)
+    find src/templates -type f -not -path "src/templates/commands/*" -not -path "src/templates/agents/*" | while read -r file; do
       # Get the relative path from src/templates
       rel_path="${file#src/templates/}"
       dest_file="$SPEC_DIR/templates/$rel_path"

@@ -199,14 +199,26 @@ export async function executeUpgrade(
 
       for (const agent of successfulAgents) {
         const agentFolder = AGENT_FOLDER_MAP[agent];
+        const sourceDir = sourceDirs.get(agent)!;
         const commandsPath = path.join(projectPath, agentFolder, "commands");
+        const agentsPath = path.join(projectPath, agentFolder, "agents");
+        const agentsSrcPath = path.join(sourceDir, agentFolder, "agents");
 
         console.log(chalk.gray(`\nAgent: ${agent}`));
 
         if (await fs.pathExists(commandsPath)) {
-          console.log(chalk.gray(`  would update ${agentFolder}commands/`));
+          console.log(chalk.gray(`  would update ${agentFolder}/commands/`));
         } else {
-          console.log(chalk.gray(`  would create ${agentFolder}commands/`));
+          console.log(chalk.gray(`  would create ${agentFolder}/commands/`));
+        }
+
+        // Check if source has agents (e.g., .claude/agents for Claude Code)
+        if (await fs.pathExists(agentsSrcPath)) {
+          if (await fs.pathExists(agentsPath)) {
+            console.log(chalk.gray(`  would update ${agentFolder}/agents/`));
+          } else {
+            console.log(chalk.gray(`  would create ${agentFolder}/agents/`));
+          }
         }
       }
 
@@ -267,6 +279,26 @@ export async function executeUpgrade(
 
       tracker.complete("backup", `backed up ${successfulAgents.length} agents`);
       tracker.complete("replace-commands", `${totalCommandFiles} command files`);
+
+      // Replace agents for each agent (e.g., .claude/agents/ for Claude Code sub-agents)
+      for (const agent of successfulAgents) {
+        const agentFolder = AGENT_FOLDER_MAP[agent];
+        const sourceDir = sourceDirs.get(agent)!;
+        const agentsSrc = path.join(sourceDir, agentFolder, "agents");
+        const agentsDest = path.join(projectPath, agentFolder, "agents");
+
+        if (await fs.pathExists(agentsSrc)) {
+          // Backup agents if they exist
+          if (await fs.pathExists(agentsDest)) {
+            await fs.copy(agentsDest, path.join(backupDir, agent, "agents"));
+          }
+
+          // Replace agents
+          await fs.ensureDir(path.dirname(agentsDest));
+          await fs.remove(agentsDest);
+          await fs.copy(agentsSrc, agentsDest);
+        }
+      }
 
       // Replace templates (shared across all agents)
       tracker.start("replace-templates");
@@ -390,11 +422,18 @@ export async function executeUpgrade(
         for (const agent of successfulAgents) {
           const agentFolder = AGENT_FOLDER_MAP[agent];
           const commandsBackup = path.join(backupDir, agent, "commands");
+          const agentsBackup = path.join(backupDir, agent, "agents");
 
           if (await fs.pathExists(commandsBackup)) {
             const commandsDest = path.join(projectPath, agentFolder, "commands");
             await fs.remove(commandsDest);
             await fs.copy(commandsBackup, commandsDest);
+          }
+
+          if (await fs.pathExists(agentsBackup)) {
+            const agentsDest = path.join(projectPath, agentFolder, "agents");
+            await fs.remove(agentsDest);
+            await fs.copy(agentsBackup, agentsDest);
           }
         }
 
