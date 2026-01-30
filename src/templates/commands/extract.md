@@ -1,6 +1,6 @@
 ---
 version: "0.0.42"
-description: Extract and persist context from fresh codebases using Context Miners.
+description: Extract and persist context from fresh codebases using Context Extractors.
 agents: [claude]
 ---
 
@@ -8,7 +8,7 @@ User input:
 
 $ARGUMENTS
 
-**Context**: The user is invoking `/buildforce.extract` to bootstrap or refine a context repository. This command uses sub-agents (Context Miners) to extract structural, convention, and verification context iteratively.
+**Context**: The user is invoking `/buildforce.extract` to bootstrap or refine a context repository. This command uses sub-agents (Context Extractors) to extract structural, convention, and verification context iteratively.
 
 **Prerequisites**: Buildforce initialized, context v2.1 structure present.
 
@@ -35,7 +35,7 @@ Read `.buildforce/context/_index.yaml` FROM CURRENT WORKING DIRECTORY.
    - Create `_extraction-progress.yaml` in each domain folder (architecture/, conventions/, verification/)
    - Set target_items, target_depth: "shallow", and verification_criteria specific to discoveries
 
-4. **Deploy Miners** (Step 3)
+4. **Deploy Extractors** (Step 3)
 
 5. **Present Summary** (Step 4)
 
@@ -53,42 +53,42 @@ Read `.buildforce/context/_index.yaml` FROM CURRENT WORKING DIRECTORY.
    - Create `_extraction-progress.yaml` files targeting specific items based on interpretation
    - Set target_depth based on current depth + 1
 
-4. **Deploy Miners** (Step 3)
+4. **Deploy Extractors** (Step 3)
 
 5. **Present Summary** (Step 4)
 
-## Step 3: Deploy Miners
+## Step 3: Deploy Extractors
 
 ### 3.1 Generate Plans
 
 Create `_extraction-progress.yaml` in each domain folder using the `.buildforce/templates/extraction-progress-template.yaml` template.
 
-### 3.2 Deploy All Three Miners in Parallel
+### 3.2 Deploy All Three Extractors in Parallel
 
-Use the Task tool to spawn all three Context Miner sub-agents **simultaneously**:
+Use the Task tool to spawn all three Context Extractor sub-agents **simultaneously**:
 
-**IMPORTANT**: Deploy all miners in a single message with three parallel Task tool calls:
+**IMPORTANT**: Deploy all extractors in a single message with three parallel Task tool calls:
 
-1. **buildforce-cm1**: Mines architecture/structural context
+1. **buildforce-structural-extractor**: Extracts architecture/structural context
    - Reads plan from `.buildforce/context/architecture/_extraction-progress.yaml`
    - Returns proposals for structural context files
 
-2. **buildforce-cm2**: Mines convention/standards context
+2. **buildforce-conventions-extractor**: Extracts convention/standards context
    - Reads plan from `.buildforce/context/conventions/_extraction-progress.yaml`
    - Returns proposals for convention context files
 
-3. **buildforce-cm3**: Mines verification/quality context
+3. **buildforce-verification-extractor**: Extracts verification/quality context
    - Reads plan from `.buildforce/context/verification/_extraction-progress.yaml`
    - Returns proposals for verification context files
 
-Each miner will:
+Each extractor will:
 - Read their plan from the `_extraction-progress.yaml` file
 - Read their schema from `_schema.yaml`
 - Return YAML proposals (contributions, new_discoveries, questions_for_user)
 
 ### 3.3 Validate & Write Proposals
 
-After all miners return:
+After all extractors return:
 
 1. **Validate** proposals against _index.yaml (check for duplicates, verify reasoning)
 
@@ -96,7 +96,7 @@ After all miners return:
 
 3. **Write** approved context files to domain folders
 
-   For EACH contribution from miners:
+   For EACH contribution from extractors:
    - If `action: create` → Write new file to domain folder
    - If `action: update` → Replace existing file with proposed content
    - Log each write: `"Wrote {file} ({action})"`
@@ -117,7 +117,7 @@ After all miners return:
 | {file2} | update | done |
 ...
 
-Total contributions from miners: {N}
+Total contributions from extractors: {N}
 Total files written: {M}
 ```
 
@@ -141,7 +141,7 @@ Items extracted: {count} | New discoveries: {count}
 - {key insight 2}
 
 ### Questions for You
-- {question from miners}
+- {question from extractors}
 
 ### Recommended Next
 - {item}: {reason for focus}
