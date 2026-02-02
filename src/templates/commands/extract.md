@@ -12,6 +12,32 @@ $ARGUMENTS
 
 **Prerequisites**: Buildforce initialized, context v2.1 structure present.
 
+---
+
+## CRITICAL RULE: Context Preservation
+
+**Existing context is valuable. Merge intelligently, don't replace blindly.**
+
+When updating existing files:
+- **READ** the existing file completely before any modification
+- **MERGE** new findings into existing content
+- **ADD** new sections (e.g., extension_points, deeper analysis)
+- **PRESERVE** structural sections like evolution history, architecture_patterns, related_specs
+- **UPDATE** outdated information when the codebase has changed (this is valid)
+
+**Merge, don't replace:**
+- Extractor proposes new `extension_points` → ADD section to file
+- Extractor has new `design_decisions` → APPEND to existing list
+- Extractor finds outdated description → UPDATE it, but keep surrounding context
+- Existing file has detailed sections → preserve them, add new insights
+
+**Avoid:**
+- Replacing entire file content with extractor output
+- Accidentally deleting sections extractors didn't analyze
+- Losing evolution history or architectural details
+
+---
+
 ## Step 1: Check Coverage Map
 
 Read `.buildforce/context/_index.yaml` FROM CURRENT WORKING DIRECTORY.
@@ -98,8 +124,16 @@ After all extractors return:
 
    For EACH contribution from extractors:
    - If `action: create` → Write new file to domain folder
-   - If `action: update` → Replace existing file with proposed content
+   - If `action: update` → **MERGE into existing file** (see merge rules below)
    - Log each write: `"Wrote {file} ({action})"`
+
+   **MERGE RULES for `action: update`:**
+   1. READ the existing file FIRST - understand its full structure
+   2. IDENTIFY what the extractor is adding (new sections, deeper insights)
+   3. ADD new sections to the existing file (e.g., new `extension_points`)
+   4. APPEND new items to existing lists (e.g., add to `design_decisions[]`)
+   5. PRESERVE structural sections (evolution history, architecture_patterns, related_specs)
+   6. UPDATE outdated content if codebase changed, but keep surrounding context
 
 4. **Update** _index.yaml (status, depth, coverage %)
 
@@ -114,7 +148,7 @@ After all extractors return:
 | File | Action | Status |
 |------|--------|--------|
 | {file1} | create | done |
-| {file2} | update | done |
+| {file2} | update (merged) | done |
 ...
 
 Total contributions from extractors: {N}
