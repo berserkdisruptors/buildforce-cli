@@ -1,0 +1,65 @@
+id: known-risks
+name: Known Risks
+type: verification
+source: extracted
+created: "2026-02-02"
+last_updated: "2026-02-02"
+
+quality_standards:
+  - standard: "Risk awareness documentation"
+    description: |
+      This file documents known risks, gaps, and areas requiring extra attention.
+      Agents should reference this before making changes to affected modules.
+    enforcement: reference
+    confidence: 1.0
+
+known_risks:
+  - module: "src/**/*.ts"
+    risk: "No automated test coverage"
+    mitigation: |
+      All code changes must be manually verified. When making changes:
+      1. Run `npm run build` to verify TypeScript compilation
+      2. Run `npm run dev` to test the CLI locally
+      3. Test affected commands manually in a real project
+      Testing infrastructure is a known gap - contributions welcome.
+    occurrences: 0
+    last_flagged: "2026-02-02"
+
+  - module: "src/**/*.ts"
+    risk: "No linting enforcement"
+    mitigation: |
+      No ESLint or Prettier configuration at project level.
+      Code style consistency relies on TypeScript strict mode and manual review.
+      Consider running IDE-level linting during development.
+    occurrences: 0
+    last_flagged: "2026-02-02"
+
+  - module: ".github/workflows/release.yml"
+    risk: "Automatic release on main branch pushes"
+    mitigation: |
+      Merging to main automatically creates a new release if key paths are modified.
+      This is intentional for rapid iteration but means:
+      - Every merge should be release-ready
+      - Version bumping is automatic (patch increment)
+      - Breaking changes require manual version management
+    occurrences: 0
+    last_flagged: "2026-02-02"
+
+  - module: "package.json"
+    risk: "Node.js 18+ requirement not enforced in CI"
+    mitigation: |
+      engines.node specifies >=18.0.0 but no CI check validates this.
+      Development should target Node.js 18 as minimum supported version.
+    occurrences: 0
+    last_flagged: "2026-02-02"
+
+  - module: "src/commands/**/*.ts"
+    risk: "No error boundary or crash reporting"
+    mitigation: |
+      CLI commands may fail without helpful error messages in edge cases.
+      When encountering errors, check:
+      - File permissions
+      - Network connectivity (for GitHub operations)
+      - Valid project structure
+    occurrences: 0
+    last_flagged: "2026-02-02"

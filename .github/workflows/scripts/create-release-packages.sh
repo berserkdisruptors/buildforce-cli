@@ -42,12 +42,26 @@ generate_commands() {
   mkdir -p "$output_dir"
   for template in src/templates/commands/*.md; do
     [[ -f "$template" ]] || continue
-    local name description script_command body
+    local name description script_command body agents_field
     name=$(basename "$template" .md)
-    
+
     # Normalize line endings
     file_content=$(tr -d '\r' < "$template")
-    
+
+    # Check for agent-specific command filtering
+    # If 'agents:' field exists in frontmatter, only include if current agent is in the list
+    agents_field=$(printf '%s\n' "$file_content" | awk '/^agents:/ {sub(/^agents:[[:space:]]*/, ""); print; exit}' 2>/dev/null || true)
+    if [[ -n "$agents_field" ]]; then
+      # agents_field looks like "[claude]" or "[claude, cursor]" - check if current agent is included
+      # Use word boundary matching (-w) for reliable agent name detection
+      if ! echo "$agents_field" | grep -qw "$agent"; then
+        echo "  [filter] Skipping $name for $agent (agents: $agents_field)"
+        continue
+      else
+        echo "  [filter] Including $name for $agent (agents: $agents_field)"
+      fi
+    fi
+
     # Extract description and script command from YAML frontmatter
     description=$(printf '%s\n' "$file_content" | awk '/^description:/ {sub(/^description:[[:space:]]*/, ""); print; exit}' 2>/dev/null || true)
     script_command=$(printf '%s\n' "$file_content" | awk -v sv="$script_variant" '/^[[:space:]]*'"$script_variant"':[[:space:]]*/ {sub(/^[[:space:]]*'"$script_variant"':[[:space:]]*/, ""); print; exit}' 2>/dev/null || true)
@@ -60,12 +74,13 @@ generate_commands() {
     # Replace {SCRIPT} placeholder with the script command
     body=$(printf '%s\n' "$file_content" | sed "s|{SCRIPT}|${script_command}|g")
     
-    # Remove the scripts: section from frontmatter while preserving YAML structure
+    # Remove the scripts: section and agents: field from frontmatter while preserving YAML structure
     body=$(printf '%s\n' "$body" | awk '
       /^---$/ { print; if (++dash_count == 1) in_frontmatter=1; else in_frontmatter=0; next }
       in_frontmatter && /^scripts:$/ { skip_scripts=1; next }
       in_frontmatter && /^[a-zA-Z].*:/ && skip_scripts { skip_scripts=0 }
       in_frontmatter && skip_scripts && /^[[:space:]]/ { next }
+      in_frontmatter && /^agents:/ { next }
       { print }
     ')
     
@@ -80,6 +95,42 @@ generate_commands() {
       prompt.md)
         echo "$body" > "$output_dir/buildforce.$name.$ext" ;;
     esac
+  done
+}
+
+generate_agents() {
+  local agent=$1 output_dir=$2
+  mkdir -p "$output_dir"
+  for template in src/templates/agents/*.md; do
+    [[ -f "$template" ]] || continue
+    local name agents_field
+    name=$(basename "$template" .md)
+
+    # Normalize line endings
+    file_content=$(tr -d '\r' < "$template")
+
+    # Check for agent-specific filtering (same as commands)
+    # If 'agents:' field exists in frontmatter, only include if current agent is in the list
+    agents_field=$(printf '%s\n' "$file_content" | awk '/^agents:/ {sub(/^agents:[[:space:]]*/, ""); print; exit}' 2>/dev/null || true)
+    if [[ -n "$agents_field" ]]; then
+      # Use word boundary matching for reliable agent name detection
+      if ! echo "$agents_field" | grep -qw "$agent"; then
+        echo "  [filter] Skipping agent $name for $agent (agents: $agents_field)"
+        continue
+      else
+        echo "  [filter] Including agent $name for $agent (agents: $agents_field)"
+      fi
+    fi
+
+    # Remove the agents: field from frontmatter before copying
+    local body
+    body=$(printf '%s\n' "$file_content" | awk '
+      /^---$/ { print; if (++dash_count == 1) in_frontmatter=1; else in_frontmatter=0; next }
+      in_frontmatter && /^agents:/ { next }
+      { print }
+    ')
+
+    echo "$body" > "$output_dir/$name.md"
   done
 }
 
@@ -114,8 +165,9 @@ build_variant() {
 
   if [[ -d src/templates ]]; then
     mkdir -p "$SPEC_DIR/templates"
-    # Copy template files, excluding commands subdirectory
-    find src/templates -type f -not -path "src/templates/commands/*" | while read -r file; do
+    # Copy template files, excluding commands and agents subdirectories
+    # (commands go to agent-specific folders, agents go to .claude/agents/)
+    find src/templates -type f -not -path "src/templates/commands/*" -not -path "src/templates/agents/*" | while read -r file; do
       # Get the relative path from src/templates
       rel_path="${file#src/templates/}"
       dest_file="$SPEC_DIR/templates/$rel_path"
@@ -157,7 +209,13 @@ build_variant() {
   case $agent in
     claude)
       mkdir -p "$base_dir/.claude/commands"
-      generate_commands claude md "\$ARGUMENTS" "$base_dir/.claude/commands" "$script" ;;
+      generate_commands claude md "\$ARGUMENTS" "$base_dir/.claude/commands" "$script"
+      # Claude Code supports sub-agents - generate them if any exist
+      if [[ -d src/templates/agents ]]; then
+        mkdir -p "$base_dir/.claude/agents"
+        generate_agents claude "$base_dir/.claude/agents"
+      fi
+      ;;
     gemini)
       mkdir -p "$base_dir/.gemini/commands"
       generate_commands gemini toml "{{args}}" "$base_dir/.gemini/commands" "$script"

@@ -1,19 +1,19 @@
-# Buildforce Context Repository Index
-# This file serves as the entry point to your project's context repository.
-# It points to three context type directories, each serving a different purpose.
+# Buildforce Context Repository Index & Coverage Map
+# This file serves as both the context index AND the context coverage map.
+# Version 2.1: Unified structure with domain items tracking for /buildforce.extract
 
-version: "2.0"
+version: "2.1"
 
 # ============================================================================
 # CONTEXT TAXONOMY OVERVIEW
 # ============================================================================
 #
-# The context repository is organized into three directories, each aligned
-# with the context taxonomy pillars that AI agents need most:
+# The context repository is organized into three domains, each aligned with
+# the context taxonomy pillars that AI agents need most:
 #
 # 1. ARCHITECTURE (architecture/)
 #    Answers: WHAT exists already?
-#    Contains: Structural understanding of modules, features, and components
+#    Contains: Structural understanding of modules, features, components, and their relationships
 #    Used by: /buildforce.research, /buildforce.plan, /buildforce.build
 #
 # 2. CONVENTIONS (conventions/)
@@ -27,51 +27,107 @@ version: "2.0"
 #    Used by: /buildforce.build (self-review), PR Review Actions
 #
 # For more details on the context taxonomy, see:
-# https://buildforce.dev/concepts/context-repository
+# https://buildforce.dev/concepts/context-taxonomy
 #
 # ============================================================================
-# NAVIGATING THE CONTEXT REPOSITORY
+# VERSION 2.1: COVERAGE MAP FUNCTIONALITY
 # ============================================================================
 #
-# Each context type directory contains:
-#   - _schema.yaml: Field definitions and validation rules for context files
-#   - _index.yaml: Registry of context files in that directory
-#   - *.yaml: Individual context files following the schema
+# In v2.1, this file also serves as a coverage map for /buildforce.extract.
+# Each domain tracks:
+#   - items[]: Discovered and extracted context items with status/depth
+#   - coverage: Percentage of items that have been extracted
+#   - average_depth: Overall extraction depth (none|shallow|moderate|deep)
 #
-# To find context:
-#   1. Determine what type of context you need (architecture, convention, verification)
-#   2. Navigate to that directory's _index.yaml
-#   3. Find relevant context files by id, tags, or description
-#   4. Read the full context file for detailed information
+# Item structure:
+#   - id: unique-item-id
+#   - file: path/to/context-file.yaml
+#   - type: structural|convention|verification
+#   - description: Brief description of the item
+#   - tags: [optional, categorization, tags]
+#   - related_context: [references-to-other-items]
+#   - status: discovered | in-progress | extracted
+#   - depth: none | shallow | moderate | deep
+#
+# The /buildforce.extract command uses this coverage map to:
+#   1. Track what has been discovered in the codebase
+#   2. Track what has been extracted and to what depth
+#   3. Recommend focus areas for subsequent extraction iterations
 #
 # ============================================================================
 
-# Context type directories
-# Each directory is self-contained with its own schema and index
-context_types:
+# Timestamps (populated by /buildforce.extract on first run)
+generated_at: null
+last_updated: null
+
+# ============================================================================
+# CODEBASE PROFILE
+# ============================================================================
+# Populated by /buildforce.extract during initial codebase scan.
+# Provides high-level overview of the project for AI agents.
+
+codebase_profile:
+  languages: []           # e.g., [typescript, python]
+  frameworks: []          # e.g., [express, react, fastapi]
+  project_type: null      # e.g., "full-stack monorepo", "cli tool", "library"
+  scale: null             # e.g., "small (~5k LOC)", "medium (~45k LOC)"
+
+# ============================================================================
+# CONTEXT DOMAINS
+# ============================================================================
+# Each domain tracks both schema reference AND extracted items.
+# Items are discovered during codebase scan and populated during extraction.
+
+domains:
   architecture:
-    path: "architecture/"
     description: |
       Structural context about WHAT exists in the codebase.
       Contains understanding of modules, features, components, and their relationships.
-      All entries have type: structural.
-    index_file: "architecture/_index.yaml"
-    schema_file: "architecture/_schema.yaml"
+    schema: architecture/_schema.yaml
+    coverage: 0
+    average_depth: none
+    items: []
 
   conventions:
-    path: "conventions/"
     description: |
       Convention context about HOW things are done here.
       Contains coding standards, architectural patterns, and project practices.
-      All entries have type: convention with a sub_type for categorization.
-    index_file: "conventions/_index.yaml"
-    schema_file: "conventions/_schema.yaml"
+    schema: conventions/_schema.yaml
+    coverage: 0
+    average_depth: none
+    items: []
+    # Convention items also include: sub_type, enforcement
 
   verification:
-    path: "verification/"
     description: |
       Verification context about HOW to know if code is right.
       Contains quality standards, test expectations, review checklists, and known risks.
-      All entries have type: verification with source field (mined, manual, hybrid).
-    index_file: "verification/_index.yaml"
-    schema_file: "verification/_schema.yaml"
+    schema: verification/_schema.yaml
+    coverage: 0
+    average_depth: none
+    items: []
+    # Verification items also include: source (extracted | manual | hybrid)
+
+# ============================================================================
+# AGGREGATE SUMMARY
+# ============================================================================
+# Computed metrics across all domains. Updated after each extraction iteration.
+
+summary:
+  overall_coverage: 0
+  total_items: 0
+  extracted_items: 0
+  iterations_completed: 0
+
+# ============================================================================
+# EXTRACTION STATE
+# ============================================================================
+# Tracks state between /buildforce.extract invocations.
+# Enables continuation after /clear or session restart.
+
+extraction:
+  needs_clarification: []    # Questions that emerged during extraction
+  recommended_focus: []      # Suggested items for next iteration
+  # Format: - id: item-id
+  #           reason: "Why this item should be prioritized"
+  new_discoveries: []        # Items found but not yet in items arrays

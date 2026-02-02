@@ -1,0 +1,186 @@
+id: "claude-code-extract-command-20260127152345-research"
+created: "2026-01-27"
+last_updated: "2026-01-27"
+
+summary: |
+  Research on the /buildforce.extract command PoC - a new slash command designed to solve the
+  cold start problem for fresh repositories. The command uses Context Manager + Context Extractors
+  pattern to iteratively extract and persist structural, convention, and verification context
+  from codebases. Aligned with the context taxonomy (6 pillars: Intent, Structural, Convention,
+  Historical, Operational, Verification) introduced in the recent PR b966dd0. Includes exact
+  agent prompts for the three Context Extractors and the main extract command template.
+
+key_findings:
+  - "/buildforce.extract solves the cold start problem by bootstrapping context repositories for fresh codebases"
+  - "Root _index.yaml serves dual purpose: context repository index AND coverage map (items discovered/extracted with depth tracking)"
+  - "Iterative depth model: none → shallow (30s) → moderate (2min) → deep (5min+) per item"
+  - "Context Manager orchestrates extractors; generates per-iteration _extraction-progress.yaml plans"
+  - "Three specialized extractors: cm-1-structural, cm-2-convention, cm-3-verification"
+  - "Extractors return PROPOSALS (not direct writes) - Context Manager validates against _index.yaml before writing"
+  - "Brainstorming UX: interactive follow-ups, user guides depth/focus, sessions ephemeral but _index.yaml persists"
+  - "Context taxonomy has 6 pillars with ~60-70% capturable at coding session level"
+  - "Structural, Convention, and Verification are HIGH impact + HIGH captureability - primary extract targets"
+  - "Historical context accumulates over time (WHY questions) - the 'visible magic' for advanced operations"
+  - "PR b966dd0 migrated context repo to v2.0 taxonomy: architecture/ conventions/ verification/ structure"
+  - "All architecture context now uses type: 'structural' (replacing legacy module/feature/component/pattern enum)"
+  - "Conventions have sub_types and enforcement levels (strict/recommended/reference)"
+  - "Verification context answers 'HOW do I know it's right?' - quality standards, test expectations, known risks"
+  - "Extractors read plans from _extraction-progress.yaml files (not passed inline)"
+  - "Verification criteria are iteration-specific, not generic questions"
+  - "State preservation allows /clear and resume - _index.yaml persists across sessions"
+
+file_paths:
+  primary:
+    - ".buildforce/.temp/extract-command-poc.md"
+    - ".buildforce/.temp/agentic-context-taxonomy.md"
+    - ".buildforce/context/_index.yaml"
+    - ".buildforce/context/architecture/_index.yaml"
+    - ".buildforce/context/architecture/_schema.yaml"
+    - ".buildforce/context/conventions/_index.yaml"
+    - ".buildforce/context/conventions/_schema.yaml"
+    - ".buildforce/context/verification/_index.yaml"
+    - ".buildforce/context/verification/_schema.yaml"
+  secondary:
+    - "src/templates/commands/research.md"
+    - "src/templates/commands/document.md"
+    - "src/templates/commands/build.md"
+    - "src/templates/commands/complete.md"
+    - "src/templates/commands/plan.md"
+    - ".buildforce/context/architecture/slash-commands.yaml"
+    - ".buildforce/context/conventions/template-only-slash-commands.yaml"
+    - ".buildforce/buildforce.json"
+
+mermaid_diagrams:
+  - title: "Extract Command Architecture"
+    diagram: |
+      flowchart TB
+        subgraph "User Interaction"
+          U["/buildforce.extract [prompt]"]
+        end
+
+        subgraph "Context Manager"
+          CM[Context Manager]
+          SCAN[Codebase Scanner]
+          PLAN[Mining Plan Generator]
+          VAL[Proposal Validator]
+        end
+
+        subgraph "Persistent Artifacts"
+          IDX["_index.yaml<br/>(Coverage Map)"]
+        end
+
+        subgraph "Per-Iteration Artifacts"
+          EP1["architecture/_extraction-progress.yaml"]
+          EP2["conventions/_extraction-progress.yaml"]
+          EP3["verification/_extraction-progress.yaml"]
+        end
+
+        subgraph "Context Extractors"
+          M1[cm-1-structural]
+          M2[cm-2-convention]
+          M3[cm-3-verification]
+        end
+
+        subgraph "Context Files"
+          CF1["architecture/*.yaml"]
+          CF2["conventions/*.yaml"]
+          CF3["verification/*.yaml"]
+        end
+
+        U --> CM
+        CM --> SCAN
+        SCAN --> IDX
+        CM --> PLAN
+        PLAN --> EP1 & EP2 & EP3
+        EP1 --> M1
+        EP2 --> M2
+        EP3 --> M3
+        M1 & M2 & M3 -->|proposals| VAL
+        VAL -->|validate against| IDX
+        VAL -->|approved| CF1 & CF2 & CF3
+        VAL -->|update| IDX
+
+  - title: "Iterative Extraction Flow"
+    diagram: |
+      flowchart LR
+        subgraph "First Run"
+          FR1[Scan Codebase] --> FR2[Create _index.yaml]
+          FR2 --> FR3[All items: discovered/none]
+          FR3 --> FR4[Shallow extraction all domains]
+          FR4 --> FR5[Present summary + questions]
+        end
+
+        subgraph "Subsequent Runs"
+          SR1[Read _index.yaml] --> SR2[Interpret prompt]
+          SR2 --> SR3[Generate focused plans]
+          SR3 --> SR4[Deeper extraction on focus]
+          SR4 --> SR5[Update _index.yaml + files]
+          SR5 --> SR6[Present progress + questions]
+        end
+
+        FR5 -.->|user continues| SR1
+
+data_models:
+  - name: "_index.yaml (Root Coverage Map)"
+    properties:
+      - field: "version"
+        type: "string"
+        description: "Schema version (2.1 for extract support)"
+      - field: "type"
+        type: "string"
+        description: "context-index"
+      - field: "generated_at"
+        type: "ISO datetime"
+        description: "When first created"
+      - field: "last_updated"
+        type: "ISO datetime"
+        description: "Last modification"
+      - field: "codebase_profile"
+        type: "object"
+        description: "languages, frameworks, project_type, scale"
+      - field: "domains"
+        type: "object"
+        description: "structural, conventions, verification with items array"
+      - field: "domains.*.items[].id"
+        type: "string"
+        description: "Unique item identifier"
+      - field: "domains.*.items[].status"
+        type: "enum"
+        description: "discovered | in-progress | extracted"
+      - field: "domains.*.items[].depth"
+        type: "enum"
+        description: "none | shallow | moderate | deep"
+      - field: "summary"
+        type: "object"
+        description: "overall_coverage, total_items, extracted_items, iterations_completed"
+      - field: "extraction"
+        type: "object"
+        description: "needs_clarification, recommended_focus, new_discoveries"
+
+agent_prompts:
+  cm_1_structural:
+    name: "CM-1: Context Extractor - Structural Context"
+    model: "reasoning"
+    allowed_tools: ["View", "Glob", "Grep", "Read", "Write"]
+  cm_2_convention:
+    name: "CM-2: Context Extractor - Convention Context"
+    model: "reasoning"
+    allowed_tools: ["View", "Glob", "Grep", "Read", "Write"]
+  cm_3_verification:
+    name: "CM-3: Context Extractor - Verification Context"
+    model: "reasoning"
+    allowed_tools: ["View", "Glob", "Grep", "Read", "Write"]
+
+tldr:
+  - "The /buildforce.extract command solves cold start by iteratively mining context from fresh codebases"
+  - "Uses Context Manager + 3 specialized Extractors (structural, convention, verification) pattern"
+  - "Root _index.yaml is THE persistent artifact - serves as both index AND coverage map"
+  - "Iterative depth model: none → shallow → moderate → deep based on user focus"
+  - "Extractors return proposals validated by Context Manager before writing (prevents duplicates)"
+  - "PR b966dd0 established the v2.0 taxonomy with architecture/conventions/verification structure"
+  - "Aligns with context taxonomy: 60-70% of impactful context is capturable at coding session level"
+  - "Claude Code specific: Uses sub-agents (Task tool) for parallel mining - not available in other agents"
+
+updates:
+  - date: "2026-01-27"
+    summary: "Research materialized from cache for planning session"

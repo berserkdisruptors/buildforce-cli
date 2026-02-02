@@ -1,0 +1,64 @@
+id: review-criteria
+name: Review Criteria
+type: verification
+source: extracted
+created: "2026-02-02"
+last_updated: "2026-02-02"
+
+quality_standards:
+  - standard: "Issue templates available"
+    description: |
+      Bug reports and feature requests have templates in .github/ISSUE_TEMPLATE/
+      - bug_report.md: Requires description, reproduction steps, expected behavior
+      - feature_request.md: Requires problem description, proposed solution, alternatives
+    enforcement: recommended
+    confidence: 1.0
+
+  - standard: "Contributing workflow"
+    description: |
+      README.md documents contribution workflow:
+      1. Check existing issues
+      2. Create an issue describing problem/feature
+      3. Fork & branch following naming convention
+      4. Use Buildforce for development (dogfooding)
+      5. Test locally with npm link
+      6. Submit PR with description and linked issues
+    enforcement: recommended
+    confidence: 1.0
+
+review_checklist:
+  - item: "Issue linked in PR"
+    frequency: 0.5
+    example_comment: "Please link the related issue"
+
+  - item: "Tested locally"
+    frequency: 0.8
+    example_comment: "Did you test this with npm link?"
+
+  - item: "Follows naming conventions"
+    frequency: 1.0
+    example_comment: "Branch name must follow feat/fix/chore pattern"
+
+  - item: "TypeScript builds successfully"
+    frequency: 1.0
+    example_comment: "Please ensure npm run build passes"
+
+known_risks:
+  - module: ".github/"
+    risk: "No PR template exists"
+    mitigation: |
+      PRs may lack consistent information. Reviewers should request:
+      - Description of changes
+      - Related issue link
+      - Testing performed
+      - Screenshots if UI related
+    occurrences: 0
+    last_flagged: "2026-02-02"
+
+  - module: ".github/"
+    risk: "No CODEOWNERS file"
+    mitigation: |
+      No automatic reviewer assignment. PRs may not get timely reviews.
+      Manually request reviews from maintainers.
+    occurrences: 0
+    last_flagged: "2026-02-02"

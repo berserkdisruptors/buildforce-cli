@@ -4,17 +4,164 @@ type: convention
 sub_type: naming-convention
 enforcement: recommended
 created: "2026-01-26"
-last_updated: "2026-01-26"
+last_updated: "2026-02-02"
 
 description: |
-  Files:
-    - kebab-case for context files: _glossary.yaml, _api-patterns.yaml, _guidelines.yaml
-    - kebab-case with prefix for templates: plan-template.yaml, spec-template.yaml
-    - Descriptive names over abbreviations: get-spec-paths.sh vs get-paths.sh
-  
-  Variables:
-    - UPPER_SNAKE_CASE for bash script variables: SPEC_DIR, BUILDFORCE_ROOT, FEATURE_DIR
-    - camelCase for TypeScript: specId, featurePath, lastUpdated
-  
-  Constants:
-    - Semantic versioning in version fields: 0.0.33 (major.minor.patch)
+  Naming conventions ensure consistency across the codebase. These rules apply to files,
+  variables, folders, and identifiers throughout the Buildforce CLI and context repository.
+
+  KEY PRINCIPLE: Names should be semantic and discoverable, reflecting component identity
+  rather than temporal or spec-specific information.
+
+file_naming:
+  context_files:
+    pattern: "kebab-case"
+    max_length: 50
+    examples:
+      - "slash-commands.yaml"
+      - "authentication.yaml"
+      - "error-handling.yaml"
+    counter_examples:
+      - "add-auth-jwt-20250122.yaml (spec-based, not semantic)"
+      - "001-slash-commands.yaml (numeric prefix)"
+      - "slashCommands.yaml (wrong case)"
+    rationale: "Semantic names enable discovery and outlive individual specs"
+
+  schema_files:
+    pattern: "_schema.yaml (underscore prefix)"
+    location: "Each domain folder root"
+    examples:
+      - "architecture/_schema.yaml"
+      - "conventions/_schema.yaml"
+      - "verification/_schema.yaml"
+    rationale: "Underscore prefix indicates meta-file, not content"
+
+  index_files:
+    pattern: "_index.yaml (underscore prefix)"
+    location: ".buildforce/context/_index.yaml"
+    rationale: "Single unified index for all domains; underscore indicates meta-file"
+
+  template_files:
+    pattern: "kebab-case with descriptive suffix"
+    examples:
+      - "spec-template.yaml"
+      - "plan-template.yaml"
+    location: ".buildforce/templates/"
+
+  command_templates:
+    pattern: "command-name.md"
+    examples:
+      - "plan.md"
+      - "build.md"
+      - "complete.md"
+    location: "src/templates/commands/"
+
+folder_naming:
+  session_folders:
+    pattern: "{semantic-slug}-{timestamp}"
+    slug_rules:
+      - "3-5 words, kebab-case"
+      - "Max 35 characters"
+      - "Must start with lowercase letter"
+      - "Lowercase alphanumeric and hyphens only"
+    timestamp_format: "YYYYMMDDHHmmss (14 digits UTC)"
+    total_max_length: 50
+    examples:
+      - "add-auth-jwt-20250122143052"
+      - "refactor-error-handling-20260115093000"
+    validation_regex: "^[a-z][a-z0-9-]*-[0-9]{14}$"
+    rationale: "Slug first for readability; timestamp for uniqueness and chronological sorting"
+
+variable_naming:
+  typescript:
+    pattern: "camelCase"
+    examples:
+      - "specId"
+      - "featurePath"
+      - "lastUpdated"
+      - "currentSession"
+    applies_to: "Variables, function parameters, object properties"
+
+  bash:
+    pattern: "UPPER_SNAKE_CASE"
+    examples:
+      - "SPEC_DIR"
+      - "BUILDFORCE_ROOT"
+      - "FEATURE_DIR"
+      - "FOLDER_NAME"
+    applies_to: "All bash script variables"
+
+  constants:
+    pattern: "UPPER_SNAKE_CASE (TypeScript) or UPPER_SNAKE_CASE (Bash)"
+    examples:
+      - "MINT_COLOR"
+      - "TAGLINE"
+
+identifier_naming:
+  context_ids:
+    pattern: "kebab-case"
+    max_length: 50
+    examples:
+      - "slash-commands"
+      - "template-only-slash-commands"
+      - "context-repository-pattern"
+    used_in: "_index.yaml items, context file id field"
+
+  requirement_ids:
+    pattern: "PREFIX + sequential number"
+    prefixes:
+      FR: "Functional Requirement (FR1, FR2, ...)"
+      NFR: "Non-Functional Requirement (NFR1, NFR2, ...)"
+      AC: "Acceptance Criteria (AC1, AC2, ...)"
+    examples:
+      - "FR1, FR2, FR3"
+      - "NFR1, NFR2"
+      - "AC1, AC2, AC3"
+
+edge_cases:
+  - case: "Context file for existing spec-driven feature"
+    rule: "Use component identity, NOT spec ID"
+    example: |
+      Spec: add-auth-jwt-20250122143052
+      Context file: authentication.yaml (NOT add-auth-jwt.yaml)
+    rationale: "Context outlives specs; component name is discoverable"
+
+  - case: "Multiple context files for same component"
+    rule: "Add descriptive suffix if truly separate concerns"
+    examples:
+      - "authentication.yaml (core auth)"
+      - "authentication-oauth.yaml (OAuth extension)"
+    rationale: "Avoid monolithic files; suffix indicates specific aspect"
+
+  - case: "Agent-specific files"
+    rule: "Use agent name in folder, not filename"
+    examples:
+      - ".claude/commands/buildforce.plan.md"
+      - ".cursor/commands/buildforce.plan.md"
+    rationale: "Same command, different agent folders"
+
+enforcement_mechanism:
+  session_folders: "Validated by create-session-files.sh (regex + length check)"
+  context_files: "Enforced by template instructions in /complete, /document, /extract"
+  typescript: "tsconfig.json forceConsistentCasingInFileNames: true"
+  bash: "Convention only (no automated enforcement)"
+
+template: |
+  # Context file naming
+  {component-identity}.yaml  # Good: semantic, discoverable
+  {spec-id}.yaml             # Bad: tied to spec, not component
+
+  # Session folder naming
+  {slug}-{timestamp}         # add-auth-jwt-20250122143052
+
+  # TypeScript variables
+  const specId = '...'       # camelCase
+
+  # Bash variables
+  SPEC_DIR=".buildforce"     # UPPER_SNAKE_CASE
+
+reference_files:
+  - "src/scripts/bash/create-session-files.sh (validates folder naming)"
+  - "tsconfig.json (forceConsistentCasingInFileNames)"
+  - "src/templates/commands/complete.md (context file naming rules)"
+  - "src/templates/commands/document.md (context file naming rules)"

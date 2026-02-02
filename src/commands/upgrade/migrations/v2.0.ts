@@ -1,16 +1,7 @@
 import fs from "fs-extra";
 import path from "path";
 import YAML from "yaml";
-
-/**
- * Result of the context migration process
- */
-export interface MigrationResult {
-  migrated: boolean; // Whether migration was performed
-  skipped: boolean; // True if already at version 2.0
-  actions: string[]; // List of actions taken for logging
-  errors: string[]; // Any non-fatal errors encountered
-}
+import { Migration, MigrationResult, getTodayDate } from "./index.js";
 
 /**
  * Convention item structure from old _guidelines.yaml
@@ -76,27 +67,40 @@ interface NewConventionFile {
 }
 
 /**
- * Get today's date in YYYY-MM-DD format
+ * Entry from v1.0 _index.yaml contexts array
  */
-function getTodayDate(): string {
-  const now = new Date();
-  return now.toISOString().split("T")[0];
+interface OldIndexEntry {
+  id: string;
+  file: string;
+  type: string;
+  description?: string;
+  tags?: string[];
+  related_context?: string[];
+}
+
+/**
+ * New architecture _index.yaml entry structure
+ */
+interface NewArchitectureEntry {
+  id: string;
+  file: string;
+  type: "structural";
+  description?: string;
+  tags?: string[];
+  related_context?: string[];
 }
 
 /**
  * Format a string value for YAML output
- * Uses block scalar (|) for multi-line strings, quotes for strings with special chars
  */
-function formatYamlValue(value: string, indent: number = 0): string {
-  const indentStr = "  ".repeat(indent);
+function formatYamlValue(value: string, _indent: number = 0): string {
+  const indentStr = "  ".repeat(_indent);
 
-  // Check if multi-line
   if (value.includes("\n")) {
     const lines = value.split("\n").map((line) => indentStr + "  " + line);
     return "|\n" + lines.join("\n");
   }
 
-  // Check if needs quoting (contains special chars)
   if (value.includes(":") || value.includes("#") || value.includes("'") || value.includes('"')) {
     return `"${value.replace(/"/g, '\\"')}"`;
   }
@@ -106,12 +110,6 @@ function formatYamlValue(value: string, indent: number = 0): string {
 
 /**
  * Serialize an _index.yaml file with proper formatting
- * Preserves header from existing file and adds blank lines between entries
- *
- * @param existingContent - Existing file content (to preserve header/documentation)
- * @param entries - Array of entries to serialize
- * @param entrySerializer - Function to convert each entry to YAML lines
- * @param fallbackHeader - Header to use if no existing content
  */
 function serializeIndexFile<T>(
   existingContent: string | null,
@@ -119,13 +117,11 @@ function serializeIndexFile<T>(
   entrySerializer: (entry: T) => string[],
   fallbackHeader: string = 'version: "2.0"\n\n'
 ): string {
-  // Serialize entries with blank lines between them
   const entriesYaml = entries
     .map((entry) => entrySerializer(entry).map((line) => "  " + line).join("\n"))
     .join("\n\n");
 
   if (existingContent) {
-    // Find where contexts: section starts and preserve everything before it
     const contextsMatch = existingContent.match(/^([\s\S]*?)(contexts:\s*\[?\]?\s*)$/m);
     if (contextsMatch) {
       const header = contextsMatch[1];
@@ -133,18 +129,15 @@ function serializeIndexFile<T>(
     }
   }
 
-  // Fallback: create new file with header
   return fallbackHeader + "contexts:\n" + entriesYaml + "\n";
 }
 
 /**
- * Serialize a convention file to YAML with proper formatting
- * Uses block scalars for multi-line strings and adds blank lines between sections
+ * Serialize a convention file to YAML
  */
 function serializeConventionFile(convention: NewConventionFile): string {
   const lines: string[] = [];
 
-  // Required fields
   lines.push(`id: ${convention.id}`);
   lines.push(`name: "${convention.name}"`);
   lines.push(`type: ${convention.type}`);
@@ -153,11 +146,8 @@ function serializeConventionFile(convention: NewConventionFile): string {
   lines.push(`created: "${convention.created}"`);
   lines.push(`last_updated: "${convention.last_updated}"`);
   lines.push("");
-
-  // Description (may be multi-line)
   lines.push(`description: ${formatYamlValue(convention.description, 0)}`);
 
-  // Optional fields with blank lines between sections
   if (convention.examples && convention.examples.length > 0) {
     lines.push("");
     lines.push("examples:");
@@ -211,15 +201,15 @@ function serializeConventionFile(convention: NewConventionFile): string {
 }
 
 /**
- * Convert a string to kebab-case for use as file ID
+ * Convert a string to kebab-case
  */
 function toKebabCase(str: string): string {
   return str
     .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, "") // Remove special chars
-    .replace(/\s+/g, "-") // Spaces to hyphens
-    .replace(/-+/g, "-") // Collapse multiple hyphens
-    .replace(/^-|-$/g, ""); // Trim leading/trailing hyphens
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
 }
 
 /**
@@ -257,7 +247,7 @@ function sectionToSubType(section: string): string {
 }
 
 /**
- * Convert an old convention item to a new convention file structure
+ * Convert an old convention item to new format
  */
 function convertToNewConvention(
   item: OldConventionItem,
@@ -280,39 +270,29 @@ function convertToNewConvention(
     description: item.description || `Convention: ${name}`,
   };
 
-  // Handle examples - normalize to array format
   if (item.examples && Array.isArray(item.examples)) {
     newConvention.examples = item.examples.map((ex) => ({
       file: ex.file || "example",
       snippet: ex.snippet || "",
     }));
   } else if (item.example && typeof item.example === "string") {
-    newConvention.examples = [
-      {
-        file: "example",
-        snippet: item.example,
-      },
-    ];
+    newConvention.examples = [{ file: "example", snippet: item.example }];
   }
 
-  // Handle template
   if (item.template) {
     newConvention.template = item.template;
   }
 
-  // Handle violations
   if (item.violations && Array.isArray(item.violations)) {
     newConvention.violations = item.violations;
   } else if (item.violation_example) {
     newConvention.violations = [item.violation_example];
   }
 
-  // Handle reference files
   if (item.reference_files && Array.isArray(item.reference_files)) {
     newConvention.reference_files = item.reference_files;
   }
 
-  // Handle migration guide (for project_quirks)
   if (item.migration_guide) {
     newConvention.migration_guide = item.migration_guide;
   }
@@ -321,8 +301,7 @@ function convertToNewConvention(
 }
 
 /**
- * Handle naming_conventions which can be an object with sub-fields
- * or an array of items
+ * Process naming conventions
  */
 function processNamingConventions(
   namingData: OldConventionItem | OldConventionItem[],
@@ -330,34 +309,23 @@ function processNamingConventions(
 ): NewConventionFile[] {
   const conventions: NewConventionFile[] = [];
 
-  // If it's an object with sub-fields (files, variables, constants, functions)
   if (
     !Array.isArray(namingData) &&
-    (namingData.files ||
-      namingData.variables ||
-      namingData.constants ||
-      namingData.functions)
+    (namingData.files || namingData.variables || namingData.constants || namingData.functions)
   ) {
-    // Create one convention file that captures all naming rules
     const description = [];
 
     if (namingData.files && Array.isArray(namingData.files)) {
       description.push("Files:\n" + namingData.files.map((f) => `  - ${f}`).join("\n"));
     }
     if (namingData.variables && Array.isArray(namingData.variables)) {
-      description.push(
-        "Variables:\n" + namingData.variables.map((v) => `  - ${v}`).join("\n")
-      );
+      description.push("Variables:\n" + namingData.variables.map((v) => `  - ${v}`).join("\n"));
     }
     if (namingData.constants && Array.isArray(namingData.constants)) {
-      description.push(
-        "Constants:\n" + namingData.constants.map((c) => `  - ${c}`).join("\n")
-      );
+      description.push("Constants:\n" + namingData.constants.map((c) => `  - ${c}`).join("\n"));
     }
     if (namingData.functions && Array.isArray(namingData.functions)) {
-      description.push(
-        "Functions:\n" + namingData.functions.map((f) => `  - ${f}`).join("\n")
-      );
+      description.push("Functions:\n" + namingData.functions.map((f) => `  - ${f}`).join("\n"));
     }
 
     if (description.length > 0) {
@@ -372,9 +340,7 @@ function processNamingConventions(
         description: description.join("\n\n"),
       });
     }
-  }
-  // If it's an array of naming convention items
-  else if (Array.isArray(namingData)) {
+  } else if (Array.isArray(namingData)) {
     for (const item of namingData) {
       const converted = convertToNewConvention(item, "naming_conventions", todayDate);
       if (converted) {
@@ -387,9 +353,9 @@ function processNamingConventions(
 }
 
 /**
- * Parse _guidelines.yaml and break it down into individual convention files
+ * Migrate _guidelines.yaml to individual convention files
  */
-export async function migrateGuidelinesFile(
+async function migrateGuidelinesFile(
   guidelinesPath: string,
   conventionsPath: string,
   todayDate: string
@@ -405,10 +371,8 @@ export async function migrateGuidelinesFile(
       return result;
     }
 
-    // Collect all conventions to create
     const allConventions: NewConventionFile[] = [];
 
-    // Process each section
     const sections: (keyof OldGuidelines)[] = [
       "architectural_patterns",
       "code_conventions",
@@ -432,34 +396,25 @@ export async function migrateGuidelinesFile(
       }
     }
 
-    // Handle naming_conventions separately (can be object or array)
     if (guidelines.naming_conventions) {
-      const namingConventions = processNamingConventions(
-        guidelines.naming_conventions,
-        todayDate
-      );
+      const namingConventions = processNamingConventions(guidelines.naming_conventions, todayDate);
       allConventions.push(...namingConventions);
     }
 
-    // Write each convention to its own file
     for (const convention of allConventions) {
       const filename = `${convention.id}.yaml`;
       const filePath = path.join(conventionsPath, filename);
 
-      // Don't overwrite existing files
       if (await fs.pathExists(filePath)) {
         result.errors.push(`Skipping ${filename} - file already exists`);
         continue;
       }
 
-      // Use custom serializer for proper YAML formatting (block scalars, blank lines)
       const yamlContent = serializeConventionFile(convention);
-
       await fs.writeFile(filePath, yamlContent, "utf8");
       result.files.push(filename);
     }
 
-    // Update conventions/_index.yaml with the new files
     const indexPath = path.join(conventionsPath, "_index.yaml");
     if (await fs.pathExists(indexPath)) {
       try {
@@ -467,17 +422,12 @@ export async function migrateGuidelinesFile(
         const index = YAML.parse(indexContent);
 
         if (index && typeof index === "object") {
-          // Ensure contexts array exists
           if (!Array.isArray(index.contexts)) {
             index.contexts = [];
           }
 
-          // Add entries for each created convention file
           for (const convention of allConventions) {
-            // Check if already exists in index
-            const exists = index.contexts.some(
-              (ctx: { id?: string }) => ctx.id === convention.id
-            );
+            const exists = index.contexts.some((ctx: { id?: string }) => ctx.id === convention.id);
             if (!exists) {
               index.contexts.push({
                 id: convention.id,
@@ -489,7 +439,6 @@ export async function migrateGuidelinesFile(
             }
           }
 
-          // Write with preserved formatting using generic serializer
           const outputContent = serializeIndexFile(
             indexContent,
             index.contexts,
@@ -515,35 +464,9 @@ export async function migrateGuidelinesFile(
 }
 
 /**
- * Entry from v1.0 _index.yaml contexts array
+ * Migrate context files to architecture folder
  */
-interface OldIndexEntry {
-  id: string;
-  file: string;
-  type: string;
-  description?: string;
-  tags?: string[];
-  related_context?: string[];
-}
-
-/**
- * New architecture _index.yaml entry structure
- */
-interface NewArchitectureEntry {
-  id: string;
-  file: string;
-  type: "structural";
-  description?: string;
-  tags?: string[];
-  related_context?: string[];
-}
-
-/**
- * Migrate existing context files from root context/ to architecture/
- * Converts type field to "structural" for all files
- * Preserves original YAML formatting (blank lines, comments, structure)
- */
-export async function migrateContextFilesToArchitecture(
+async function migrateContextFilesToArchitecture(
   contextPath: string,
   architecturePath: string,
   todayDate: string
@@ -551,64 +474,49 @@ export async function migrateContextFilesToArchitecture(
   const result = { files: [] as string[], errors: [] as string[] };
 
   try {
-    // Get all .yaml and .yml files in root context/ directory
     const items = await fs.readdir(contextPath);
     const contextFiles = items.filter((item) => {
-      // Include both .yaml and .yml files, exclude special files and directories
       if (!item.endsWith(".yaml") && !item.endsWith(".yml")) return false;
-      if (item.startsWith("_")) return false; // Skip _index.yaml, _schema.yaml, _graph.yaml, _guidelines.yaml
+      if (item.startsWith("_")) return false;
       return true;
     });
 
     for (const filename of contextFiles) {
       const sourcePath = path.join(contextPath, filename);
-      // Normalize .yml to .yaml extension for consistency
       const destFilename = filename.endsWith(".yml")
         ? filename.replace(/\.yml$/, ".yaml")
         : filename;
       const destPath = path.join(architecturePath, destFilename);
 
       try {
-        // Skip if it's a directory
         const stat = await fs.stat(sourcePath);
         if (stat.isDirectory()) continue;
 
-        // Skip if destination already exists (check both original and normalized names)
         if (await fs.pathExists(destPath)) {
           result.errors.push(`Skipping ${filename} - already exists in architecture/`);
           continue;
         }
 
-        // Read the file content
         let content = await fs.readFile(sourcePath, "utf8");
 
-        // Verify it's valid YAML before modifying
         const parsed = YAML.parse(content);
         if (!parsed || typeof parsed !== "object") {
           result.errors.push(`Invalid YAML structure in ${filename}`);
           continue;
         }
 
-        // Use regex to update type field while preserving formatting
-        // Match type: followed by any value (quoted or unquoted)
         const typeRegex = /^(type:\s*)(?:"[^"]*"|'[^']*'|\S+)(\s*)$/m;
         if (typeRegex.test(content)) {
           content = content.replace(typeRegex, `$1structural$2`);
         }
 
-        // Update last_updated field while preserving formatting
         const lastUpdatedRegex = /^(last_updated:\s*)(?:"[^"]*"|'[^']*'|\S+)(\s*)$/m;
         if (lastUpdatedRegex.test(content)) {
           content = content.replace(lastUpdatedRegex, `$1"${todayDate}"$2`);
         }
 
-        // Write to architecture/ folder (preserving original formatting)
         await fs.writeFile(destPath, content, "utf8");
-
-        // Delete the original file after successful copy
         await fs.remove(sourcePath);
-
-        // Track with normalized filename (.yaml extension)
         result.files.push(destFilename);
       } catch (e: any) {
         result.errors.push(`Error migrating ${filename}: ${e.message}`);
@@ -622,17 +530,15 @@ export async function migrateContextFilesToArchitecture(
 }
 
 /**
- * Migrate entries from root _index.yaml to architecture/_index.yaml
- * Converts type to "structural" for all entries
+ * Migrate index entries to architecture
  */
-export async function migrateIndexEntriesToArchitecture(
+async function migrateIndexEntriesToArchitecture(
   rootIndexPath: string,
   archIndexPath: string
 ): Promise<{ entries: number; errors: string[] }> {
   const result = { entries: 0, errors: [] as string[] };
 
   try {
-    // Read root _index.yaml (v1.0 format with contexts array)
     if (!(await fs.pathExists(rootIndexPath))) {
       return result;
     }
@@ -644,7 +550,6 @@ export async function migrateIndexEntriesToArchitecture(
       return result;
     }
 
-    // Read architecture/_index.yaml
     let archIndex: { version: string; contexts: NewArchitectureEntry[] };
     if (await fs.pathExists(archIndexPath)) {
       const archContent = await fs.readFile(archIndexPath, "utf8");
@@ -656,27 +561,21 @@ export async function migrateIndexEntriesToArchitecture(
       archIndex = { version: "2.0", contexts: [] };
     }
 
-    // Migrate each entry, converting type to "structural"
-    // Skip entries that reference special files (_guidelines.yaml)
     for (const entry of rootIndex.contexts as OldIndexEntry[]) {
-      // Skip _guidelines.yaml entry - this goes to conventions/
       if (entry.file === "_guidelines.yaml" || entry.id === "guidelines") {
         continue;
       }
 
-      // Check if entry already exists in architecture index
       const exists = archIndex.contexts.some((ctx) => ctx.id === entry.id);
       if (exists) {
         result.errors.push(`Skipping entry ${entry.id} - already exists in architecture/_index.yaml`);
         continue;
       }
 
-      // Normalize .yml to .yaml extension for consistency
       const normalizedFile = entry.file.endsWith(".yml")
         ? entry.file.replace(/\.yml$/, ".yaml")
         : entry.file;
 
-      // Convert entry to new format with type="structural"
       const newEntry: NewArchitectureEntry = {
         id: entry.id,
         file: normalizedFile,
@@ -690,17 +589,13 @@ export async function migrateIndexEntriesToArchitecture(
         newEntry.tags = entry.tags;
       }
       if (entry.related_context && Array.isArray(entry.related_context)) {
-        // Filter out references to guidelines - they should reference conventions if needed
-        newEntry.related_context = entry.related_context.filter(
-          (ref) => ref !== "guidelines"
-        );
+        newEntry.related_context = entry.related_context.filter((ref) => ref !== "guidelines");
       }
 
       archIndex.contexts.push(newEntry);
       result.entries++;
     }
 
-    // Write updated architecture/_index.yaml with preserved formatting using generic serializer
     const existingContent = (await fs.pathExists(archIndexPath))
       ? await fs.readFile(archIndexPath, "utf8")
       : null;
@@ -731,233 +626,212 @@ export async function migrateIndexEntriesToArchitecture(
 }
 
 /**
- * Migrate context structure from version 1.0 to 2.0
+ * Migration to v2.0
  *
- * This function:
- * 1. Checks root _index.yaml version (1.0 → migrate, 2.0 → skip)
- * 2. Creates architecture/, conventions/, verification/ folders with schemas
- * 3. Copies new schema and index files from the template source
- * 4. Breaks down _guidelines.yaml into individual convention files
- * 5. Migrates existing context files to architecture/ with type="structural"
- * 6. Migrates _index.yaml entries to architecture/_index.yaml
- * 7. Updates root _index.yaml to version 2.0 directory format
- * 8. Cleans up old files from root context/
+ * Migrates context structure from v1.0 to v2.0:
+ * 1. Creates architecture/, conventions/, verification/ folders with schemas
+ * 2. Breaks down _guidelines.yaml into individual convention files
+ * 3. Migrates existing context files to architecture/ with type="structural"
+ * 4. Updates root _index.yaml to version 2.0
  */
-export async function migrateContextStructure(
-  projectPath: string,
-  templateSourceDir: string
-): Promise<MigrationResult> {
-  const result: MigrationResult = {
-    migrated: false,
-    skipped: false,
-    actions: [],
-    errors: [],
-  };
+export const migration20: Migration = {
+  version: "2.0",
+  description: "Migrate to v2.0 taxonomy (architecture/conventions/verification structure)",
 
-  const contextPath = path.join(projectPath, ".buildforce", "context");
-  const rootIndexPath = path.join(contextPath, "_index.yaml");
-  const todayDate = getTodayDate();
+  async execute(projectPath: string, templateSourceDir: string): Promise<MigrationResult> {
+    const result: MigrationResult = {
+      migrated: false,
+      skipped: false,
+      actions: [],
+      errors: [],
+    };
 
-  // Check if context folder exists
-  if (!(await fs.pathExists(contextPath))) {
-    result.skipped = true;
-    result.actions.push("No .buildforce/context/ folder found - skipping migration");
-    return result;
-  }
+    const contextPath = path.join(projectPath, ".buildforce", "context");
+    const rootIndexPath = path.join(contextPath, "_index.yaml");
+    const todayDate = getTodayDate();
 
-  // Check if root _index.yaml exists and its version
-  if (await fs.pathExists(rootIndexPath)) {
+    // Check if context folder exists
+    if (!(await fs.pathExists(contextPath))) {
+      result.skipped = true;
+      result.actions.push("No .buildforce/context/ folder found - skipping migration");
+      return result;
+    }
+
+    // Check if root _index.yaml exists and its version
+    if (await fs.pathExists(rootIndexPath)) {
+      try {
+        const indexContent = await fs.readFile(rootIndexPath, "utf8");
+        const index = YAML.parse(indexContent);
+        const version = index?.version;
+
+        if (version === "2.0" || version === "2.1") {
+          result.skipped = true;
+          result.actions.push(`Already at version ${version} - skipping v2.0 migration`);
+          return result;
+        }
+      } catch (e: any) {
+        result.errors.push(`Error reading _index.yaml: ${e.message}`);
+      }
+    }
+
+    // Perform migration
     try {
-      const indexContent = await fs.readFile(rootIndexPath, "utf8");
-      const index = YAML.parse(indexContent);
-      const version = index?.version;
+      const architecturePath = path.join(contextPath, "architecture");
+      const conventionsPath = path.join(contextPath, "conventions");
+      const verificationPath = path.join(contextPath, "verification");
 
-      if (version === "2.0") {
-        result.skipped = true;
-        result.actions.push("Already at version 2.0 - skipping migration");
-        return result;
+      const archExists = await fs.pathExists(architecturePath);
+      const convExists = await fs.pathExists(conventionsPath);
+      const verExists = await fs.pathExists(verificationPath);
+
+      if (archExists && convExists && verExists) {
+        const archIndexExists = await fs.pathExists(path.join(architecturePath, "_index.yaml"));
+        const convIndexExists = await fs.pathExists(path.join(conventionsPath, "_index.yaml"));
+        const verIndexExists = await fs.pathExists(path.join(verificationPath, "_index.yaml"));
+
+        if (archIndexExists && convIndexExists && verIndexExists) {
+          result.skipped = true;
+          result.actions.push("Context structure already exists - skipping folder creation");
+          return result;
+        }
       }
-    } catch (e: any) {
-      result.errors.push(`Error reading _index.yaml: ${e.message}`);
-    }
-  }
 
-  // Perform migration
-  try {
-    // Create folder structure
-    const architecturePath = path.join(contextPath, "architecture");
-    const conventionsPath = path.join(contextPath, "conventions");
-    const verificationPath = path.join(contextPath, "verification");
+      await fs.ensureDir(architecturePath);
+      await fs.ensureDir(conventionsPath);
+      await fs.ensureDir(verificationPath);
+      result.actions.push("Created context type folders: architecture/, conventions/, verification/");
 
-    // Check if any of the new folders already exist (partial migration)
-    const archExists = await fs.pathExists(architecturePath);
-    const convExists = await fs.pathExists(conventionsPath);
-    const verExists = await fs.pathExists(verificationPath);
+      // Copy schema files from template
+      const templateContextPath = path.join(templateSourceDir, ".buildforce", "context");
 
-    if (archExists && convExists && verExists) {
-      // Folders exist - check if they have _index.yaml files
-      const archIndexExists = await fs.pathExists(path.join(architecturePath, "_index.yaml"));
-      const convIndexExists = await fs.pathExists(path.join(conventionsPath, "_index.yaml"));
-      const verIndexExists = await fs.pathExists(path.join(verificationPath, "_index.yaml"));
-
-      if (archIndexExists && convIndexExists && verIndexExists) {
-        // Already fully migrated
-        result.skipped = true;
-        result.actions.push("Context structure already exists - skipping folder creation");
-        return result;
+      // Copy architecture schema and index
+      const archSchemaTemplatePath = path.join(templateContextPath, "architecture", "_schema.yaml");
+      const archIndexTemplatePath = path.join(templateContextPath, "architecture", "_index.yaml");
+      if (await fs.pathExists(archSchemaTemplatePath)) {
+        await fs.copy(archSchemaTemplatePath, path.join(architecturePath, "_schema.yaml"));
+        result.actions.push("Copied architecture/_schema.yaml from template");
       }
-    }
-
-    await fs.ensureDir(architecturePath);
-    await fs.ensureDir(conventionsPath);
-    await fs.ensureDir(verificationPath);
-    result.actions.push("Created context type folders: architecture/, conventions/, verification/");
-
-    // Copy schema files from template
-    // NOTE: The templateSourceDir is the extracted release ZIP which has .buildforce/context/, not src/context/
-    const templateContextPath = path.join(templateSourceDir, ".buildforce", "context");
-
-    // Copy architecture schema and index
-    const archSchemaTemplatePath = path.join(templateContextPath, "architecture", "_schema.yaml");
-    const archIndexTemplatePath = path.join(templateContextPath, "architecture", "_index.yaml");
-    if (await fs.pathExists(archSchemaTemplatePath)) {
-      await fs.copy(archSchemaTemplatePath, path.join(architecturePath, "_schema.yaml"));
-      result.actions.push("Copied architecture/_schema.yaml from template");
-    }
-    if (await fs.pathExists(archIndexTemplatePath)) {
-      // Only copy if doesn't exist (preserve user's index)
-      const destPath = path.join(architecturePath, "_index.yaml");
-      if (!(await fs.pathExists(destPath))) {
-        await fs.copy(archIndexTemplatePath, destPath);
-        result.actions.push("Copied architecture/_index.yaml from template");
+      if (await fs.pathExists(archIndexTemplatePath)) {
+        const destPath = path.join(architecturePath, "_index.yaml");
+        if (!(await fs.pathExists(destPath))) {
+          await fs.copy(archIndexTemplatePath, destPath);
+          result.actions.push("Copied architecture/_index.yaml from template");
+        }
       }
-    }
 
-    // Copy conventions schema and index
-    const convSchemaTemplatePath = path.join(templateContextPath, "conventions", "_schema.yaml");
-    const convIndexTemplatePath = path.join(templateContextPath, "conventions", "_index.yaml");
-    if (await fs.pathExists(convSchemaTemplatePath)) {
-      await fs.copy(convSchemaTemplatePath, path.join(conventionsPath, "_schema.yaml"));
-      result.actions.push("Copied conventions/_schema.yaml from template");
-    }
-    if (await fs.pathExists(convIndexTemplatePath)) {
-      const destPath = path.join(conventionsPath, "_index.yaml");
-      if (!(await fs.pathExists(destPath))) {
-        await fs.copy(convIndexTemplatePath, destPath);
-        result.actions.push("Copied conventions/_index.yaml from template");
+      // Copy conventions schema and index
+      const convSchemaTemplatePath = path.join(templateContextPath, "conventions", "_schema.yaml");
+      const convIndexTemplatePath = path.join(templateContextPath, "conventions", "_index.yaml");
+      if (await fs.pathExists(convSchemaTemplatePath)) {
+        await fs.copy(convSchemaTemplatePath, path.join(conventionsPath, "_schema.yaml"));
+        result.actions.push("Copied conventions/_schema.yaml from template");
       }
-    }
-
-    // Copy verification schema and index
-    const verSchemaTemplatePath = path.join(templateContextPath, "verification", "_schema.yaml");
-    const verIndexTemplatePath = path.join(templateContextPath, "verification", "_index.yaml");
-    if (await fs.pathExists(verSchemaTemplatePath)) {
-      await fs.copy(verSchemaTemplatePath, path.join(verificationPath, "_schema.yaml"));
-      result.actions.push("Copied verification/_schema.yaml from template");
-    }
-    if (await fs.pathExists(verIndexTemplatePath)) {
-      const destPath = path.join(verificationPath, "_index.yaml");
-      if (!(await fs.pathExists(destPath))) {
-        await fs.copy(verIndexTemplatePath, destPath);
-        result.actions.push("Copied verification/_index.yaml from template");
+      if (await fs.pathExists(convIndexTemplatePath)) {
+        const destPath = path.join(conventionsPath, "_index.yaml");
+        if (!(await fs.pathExists(destPath))) {
+          await fs.copy(convIndexTemplatePath, destPath);
+          result.actions.push("Copied conventions/_index.yaml from template");
+        }
       }
-    }
 
-    // Migrate _guidelines.yaml to individual convention files
-    const guidelinesPath = path.join(contextPath, "_guidelines.yaml");
-    if (await fs.pathExists(guidelinesPath)) {
-      const guidelinesResult = await migrateGuidelinesFile(
-        guidelinesPath,
-        conventionsPath,
+      // Copy verification schema and index
+      const verSchemaTemplatePath = path.join(templateContextPath, "verification", "_schema.yaml");
+      const verIndexTemplatePath = path.join(templateContextPath, "verification", "_index.yaml");
+      if (await fs.pathExists(verSchemaTemplatePath)) {
+        await fs.copy(verSchemaTemplatePath, path.join(verificationPath, "_schema.yaml"));
+        result.actions.push("Copied verification/_schema.yaml from template");
+      }
+      if (await fs.pathExists(verIndexTemplatePath)) {
+        const destPath = path.join(verificationPath, "_index.yaml");
+        if (!(await fs.pathExists(destPath))) {
+          await fs.copy(verIndexTemplatePath, destPath);
+          result.actions.push("Copied verification/_index.yaml from template");
+        }
+      }
+
+      // Migrate _guidelines.yaml to individual convention files
+      const guidelinesPath = path.join(contextPath, "_guidelines.yaml");
+      if (await fs.pathExists(guidelinesPath)) {
+        const guidelinesResult = await migrateGuidelinesFile(guidelinesPath, conventionsPath, todayDate);
+
+        if (guidelinesResult.files.length > 0) {
+          result.actions.push(
+            `Migrated _guidelines.yaml into ${guidelinesResult.files.length} convention files: ${guidelinesResult.files.join(", ")}`
+          );
+        } else {
+          result.actions.push("No conventions found in _guidelines.yaml to migrate");
+        }
+
+        if (guidelinesResult.errors.length > 0) {
+          result.errors.push(...guidelinesResult.errors);
+        }
+
+        if (guidelinesResult.files.length > 0) {
+          await fs.remove(guidelinesPath);
+          result.actions.push("Deleted original _guidelines.yaml after successful migration");
+        }
+      } else {
+        result.actions.push("No _guidelines.yaml found to migrate");
+      }
+
+      // Migrate existing context files to architecture/ folder
+      const contextFilesResult = await migrateContextFilesToArchitecture(
+        contextPath,
+        architecturePath,
         todayDate
       );
 
-      if (guidelinesResult.files.length > 0) {
+      if (contextFilesResult.files.length > 0) {
         result.actions.push(
-          `Migrated _guidelines.yaml into ${guidelinesResult.files.length} convention files: ${guidelinesResult.files.join(", ")}`
+          `Migrated ${contextFilesResult.files.length} context files to architecture/: ${contextFilesResult.files.slice(0, 5).join(", ")}${contextFilesResult.files.length > 5 ? "..." : ""}`
         );
-      } else {
-        result.actions.push("No conventions found in _guidelines.yaml to migrate");
       }
 
-      if (guidelinesResult.errors.length > 0) {
-        result.errors.push(...guidelinesResult.errors);
+      if (contextFilesResult.errors.length > 0) {
+        result.errors.push(...contextFilesResult.errors);
       }
 
-      // Delete original _guidelines.yaml after successful migration
-      if (guidelinesResult.files.length > 0) {
-        await fs.remove(guidelinesPath);
-        result.actions.push("Deleted original _guidelines.yaml after successful migration");
+      // Migrate _index.yaml entries to architecture/_index.yaml
+      const archIndexPath = path.join(architecturePath, "_index.yaml");
+      const indexEntriesResult = await migrateIndexEntriesToArchitecture(rootIndexPath, archIndexPath);
+
+      if (indexEntriesResult.entries > 0) {
+        result.actions.push(`Migrated ${indexEntriesResult.entries} index entries to architecture/_index.yaml`);
       }
-    } else {
-      result.actions.push("No _guidelines.yaml found to migrate");
-    }
 
-    // Migrate existing context files to architecture/ folder
-    // This happens BEFORE replacing root _index.yaml so we can read the old entries
-    const contextFilesResult = await migrateContextFilesToArchitecture(
-      contextPath,
-      architecturePath,
-      todayDate
-    );
-
-    if (contextFilesResult.files.length > 0) {
-      result.actions.push(
-        `Migrated ${contextFilesResult.files.length} context files to architecture/: ${contextFilesResult.files.slice(0, 5).join(", ")}${contextFilesResult.files.length > 5 ? "..." : ""}`
-      );
-    }
-
-    if (contextFilesResult.errors.length > 0) {
-      result.errors.push(...contextFilesResult.errors);
-    }
-
-    // Migrate _index.yaml entries to architecture/_index.yaml
-    // This MUST happen BEFORE replacing root _index.yaml with v2.0 format
-    const archIndexPath = path.join(architecturePath, "_index.yaml");
-    const indexEntriesResult = await migrateIndexEntriesToArchitecture(
-      rootIndexPath,
-      archIndexPath
-    );
-
-    if (indexEntriesResult.entries > 0) {
-      result.actions.push(
-        `Migrated ${indexEntriesResult.entries} index entries to architecture/_index.yaml`
-      );
-    }
-
-    if (indexEntriesResult.errors.length > 0) {
-      result.errors.push(...indexEntriesResult.errors);
-    }
-
-    // Copy new root _index.yaml from template (AFTER migrating entries!)
-    const rootIndexTemplatePath = path.join(templateContextPath, "_index.yaml");
-    if (await fs.pathExists(rootIndexTemplatePath)) {
-      await fs.copy(rootIndexTemplatePath, rootIndexPath);
-      result.actions.push("Updated root _index.yaml to version 2.0 format");
-    }
-
-    // Delete old _schema.yaml from root if it exists (moved to architecture/)
-    const oldSchemaPath = path.join(contextPath, "_schema.yaml");
-    if (await fs.pathExists(oldSchemaPath)) {
-      await fs.remove(oldSchemaPath);
-      result.actions.push("Removed old root _schema.yaml (now in architecture/)");
-    }
-
-    // Delete empty _graph.yaml if it exists
-    const graphPath = path.join(contextPath, "_graph.yaml");
-    if (await fs.pathExists(graphPath)) {
-      const graphContent = await fs.readFile(graphPath, "utf8");
-      // Only delete if it's mostly empty (placeholder file)
-      if (graphContent.trim().length < 100) {
-        await fs.remove(graphPath);
-        result.actions.push("Removed empty _graph.yaml placeholder");
+      if (indexEntriesResult.errors.length > 0) {
+        result.errors.push(...indexEntriesResult.errors);
       }
+
+      // Copy new root _index.yaml from template
+      const rootIndexTemplatePath = path.join(templateContextPath, "_index.yaml");
+      if (await fs.pathExists(rootIndexTemplatePath)) {
+        await fs.copy(rootIndexTemplatePath, rootIndexPath);
+        result.actions.push("Updated root _index.yaml to version 2.0 format");
+      }
+
+      // Delete old _schema.yaml from root
+      const oldSchemaPath = path.join(contextPath, "_schema.yaml");
+      if (await fs.pathExists(oldSchemaPath)) {
+        await fs.remove(oldSchemaPath);
+        result.actions.push("Removed old root _schema.yaml (now in architecture/)");
+      }
+
+      // Delete empty _graph.yaml if it exists
+      const graphPath = path.join(contextPath, "_graph.yaml");
+      if (await fs.pathExists(graphPath)) {
+        const graphContent = await fs.readFile(graphPath, "utf8");
+        if (graphContent.trim().length < 100) {
+          await fs.remove(graphPath);
+          result.actions.push("Removed empty _graph.yaml placeholder");
+        }
+      }
+
+      result.migrated = true;
+    } catch (e: any) {
+      result.errors.push(`Migration error: ${e.message}`);
     }
 
-    result.migrated = true;
-  } catch (e: any) {
-    result.errors.push(`Migration error: ${e.message}`);
-  }
-
-  return result;
-}
+    return result;
+  },
+};

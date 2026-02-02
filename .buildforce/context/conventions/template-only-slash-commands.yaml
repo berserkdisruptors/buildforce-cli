@@ -4,29 +4,115 @@ type: convention
 sub_type: architectural-pattern
 enforcement: strict
 created: "2026-01-26"
-last_updated: "2026-01-26"
+last_updated: "2026-02-02"
 
 description: |
   All slash commands are implemented as markdown templates in src/templates/commands/,
   NOT as TypeScript code. The CLI infrastructure reads these templates and passes them
   to Claude AI agents for execution. This keeps the CLI thin and puts all logic in
   AI-interpretable instructions.
-  
+
+  RATIONALE:
+  This pattern exists because:
+  1. Keeps CLI lightweight (~50 dependencies) - no heavy command logic in TypeScript
+  2. Enables rapid iteration - template changes don't require CLI rebuild/republish
+  3. Makes command logic transparent - markdown is readable by both humans and AI agents
+  4. Supports multi-agent architecture - same templates work with Claude, Cursor, Copilot
+  5. Separates concerns: CLI handles distribution, templates handle workflow logic
 
 examples:
   - file: "src/templates/commands/plan.md"
     snippet: |
-      # /plan command template
-      User input: $ARGUMENTS
-      **Your task**: Create structured plan...
-      
+      ---
+      version: "0.0.42"
+      description: Create or update a structured specification
+      scripts:
+        sh: bash src/scripts/bash/create-session-files.sh --folder-name "{FOLDER_NAME}" --json
+        ps: src/scripts/powershell/create-session-files.ps1 -FolderName "{FOLDER_NAME}" -Json
+      ---
+
+      User input:
+      $ARGUMENTS
+
+      ## Workflow Steps
+      1. **Determine CREATE vs UPDATE mode**...
+
+  - file: "src/templates/commands/build.md"
+    snippet: |
+      ---
+      version: "0.0.42"
+      description: Build the code changes required for the current spec
+      ---
+
+      User input:
+      $ARGUMENTS
+
+      **Context**: The user is invoking `/buildforce.build` to execute implementation.
 
 violations:
   - "Adding command logic to TypeScript CLI code instead of templates"
-  - "Creating command handlers in src/commands/ directory"
+  - "Creating command handlers in src/commands/ directory for slash commands"
+  - "Embedding workflow logic (spec creation, build validation) in TypeScript"
+  - "Adding npm dependencies to implement command behavior (use templates instead)"
+  - "Creating src/lib/ functions that contain command-specific workflow logic"
+  - "Hard-coding workflow steps that should be AI-interpretable instructions"
+
+anti_patterns:
+  - pattern: "TypeScript command handler"
+    description: "Creating a new TypeScript file to handle /buildforce.* commands"
+    example: |
+      // WRONG - Do not create this
+      // src/commands/my-command.ts
+      export async function myCommand(args: string[]) {
+        // workflow logic here
+      }
+    why_bad: "Violates thin CLI principle; CLI only distributes templates"
+
+  - pattern: "Workflow logic in CLI"
+    description: "Adding spec/plan/build logic to the CLI TypeScript codebase"
+    example: |
+      // WRONG - spec validation belongs in template, not CLI
+      function validateSpec(spec: object) {
+        if (!spec.requirements) throw new Error('Missing requirements');
+      }
+    why_bad: "Makes CLI heavy; workflow logic should be AI-interpretable markdown"
+
+  - pattern: "Command-specific npm packages"
+    description: "Adding npm dependencies for features that could be template instructions"
+    example: |
+      // WRONG - Don't add packages for template-solvable problems
+      import { specValidator } from 'some-spec-package';
+    why_bad: "Increases CLI size; prefer template instructions that AI agents interpret"
+
+edge_cases:
+  - case: "YAML frontmatter with script references"
+    explanation: |
+      Templates CAN reference shell scripts in YAML frontmatter for simple operations
+      like file creation. The script is executed, but the LOGIC remains in the template.
+      Example: create-session-files.sh creates folders; template contains workflow.
+
+  - case: "src/commands/ directory"
+    explanation: |
+      The src/commands/ directory contains CLI infrastructure commands (init, upgrade,
+      check, session) - NOT slash commands. These are valid TypeScript because they
+      handle CLI-level operations, not workflow logic.
+
+  - case: "Agent-specific commands"
+    explanation: |
+      Some commands like /buildforce.extract are Claude Code-only (use Task tool).
+      The template still contains all logic; agent restriction is documented in frontmatter.
+
+enforcement_mechanism:
+  primary: "Code review - PRs adding TypeScript command handlers are rejected"
+  secondary: "Directory convention - slash command templates MUST be in src/templates/commands/"
+  verification: "Check: No .ts files in src/commands/ contain /buildforce.* logic"
+  tooling: "None (enforced by convention and code review)"
 
 reference_files:
   - "src/templates/commands/plan.md"
   - "src/templates/commands/build.md"
   - "src/templates/commands/document.md"
   - "src/templates/commands/complete.md"
+  - "src/templates/commands/research.md"
+  - "src/templates/commands/extract.md"
+  - "src/cli.ts (counter-example: CLI infrastructure, not slash commands)"

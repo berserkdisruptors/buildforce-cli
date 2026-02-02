@@ -1,5 +1,5 @@
 # Verification Context Schema
-# Version: 2.0
+# Version: 2.1
 # This schema defines the structure for verification context files.
 # Verification context answers: "HOW do I know it's right?"
 #
@@ -8,7 +8,7 @@
 # agents cannot infer from code alone.
 #
 # SOURCE OPTIONS:
-#   - mined: Derived from PR comment analysis (GitHub Action)
+#   - extracted: Derived from PR comment analysis (GitHub Action)
 #   - manual: Manually documented by the team
 #   - hybrid: Combination of mining with human curation
 #
@@ -17,14 +17,14 @@
 #   - PR Review Action: Official verification gate before merge
 #   - Agent self-evaluation: What makes code "good enough" here?
 
-version: "2.0"
+version: "2.1"
 
 # Required fields for all verification files
 required_fields:
   - id                # Unique identifier (kebab-case)
   - name              # Human-readable name
   - type              # Must be "verification" (fixed value)
-  - source            # mined | manual | hybrid
+  - source            # extracted | manual | hybrid
   - created           # ISO date (YYYY-MM-DD)
   - last_updated      # ISO date (YYYY-MM-DD)
 
@@ -56,7 +56,7 @@ type:
 source:
   description: "How this verification context was populated"
   values:
-    - mined: "Derived from PR comment analysis by GitHub Action"
+    - extracted: "Derived from PR comment analysis by GitHub Action"
     - manual: "Manually documented by the team"
     - hybrid: "Combination of mining results with human curation"
   example: "hybrid"

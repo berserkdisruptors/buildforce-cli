@@ -1,0 +1,51 @@
+id: testing-standards
+name: Testing Standards
+type: verification
+source: extracted
+created: "2026-02-02"
+last_updated: "2026-02-02"
+
+quality_standards:
+  - standard: "No automated tests exist"
+    description: |
+      This project currently has NO automated testing infrastructure.
+      The package.json test script explicitly returns an error: "Error: no test specified".
+      All verification must be done manually through local execution and manual review.
+    enforcement: reference
+    confidence: 1.0
+
+  - standard: "TypeScript strict mode"
+    description: |
+      TypeScript is configured with strict: true, noImplicitReturns: true, and
+      noFallthroughCasesInSwitch: true. This provides compile-time type safety
+      as the primary form of static analysis.
+    enforcement: strict
+    confidence: 1.0
+
+test_expectations:
+  unit_tests:
+    when_required: "Not currently implemented - no test framework exists"
+    patterns: "N/A - tests need to be added"
+  integration_tests:
+    when_required: "Not currently implemented"
+    patterns: "N/A - tests need to be added"
+  e2e_tests:
+    when_required: "Not currently implemented"
+    patterns: "N/A - tests need to be added"
+
+known_risks:
+  - module: "src/**/*.ts"
+    risk: "No automated test coverage exists for any module"
+    mitigation: |
+      Manual testing required before merge. Run `npm run dev` to test changes locally.
+      Build verification via `npm run build` ensures TypeScript compilation succeeds.
+    occurrences: 0
+    last_flagged: "2026-02-02"
+
+  - module: "package.json"
+    risk: "Test script is a placeholder that always fails"
+    mitigation: |
+      Do not run `npm test` expecting it to validate changes.
+      Use manual verification and TypeScript build checks instead.
+    occurrences: 0
+    last_flagged: "2026-02-02"

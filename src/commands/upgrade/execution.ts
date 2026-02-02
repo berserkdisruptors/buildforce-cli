@@ -8,7 +8,7 @@ import { downloadTemplateFromGithub } from "../../lib/github.js";
 import { saveBuildforceConfig } from "../../utils/config.js";
 import { AGENT_FOLDER_MAP, MINT_COLOR } from "../../constants.js";
 import { resolveLocalArtifact } from "../../lib/local-artifacts.js";
-import { migrateContextStructure } from "./context-migration.js";
+import { createMigrationRunner } from "./migrations/registry.js";
 
 /**
  * Execute the upgrade process
@@ -199,14 +199,26 @@ export async function executeUpgrade(
 
       for (const agent of successfulAgents) {
         const agentFolder = AGENT_FOLDER_MAP[agent];
+        const sourceDir = sourceDirs.get(agent)!;
         const commandsPath = path.join(projectPath, agentFolder, "commands");
+        const agentsPath = path.join(projectPath, agentFolder, "agents");
+        const agentsSrcPath = path.join(sourceDir, agentFolder, "agents");
 
         console.log(chalk.gray(`\nAgent: ${agent}`));
 
         if (await fs.pathExists(commandsPath)) {
-          console.log(chalk.gray(`  would update ${agentFolder}commands/`));
+          console.log(chalk.gray(`  would update ${agentFolder}/commands/`));
         } else {
-          console.log(chalk.gray(`  would create ${agentFolder}commands/`));
+          console.log(chalk.gray(`  would create ${agentFolder}/commands/`));
+        }
+
+        // Check if source has agents (e.g., .claude/agents for Claude Code)
+        if (await fs.pathExists(agentsSrcPath)) {
+          if (await fs.pathExists(agentsPath)) {
+            console.log(chalk.gray(`  would update ${agentFolder}/agents/`));
+          } else {
+            console.log(chalk.gray(`  would create ${agentFolder}/agents/`));
+          }
         }
       }
 
@@ -268,6 +280,26 @@ export async function executeUpgrade(
       tracker.complete("backup", `backed up ${successfulAgents.length} agents`);
       tracker.complete("replace-commands", `${totalCommandFiles} command files`);
 
+      // Replace agents for each agent (e.g., .claude/agents/ for Claude Code sub-agents)
+      for (const agent of successfulAgents) {
+        const agentFolder = AGENT_FOLDER_MAP[agent];
+        const sourceDir = sourceDirs.get(agent)!;
+        const agentsSrc = path.join(sourceDir, agentFolder, "agents");
+        const agentsDest = path.join(projectPath, agentFolder, "agents");
+
+        if (await fs.pathExists(agentsSrc)) {
+          // Backup agents if they exist
+          if (await fs.pathExists(agentsDest)) {
+            await fs.copy(agentsDest, path.join(backupDir, agent, "agents"));
+          }
+
+          // Replace agents
+          await fs.ensureDir(path.dirname(agentsDest));
+          await fs.remove(agentsDest);
+          await fs.copy(agentsSrc, agentsDest);
+        }
+      }
+
       // Replace templates (shared across all agents)
       tracker.start("replace-templates");
       // Use first agent's templates as they should be the same
@@ -303,19 +335,23 @@ export async function executeUpgrade(
         tracker.skip("replace-scripts", "no scripts in release");
       }
 
-      // Migrate context structure (v1.0 → v2.0)
+      // Migrate context structure using MigrationRunner
+      // The runner automatically detects current version and runs all needed migrations
       tracker.start("migrate-context");
       try {
-        const migrationResult = await migrateContextStructure(projectPath, firstSourceDir);
+        const runner = createMigrationRunner();
+        const migrationResult = await runner.run(projectPath, firstSourceDir);
 
-        if (migrationResult.skipped) {
-          tracker.skip("migrate-context", migrationResult.actions[0] || "already at v2.0");
-        } else if (migrationResult.migrated) {
-          tracker.complete("migrate-context", `${migrationResult.actions.length} actions`);
+        if (migrationResult.migrated) {
+          const migratedVersions = migrationResult.appliedMigrations.join(" → ");
+          tracker.complete(
+            "migrate-context",
+            `${migrationResult.fromVersion || "1.0"} → ${migrationResult.toVersion} (${migratedVersions})`
+          );
           if (debug && migrationResult.actions.length > 0) {
             console.log(chalk.gray("\n[DEBUG] Migration actions:"));
             for (const action of migrationResult.actions) {
-              console.log(chalk.gray(`  - ${action}`));
+              console.log(chalk.gray(`  ${action}`));
             }
           }
           if (migrationResult.errors.length > 0) {
@@ -324,6 +360,8 @@ export async function executeUpgrade(
               console.log(chalk.yellow(`  - ${error}`));
             }
           }
+        } else if (migrationResult.alreadyLatest) {
+          tracker.skip("migrate-context", `already at v${migrationResult.toVersion}`);
         } else {
           tracker.skip("migrate-context", "no context to migrate");
         }
@@ -384,11 +422,18 @@ export async function executeUpgrade(
         for (const agent of successfulAgents) {
           const agentFolder = AGENT_FOLDER_MAP[agent];
           const commandsBackup = path.join(backupDir, agent, "commands");
+          const agentsBackup = path.join(backupDir, agent, "agents");
 
           if (await fs.pathExists(commandsBackup)) {
             const commandsDest = path.join(projectPath, agentFolder, "commands");
             await fs.remove(commandsDest);
             await fs.copy(commandsBackup, commandsDest);
+          }
+
+          if (await fs.pathExists(agentsBackup)) {
+            const agentsDest = path.join(projectPath, agentFolder, "agents");
+            await fs.remove(agentsDest);
+            await fs.copy(agentsBackup, agentsDest);
           }
         }
 

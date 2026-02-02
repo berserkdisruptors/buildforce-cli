@@ -1,0 +1,273 @@
+id: extract-command
+name: Extract Command
+type: structural
+status: production
+created: "2026-01-28"
+last_updated: "2026-02-02"
+
+summary: |
+  Claude Code-specific slash command for iterative context extraction from fresh codebases.
+  Uses Context Manager + Context Extractors sub-agent architecture to parallelize extraction across
+  three domains (architecture, conventions, verification). Solves the "cold start" problem for
+  new repositories by bootstrapping the context repository with discovered and extracted items.
+
+responsibilities:
+  - Scan fresh codebases to discover extractable context items
+  - Orchestrate parallel extraction via Context Extractor sub-agents (cm-1-structural, cm-2-convention, cm-3-verification)
+  - Maintain root _index.yaml as both context index AND coverage map
+  - Track extraction depth (none → shallow → moderate → deep) per item
+  - Validate extractor proposals before writing to context files
+  - Support iterative depth extraction based on user focus prompts
+
+dependencies:
+  internal:
+    - cli-architecture: "Template distributed via agent-specific release packaging"
+    - slash-commands: "Part of the slash command system"
+    - upgrade-command: "v2.1 migration adds coverage map fields to _index.yaml"
+  external:
+    - Claude Code Task tool: "Required for sub-agent spawning - extract command is Claude Code only"
+
+files:
+  primary:
+    - src/templates/commands/extract.md
+    - src/templates/agents/cm-1-structural.md
+    - src/templates/agents/cm-2-convention.md
+    - src/templates/agents/cm-3-verification.md
+    - src/templates/extraction-progress-template.yaml
+  secondary:
+    - .github/workflows/scripts/create-release-packages.sh
+
+workflow:
+  first_run:
+    - step: "Scan codebase structure"
+      action: "Analyze project files to identify modules, patterns, conventions"
+    - step: "Create/update _index.yaml"
+      action: "Populate domains.*.items[] with discovered items (status=discovered, depth=none)"
+    - step: "Spawn Context Extractors"
+      action: "Launch cm-1, cm-2, cm-3 sub-agents in parallel via Task tool"
+    - step: "Validate proposals"
+      action: "Context Manager receives extractor proposals and validates against _index.yaml"
+    - step: "Write context files"
+      action: "Create context files for approved proposals, update _index.yaml status to extracted"
+
+  subsequent_runs:
+    - step: "Interpret user prompt"
+      action: "Parse focus area from user input (e.g., 'go deeper on authentication')"
+    - step: "Generate mining plans"
+      action: "Create focused extraction plans for relevant items"
+    - step: "Execute targeted extraction"
+      action: "Spawn extractors with specific focus areas"
+    - step: "Update coverage"
+      action: "Increase depth level for extracted items"
+
+design_decisions:
+  - decision: "Claude Code only - not available to other agents"
+    rationale: "Requires Task tool for sub-agent spawning which is unique to Claude Code. Other agents lack this capability. Filtered at build time via agents field in template frontmatter."
+
+  - decision: "Context Extractors return proposals, not direct writes"
+    rationale: "Centralizes conflict resolution in Context Manager. Prevents race conditions when extractors run in parallel. Enables intelligent merge for overlapping discoveries."
+
+  - decision: "Parallel extractor execution"
+    rationale: "Faster extraction by running structural, convention, and verification extractors simultaneously. Context Manager handles coordination and merge."
+
+  - decision: "Ephemeral _extraction-progress.yaml files"
+    rationale: "Per-iteration mining plans are temporary. Only root _index.yaml persists extraction state between sessions."
+
+  - decision: "Iterative depth model (none → shallow → moderate → deep)"
+    rationale: "Progressive disclosure allows users to control extraction scope. Shallow extraction for breadth, deep extraction for critical areas."
+
+  - decision: "Sub-agents in separate files (src/templates/agents/)"
+    rationale: "Claude Code sub-agents require separate markdown files with proper frontmatter (name, description, tools, model). Generated to .claude/agents/ during release packaging."
+
+  - decision: "Agent-specific filtering via frontmatter agents field"
+    rationale: "Template includes 'agents: [claude]' in YAML frontmatter. Release packaging script (create-release-packages.sh) filters templates based on this field. Non-Claude packages don't include extract.md."
+
+architecture_patterns:
+  context_manager: |
+    The Context Manager (main extract.md template) orchestrates extraction:
+    1. Reads _index.yaml to understand current coverage state
+    2. Generates per-iteration _extraction-progress.yaml plans
+    3. Spawns Context Extractors via Claude Code Task tool
+    4. Receives proposals from extractors
+    5. Validates proposals against existing context
+    6. Writes approved context files
+    7. Updates _index.yaml with new status/depth
+
+  context_extractors: |
+    Three specialized sub-agents (cm-1, cm-2, cm-3):
+    - cm-1-structural: Extracts architecture context (modules, features, components)
+    - cm-2-convention: Extracts convention context (patterns, standards, practices)
+    - cm-3-verification: Extracts verification context (test expectations, quality standards)
+
+    Each extractor:
+    1. Reads its domain's _extraction-progress.yaml plan
+    2. Analyzes relevant codebase areas
+    3. Returns structured YAML proposals
+    4. Never writes directly to context files
+
+  coverage_map: |
+    Root _index.yaml serves dual purpose:
+    - Context index: Registry of all context files with descriptions and tags
+    - Coverage map: Tracks extraction status and depth per item
+
+    Item states:
+    - status: discovered | in-progress | extracted
+    - depth: none | shallow | moderate | deep
+
+evolution:
+  - version: "1.0"
+    date: "2026-01-28"
+    changes: "Initial implementation with Context Manager + Extractors architecture, parallel execution, iterative depth model"
+
+related_specs:
+  - claude-code-extract-command-20260127152345
+
+sub_agent_orchestration:
+  spawning_pattern: |
+    Context Manager (extract.md) spawns three extractors in PARALLEL:
+    1. Creates _extraction-progress.yaml in each domain folder
+    2. Uses Claude Code Task tool with three simultaneous calls
+    3. Each extractor runs independently, reading its plan
+    4. Extractors return YAML proposals (not files)
+    5. Context Manager receives all proposals, validates, writes
+
+  extractor_lifecycle: |
+    Each extractor follows identical lifecycle:
+    1. READ: .buildforce/context/{domain}/_extraction-progress.yaml
+    2. READ: .buildforce/context/{domain}/_schema.yaml
+    3. ANALYZE: Codebase files relevant to target items
+    4. ANSWER: Verification criteria from plan
+    5. RETURN: Structured YAML proposals
+
+    Extractors NEVER write files directly - proposals only.
+
+  coordination: |
+    No inter-extractor communication:
+    - Extractors run in isolation
+    - Context Manager handles all coordination
+    - Parallel execution avoids sequential bottlenecks
+    - Race conditions prevented by proposal-based writes
+
+proposal_validation_flow:
+  receive_proposals: |
+    After all extractors complete:
+    1. Context Manager receives three sets of proposals
+    2. Each proposal set contains:
+       - contributions: Context file creates/updates
+       - new_discoveries: Items found during analysis
+       - questions_for_user: Clarifying questions
+
+  validation_steps: |
+    For each contribution in proposals:
+    1. Check target_item exists in _index.yaml
+    2. Verify action matches current state:
+       - create: item has depth=none
+       - update: item has depth > none
+    3. Validate content follows _schema.yaml
+    4. Check for conflicts with other proposals
+
+  conflict_resolution: |
+    If multiple extractors touch same item (rare):
+    - Prefer deeper depth proposal
+    - Combine insights from both
+    - Context Manager makes final decision
+
+  write_sequence: |
+    After validation:
+    1. For create actions: Write new context file
+    2. For update actions: MERGE into existing file
+       - Read existing file
+       - Add new sections (extension_points, etc.)
+       - Append to lists (design_decisions, evolution)
+       - Preserve structural sections
+    3. Update _index.yaml with status/depth changes
+    4. Add new_discoveries to _index.yaml as discovered items
+
+coverage_tracking_mechanics:
+  index_as_coverage_map: |
+    Root _index.yaml serves dual purpose:
+    - Context registry: Where to find context files
+    - Coverage map: Extraction progress per item
+
+    Item tracking fields:
+    - status: discovered | in-progress | extracted
+    - depth: none | shallow | moderate | deep
+
+  depth_progression: |
+    Depth model follows linear progression:
+    none → shallow → moderate → deep
+
+    What each depth captures:
+    - none: Just discovered, on the map
+    - shallow: Basic structure and purpose
+    - moderate: Relationships, dependencies, integration points
+    - deep: Full rationale, edge cases, extension points
+
+    Target depth calculated from current + 1 (or user override)
+
+  coverage_calculation: |
+    summary.coverage_percentage in _index.yaml:
+    - Calculated: (extracted_items / total_items) * 100
+    - Updated after each extraction iteration
+    - Items with depth > none count as extracted
+
+ephemeral_plan_files:
+  purpose: |
+    _extraction-progress.yaml files are per-iteration:
+    - Generated by Context Manager before spawning
+    - Read by extractors to understand their tasks
+    - Deleted by Context Manager after validation/writes
+
+  plan_structure: |
+    status: pending | in-progress | complete
+    iteration: {number}
+    target_items:
+      - id: {item-id}
+        current_depth: {current}
+        target_depth: {target}
+        priority: high | medium | low
+        notes: {context from previous iterations}
+    verification_criteria:
+      - {specific questions for target items}
+    tasks:
+      - task: {description}
+        status: pending | in-progress | complete
+        findings: {populated by extractor}
+    last_checkpoint: {ISO timestamp}
+
+  cleanup: |
+    After successful write of all proposals:
+    - Delete architecture/_extraction-progress.yaml
+    - Delete conventions/_extraction-progress.yaml
+    - Delete verification/_extraction-progress.yaml
+    - Only _index.yaml persists between iterations
+
+critical_rules:
+  context_preservation: |
+    MERGE, DON'T REPLACE rule applies to all updates:
+    - Read existing file before modification
+    - Add new sections to existing content
+    - Append to lists, don't overwrite
+    - Preserve evolution history, architecture_patterns, related_specs
+    - Update outdated info, but keep surrounding context
+
+  verification_before_cleanup: |
+    Before deleting plan files, verify:
+    - Count contributions received = count files written
+    - Log table showing each file + action + status
+    - Only proceed to cleanup if counts match
+
+notes: |
+  First agent-specific slash command in Buildforce CLI. Sets precedent for future agent-specific features.
+
+  Key innovations:
+  - Sub-agent orchestration pattern for complex multi-domain extraction
+  - Coverage map in _index.yaml enables progress tracking across sessions
+  - Iterative depth model gives users control over extraction scope
+
+  Requirements for v2.1 schema:
+  - Root _index.yaml must have domains.*.items[] arrays (not separate domain _index.yaml files)
+  - Items track status and depth for coverage map functionality
+  - Migration from v2.0 consolidates domain indexes into root
+
+  Template line count: 167 lines (under 200 line limit per NFR1)

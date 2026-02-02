@@ -1,0 +1,121 @@
+id: local-testing-workflow
+name: Local Testing Workflow
+type: verification
+source: manual
+created: "2026-02-02"
+last_updated: "2026-02-02"
+
+description: |
+  Workflow for testing template changes locally before committing. This is essential
+  when modifying slash commands, sub-agents, or any files in src/templates/.
+
+  Since there are no automated tests for templates, this manual workflow is the
+  primary verification method for template changes.
+
+scope:
+  - Slash command templates (src/templates/commands/*.md)
+  - Sub-agent definitions (src/templates/agents/*.md)
+  - YAML templates (src/templates/*.yaml)
+  - Release packaging scripts (.github/workflows/scripts/create-release-packages.sh)
+  - Any change that affects the distributed package structure
+
+workflow:
+  step_1_build:
+    command: "npm run build"
+    purpose: "Compile TypeScript to dist/"
+    expected_output: "No compilation errors"
+    notes: "Must complete successfully before proceeding"
+
+  step_2_create_packages:
+    command: "npm run create-release-packages"
+    purpose: "Generate local ZIP packages for all agent/script variants"
+    expected_output: "ZIP files created in release-packages/ directory"
+    notes: |
+      Creates packages like:
+      - buildforce-cli-template-claude-sh.zip
+      - buildforce-cli-template-cursor-ps.zip
+      - etc. (22 combinations: 11 agents × 2 script types)
+
+  step_3_test_upgrade:
+    command: "node ./dist/cli.js upgrade --local"
+    purpose: "Test upgrade flow with local artifacts"
+    expected_output: "Upgrade completes without errors"
+    notes: |
+      Tests that:
+      - Local artifact resolution works
+      - Template extraction succeeds
+      - User content (.buildforce/context/, .buildforce/sessions/) is preserved
+      - New templates are applied correctly
+
+  step_4_test_init:
+    command: "node ./dist/cli.js init . --local"
+    purpose: "Test initialization flow with local artifacts"
+    prerequisites: |
+      IMPORTANT: Temporarily rename existing .buildforce folder first:
+
+      1. mv .buildforce .buildforce-backup
+      2. Run the init command
+      3. Verify the new .buildforce structure
+      4. rm -rf .buildforce
+      5. mv .buildforce-backup .buildforce
+    expected_output: "Fresh .buildforce folder created with correct structure"
+    notes: |
+      Tests that:
+      - Fresh initialization works
+      - All templates are correctly distributed
+      - Agent-specific folders are created correctly
+      - Scripts have correct permissions (POSIX)
+
+quick_reference: |
+  # Full local testing workflow
+  npm run build
+  npm run create-release-packages
+  node ./dist/cli.js upgrade --local
+
+  # For init testing (requires folder swap)
+  mv .buildforce .buildforce-backup
+  node ./dist/cli.js init . --local
+  # ... verify ...
+  rm -rf .buildforce
+  mv .buildforce-backup .buildforce
+
+common_issues:
+  - issue: "Command not found or module errors"
+    cause: "Forgot to run npm run build"
+    fix: "Always build before testing"
+
+  - issue: "No local artifacts found"
+    cause: "Forgot to run create-release-packages"
+    fix: "Run npm run create-release-packages first"
+
+  - issue: "Init fails with 'directory already exists'"
+    cause: "Existing .buildforce folder not renamed"
+    fix: "Rename .buildforce to .buildforce-backup first"
+
+  - issue: "Forgot to restore .buildforce-backup"
+    cause: "Manual step missed after init testing"
+    fix: "Always restore backup immediately after verification"
+
+  - issue: "Permission denied on scripts (macOS/Linux)"
+    cause: "ensureExecutableScripts() not running or failing"
+    fix: "Check src/utils/permissions.ts and script paths"
+
+verification_checklist:
+  after_upgrade:
+    - "[ ] Templates in agent folder updated (check file timestamps)"
+    - "[ ] Context files preserved (.buildforce/context/ unchanged)"
+    - "[ ] Session files preserved (.buildforce/sessions/ unchanged)"
+    - "[ ] buildforce.json version updated"
+    - "[ ] New commands appear in agent folder"
+
+  after_init:
+    - "[ ] .buildforce/ folder created with correct structure"
+    - "[ ] Agent folder created (e.g., .claude/)"
+    - "[ ] Commands deployed with buildforce.* prefix"
+    - "[ ] Scripts have execute permissions (ls -la .buildforce/scripts/)"
+    - "[ ] buildforce.json created with correct settings"
+
+related_context:
+  - architecture/local-artifact-resolution.yaml
+  - architecture/cli-architecture.yaml
+  - conventions/manual-workflow-testing.yaml

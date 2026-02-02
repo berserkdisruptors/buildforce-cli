@@ -37,8 +37,11 @@ $ARGUMENTS
 
    Do a proactive search to determine which context files need updates or creation:
 
-   - **Read `.buildforce/context/_index.yaml`** to understand context type directories
-   - **Navigate to `.buildforce/context/architecture/_index.yaml`** to see existing architecture context files
+   - **Read `.buildforce/context/_index.yaml`** - this unified index contains all context entries organized by domain:
+     - `domains.architecture.items[]` - architecture context entries (files in `architecture/`)
+     - `domains.conventions.items[]` - convention context entries (files in `conventions/`)
+     - `domains.verification.items[]` - verification context entries (files in `verification/`)
+   - **Search `domains.architecture.items`** to see existing architecture context files
    - **Analyze spec and plan** to identify which system components/features/modules were actually modified
    - **Review conversation history** to extract key design decisions, implementation changes, and deviations
    - **Determine update vs create** for each component:
@@ -55,7 +58,7 @@ $ARGUMENTS
    - Format: kebab-case, max 50 characters, no numeric or timestamp prefixes
    - Examples: `authentication.yaml`, `build-command.yaml`, `error-handling.yaml`, `plan-template.yaml`
    - Validate: lowercase alphanumeric and hyphens only
-   - **Check for ID conflicts**: Search architecture/_index.yaml to ensure generated ID doesn't already exist
+   - **Check for ID conflicts**: Search `_index.yaml` `domains.architecture.items` to ensure generated ID doesn't already exist
    - If conflict exists: Choose alternative ID (append descriptor, use synonym)
 
 5. **Create/Update Context Files**:
@@ -84,13 +87,15 @@ $ARGUMENTS
 
 6. **Update Context Index**:
 
-   Update `.buildforce/context/architecture/_index.yaml` with new entries:
+   Update `.buildforce/context/_index.yaml` `domains.architecture.items` with new entries:
 
-   - For each NEW context file created, add entry:
+   - For each NEW context file created, add entry to `domains.architecture.items[]`:
      ```yaml
      - id: {semantic-id}
-       file: {filename}.yaml
+       file: architecture/{filename}.yaml
        type: structural
+       status: extracted
+       depth: shallow
        description: {short-one-liner-description}
        tags: [{auto-generated-tags}]
        related_context: [{related-context-ids}]  # OPTIONAL
@@ -100,8 +105,9 @@ $ARGUMENTS
    - **Related context field** (OPTIONAL): Add array of closely related context IDs for discovery
      - Include for: feature families, dependent modules, sibling features
      - Only add significant relationships (avoid over-populating)
-     - IDs must exist in architecture/_index.yaml
+     - IDs must exist in `domains.architecture.items`
      - Example: `[slash-commands, plan-template, spec-command]`
+   - **Update summary counts**: Increment `summary.total_items` and `summary.extracted_items`
    - Maintain proper YAML indentation (2 spaces per level)
    - Preserve existing entries (do not modify or delete)
    - For EXISTING context files, no index update needed (entry already exists)
@@ -198,8 +204,9 @@ $ARGUMENTS
         - Set type: "convention" and appropriate sub_type
         - Set enforcement to `recommended` (users can upgrade to strict later)
         - Include reference_files array from detected files
-     2. Update `.buildforce/context/conventions/_index.yaml` with new entries
-     3. Report: "Added [N] new conventions: [list filenames with enforcement levels]"
+     2. Update `.buildforce/context/_index.yaml` `domains.conventions.items` with new entries
+     3. Update `summary.total_items` and `summary.extracted_items` counts
+     4. Report: "Added [N] new conventions: [list filenames with enforcement levels]"
 
    - **If user declines (n or no)**:
      1. Skip auto-update
@@ -249,11 +256,11 @@ Provide a concise report to the user:
 1. Read buildforce.json currentSession → "20250123150000-add-auth"
 2. Load spec.yaml and plan.yaml from .buildforce/sessions/20250123150000-add-auth/
 3. Analyze: Introduced new authentication module
-4. Check architecture/_index.yaml: No existing "authentication" context
+4. Check _index.yaml domains.architecture.items: No existing "authentication" context
 5. Generate filename: "authentication.yaml"
 6. Load architecture/_schema.yaml template
 7. Create .buildforce/context/architecture/authentication.yaml with full content (type: structural)
-8. Add entry to architecture/_index.yaml
+8. Add entry to _index.yaml domains.architecture.items, update summary counts
 9. Clear currentSession in buildforce.json (set to null)
 10. Report: "Created authentication.yaml context file in architecture/ for new auth module"
 ```
@@ -264,7 +271,7 @@ Provide a concise report to the user:
 1. Read buildforce.json currentSession → "20250123160000-refactor-auth"
 2. Load spec.yaml and plan.yaml
 3. Analyze: Modified existing authentication module
-4. Check architecture/_index.yaml: Found existing "authentication.yaml"
+4. Check _index.yaml domains.architecture.items: Found existing "authentication.yaml"
 5. Read existing architecture/authentication.yaml
 6. Add evolution entry, update files list, append to related_specs
 7. No index update needed (entry exists)
@@ -278,10 +285,10 @@ Provide a concise report to the user:
 1. Read buildforce.json currentSession → "20250123170000-add-feature-x"
 2. Load spec.yaml and plan.yaml
 3. Analyze: Modified auth module, created new config module, touched error handling
-4. Check architecture/_index.yaml: Found "authentication.yaml" and "error-handling.yaml", no "config-management.yaml"
+4. Check _index.yaml domains.architecture.items: Found "authentication" and "error-handling", no "config-management"
 5. UPDATE architecture/authentication.yaml and architecture/error-handling.yaml
 6. CREATE architecture/config-management.yaml (type: structural)
-7. Add config-management entry to architecture/_index.yaml
+7. Add config-management entry to _index.yaml domains.architecture.items, update summary counts
 8. Clear currentSession in buildforce.json (set to null)
 9. Report: "Updated 2 context files (authentication, error-handling) and created 1 new file (config-management)"
 ```
