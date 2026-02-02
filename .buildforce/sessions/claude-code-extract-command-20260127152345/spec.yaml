@@ -8,7 +8,7 @@ last_updated: "2026-01-28"
 
 summary: |
   Implement the /buildforce.extract command as a Claude Code-specific feature that uses sub-agents
-  (Context Miners) to iteratively extract and persist context from fresh codebases. This is the first
+  (Context Extractors) to iteratively extract and persist context from fresh codebases. This is the first
   agent-specific slash command, requiring schema migration to v2.1 and updates to the release
   packaging system.
 
@@ -23,7 +23,7 @@ problem: |
 motivation: |
   The /buildforce.extract command solves the cold start problem by enabling iterative, interactive
   context extraction. Using Claude Code's unique sub-agent capability (Task tool), it can deploy
-  specialized Context Miners in parallel to extract structural, convention, and verification
+  specialized Context Extractors in parallel to extract structural, convention, and verification
   context. This dramatically accelerates context repository population while ensuring high-quality,
   validated context files.
 
@@ -31,7 +31,7 @@ motivation: |
 
 primary_goals:
   - Implement /buildforce.extract as a Claude Code-only slash command with sub-agent orchestration
-  - Create the extract.md command template with Context Manager + Miner architecture
+  - Create the extract.md command template with Context Manager + Extractor architecture
   - Migrate context schema from v2.0 to v2.1 with coverage map support in root _index.yaml
   - Update release packaging to handle agent-specific commands
 
@@ -46,10 +46,10 @@ secondary_goals:
 functional_requirements:
   - FR1: Create src/templates/commands/extract.md as a Claude Code-specific slash command template
   - FR2: Template must define Context Manager behavior for codebase scanning and _index.yaml management
-  - FR3: Template must define three Context Miner sub-agent prompts (cm-1-structural, cm-2-convention, cm-3-verification)
+  - FR3: Template must define three Context Extractor sub-agent prompts (cm-1-structural, cm-2-convention, cm-3-verification)
   - FR4: First run must scan codebase and create/update _index.yaml with discovered items (status=discovered, depth=none)
   - FR5: Subsequent runs must interpret user prompts and generate focused mining plans
-  - FR6: Miners must return proposals validated by Context Manager before writing to context files
+  - FR6: Extractors must return proposals validated by Context Manager before writing to context files
   - FR7: Root _index.yaml must serve as both context index AND coverage map (dual purpose)
   - FR8: Migration from v2.0 to v2.1 must remove domain-specific _index.yaml files and migrate entries to root
   - FR9: Release packaging must conditionally include extract.md only for Claude Code packages
@@ -73,7 +73,7 @@ in_scope:
   - Removal of domain-specific _index.yaml files from templates
   - Updates to upgrade CLI command for v2.1 migration
   - Updates to init CLI command for v2.1 schema
-  - New _extraction-progress.yaml template files for miner coordination
+  - New _extraction-progress.yaml template files for extractor coordination
 
 out_of_scope:
   - Implementation of extract command for other agents (gemini, cursor, etc.)
@@ -96,7 +96,7 @@ design_principles:
 acceptance_criteria:
   - AC1: /buildforce.extract command available only in Claude Code packages (not in gemini, cursor, etc.)
   - AC2: First run creates root _index.yaml with codebase_profile and domains.*.items arrays
-  - AC3: Context Miners can be invoked via @cm-1-structural, @cm-2-convention, @cm-3-verification
+  - AC3: Context Extractors can be invoked via @cm-1-structural, @cm-2-convention, @cm-3-verification
   - AC4: Running upgrade on v2.0 project migrates to v2.1 and removes architecture/_index.yaml, conventions/_index.yaml, verification/_index.yaml
   - AC5: Running init creates v2.1 schema with unified root _index.yaml (no domain-specific indexes)
   - AC6: Release ZIP for claude-sh contains extract.md; release ZIP for gemini-sh does not
@@ -123,7 +123,7 @@ dependencies:
 open_questions: []
 
 resolved_questions:
-  - question: "Q1: Should the three Context Miners run in parallel or sequentially?"
+  - question: "Q1: Should the three Context Extractors run in parallel or sequentially?"
     answer: "Parallel execution - faster performance, Context Manager handles coordination"
 
   - question: "Q2: What should happen if a user runs /buildforce.extract on a non-Claude agent?"
@@ -132,8 +132,8 @@ resolved_questions:
   - question: "Q3: Should _extraction-progress.yaml files be persisted or ephemeral?"
     answer: "Ephemeral - deleted after each iteration completes"
 
-  - question: "Q4: How should conflicts be handled if a miner's proposal contradicts existing context?"
-    answer: "Context Manager responsibility - miners return proposals only, CM decides how to merge intelligently"
+  - question: "Q4: How should conflicts be handled if a extractor's proposal contradicts existing context?"
+    answer: "Context Manager responsibility - extractors return proposals only, CM decides how to merge intelligently"
 
   - question: "Q5: Should the schema version update be semantic (breaking) or minor (compatible)?"
     answer: "Minor version 2.1 - backward compatible. Migration must handle both v1.0 → v2.1 (direct) and v2.0 → v2.1 (migrate entries from domain _index.yaml files back to root)"

@@ -34,7 +34,7 @@ For each target item in your plan:
 3. Answer the verification criteria
 4. Prepare a proposal
 
-## What to Mine
+## What to Extract
 
 **Purpose & Rationale**
 - WHY was this structured this way?

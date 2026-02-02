@@ -34,7 +34,7 @@ For each target item in your plan:
 3. Answer the verification criteria
 4. Prepare a proposal
 
-## What to Mine
+## What to Extract
 
 **Testing Infrastructure**
 - Test framework and WHY it was chosen
@@ -91,7 +91,7 @@ contributions:
       id: {id}
       name: {Name}
       type: verification
-      source: mined | manual | hybrid
+      source: extracted | manual | hybrid
       # ... rest of schema fields
 
 new_discoveries:

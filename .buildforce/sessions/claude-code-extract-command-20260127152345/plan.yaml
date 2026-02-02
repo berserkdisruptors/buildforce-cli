@@ -11,7 +11,7 @@ last_updated: "2026-01-28"
 
 approach: |
   Implement the /buildforce.extract command in four phases: (1) Create the extract.md template with
-  Context Manager and Miner sub-agent prompts, (2) Update template structure for v2.1 schema,
+  Context Manager and Extractor sub-agent prompts, (2) Update template structure for v2.1 schema,
   (3) Add v2.0 → v2.1 migration logic, and (4) Update release packaging for agent-specific commands.
 
   The architecture follows the Template-Only Slash Commands convention - all intelligence is in the
@@ -48,21 +48,21 @@ decisions:
       This keeps the command self-contained and makes it easy to version and update.
       Sub-agents are invoked inline with @cm-1-structural etc. syntax.
 
-  - decision: "Parallel execution for Context Miners"
+  - decision: "Parallel execution for Context Extractors"
     rationale: |
-      Miners run in parallel via Claude Code's Task tool for faster extraction. Context Manager
-      handles coordination - miners return proposals only, CM validates and merges intelligently.
-      No direct file writes by miners eliminates race conditions.
+      Extractors run in parallel via Claude Code's Task tool for faster extraction. Context Manager
+      handles coordination - extractors return proposals only, CM validates and merges intelligently.
+      No direct file writes by extractors eliminates race conditions.
 
   - decision: "Ephemeral _extraction-progress.yaml files"
     rationale: |
       Progress files are deleted after each iteration completes. They serve only as communication
-      between Context Manager and Miners during extraction, not as persistent state. The root
+      between Context Manager and Extractors during extraction, not as persistent state. The root
       _index.yaml is the only persistent artifact tracking extraction progress.
 
   - decision: "Context Manager owns all write operations and merge logic"
     rationale: |
-      Miners return proposals only - they never write to context files directly. Context Manager
+      Extractors return proposals only - they never write to context files directly. Context Manager
       receives all proposals, validates against _index.yaml, performs intelligent merging for
       conflicts, and executes all writes. This centralizes conflict resolution and ensures consistency.
 
@@ -103,7 +103,7 @@ phase_1:
   name: "Create Extract Command Template"
   description: |
     Create the extract.md template with Context Manager orchestration logic and embedded
-    Context Miner sub-agent prompts. This is the core deliverable.
+    Context Extractor sub-agent prompts. This is the core deliverable.
 
   tasks:
     - [x] Create src/templates/commands/extract.md with YAML frontmatter
@@ -131,7 +131,7 @@ phase_1:
       files: [src/templates/commands/extract.md]
       notes: "Verification domain mining; returns proposals"
 
-    - [x] Create extraction-progress-template.yaml for miner coordination
+    - [x] Create extraction-progress-template.yaml for extractor coordination
       spec_refs: [FR5]
       files: [src/context/extraction-progress-template.yaml]
       notes: "Template for per-iteration mining plans"
@@ -271,7 +271,7 @@ deviations:
 
   - original: "Sub-agent prompts embedded inline in extract.md"
     actual: "Sub-agents in separate files: src/templates/agents/cm-{1,2,3}-*.md"
-    reason: "Claude Code sub-agents must be separate markdown files in .claude/agents/ directory with proper frontmatter (name, description, tools, model). Updated packaging script to generate agents folder for claude packages only. Each miner now has its own file with full prompt."
+    reason: "Claude Code sub-agents must be separate markdown files in .claude/agents/ directory with proper frontmatter (name, description, tools, model). Updated packaging script to generate agents folder for claude packages only. Each extractor now has its own file with full prompt."
 
   - original: "migrate21 sets coverage=100 for migrated entries"
     actual: "migrate21 sets coverage=0 for all domains (unchanged from initialization)"
@@ -295,7 +295,7 @@ convention_compliance:
     - convention: "Template-Only Slash Commands"
       status: "✓ PASS"
       checked_files: [src/templates/commands/extract.md, src/templates/agents/cm-1-structural.md, src/templates/agents/cm-2-convention.md, src/templates/agents/cm-3-verification.md]
-      notes: "Extract command and Context Miner sub-agents implemented as markdown templates, no TypeScript handlers"
+      notes: "Extract command and Context Extractor sub-agents implemented as markdown templates, no TypeScript handlers"
 
     - convention: "Bash Script Context Loading"
       status: "✓ PASS"
@@ -357,10 +357,10 @@ success_metrics:
 spec_coverage:
   - FR1: "✓ Phase 1: Task 1 - extract.md created"
   - FR2: "✓ Phase 1: Task 2 - Context Manager behavior defined"
-  - FR3: "✓ Phase 1: Tasks 3-5 - All three miner prompts defined"
+  - FR3: "✓ Phase 1: Tasks 3-5 - All three extractor prompts defined"
   - FR4: "✓ Phase 1: Task 2 - First run creates _index.yaml with discovered items"
   - FR5: "✓ Phase 1: Tasks 2,6 - Mining plans generated per iteration"
-  - FR6: "✓ Phase 1: Tasks 3-5 - Miners return proposals for validation"
+  - FR6: "✓ Phase 1: Tasks 3-5 - Extractors return proposals for validation"
   - FR7: "✓ Phase 2: Task 1 - Root _index.yaml serves as coverage map"
   - FR8: "✓ Phase 2: Tasks 2-4 - Domain _index.yaml files removed"
   - FR9: "✓ Phase 4: Tasks 1-3 - Agent-specific filtering in packaging"
@@ -394,7 +394,7 @@ next_immediate_steps:
 
 risks:
   - risk: "Sub-agent coordination in parallel execution"
-    mitigation: "Miners return proposals only, no direct writes. Context Manager centralizes all merging and writes, eliminating race conditions."
+    mitigation: "Extractors return proposals only, no direct writes. Context Manager centralizes all merging and writes, eliminating race conditions."
 
   - risk: "Migration breaks existing projects"
     mitigation: "Comprehensive testing on v1.0, v2.0 projects; idempotent design. v1.0 → v2.1 direct path avoids intermediate state issues."

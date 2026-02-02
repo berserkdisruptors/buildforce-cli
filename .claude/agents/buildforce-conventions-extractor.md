@@ -33,7 +33,7 @@ For each target item in your plan:
 3. Answer the verification criteria
 4. Prepare a proposal
 
-## What to Mine
+## What to Extract
 
 **Explicit Conventions** (from configs)
 - Linting, formatting, compiler config rules

@@ -158,7 +158,7 @@ phase_1:
         Version: 2.0
         Required fields: type="verification" (fixed)
         Include: quality_standards, test_expectations, review_checklist, compliance_requirements, known_risks
-        Source field: mined | manual | hybrid
+        Source field: extracted | manual | hybrid
 
     - [x] Create src/context/verification/_index.yaml with version 2.0
       spec_refs: [FR4]

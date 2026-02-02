@@ -199,7 +199,7 @@ data_models:
       id: string (kebab-case)
       name: string (human-readable)
       type: "verification" (fixed)
-      source: enum [mined | manual | hybrid]
+      source: enum [extracted | manual | hybrid]
       created: date (YYYY-MM-DD)
       last_updated: date (YYYY-MM-DD)
 

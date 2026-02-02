@@ -106,7 +106,7 @@ domains:
     coverage: 0
     average_depth: none
     items: []
-    # Verification items also include: source (mined | manual | hybrid)
+    # Verification items also include: source (extracted | manual | hybrid)
 
 # ============================================================================
 # AGGREGATE SUMMARY

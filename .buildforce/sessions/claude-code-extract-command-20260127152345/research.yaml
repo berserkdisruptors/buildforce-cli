@@ -4,19 +4,19 @@ last_updated: "2026-01-27"
 
 summary: |
   Research on the /buildforce.extract command PoC - a new slash command designed to solve the
-  cold start problem for fresh repositories. The command uses Context Manager + Context Miners
+  cold start problem for fresh repositories. The command uses Context Manager + Context Extractors
   pattern to iteratively extract and persist structural, convention, and verification context
   from codebases. Aligned with the context taxonomy (6 pillars: Intent, Structural, Convention,
   Historical, Operational, Verification) introduced in the recent PR b966dd0. Includes exact
-  agent prompts for the three Context Miners and the main extract command template.
+  agent prompts for the three Context Extractors and the main extract command template.
 
 key_findings:
   - "/buildforce.extract solves the cold start problem by bootstrapping context repositories for fresh codebases"
   - "Root _index.yaml serves dual purpose: context repository index AND coverage map (items discovered/extracted with depth tracking)"
   - "Iterative depth model: none → shallow (30s) → moderate (2min) → deep (5min+) per item"
-  - "Context Manager orchestrates miners; generates per-iteration _extraction-progress.yaml plans"
-  - "Three specialized miners: cm-1-structural, cm-2-convention, cm-3-verification"
-  - "Miners return PROPOSALS (not direct writes) - Context Manager validates against _index.yaml before writing"
+  - "Context Manager orchestrates extractors; generates per-iteration _extraction-progress.yaml plans"
+  - "Three specialized extractors: cm-1-structural, cm-2-convention, cm-3-verification"
+  - "Extractors return PROPOSALS (not direct writes) - Context Manager validates against _index.yaml before writing"
   - "Brainstorming UX: interactive follow-ups, user guides depth/focus, sessions ephemeral but _index.yaml persists"
   - "Context taxonomy has 6 pillars with ~60-70% capturable at coding session level"
   - "Structural, Convention, and Verification are HIGH impact + HIGH captureability - primary extract targets"
@@ -25,7 +25,7 @@ key_findings:
   - "All architecture context now uses type: 'structural' (replacing legacy module/feature/component/pattern enum)"
   - "Conventions have sub_types and enforcement levels (strict/recommended/reference)"
   - "Verification context answers 'HOW do I know it's right?' - quality standards, test expectations, known risks"
-  - "Miners read plans from _extraction-progress.yaml files (not passed inline)"
+  - "Extractors read plans from _extraction-progress.yaml files (not passed inline)"
   - "Verification criteria are iteration-specific, not generic questions"
   - "State preservation allows /clear and resume - _index.yaml persists across sessions"
 
@@ -75,7 +75,7 @@ mermaid_diagrams:
           EP3["verification/_extraction-progress.yaml"]
         end
 
-        subgraph "Context Miners"
+        subgraph "Context Extractors"
           M1[cm-1-structural]
           M2[cm-2-convention]
           M3[cm-3-verification]
@@ -159,24 +159,24 @@ data_models:
 
 agent_prompts:
   cm_1_structural:
-    name: "CM-1: Context Miner - Structural Context"
+    name: "CM-1: Context Extractor - Structural Context"
     model: "reasoning"
     allowed_tools: ["View", "Glob", "Grep", "Read", "Write"]
   cm_2_convention:
-    name: "CM-2: Context Miner - Convention Context"
+    name: "CM-2: Context Extractor - Convention Context"
     model: "reasoning"
     allowed_tools: ["View", "Glob", "Grep", "Read", "Write"]
   cm_3_verification:
-    name: "CM-3: Context Miner - Verification Context"
+    name: "CM-3: Context Extractor - Verification Context"
     model: "reasoning"
     allowed_tools: ["View", "Glob", "Grep", "Read", "Write"]
 
 tldr:
   - "The /buildforce.extract command solves cold start by iteratively mining context from fresh codebases"
-  - "Uses Context Manager + 3 specialized Miners (structural, convention, verification) pattern"
+  - "Uses Context Manager + 3 specialized Extractors (structural, convention, verification) pattern"
   - "Root _index.yaml is THE persistent artifact - serves as both index AND coverage map"
   - "Iterative depth model: none → shallow → moderate → deep based on user focus"
-  - "Miners return proposals validated by Context Manager before writing (prevents duplicates)"
+  - "Extractors return proposals validated by Context Manager before writing (prevents duplicates)"
   - "PR b966dd0 established the v2.0 taxonomy with architecture/conventions/verification structure"
   - "Aligns with context taxonomy: 60-70% of impactful context is capturable at coding session level"
   - "Claude Code specific: Uses sub-agents (Task tool) for parallel mining - not available in other agents"
