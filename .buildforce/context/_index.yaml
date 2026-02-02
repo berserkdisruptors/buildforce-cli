@@ -57,8 +57,8 @@ version: "2.1"
 # ============================================================================
 
 # Timestamps (populated by /buildforce.extract on first run)
-generated_at: null
-last_updated: 2026-01-28
+generated_at: "2026-02-02"
+last_updated: "2026-02-02"
 
 # ============================================================================
 # CODEBASE PROFILE
@@ -67,10 +67,10 @@ last_updated: 2026-01-28
 # Provides high-level overview of the project for AI agents.
 
 codebase_profile:
-  languages: [] # e.g., [typescript, python]
-  frameworks: [] # e.g., [express, react, fastapi]
-  project_type: null # e.g., "full-stack monorepo", "cli tool", "library"
-  scale: null # e.g., "small (~5k LOC)", "medium (~45k LOC)"
+  languages: [typescript, bash, powershell]
+  frameworks: [commander, inquirer]
+  project_type: "cli tool"
+  scale: "small (~5k LOC)"
 
 # ============================================================================
 # CONTEXT DOMAINS
@@ -91,7 +91,7 @@ domains:
         file: architecture/slash-commands.yaml
         type: structural
         status: extracted
-        depth: shallow
+        depth: moderate
         description: Core slash command system enabling spec-driven development workflow for AI agents
         tags: [ core, workflow, agents ]
         related_context: [ research-slash-command, plan-command, build-command, complete-command, document-command, plan-template, cli-architecture ]
@@ -172,7 +172,7 @@ domains:
         file: architecture/cli-architecture.yaml
         type: structural
         status: extracted
-        depth: shallow
+        depth: moderate
         description: Comprehensive CLI architecture with template distribution, context management, and multi-agent support
         tags: [ core, architecture, cli, commander, github-releases, context-system, agent-support, initialization, workflow-foundation ]
         related_context: [ slash-commands, document-command, research-slash-command, plan-command, plan-template, upgrade-command, local-artifact-resolution ]
@@ -226,7 +226,7 @@ domains:
         file: architecture/state-tracking.yaml
         type: structural
         status: extracted
-        depth: shallow
+        depth: moderate
         description: JSON-based state tracking using buildforce.json to manage active spec sessions
         tags: [ core, state-management, buildforce-json, configuration, workflow-foundation ]
         related_context: [ plan-command, research-persistence, complete-command, cli-architecture ]
@@ -262,7 +262,7 @@ domains:
         file: architecture/extract-command.yaml
         type: structural
         status: extracted
-        depth: shallow
+        depth: moderate
         description: Claude Code-specific slash command for iterative context extraction from fresh codebases
         tags: [ slash-command, extract, context-mining, sub-agents, claude-code-only, coverage-map ]
         related_context: [ slash-commands, cli-architecture, upgrade-command ]
@@ -279,7 +279,7 @@ domains:
         file: conventions/template-only-slash-commands.yaml
         type: convention
         status: extracted
-        depth: shallow
+        depth: moderate
         description: Template-Only Slash Commands
         sub_type: architectural-pattern
         enforcement: strict
@@ -288,7 +288,7 @@ domains:
         file: conventions/context-repository-pattern.yaml
         type: convention
         status: extracted
-        depth: shallow
+        depth: moderate
         description: Context Repository Pattern
         sub_type: architectural-pattern
         enforcement: recommended
@@ -351,32 +351,85 @@ domains:
         file: conventions/naming-conventions.yaml
         type: convention
         status: extracted
-        depth: shallow
+        depth: moderate
         description: Naming Conventions
         sub_type: naming-convention
         enforcement: recommended
-    # Convention items also include: sub_type, enforcement
+
+      - id: yaml-file-extension-convention
+        file: conventions/yaml-file-extension-convention.yaml
+        type: convention
+        status: extracted
+        depth: shallow
+        description: YAML File Extension Convention (.yaml not .yml)
+        sub_type: code-convention
+        enforcement: strict
+        related_context: [ yaml-extension-standard ]
 
   verification:
     description: |
       Verification context about HOW to know if code is right.
       Contains quality standards, test expectations, review checklists, and known risks.
     schema: verification/_schema.yaml
-    coverage: 0
-    average_depth: none
-    items: []
-    # Verification items also include: source (mined | manual | hybrid)
+    coverage: 100
+    average_depth: shallow
+    items:
+      - id: testing-standards
+        file: verification/testing-standards.yaml
+        type: verification
+        status: extracted
+        depth: shallow
+        description: Testing standards and expectations for the project
+        source: extracted
+        tags: [ testing, quality, verification ]
 
-    # ============================================================================
-    # AGGREGATE SUMMARY
-    # ============================================================================
-    # Computed metrics across all domains. Updated after each extraction iteration.
+      - id: quality-gates
+        file: verification/quality-gates.yaml
+        type: verification
+        status: extracted
+        depth: shallow
+        description: CI/CD quality gates and pre-commit requirements
+        source: extracted
+        tags: [ ci-cd, quality-gates, git-hooks, conventional-commits ]
+
+      - id: review-criteria
+        file: verification/review-criteria.yaml
+        type: verification
+        status: extracted
+        depth: shallow
+        description: PR review expectations and issue templates
+        source: extracted
+        tags: [ review, pr, issues, contribution ]
+
+      - id: known-risks
+        file: verification/known-risks.yaml
+        type: verification
+        status: extracted
+        depth: shallow
+        description: Known risks and areas requiring extra attention
+        source: extracted
+        tags: [ risks, gaps, testing, linting ]
+
+      - id: local-testing-workflow
+        file: verification/local-testing-workflow.yaml
+        type: verification
+        status: extracted
+        depth: shallow
+        description: Local testing workflow for template changes
+        source: manual
+        tags: [ testing, local, templates, verification, workflow ]
+        related_context: [ local-artifact-resolution, cli-architecture, manual-workflow-testing ]
+
+# ============================================================================
+# AGGREGATE SUMMARY
+# ============================================================================
+# Computed metrics across all domains. Updated after each extraction iteration.
 
 summary:
-  overall_coverage: 0
-  total_items: 29
-  extracted_items: 29
-  iterations_completed: 0
+  overall_coverage: 100
+  total_items: 35
+  extracted_items: 35
+  iterations_completed: 2
 
 # ============================================================================
 # EXTRACTION STATE
@@ -385,8 +438,31 @@ summary:
 # Enables continuation after /clear or session restart.
 
 extraction:
-  needs_clarification: [] # Questions that emerged during extraction
-  recommended_focus: [] # Suggested items for next iteration
-  # Format: - id: item-id
-  #           reason: "Why this item should be prioritized"
-  new_discoveries: [] # Items found but not yet in items arrays
+  needs_clarification:
+    - "Should the migration system (MigrationRunner) be documented as a separate context item?"
+    - "Are there plans to add automated testing? Should we document target test framework preferences?"
+    - "Should linting tools (ESLint/Prettier) be added to the quality gates?"
+  recommended_focus:
+    - id: build-command
+      reason: "Core workflow command - could benefit from moderate depth with extension points"
+    - id: plan-command
+      reason: "Core workflow command - could benefit from moderate depth with state flow details"
+    - id: complete-command
+      reason: "Core workflow command - could benefit from moderate depth with context creation details"
+  new_discoveries:
+    - id: migration-runner
+      domain: architecture
+      description: "Database-migration-inspired system for context schema upgrades (MigrationRunner class)"
+      priority: medium
+    - id: step-tracker
+      domain: architecture
+      description: "Visual progress tracking class for hierarchical step display"
+      priority: low
+    - id: commit-conventions
+      domain: conventions
+      description: "Commitlint configuration with Husky hooks enforcing conventional commits"
+      priority: medium
+    - id: release-automation
+      domain: architecture
+      description: "Sophisticated release automation with version calculation and npm publishing"
+      priority: low

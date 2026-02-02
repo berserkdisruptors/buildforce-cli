@@ -3,7 +3,7 @@ name: "State Tracking System"
 type: structural
 status: production
 created: 2025-10-29
-last_updated: "2026-01-26"
+last_updated: "2026-02-02"
 
 summary: |
   JSON-based state tracking system using buildforce.json to manage active spec sessions,
@@ -99,6 +99,109 @@ related_specs:
   - rename-specs-to-sessions-20251121160000
   - add-cli-session-management-20251125000000
   - rename-create-spec-to-session-20251126000000
+
+state_lifecycle:
+  initial_state: |
+    After buildforce init:
+    - buildforce.json created with aiAssistants, scriptType, version
+    - currentSession field absent or null
+    - No active session
+
+  session_creation: |
+    When /buildforce.plan creates new session (CREATE mode):
+    1. Plan command generates folder name: {slug}-{timestamp}
+    2. Runs create-session-files.sh with folder name
+    3. Script creates .buildforce/sessions/{folder}/
+    4. Script creates spec.yaml and plan.yaml from templates
+    5. Script calls set_current_session() in common.sh
+    6. set_current_session() updates buildforce.json:
+       - Preserves existing fields (aiAssistants, scriptType, version)
+       - Sets currentSession to folder name
+       - Uses atomic write (temp file + mv)
+
+  session_active: |
+    While currentSession has value:
+    - /plan (UPDATE mode): Reads and modifies session artifacts
+    - /build: Reads session artifacts, updates progress
+    - /research: Writes research.yaml to session folder
+    - Multiple /build iterations supported
+
+  session_completion: |
+    When /buildforce.complete finalizes:
+    1. Validates all requirements implemented
+    2. Creates/updates context files
+    3. Sets status to "completed" in spec.yaml and plan.yaml
+    4. Clears currentSession by setting to null
+    5. Session folder preserved for history
+    6. New sessions can begin
+
+integration_with_workflow:
+  research_integration: |
+    Research command adapts based on session state:
+    - Session active (currentSession exists):
+      → Writes to .buildforce/sessions/{session}/research.yaml
+    - No session (currentSession null):
+      → Writes to .buildforce/.temp/research-cache.yaml
+      → Cache materialized to session when /plan creates session
+
+  plan_integration: |
+    Plan command checks currentSession to determine mode:
+    - null/empty → CREATE mode (new session)
+    - has value → UPDATE mode (modify existing)
+
+    CREATE mode sequence:
+    1. Generate folder name
+    2. Run create-session-files.sh (creates folder + files + sets state)
+    3. Check research-cache.yaml, materialize if related
+    4. Populate spec.yaml and plan.yaml
+
+    UPDATE mode sequence:
+    1. Read folder name from currentSession
+    2. Load existing spec.yaml and plan.yaml
+    3. Intelligently route updates based on content type
+
+  build_integration: |
+    Build command requires active session:
+    - Reads currentSession from buildforce.json
+    - If empty: STANDALONE MODE (ad-hoc changes)
+    - If present: FULL WORKFLOW MODE (spec-driven)
+    - Updates status from "draft" to "in-progress" on first build
+    - Tracks progress via plan.yaml checkboxes
+
+  complete_integration: |
+    Complete command requires and clears session:
+    - Validates currentSession exists
+    - Loads session artifacts for context file generation
+    - Updates status to "completed"
+    - Clears currentSession (set to null)
+    - Preserves buildforce.json other fields
+
+edge_cases:
+  concurrent_sessions: |
+    NOT SUPPORTED - only one active session at a time.
+    currentSession is single value, not array.
+    User must /complete current session before starting new one.
+
+  interrupted_sessions: |
+    If user abandons session (closes IDE, etc.):
+    - currentSession remains set
+    - Next /plan continues existing session (UPDATE mode)
+    - User can manually edit buildforce.json to clear
+    - Session artifacts remain intact for recovery
+
+  missing_json_fields: |
+    set_current_session() handles missing fields gracefully:
+    - If buildforce.json doesn't exist: creates minimal JSON
+    - If currentSession field missing: adds it
+    - If currentSession exists: replaces value
+    - Always preserves existing fields (aiAssistants, scriptType, version)
+
+  atomic_writes: |
+    All state updates use atomic write pattern:
+    1. Write to temp file: ${json_file}.tmp
+    2. Move temp to target: mv "$temp_file" "$json_file"
+    3. Prevents partial writes on failure
+    4. Ensures consistent state even on interruption
 
 notes: |
   This migration establishes foundation for future buildforce.json enhancements:

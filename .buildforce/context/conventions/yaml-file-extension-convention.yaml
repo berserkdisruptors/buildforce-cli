@@ -1,0 +1,133 @@
+id: yaml-file-extension-convention
+name: "YAML File Extension Convention"
+type: convention
+sub_type: code-convention
+enforcement: strict
+created: "2026-02-02"
+last_updated: "2026-02-02"
+
+description: |
+  All YAML files in the Buildforce CLI codebase MUST use the `.yaml` extension exclusively.
+  The `.yml` extension is prohibited in source files and generated artifacts.
+
+  This convention exists because mixed `.yaml`/`.yml` usage caused file-not-found errors
+  when AI agents attempted to read workflow and context files. The inconsistency was
+  eliminated through a codebase-wide migration on 2025-11-03.
+
+  RATIONALE:
+  - Eliminates ambiguity for AI agents attempting to locate files
+  - More explicit and descriptive than `.yml`
+  - Aligns with modern industry trend toward the official `.yaml` extension
+  - Matches YAML specification's official recommendation
+
+  SCOPE:
+  - All files in `src/` directory
+  - All files in `.buildforce/` directory
+  - All template files
+  - All context repository files
+
+  EXCEPTIONS:
+  - `.github/workflows/*.yml` - GitHub Actions convention
+  - `node_modules/` - Third-party dependencies (not controlled)
+  - Legacy session research files (5 pre-migration files remain as historical artifacts)
+
+  NOT APPLICABLE (different file types):
+  - `src/templates/commands/*.md` - Markdown command templates (copied to user codebases)
+  - `src/templates/agents/*.md` - Markdown agent definitions
+  - `README.md`, `CONTRIBUTING.md` - Documentation files
+
+  This convention applies ONLY to files with YAML content. Markdown files (.md) are a
+  different file type entirely and are not subject to this convention.
+
+examples:
+  - file: "src/templates/spec-template.yaml"
+    snippet: |
+      # Template files use .yaml extension
+      id: "{SESSION_ID}"
+      name: "{SESSION_NAME}"
+      ...
+
+  - file: ".buildforce/context/architecture/cli-architecture.yaml"
+    snippet: |
+      # Context files use .yaml extension
+      id: cli-architecture
+      name: "CLI Architecture"
+      type: structural
+      ...
+
+  - file: "src/context/_index.yaml"
+    snippet: |
+      # System files use .yaml extension (with underscore prefix)
+      version: "2.1"
+      domains:
+        architecture:
+          schema: architecture/_schema.yaml
+      ...
+
+violations:
+  - "Creating any file with .yml extension in src/ or .buildforce/"
+  - "Referencing .yml in documentation or templates (use .yaml)"
+  - "Using .yml for new context files"
+  - "Using .yml for new session artifacts (spec.yaml, plan.yaml, research.yaml)"
+
+anti_patterns:
+  - pattern: "Mixed extensions in same directory"
+    example: "src/templates/spec-template.yaml alongside config.yml"
+    why_bad: "Creates inconsistency and confusion for file lookups"
+    correct: "Use .yaml for all files: spec-template.yaml, config.yaml"
+
+  - pattern: "Using .yml because it's shorter"
+    example: "config.yml instead of config.yaml"
+    why_bad: "Brevity doesn't justify breaking consistency"
+    correct: "Always use .yaml regardless of filename length"
+
+  - pattern: "Copying external examples verbatim"
+    example: "Copying a .yml example from Stack Overflow without extension change"
+    why_bad: "Introduces inconsistency from external sources"
+    correct: "Adapt external examples to use .yaml extension"
+
+enforcement_mechanism:
+  current:
+    - method: "Documentation"
+      description: "Templates and command instructions specify .yaml"
+      files:
+        - "src/templates/commands/plan.md"
+        - "src/templates/commands/build.md"
+        - "src/templates/commands/complete.md"
+    - method: "Code Review"
+      description: "Reviewers should reject PRs introducing .yml files"
+    - method: "Template Defaults"
+      description: "create-session-files.sh generates .yaml files by default"
+  future_consideration: |
+    A pre-commit hook or linter rule to prevent .yml files from being committed
+    to src/ directory. This was noted as a future enhancement in the original
+    standardization spec but has not been implemented.
+  validation_command: |
+    # Check for violations in source directories
+    find src .buildforce -name "*.yml" -not -path "*/node_modules/*" 2>/dev/null
+
+reference_files:
+  - "src/templates/spec-template.yaml"
+  - "src/templates/plan-template.yaml"
+  - "src/templates/research-template.yaml"
+  - ".buildforce/context/_index.yaml"
+  - ".buildforce/context/architecture/_schema.yaml"
+
+related_context:
+  - architecture/yaml-extension-standard.yaml
+
+migration_guide: |
+  If you encounter legacy .yml files:
+  1. Use `git mv old-file.yml new-file.yaml` to preserve history
+  2. Update all references to the file (grep for the filename)
+  3. Verify no broken references with full test of affected commands
+
+  Current legacy violations (5 research.yml files in sessions):
+  - .buildforce/sessions/add-examples-command-20251030215737/research.yml
+  - .buildforce/sessions/revert-to-prefix-naming-20251104000000/research.yml
+  - .buildforce/sessions/standardize-cli-title-display-20250130220000/research.yml
+  - .buildforce/sessions/standardize-color-scheme-mint-20251031011544/research.yml
+  - .buildforce/sessions/standardize-lined-boxes-20250131000000/research.yml
+
+  These predate the 2025-11-03 standardization and are retained as historical
+  artifacts. New research files must use .yaml extension.

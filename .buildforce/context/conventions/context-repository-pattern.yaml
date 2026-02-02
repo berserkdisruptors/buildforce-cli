@@ -4,24 +4,166 @@ type: convention
 sub_type: architectural-pattern
 enforcement: recommended
 created: "2026-01-26"
-last_updated: "2026-01-26"
+last_updated: "2026-02-02"
 
 description: |
   Project knowledge lives in .buildforce/context/ as YAML files. Each context file
-  captures a specific aspect of the project (glossary, API patterns, architecture).
+  captures a specific aspect of the project (architecture, conventions, verification).
   Context files are registered in _index.yaml with descriptive tags for discovery.
   This creates a "living documentation" system that evolves with the project.
-  
+
+  RATIONALE:
+  1. Accumulated knowledge persists across AI agent sessions
+  2. Enables context-first search before codebase exploration
+  3. Supports the context taxonomy: Architecture (WHAT), Conventions (HOW), Verification (HOW to verify)
+  4. Makes project knowledge AI-readable and searchable via structured YAML
+
+lifecycle:
+  creation:
+    - trigger: "/buildforce.extract (bootstrap from fresh codebase)"
+      flow: "Scan codebase → Generate extraction plans → Deploy extractors → Validate proposals → Write files → Update _index.yaml"
+
+    - trigger: "/buildforce.complete (after spec workflow)"
+      flow: "Analyze spec artifacts → Determine CREATE vs UPDATE → Generate/merge context → Update _index.yaml"
+
+    - trigger: "/buildforce.document (standalone documentation)"
+      flow: "Analyze conversation history → Generate/merge context → Update _index.yaml"
+
+  updates:
+    - trigger: "Subsequent /buildforce.complete calls"
+      flow: "Read existing file → Preserve structure → Merge new information → Update last_updated → Append to evolution"
+
+    - trigger: "Manual edits"
+      flow: "Edit YAML directly → Update last_updated → Run /buildforce.extract to validate"
+
+  discovery:
+    - method: "/buildforce.research searches _index.yaml first"
+    - method: "Tags enable topic-based filtering"
+    - method: "related_context enables graph traversal"
+
+  retirement:
+    - trigger: "Component deprecated or removed"
+      flow: "Update status to 'deprecated' → Add migration notes → Keep for historical reference"
+
+structure:
+  directory_layout: |
+    .buildforce/context/
+    ├── _index.yaml              # Unified index + coverage map (v2.1)
+    ├── architecture/            # WHAT exists (structural context)
+    │   ├── _schema.yaml         # Schema for architecture files
+    │   └── *.yaml               # Individual context files
+    ├── conventions/             # HOW we do things (patterns, standards)
+    │   ├── _schema.yaml         # Schema for convention files
+    │   └── *.yaml               # Individual convention files
+    └── verification/            # HOW to verify (quality, testing)
+        ├── _schema.yaml         # Schema for verification files
+        └── *.yaml               # Individual verification files
+
+  index_structure: |
+    # _index.yaml serves as BOTH index AND coverage map
+    version: "2.1"
+    codebase_profile:
+      languages: [typescript]
+      project_type: "cli tool"
+    domains:
+      architecture:
+        items:
+          - id: slash-commands
+            file: architecture/slash-commands.yaml
+            status: extracted
+            depth: shallow
+            description: "Core slash command system"
+            tags: [core, workflow]
+      conventions:
+        items: [...]
+      verification:
+        items: [...]
+    summary:
+      total_items: 29
+      extracted_items: 29
+
+best_practices:
+  - practice: "Context-first search"
+    description: "Always search _index.yaml before exploring codebase"
+
+  - practice: "Semantic naming"
+    description: "Use component identity (authentication.yaml), not spec intent (add-auth.yaml)"
+
+  - practice: "Incremental updates"
+    description: "Append to existing files rather than replacing; use evolution section"
+
+  - practice: "Cross-references"
+    description: "Use related_context to link related components for discovery"
+
+  - practice: "Depth progression"
+    description: "Start shallow (basic structure), deepen iteratively (none → shallow → moderate → deep)"
+
+anti_patterns:
+  - pattern: "Duplicate context files"
+    description: "Creating new file when existing one covers same component"
+    why_bad: "Fragments knowledge; search returns multiple partial files"
+    correct: "UPDATE existing file, add to evolution section"
+
+  - pattern: "Spec-named context files"
+    description: "Using spec IDs as context filenames (add-auth-jwt-20250122.yaml)"
+    why_bad: "Context outlives specs; semantic names enable discovery"
+    correct: "Use component identity: authentication.yaml"
+
+  - pattern: "Monolithic context files"
+    description: "Single file covering multiple unrelated components"
+    why_bad: "Hard to update, search, and maintain"
+    correct: "Split into focused files; use related_context for linking"
+
+  - pattern: "Orphaned context files"
+    description: "Context files not registered in _index.yaml"
+    why_bad: "/buildforce.research cannot discover them"
+    correct: "Always add entry to domains.{domain}.items[]"
+
+enforcement_mechanism:
+  primary: "/buildforce.complete and /buildforce.document auto-update _index.yaml"
+  secondary: "/buildforce.extract validates against _index.yaml before writing"
+  verification: "All context files must have corresponding _index.yaml entry"
+  tooling: "Template instructions enforce index updates; no separate linting"
 
 examples:
-  - file: ".buildforce/context/_glossary.yaml"
+  - file: ".buildforce/context/_index.yaml"
     snippet: |
-      version: "0.0.33"
-      terms:
-        - term: "spec"
-          definition: "Structured YAML file capturing WHAT needs to be built"
-      
+      version: "2.1"
+      domains:
+        architecture:
+          items:
+            - id: slash-commands
+              file: architecture/slash-commands.yaml
+              type: structural
+              status: extracted
+              depth: shallow
+              description: Core slash command system
+              tags: [core, workflow, agents]
+              related_context: [plan-command, build-command]
+
+  - file: ".buildforce/context/architecture/slash-commands.yaml"
+    snippet: |
+      id: slash-commands
+      name: "Slash Commands System"
+      type: structural
+      status: production
+      created: "2025-01-15"
+      last_updated: "2026-01-28"
+
+      summary: |
+        Spec-driven development workflow implemented via slash commands.
+        Core workflow: Research → Spec → Build → Complete lifecycle.
+
+      evolution:
+        - version: "1.0"
+          date: "2025-01-15"
+          changes: "Initial implementation"
 
 reference_files:
   - ".buildforce/context/_index.yaml"
-  - ".buildforce/context/_glossary.yaml"
+  - ".buildforce/context/architecture/_schema.yaml"
+  - ".buildforce/context/conventions/_schema.yaml"
+  - ".buildforce/context/verification/_schema.yaml"
+  - "src/templates/commands/complete.md (creates context on spec completion)"
+  - "src/templates/commands/document.md (creates context standalone)"
+  - "src/templates/commands/extract.md (bootstraps context from fresh codebase)"

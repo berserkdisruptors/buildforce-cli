@@ -1,0 +1,78 @@
+id: quality-gates
+name: Quality Gates
+type: verification
+source: extracted
+created: "2026-02-02"
+last_updated: "2026-02-02"
+
+quality_standards:
+  - standard: "Branch naming convention"
+    description: |
+      Branches must follow pattern: (feat|fix|chore|docs|refactor|perf|test|ci|build|revert|hotfix)/description
+      Protected branches: main, staging, dev
+      Enforced via: .github/workflows/branch-naming.yml (CI) and .husky/pre-push (local)
+    enforcement: strict
+    confidence: 1.0
+
+  - standard: "Conventional commits"
+    description: |
+      Commit messages must follow Conventional Commits format.
+      Allowed types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert
+      Subject must be lower-case. Max header length: 1000 characters.
+      Enforced via: .husky/commit-msg with commitlint
+      Configuration: commitlint.config.js extends @commitlint/config-conventional
+    enforcement: strict
+    confidence: 1.0
+
+  - standard: "TypeScript compilation"
+    description: |
+      All TypeScript must compile without errors before release.
+      Build step runs `tsc` with strict mode.
+      Enforced in: .github/workflows/release.yml and .github/workflows/npm-publish.yml
+    enforcement: strict
+    confidence: 1.0
+
+  - standard: "Version verification before publish"
+    description: |
+      Package.json version must match release tag before npm publish.
+      If mismatch detected, version is auto-updated as fallback.
+      Enforced in: .github/workflows/npm-publish.yml
+    enforcement: strict
+    confidence: 1.0
+
+review_checklist:
+  - item: "Branch name follows convention"
+    frequency: 1.0
+    example_comment: "Branch name must follow: feat/, fix/, chore/, etc."
+
+  - item: "Commit messages follow conventional format"
+    frequency: 1.0
+    example_comment: "Use conventional commit format: feat: description"
+
+  - item: "TypeScript compiles without errors"
+    frequency: 1.0
+    example_comment: "Run npm run build to verify compilation"
+
+compliance_requirements:
+  - requirement: "Git hooks must be enabled"
+    description: |
+      Husky is configured in package.json prepare script.
+      Run `npm install` to set up hooks automatically.
+    applies_to: "All contributors"
+    enforcement: recommended
+
+  - requirement: "Commitizen available for commits"
+    description: |
+      Use `npm run commit` (or `cz`) for interactive commit message creation
+      that follows conventional commits format.
+    applies_to: "All contributors"
+    enforcement: recommended
+
+known_risks:
+  - module: ".github/workflows/release.yml"
+    risk: "Automated releases trigger on any push to main affecting key paths"
+    mitigation: |
+      Be aware that merging to main triggers automatic version bump and release.
+      Paths that trigger release: memory/**, src/**, package.json, tsconfig.json
+    occurrences: 0
+    last_flagged: "2026-02-02"

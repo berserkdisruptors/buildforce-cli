@@ -3,7 +3,7 @@ name: "Slash Commands System"
 type: structural
 status: production
 created: "2025-01-15"
-last_updated: "2026-01-28"
+last_updated: "2026-02-02"
 
 summary: |
   Spec-driven development workflow implemented via 4 core slash commands plus 2 utility commands.
@@ -109,10 +109,10 @@ workflow:
       output: "Context files + _index.yaml coverage map updates"
       key_features:
         - "Claude Code only (uses Task tool for sub-agent spawning)"
-        - "Context Manager + Context Miners architecture"
+        - "Context Manager + Context Extractors architecture"
         - "Parallel extraction across architecture, conventions, verification domains"
         - "Iterative depth model (none → shallow → moderate → deep)"
-        - "Miners return proposals validated by Context Manager before writing"
+        - "Extractors return proposals validated by Context Manager before writing"
         - "Root _index.yaml serves as both index AND coverage map"
         - "Solves cold start problem for new repositories"
         - "Template: 167 lines with embedded sub-agent prompts"
@@ -147,7 +147,7 @@ evolution:
 
   - version: "2.2"
     date: "2026-01-28"
-    changes: "Added /buildforce.extract command (Claude Code only) for bootstrapping context repositories from fresh codebases. Uses Context Manager + Context Miners sub-agent architecture with parallel extraction. Implements iterative depth model and coverage map in _index.yaml. First agent-specific slash command."
+    changes: "Added /buildforce.extract command (Claude Code only) for bootstrapping context repositories from fresh codebases. Uses Context Manager + Context Extractors sub-agent architecture with parallel extraction. Implements iterative depth model and coverage map in _index.yaml. First agent-specific slash command."
 
 related_specs:
   - "slash-commands-20250101120000 (initial system design)"
@@ -155,6 +155,100 @@ related_specs:
   - "plan-template-20250103120000 (enhanced plan template)"
   - "new-document-slash-20250105120000 (DOCUMENT command implementation)"
   - "claude-code-extract-command-20260127152345 (EXTRACT command implementation)"
+
+extension_points:
+  adding_new_command: |
+    To add a new slash command:
+    1. Create src/templates/commands/{name}.md with YAML frontmatter:
+       ---
+       version: "0.0.42"
+       description: Command description for help text
+       scripts:
+         sh: bash .buildforce/scripts/bash/{script}.sh
+         ps: .buildforce/scripts/powershell/{script}.ps1
+       ---
+    2. Use $ARGUMENTS placeholder for user input
+    3. Add supporting scripts to src/scripts/bash/ and src/scripts/powershell/
+    4. Optionally add "agents:" field to restrict to specific agents
+
+  agent_specific_commands: |
+    Commands can be agent-specific via frontmatter filtering:
+    - Add "agents: [claude]" or "agents: [claude, cursor]" to frontmatter
+    - Build script filters commands based on current agent
+    - Example: extract.md is Claude-only due to Task tool requirement
+
+  sub_agent_creation: |
+    Claude Code supports sub-agents for parallel execution:
+    1. Create src/templates/agents/{name}.md with frontmatter:
+       ---
+       name: agent-name
+       description: Agent description
+       tools: Read, Glob, Grep
+       model: inherit
+       agents: [claude]
+       ---
+    2. Sub-agents are deployed to .claude/agents/ during packaging
+    3. Spawned via Claude Code's Task tool
+    4. Return structured data (typically YAML) to parent command
+
+command_lifecycle:
+  template_to_runtime: |
+    1. Template created in src/templates/commands/{name}.md
+    2. During release packaging (create-release-packages.sh):
+       - generate_commands() reads template
+       - Checks agents field for filtering
+       - Extracts script command for variant (sh/ps)
+       - Substitutes {SCRIPT} placeholder
+       - Outputs to agent-specific folder with buildforce.{name}.{ext}
+    3. User installs via buildforce init
+    4. Commands available as /buildforce.{name} in agent
+
+  invocation_flow: |
+    User types "/buildforce.{command} {args}" in AI agent:
+    1. Agent reads command file from agent folder
+    2. $ARGUMENTS variable populated with user input
+    3. Command executed - may spawn scripts or sub-agents
+    4. Output presented to user, files modified as needed
+
+state_flow_between_commands: |
+  Research -> Plan -> Build -> Complete workflow state management:
+
+  1. /buildforce.research (no session required):
+     - If currentSession exists: writes to sessions/{session}/research.yaml
+     - If no session: writes to .temp/research-cache.yaml
+
+  2. /buildforce.plan (creates session):
+     - CREATE mode: Generates folder name with timestamp
+     - Runs create-session-files.sh to create folder
+     - Sets currentSession in buildforce.json
+     - Materializes research-cache.yaml to session/research.yaml
+     - Creates spec.yaml and plan.yaml
+
+  3. /buildforce.build (uses session):
+     - Reads currentSession from buildforce.json
+     - Loads spec.yaml, plan.yaml, research.yaml from session
+     - Updates status to "in-progress"
+     - Tracks progress in plan.yaml
+
+  4. /buildforce.complete (clears session):
+     - Validates all requirements met
+     - Creates/updates context files
+     - Sets currentSession to null in buildforce.json
+     - Session artifacts preserved for history
+
+integration_patterns:
+  context_repository: |
+    Commands interact with context via _index.yaml:
+    - /research: READS domains.*.items to find relevant context
+    - /document: WRITES to architecture/ or conventions/
+    - /complete: WRITES to architecture/, updates _index.yaml
+    - /extract: ORCHESTRATES extraction across all domains
+
+  conventions_integration: |
+    Conventions loaded by /plan and enforced by /build:
+    - /plan: Reads conventions/_index.yaml, references in decisions
+    - /build: Validates strict conventions, logs recommended deviations
+    - Convention files in conventions/ with enforcement levels
 
 notes: |
   Key innovation: .buildforce/context repository as primary knowledge source.

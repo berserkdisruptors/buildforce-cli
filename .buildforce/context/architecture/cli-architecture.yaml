@@ -3,7 +3,7 @@ name: Buildforce CLI Architecture
 type: structural
 status: production
 created: 2025-10-27
-last_updated: "2026-01-28"
+last_updated: "2026-02-02"
 
 summary: |
   Comprehensive architecture of the Buildforce CLI tool - a Node.js-based command-line
@@ -279,7 +279,7 @@ architecture_patterns:
 
     3. VERIFICATION (verification/): HOW do I know it's right?
        - Contains quality standards, test expectations, review checklists, known risks
-       - All entries use type: "verification" with source field (mined | manual | hybrid)
+       - All entries use type: "verification" with source field (extracted | manual | hybrid)
        - Created by: PR mining GitHub Actions, manual documentation
        - Used by: /buildforce.build (self-review), PR Review Actions
 
@@ -503,6 +503,74 @@ related_specs:
   - "add-temp-folder-gitignore-upgrade-20251201000000"
   - "context-taxonomy-align-20260123143000"
   - "claude-code-extract-command-20260127152345"
+
+extension_points:
+  command_registration: |
+    New CLI commands are added via Commander.js program.command() pattern:
+    1. Create command handler in src/commands/{name}/index.ts
+    2. Import handler in src/cli.ts
+    3. Register with program.command('{name}') followed by options/actions
+    4. Example structure:
+       program
+         .command("{name}")
+         .description("{description}")
+         .option("--flag", "description")
+         .action(async (options) => { await commandHandler(options) });
+
+    Current commands: init (default), upgrade, check, examples, session
+    All commands follow same pattern: validation -> execution -> output phases
+
+  agent_support: |
+    Adding new AI agent support:
+    1. Add entry to AI_CHOICES in src/config/agents.ts
+    2. Add folder mapping to AGENT_FOLDER_MAP (e.g., ".claude/")
+    3. Update create-release-packages.sh build_variant() case statement
+    4. Create agent-specific command format in generate_commands()
+
+    Agent format variations:
+    - Markdown (.md): claude, copilot, cursor, opencode, windsurf, codex, kilocode, auggie, roo
+    - TOML (.toml): gemini, qwen
+    - Special path patterns: copilot uses .github/prompts/, opencode uses .opencode/command/
+
+  template_distribution: |
+    Templates are packaged at build time via create-release-packages.sh:
+    1. Each agent + script variant gets its own ZIP package
+    2. Commands transform from src/templates/commands/*.md
+    3. Agent filtering via "agents:" YAML frontmatter field
+    4. Package structure: .buildforce/ + agent-specific folder
+
+    Extension: Add new template by creating src/templates/commands/{name}.md
+    with YAML frontmatter (version, description, optional scripts section)
+
+  help_customization: |
+    CLI help is fully customized via program.configureHelp() in cli.ts:
+    - optionTerm: Colors flags with MINT_COLOR
+    - argumentTerm: Colors arguments with MINT_COLOR
+    - subcommandTerm: Colors command names with MINT_COLOR
+    - formatHelp: Custom layout with boxed sections (Usage, Commands, Options)
+
+    Uses createBox() utility from src/utils/box.ts for consistent styling
+    Banner rendered via program.addHelpText("beforeAll", renderBannerForHelp)
+
+integration_points:
+  cli_to_commands: |
+    Entry point (src/cli.ts) -> Command handlers (src/commands/*)
+    - Options parsed by Commander, passed as objects to handlers
+    - Each command handler is async, returns void
+    - Errors caught at command level, exit codes managed by handlers
+
+  commands_to_libraries: |
+    Command handlers -> Library functions (src/lib/*)
+    - StepTracker for progress visualization
+    - Interactive functions for user input
+    - GitHub/extract for template distribution
+    - Config utilities for buildforce.json management
+
+  template_to_runtime: |
+    Build-time templates (src/templates/) -> Runtime commands (agent folders)
+    - create-release-packages.sh transforms templates
+    - Variables substituted: {SCRIPT}, {ARGS}, __AGENT__
+    - Paths rewritten: src/scripts/ -> .buildforce/scripts/
 
 notes: |
   Key architectural strengths:
