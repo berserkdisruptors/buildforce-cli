@@ -1,5 +1,5 @@
 # Verification Context Schema
-# Version: 2.0
+# Version: 2.1
 # This schema defines the structure for verification context files.
 # Verification context answers: "HOW do I know it's right?"
 #
@@ -17,7 +17,7 @@
 #   - PR Review Action: Official verification gate before merge
 #   - Agent self-evaluation: What makes code "good enough" here?
 
-version: "2.0"
+version: "2.1"
 
 # Required fields for all verification files
 required_fields:

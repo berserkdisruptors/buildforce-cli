@@ -1,5 +1,5 @@
 # Architecture Context Schema
-# Version: 2.0
+# Version: 2.1
 # This schema defines the structure for architecture context files.
 # Architecture context captures WHAT exists - structural understanding of modules, features, and components.
 #
@@ -17,7 +17,7 @@
 #   - What dependencies they have
 #   - How they've evolved over time
 
-version: "2.0"
+version: "2.1"
 
 # Required fields for all architecture context files
 required_fields:
@@ -134,7 +134,7 @@ evolution:
     - version: "1.0"
       date: "2025-01-15"
       changes: "Initial implementation"
-    - version: "2.0"
+    - version: "2.1"
       date: "2025-09-20"
       changes: "Migrated to refresh token pattern"
 

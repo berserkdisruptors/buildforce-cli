@@ -1,5 +1,5 @@
 # Convention Context Schema
-# Version: 2.0
+# Version: 2.1
 # This schema defines the structure for convention context files.
 # Conventions capture HOW we do things in this project - coding standards, patterns, and practices.
 #
@@ -15,7 +15,7 @@
 #   - recommended: SHOULD follow. Logs warnings on deviations. Use for best practices.
 #   - reference: Context only. No validation. Use for informational patterns.
 
-version: "2.0"
+version: "2.1"
 
 # Required fields for all convention files
 required_fields:
