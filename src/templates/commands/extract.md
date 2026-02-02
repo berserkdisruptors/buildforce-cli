@@ -130,8 +130,53 @@ Only after verification passes:
 
 ## Step 4: Present Summary
 
+Display a visual coverage map followed by iteration summary.
+
+### 4.1 Coverage Map Visualization
+
+Generate a tree view of all context items organized by domain, showing depth with visual bars:
+
 ```
-## Iteration Complete
+CONTEXT COVERAGE MAP
+═══════════════════════════════════════════════════════════════════════════════
+
+ARCHITECTURE ({count} items)                               WHAT exists?
+├── {item-id} ..................... [{depth-bar}] {depth}  {short description}
+├── {item-id} ..................... [{depth-bar}] {depth}  {short description}
+└── {item-id} ..................... [{depth-bar}] {depth}  {short description}
+
+CONVENTIONS ({count} items)                                HOW we do things?
+├── {item-id} ..................... [{depth-bar}] {depth}  {short description}
+└── {item-id} ..................... [{depth-bar}] {depth}  {short description}
+
+VERIFICATION ({count} items)                               HOW to verify?
+├── {item-id} ..................... [{depth-bar}] {depth}  {short description}
+└── {item-id} ..................... [{depth-bar}] {depth}  {short description}
+
+───────────────────────────────────────────────────────────────────────────────
+DEPTH LEGEND: [░░░░] shallow  [▓▓░░] moderate  [████] deep
+
+PENDING DISCOVERIES (not yet extracted):
+  + {discovery-id} ({domain}) .............. {priority} priority
+```
+
+**Depth bar encoding:**
+- `[░░░░]` = shallow (basic structure documented)
+- `[▓▓░░]` = moderate (relationships and dependencies documented)
+- `[████]` = deep (full rationale, edge cases, extension points documented)
+
+**Formatting rules:**
+- Use `├──` for items, `└──` for last item in each domain
+- Pad item IDs with dots to align depth bars at consistent column
+- Keep descriptions concise (3-5 words max)
+- List pending discoveries at bottom with `+` prefix
+
+### 4.2 Iteration Summary
+
+After the coverage map, show:
+
+```
+## Iteration {N} Complete
 
 Coverage: {before}% → {after}% (+{delta}%)
 Items extracted: {count} | New discoveries: {count}
