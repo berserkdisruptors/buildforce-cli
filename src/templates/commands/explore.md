@@ -52,8 +52,8 @@ Classify the user's intent:
 
 Determine which context domains are relevant:
 
-| Query Type | CE-1 (Structural) | CE-2 (Convention) | CE-3 (Verification) |
-|------------|-------------------|-------------------|---------------------|
+| Query Type | Structural Explorer | Convention Explorer | Verification Explorer |
+|------------|---------------------|---------------------|----------------------|
 | Architecture discussion | Primary | Secondary | If relevant |
 | Code patterns/style | Secondary | Primary | If relevant |
 | Testing/quality | Secondary | If relevant | Primary |
@@ -73,9 +73,9 @@ Based on intent analysis, dispatch relevant Context Explorer sub-agents using th
 Transform user intent into explorer queries:
 
 ```
-Query for CE-1 (Structural): {topic} architecture, structure, dependencies, design decisions
-Query for CE-2 (Convention): {topic} patterns, conventions, coding standards, best practices
-Query for CE-3 (Verification): {topic} testing, quality gates, CI requirements, coverage
+Query for Structural Explorer: {topic} architecture, structure, dependencies, design decisions
+Query for Convention Explorer: {topic} patterns, conventions, coding standards, best practices
+Query for Verification Explorer: {topic} testing, quality gates, CI requirements, coverage
 ```
 
 ### 2.2 Parallel Dispatch
@@ -87,9 +87,9 @@ Use the Task tool to spawn explorers **in parallel** for speed:
 For each relevant explorer:
 ```
 Task tool parameters:
-- subagent_type: "ce-1-structural-explorer" | "ce-2-convention-explorer" | "ce-3-verification-explorer"
+- subagent_type: "buildforce-structural-explorer" | "buildforce-convention-explorer" | "buildforce-verification-explorer"
 - prompt: Include query, scope (broad|focused|deep), and session context
-- model: haiku (explorers should be fast and efficient)
+- model: inherit
 ```
 
 **Scope guidance:**
@@ -100,12 +100,12 @@ Task tool parameters:
 ### 2.3 Selective Dispatch Examples
 
 **User: "let's discuss the auth system"**
-- Dispatch: CE-1 (Primary), CE-2 (Secondary)
-- Skip: CE-3 (unless testing mentioned)
+- Dispatch: Structural Explorer (Primary), Convention Explorer (Secondary)
+- Skip: Verification Explorer (unless testing mentioned)
 
 **User: "how should we test the payment flow?"**
-- Dispatch: CE-3 (Primary), CE-1 (for architecture context)
-- Skip: CE-2 (conventions less relevant)
+- Dispatch: Verification Explorer (Primary), Structural Explorer (for architecture context)
+- Skip: Convention Explorer (conventions less relevant)
 
 **User: "tell me about the codebase"**
 - Dispatch: All three (broad exploration)

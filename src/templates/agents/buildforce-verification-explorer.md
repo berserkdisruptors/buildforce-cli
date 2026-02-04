@@ -1,5 +1,5 @@
 ---
-name: ce-3-verification-explorer
+name: buildforce-verification-explorer
 description: Context Explorer for verification/quality context. Searches the context repository for testing requirements, CI gates, and quality standards. Use during /buildforce.explore for verification-related queries.
 tools: Read, Glob, Grep
 model: inherit

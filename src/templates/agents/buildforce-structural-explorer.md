@@ -1,5 +1,5 @@
 ---
-name: ce-1-structural-explorer
+name: buildforce-structural-explorer
 description: Context Explorer for structural/architecture context. Searches the context repository for relevant architectural information and returns targeted findings. Use during /buildforce.explore for architecture-related queries.
 tools: Read, Glob, Grep
 model: inherit
