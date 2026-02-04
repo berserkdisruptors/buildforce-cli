@@ -1,0 +1,139 @@
+version: "0.0.42"
+id: explore-command-20260202090346
+name: "/buildforce.explore Command"
+type: feature
+status: in-progress
+created: "2026-02-02"
+last_updated: "2026-02-02"
+resolved_questions:
+  - question: "Should explore sessions persist across CLI invocations?"
+    answer: "Yes - persist to .buildforce/.temp/research-cache.yaml for compatibility with other commands"
+  - question: "What model tier should explorers use?"
+    answer: "Inherit from parent (same as extractors)"
+  - question: "Should the command output session state for debugging?"
+    answer: "No - clean conversational UX; session state available in research-cache.yaml if needed"
+
+summary: |
+  Session-aware brainstorming command that uses Context Explorer sub-agents to dynamically retrieve
+  and synthesize context from the repository into natural conversation, enabling users to discuss
+  their codebase with an AI that "knows" the project.
+
+# INTENT / PROBLEM STATEMENT
+
+problem: |
+  Current workflows are disconnected: users brainstorm in claude.ai/chatgpt (with memory but no project
+  context), then manually transfer artifacts to local projects, then run separate research/planning
+  commands. Context is lost between tools, and users must explicitly tell the AI to "check files" -
+  the AI doesn't proactively surface relevant project knowledge.
+
+motivation: |
+  Enable integrated brainstorming directly within the buildforce workflow. Users should be able to
+  have natural conversations where project context surfaces automatically and invisibly. The "wow"
+  moment: the AI responds with deep project knowledge without being explicitly asked to look it up,
+  feeling like talking to a knowledgeable colleague who deeply understands the codebase.
+
+# GOALS
+
+primary_goals:
+  - Enable conversational exploration of project context with automatic context retrieval
+  - Synthesize findings naturally (not as research reports)
+  - Track session state for multi-turn continuity
+
+secondary_goals:
+  - Validate the Explorer sub-agent pattern for future context provisioning features
+  - Establish performance baselines for real-time context retrieval (<5s latency)
+
+# REQUIREMENTS
+
+functional_requirements:
+  - FR1: Command accepts optional prompt argument for topic-focused exploration
+  - FR2: Manager analyzes user intent (continuation, new topic, question, open exploration)
+  - FR3: Selective dispatch of Context Explorers based on intent (not always all three)
+  - FR4: CE-1 (Structural Explorer) searches architecture/ domain and returns findings
+  - FR5: CE-2 (Convention Explorer) searches conventions/ domain and returns findings
+  - FR6: CE-3 (Verification Explorer) searches verification/ domain and returns findings
+  - FR7: Explorers return structured findings with excerpts, connections, gaps, and suggestions
+  - FR8: Manager synthesizes findings conversationally (integrated, not enumerated)
+  - FR9: Session state tracks topics, context surfaced, and open questions across turns
+  - FR10: Manager decides when to re-dispatch explorers vs use existing context
+  - FR11: Graceful handling when no relevant context exists
+  - FR12: Session Persister sub-agent saves key findings to research-cache.yaml asynchronously
+
+non_functional_requirements:
+  - NFR1: Total user-perceived latency under 5 seconds (explorers <3s, synthesis <2s)
+  - NFR2: Explorer agents use read-only tools (no context modification)
+  - NFR3: Session persistence runs async via Task tool with run_in_background=true
+  - NFR4: Explorer agents inherit model tier from parent (no explicit model specification)
+  - NFR5: Checkpoint saves are infrequent (minimize writes) - only on significant new findings
+  - NFR6: Session Persister uses permissionMode=bypassPermissions (no user confirmation for writes)
+
+# SCOPE
+
+in_scope:
+  - New command template (explore.md)
+  - Three new Explorer agent templates (ce-1-structural.md, ce-2-convention.md, ce-3-verification.md)
+  - Session Persister sub-agent for async checkpoint saves to research-cache.yaml
+  - Intent analysis logic in command template
+  - Explorer dispatch strategy based on intent
+  - Conversational synthesis guidelines
+  - Error handling for missing context
+
+out_of_scope:
+  - Automatic context provisioning (future skill, not this command)
+  - Writing/modifying context repository files (read-only for context/)
+  - Integration with /buildforce.plan or /buildforce.build workflows
+  - User authentication or multi-user sessions
+  - Debug output or verbose session state display
+
+# DESIGN PRINCIPLES
+
+design_principles:
+  - "Invisible retrieval: Users shouldn't feel like they're waiting for a search"
+  - "Conversational, not report-like: Lead with understanding, not sourcing"
+  - "Targeted, not exhaustive: Fetch only what's needed for the current exchange"
+  - "Session continuity: Build understanding over multiple turns"
+  - "Honest about gaps: Acknowledge when context doesn't exist, don't fabricate"
+
+# ACCEPTANCE CRITERIA
+
+acceptance_criteria:
+  - AC1: Running `/buildforce.explore` with no arguments provides open-ended exploration
+  - AC2: Running `/buildforce.explore "topic"` focuses exploration on that topic
+  - AC3: Explorers complete retrieval in under 3 seconds
+  - AC4: Manager response integrates findings without explicit "I found X in file Y" phrasing
+  - AC5: Follow-up questions build on prior context without redundant re-fetching
+  - AC6: Topic shifts trigger new explorer dispatches
+  - AC7: Missing context is acknowledged honestly with suggested alternatives
+  - AC8: Session findings persist to research-cache.yaml asynchronously (user never waits for saves)
+  - AC9: Persisted findings can be consumed by /buildforce.plan
+  - AC10: User sees no permission prompts for research-cache.yaml writes (bypassPermissions)
+
+# ASSUMPTIONS & DEPENDENCIES
+
+assumptions:
+  - Context repository exists with extracted content in architecture/, conventions/, verification/
+  - _index.yaml exists and provides accurate inventory of available context
+  - Task tool is available for spawning sub-agents
+  - Read/Glob/Grep tools available for explorers
+
+dependencies:
+  internal:
+    - context-repo: "Must have extracted context (run /buildforce.extract first)"
+  external:
+    - task-tool: "Claude Code Task tool for sub-agent spawning (supports background execution)"
+
+# OPEN QUESTIONS
+
+open_questions: []
+  # All questions resolved:
+  # - Session persistence: Use .buildforce/.temp/research-cache.yaml (compatible with other commands)
+  # - Model tier: Inherit from parent (same as extractors)
+  # - Debug output: No - clean conversational UX
+
+# NOTES
+
+notes: |
+  This is a proof-of-concept implementation that validates the Explorer pattern. The architecture
+  mirrors /buildforce.extract (three parallel sub-agents for the same domains) but with opposite
+  data flow: extract WRITES context, explore READS context. Success here informs the future
+  "always-on" context provisioning skill that will inject context automatically during any agent action.

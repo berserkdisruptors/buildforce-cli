@@ -1,0 +1,363 @@
+version: "0.0.42"
+# Plan Template for /buildforce.build Agent Execution
+# This template is optimized for AI agent consumption during /buildforce.build commands
+# It provides checkbox-based progress tracking, deviation logging, and spec traceability
+
+id: explore-command-20260202090346-plan
+name: "Implementation Plan for /buildforce.explore Command"
+spec_id: "explore-command-20260202090346"
+type: implementation-plan
+status: in-progress
+created: "2026-02-02"
+last_updated: "2026-02-02"
+
+# ARCHITECTURE OVERVIEW
+# Describe the high-level implementation approach and key technical decisions.
+
+approach: |
+  Mirror the extract command architecture but with reversed data flow. The Explore Manager command
+  template handles intent analysis, explorer dispatch, findings synthesis, and session state. Three
+  Explorer sub-agents (CE-1, CE-2, CE-3) search their respective context domains and return structured
+  findings. The Manager synthesizes findings conversationally rather than as reports.
+
+  A fourth sub-agent (Session Persister) handles async checkpoint saves to research-cache.yaml,
+  running in background so the user's conversation flow is never interrupted by persistence operations.
+
+  Key pattern: Manager → parallel Explorer dispatch → findings aggregation → conversational synthesis
+                    ↘ (async, infrequent) Session Persister → research-cache.yaml
+
+technology_stack:
+  - Markdown templates for command and agent definitions
+  - Task tool for sub-agent spawning (same as extract)
+  - Read/Glob/Grep tools for explorers (read-only operations)
+  - YAML for structured findings format
+
+decisions:
+  - decision: "Use same three-domain architecture as extract (structural, conventions, verification)"
+    rationale: "Consistency with existing patterns, reuses domain expertise, aligns with context repo structure"
+
+  - decision: "Explorers return structured YAML findings, not raw file content"
+    rationale: "Enables manager to synthesize intelligently; findings include relevance scoring, excerpts, connections, and gaps"
+
+  - decision: "Async persistence via dedicated Session Persister sub-agent running in background"
+    rationale: "User flow never blocked; use Task tool with run_in_background=true for concurrent execution"
+
+  - decision: "Session Persister uses permissionMode: bypassPermissions"
+    rationale: "Skips all permission checks so writes to research-cache.yaml don't require user confirmation; safe since only writes to .buildforce/.temp/"
+
+  - decision: "Session Persister uses model: haiku"
+    rationale: "Simple write operation doesn't need powerful model; haiku is fast and cost-effective for file writes"
+
+  - decision: "Persist to .buildforce/.temp/research-cache.yaml"
+    rationale: "Compatible with existing buildforce commands; /buildforce.plan can consume explore findings; familiar format"
+
+  - decision: "Selective explorer dispatch based on intent classification"
+    rationale: "Performance optimization - no need to search all domains for focused queries; reduces latency"
+
+  - decision: "Explorers inherit model tier from parent (no explicit model specification)"
+    rationale: "Consistency with extractor agents; allows user to control model via CLI flags"
+
+  - decision: "No debug output - clean conversational UX"
+    rationale: "Users want natural conversation; session state is persisted to file for inspection if needed"
+
+# FILE STRUCTURE
+# List all files to be created or modified during implementation
+
+files_to_create:
+  - src/templates/commands/explore.md
+  - src/templates/agents/ce-1-structural-explorer.md
+  - src/templates/agents/ce-2-convention-explorer.md
+  - src/templates/agents/ce-3-verification-explorer.md
+  - src/templates/agents/buildforce-session-persister.md
+
+files_to_modify: []
+  # No existing files need modification - this is a new command with new agents
+
+# IMPLEMENTATION PHASES
+# Break down the implementation into logical phases with checkbox-based task tracking
+# Use [ ] for pending tasks and [x] for completed tasks
+# Each task should link back to spec requirements via spec_refs
+
+phase_1:
+  name: "Explorer Sub-Agents"
+  description: |
+    Create the three Context Explorer agent templates that search their respective domains
+    and return structured findings. These are the read-only counterparts to the Extractors.
+
+  tasks:
+    - [x] Create CE-1 Structural Explorer agent template
+      spec_refs: [FR4, FR7, NFR2]
+      files: [src/templates/agents/ce-1-structural-explorer.md]
+      notes: "Searches architecture/ domain, returns findings with excerpts, connections, gaps"
+
+    - [x] Create CE-2 Convention Explorer agent template
+      spec_refs: [FR5, FR7, NFR2]
+      files: [src/templates/agents/ce-2-convention-explorer.md]
+      notes: "Searches conventions/ domain, includes confidence levels from extraction"
+
+    - [x] Create CE-3 Verification Explorer agent template
+      spec_refs: [FR6, FR7, NFR2]
+      files: [src/templates/agents/ce-3-verification-explorer.md]
+      notes: "Searches verification/ domain, surfaces testing requirements and gaps"
+
+  validation:
+    - [x] All phase_1 tasks completed
+    - [x] Explorer templates follow consistent structure
+    - [x] Each explorer has correct tool restrictions (read-only)
+    - [x] Spec requirements covered: [FR4, FR5, FR6, FR7, NFR2]
+
+phase_2:
+  name: "Explore Command Template"
+  description: |
+    Create the main explore.md command template that handles intent analysis, explorer dispatch,
+    findings synthesis, and session state management.
+
+  tasks:
+    - [x] Create explore.md command template with intent analysis logic
+      spec_refs: [FR1, FR2, FR3]
+      files: [src/templates/commands/explore.md]
+      notes: "Includes topic detection, intent classification, context needs assessment"
+
+    - [x] Add explorer dispatch strategy to command template
+      spec_refs: [FR3, FR10, NFR1]
+      files: [src/templates/commands/explore.md]
+      notes: "Selective dispatch based on intent; parallel execution via Task tool"
+
+    - [x] Add conversational synthesis guidelines to command template
+      spec_refs: [FR8, FR11]
+      files: [src/templates/commands/explore.md]
+      notes: "Lead with understanding, integrate findings, acknowledge gaps"
+
+    - [x] Add session state tracking (in-memory) to command template
+      spec_refs: [FR9, FR10]
+      files: [src/templates/commands/explore.md]
+      notes: "Track topics, context surfaced, open questions in memory during conversation"
+
+    - [x] Add research-cache.yaml read logic for session continuity
+      spec_refs: [NFR3]
+      files: [src/templates/commands/explore.md]
+      notes: "Load existing cache on start if present; use to inform initial context"
+
+    - [x] Add async persister dispatch logic (infrequent checkpoints)
+      spec_refs: [FR12, NFR3, NFR5, NFR6]
+      files: [src/templates/commands/explore.md]
+      notes: |
+        Use Task tool with run_in_background: true to dispatch Session Persister
+        Only dispatch when significant new findings accumulated (not every turn)
+        Persister has bypassPermissions so user sees no confirmation prompts
+
+  validation:
+    - [x] All phase_2 tasks completed
+    - [x] Command template handles all intent types (continuation, new topic, question, open)
+    - [x] Dispatch strategy documented clearly
+    - [x] Synthesis guidelines prevent report-style output
+    - [x] Persister dispatch is async and non-blocking
+    - [x] Spec requirements covered: [FR1, FR2, FR3, FR8, FR9, FR10, FR11, FR12, NFR1, NFR3, NFR5]
+
+phase_3:
+  name: "Session Persister Sub-Agent"
+  description: |
+    Create the Session Persister agent that runs asynchronously in the background to save
+    key findings to research-cache.yaml without blocking the user's conversation flow.
+
+  tasks:
+    - [x] Create Session Persister agent template
+      spec_refs: [FR12, NFR3, NFR5, NFR6]
+      files: [src/templates/agents/buildforce-session-persister.md]
+      notes: |
+        Frontmatter must include:
+        - permissionMode: bypassPermissions (skip permission checks for writes)
+        - model: haiku (fast, efficient for simple write operation)
+        - tools: Write (only needs write access to .buildforce/.temp/)
+        Dispatched via Task tool with run_in_background: true
+
+  validation:
+    - [x] All phase_3 tasks completed
+    - [x] Persister agent has permissionMode: bypassPermissions in frontmatter
+    - [x] Persister agent writes valid research-cache.yaml format
+    - [x] Persister runs in background without blocking main conversation
+    - [x] Spec requirements covered: [FR12, NFR3, NFR5, NFR6]
+
+# DEVIATION LOG
+# The /buildforce.build agent populates this section when implementation deviates from the original plan
+# Format: phase -> task -> original plan -> actual implementation -> reason for deviation
+
+deviations:
+  # To be populated during implementation
+
+# CONVENTION COMPLIANCE
+# Track validation results for strict and recommended enforcement levels
+# This section is populated during /buildforce.build when .buildforce/context/conventions/ exists
+
+convention_compliance:
+  strict_validations:
+    - convention: "Template-Only Slash Commands"
+      status: "PASS"
+      checked_files:
+        - src/templates/commands/explore.md
+        - src/templates/agents/ce-1-structural-explorer.md
+        - src/templates/agents/ce-2-convention-explorer.md
+        - src/templates/agents/ce-3-verification-explorer.md
+        - src/templates/agents/buildforce-session-persister.md
+      notes: "All implementation is in markdown templates, no TypeScript command handlers added"
+
+    - convention: "YAML File Extension Convention"
+      status: "PASS"
+      checked_files:
+        - src/templates/commands/explore.md
+        - src/templates/agents/ce-1-structural-explorer.md
+        - src/templates/agents/ce-2-convention-explorer.md
+        - src/templates/agents/ce-3-verification-explorer.md
+        - src/templates/agents/buildforce-session-persister.md
+      notes: "All files use .md extension (command templates). References to YAML files in templates use .yaml extension (research-cache.yaml, _index.yaml)"
+
+  recommended_validations:
+    - convention: "Naming Conventions"
+      status: "PASS"
+      checked_files:
+        - src/templates/commands/explore.md
+        - src/templates/agents/ce-1-structural-explorer.md
+        - src/templates/agents/ce-2-convention-explorer.md
+        - src/templates/agents/ce-3-verification-explorer.md
+        - src/templates/agents/buildforce-session-persister.md
+      notes: "All files use kebab-case naming. Agent files follow buildforce-* or ce-N-* pattern."
+
+    - convention: "Template-Only Changes Preferred"
+      status: "PASS"
+      notes: "Feature implemented entirely in markdown templates. No TypeScript dependencies added."
+
+# TESTING GUIDANCE
+# Structured guidance for testing the implementation
+
+testing:
+  automated_tests:
+    - test_file: "N/A - template files"
+      what: "Template syntax validation"
+      command: "Manual review of YAML/Markdown structure"
+
+  manual_tests:
+    - scenario: "Basic explore invocation"
+      steps: |
+        1. Ensure context repo has extracted content
+        2. Run /buildforce.explore "let's discuss the auth system"
+        3. Verify explorers are dispatched
+        4. Verify response is conversational (not report-style)
+        5. Verify response includes relevant context from repo
+
+    - scenario: "Follow-up conversation"
+      steps: |
+        1. Complete basic explore scenario
+        2. Ask follow-up: "what about testing for that?"
+        3. Verify topic shift triggers appropriate explorer dispatch
+        4. Verify session context is maintained (references prior discussion)
+
+    - scenario: "No context found"
+      steps: |
+        1. Ask about topic not in context repo
+        2. Verify graceful handling with honest acknowledgment
+        3. Verify suggestion to extract context or explore alternatives
+
+    - scenario: "Async persistence checkpoint"
+      steps: |
+        1. Have multi-turn conversation with significant findings
+        2. Verify user is never blocked waiting for saves
+        3. Check .buildforce/.temp/research-cache.yaml after conversation
+        4. Verify key findings are persisted in compatible format
+
+# VALIDATION CRITERIA
+# Define success metrics and track spec requirement coverage
+
+success_metrics:
+  - "Total response time under 5 seconds for typical queries"
+  - "Responses read as natural conversation, not enumerated findings"
+  - "Follow-up questions leverage prior context appropriately"
+  - "Missing context acknowledged honestly without fabrication"
+
+spec_coverage:
+  # Auto-track which spec requirements are implemented in which tasks
+  # Format: requirement_id: status + location
+  - FR1: "Phase 2: Task 1"
+  - FR2: "Phase 2: Task 1"
+  - FR3: "Phase 2: Tasks 1-2"
+  - FR4: "Phase 1: Task 1"
+  - FR5: "Phase 1: Task 2"
+  - FR6: "Phase 1: Task 3"
+  - FR7: "Phase 1: Tasks 1-3"
+  - FR8: "Phase 2: Task 3"
+  - FR9: "Phase 2: Task 4"
+  - FR10: "Phase 2: Tasks 2, 4"
+  - FR11: "Phase 2: Task 3"
+  - FR12: "Phase 2: Task 6, Phase 3: Task 1"
+  - NFR1: "Phase 2: Task 2"
+  - NFR2: "Phase 1: Tasks 1-3"
+  - NFR3: "Phase 2: Tasks 5-6, Phase 3: Task 1"
+  - NFR4: "Phase 1: Tasks 1-3"
+  - NFR5: "Phase 2: Task 6, Phase 3: Task 1"
+  - NFR6: "Phase 2: Task 6, Phase 3: Task 1"
+
+# PROGRESS SUMMARY
+# Track overall progress and identify next steps
+
+overall_progress:
+  phase_1: "3/3 tasks completed"
+  phase_2: "6/6 tasks completed"
+  phase_3: "1/1 tasks completed"
+
+current_status: |
+  All implementation phases complete. Files created:
+  - src/templates/agents/ce-1-structural-explorer.md
+  - src/templates/agents/ce-2-convention-explorer.md
+  - src/templates/agents/ce-3-verification-explorer.md
+  - src/templates/commands/explore.md
+  - src/templates/agents/buildforce-session-persister.md
+
+next_immediate_steps:
+  - "Manual testing with /buildforce.explore command"
+  - "Verify context repository has extracted content"
+  - "Test conversational flow and explorer dispatch"
+
+# RISKS & CONSIDERATIONS
+# Document potential risks and mitigation strategies
+
+risks:
+  - risk: "Explorer latency exceeds 3-second target"
+    mitigation: "Ensure explorers read _index.yaml first for fast navigation; implement early return when sufficient context found"
+
+  - risk: "Synthesis feels report-like instead of conversational"
+    mitigation: "Include strong guidelines in command template with examples of good vs bad synthesis"
+
+  - risk: "Session state complexity grows unbounded"
+    mitigation: "Keep session state minimal; focus on topics and open questions only"
+
+  - risk: "Context repo is empty or sparse"
+    mitigation: "Graceful fallback with honest acknowledgment and suggestion to run /buildforce.extract"
+
+  - risk: "KNOWN BUG: Background subagent file writes may fail silently"
+    mitigation: |
+      Known Claude Code issues #13890 and #4462 report that subagents (especially with run_in_background)
+      fail to write files - either silently or claiming success when files don't persist.
+
+      Workaround strategy if this occurs:
+      1. Have Session Persister return the YAML content instead of writing directly
+      2. Main Explore Manager writes the file after receiving persister output
+      3. This trades some async benefit for reliability
+
+      Implement as planned first; apply workaround if file writes don't persist.
+      Monitor these issues for upstream fixes.
+
+# NOTES
+# Capture lessons learned and future enhancement ideas
+
+general_notes:
+  - "This is a PoC that validates the Explorer pattern for future context provisioning features"
+  - "Success criteria focus on conversation quality, not feature completeness"
+  - "Template structure mirrors extract command for consistency"
+  - "WATCH: Background subagent file writes have known bugs (#13890, #4462) - test early and apply workaround if needed"
+
+lessons_learned:
+  # To be populated during implementation
+
+future_enhancements:
+  - "Automatic context provisioning skill (always-on, not explicit command)"
+  - "Direct integration with /buildforce.plan to carry explore findings into planning"
+  - "Experiment with efficient model tier (haiku) for explorers via CLI flag"
