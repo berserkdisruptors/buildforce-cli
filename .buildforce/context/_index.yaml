@@ -58,7 +58,7 @@ version: "2.1"
 
 # Timestamps (populated by /buildforce.extract on first run)
 generated_at: "2026-02-02"
-last_updated: "2026-02-02"
+last_updated: "2026-02-04"
 
 # ============================================================================
 # CODEBASE PROFILE
@@ -267,6 +267,24 @@ domains:
         tags: [ slash-command, extract, context-mining, sub-agents, claude-code-only, coverage-map ]
         related_context: [ slash-commands, cli-architecture, upgrade-command ]
 
+      - id: settings-merge-utility
+        file: architecture/settings-merge-utility.yaml
+        type: structural
+        status: extracted
+        depth: shallow
+        description: TypeScript utility for merging Claude Code settings with additive deep-merge strategy
+        tags: [ utility, settings, claude-code, merge, hooks, permissions ]
+        related_context: [ upgrade-command, cli-architecture ]
+
+      - id: skills-bundling
+        file: architecture/skills-bundling.yaml
+        type: structural
+        status: extracted
+        depth: shallow
+        description: Release packaging system for bundling Claude Code skills with agent filtering
+        tags: [ release-packaging, skills, claude-code, bundling, agent-filtering ]
+        related_context: [ upgrade-command, cli-architecture, settings-merge-utility ]
+
   conventions:
     description: |
       Convention context about HOW things are done here.
@@ -427,8 +445,8 @@ domains:
 
 summary:
   overall_coverage: 100
-  total_items: 35
-  extracted_items: 35
+  total_items: 37
+  extracted_items: 37
   iterations_completed: 2
 
 # ============================================================================

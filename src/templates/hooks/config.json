@@ -1,0 +1,13 @@
+{
+    "Stop": [
+        {
+            "hooks": [
+                {
+                    "type": "agent",
+                    "prompt": "Call the buildforce-context-extract skill",
+                    "timeout": 150
+                }
+            ]
+        }
+    ]
+}

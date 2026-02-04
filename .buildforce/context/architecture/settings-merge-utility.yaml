@@ -1,0 +1,139 @@
+id: settings-merge-utility
+name: Settings Merge Utility
+type: structural
+status: production
+created: "2026-02-04"
+last_updated: "2026-02-04"
+
+summary: |
+  TypeScript utility for merging Claude Code settings from template configuration into
+  user's .claude/settings.local.json file. Uses additive deep-merge strategy that
+  preserves all existing user permissions and hooks while adding new entries from
+  templates. Deduplicates arrays using JSON.stringify comparison to ensure idempotent
+  operations across multiple init/upgrade cycles.
+
+responsibilities:
+  - Merge template hooks/config.json into .claude/settings.local.json
+  - Preserve existing user permissions (allow, deny, ask arrays)
+  - Preserve existing user hooks (Stop, PreToolUse, PostToolUse arrays)
+  - Deduplicate array entries using JSON.stringify comparison
+  - Create settings.local.json if it doesn't exist
+  - Handle edge cases gracefully (missing template, malformed JSON)
+  - Provide debug logging when enabled
+  - Return detailed merge result for progress tracking
+
+dependencies:
+  internal:
+    - init-command: "Calls mergeClaudeSettings after template extraction"
+    - upgrade-command: "Calls mergeClaudeSettings after template replacement"
+  external:
+    - fs-extra: "^11.2.0 - File system operations (readFile, writeFile, pathExists, ensureDir)"
+    - chalk: "^5.4.1 - Debug logging with colored output"
+
+files:
+  primary:
+    - src/utils/settings-merge.ts
+  secondary:
+    - src/commands/init/setup.ts
+    - src/commands/upgrade/execution.ts
+
+interfaces:
+  exports:
+    - name: "mergeClaudeSettings"
+      signature: "(projectPath: string, templateConfigPath: string, options?: { debug?: boolean }) => Promise<MergeResult>"
+      description: "Merges template hooks configuration into user's Claude Code settings"
+
+    - name: "MergeResult"
+      signature: "interface { merged: boolean; skipped: boolean; reason: string; hooksAdded?: number; permissionsAdded?: number }"
+      description: "Result object describing what was done during merge"
+
+design_decisions:
+  - decision: "Use additive-only merge strategy (never removes existing data)"
+    rationale: "User permissions and hooks represent accumulated approvals and customizations. Removing them would break workflows and require re-approval. Safety over cleanup."
+
+  - decision: "Deduplicate arrays using JSON.stringify comparison"
+    rationale: "Simple and reliable for comparing hook objects. Multiple upgrade cycles shouldn't add duplicate hooks. Performance is acceptable since arrays are small."
+
+  - decision: "Template config contains hooks content directly, not full settings structure"
+    rationale: "Keeps template file focused on what Buildforce needs (hooks). The utility wraps it in settings structure for merging. Separation of concerns."
+
+  - decision: "Skip merge gracefully if template config doesn't exist"
+    rationale: "Not all releases may include hooks. Graceful degradation prevents upgrade failures when hooks aren't needed."
+
+  - decision: "No backup file creation"
+    rationale: "Merge is additive-only and git tracks changes. Backup adds complexity without significant value since no data is lost."
+
+merge_algorithm: |
+  1. Read template config from .buildforce/templates/hooks/config.json
+     - Template contains hooks content directly: { "Stop": [...], "PreToolUse": [...] }
+     - Wrap in settings structure: { hooks: templateContent }
+
+  2. Read existing settings from .claude/settings.local.json
+     - If file doesn't exist: start with empty object {}
+     - If file is malformed: log warning, start with empty object {}
+
+  3. Merge permissions (if present in template):
+     - permissions.allow: concat arrays, deduplicate
+     - permissions.deny: concat arrays, deduplicate
+     - permissions.ask: concat arrays, deduplicate
+
+  4. Merge hooks (if present in template):
+     - For each hook type (Stop, PreToolUse, PostToolUse):
+       - Concat existing array with incoming array
+       - Deduplicate using JSON.stringify comparison
+
+  5. Write merged result to .claude/settings.local.json
+     - Pretty-print with 2-space indent
+     - Add trailing newline
+
+data_models:
+  - name: "ClaudeSettings"
+    description: "Claude Code settings file structure"
+    properties:
+      - name: permissions
+        type: "{ allow?: string[], deny?: string[], ask?: string[] }"
+        description: "Tool permission rules"
+      - name: hooks
+        type: "{ Stop?: unknown[], PreToolUse?: unknown[], PostToolUse?: unknown[] }"
+        description: "Event hook configurations"
+
+  - name: "MergeResult"
+    description: "Result returned by mergeClaudeSettings"
+    properties:
+      - name: merged
+        type: boolean
+        description: "True if merge was performed"
+      - name: skipped
+        type: boolean
+        description: "True if merge was skipped"
+      - name: reason
+        type: string
+        description: "Explanation of what happened"
+      - name: hooksAdded
+        type: number
+        description: "Count of hooks in template config"
+      - name: permissionsAdded
+        type: number
+        description: "Count of permissions in template config"
+
+evolution:
+  - version: "1.0"
+    date: "2026-02-04"
+    changes: "Initial implementation with additive deep-merge, array deduplication, and graceful edge case handling"
+
+related_specs:
+  - skills-bundling-config-concat-20260204000000
+
+notes: |
+  This utility enables automatic activation of Buildforce features by ensuring
+  the Stop hook is configured to call the buildforce-context-extract skill.
+
+  The merge is designed to be:
+  - Safe: Never removes user data
+  - Idempotent: Multiple runs don't create duplicates
+  - Transparent: Debug logging shows what was done
+  - Resilient: Graceful handling of missing/malformed files
+
+  Future enhancements:
+  - Support for merging other Claude Code settings sections if needed
+  - Version tracking to detect when template config changes

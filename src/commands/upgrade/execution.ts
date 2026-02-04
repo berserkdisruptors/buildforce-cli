@@ -9,6 +9,7 @@ import { saveBuildforceConfig } from "../../utils/config.js";
 import { AGENT_FOLDER_MAP, MINT_COLOR } from "../../constants.js";
 import { resolveLocalArtifact } from "../../lib/local-artifacts.js";
 import { createMigrationRunner } from "./migrations/registry.js";
+import { mergeClaudeSettings } from "../../utils/settings-merge.js";
 
 /**
  * Execute the upgrade process
@@ -53,6 +54,8 @@ export async function executeUpgrade(
     ["replace-commands", "Replace slash commands"],
     ["replace-templates", "Replace templates"],
     ["replace-scripts", "Replace scripts"],
+    ["replace-skills", "Replace skills"],
+    ["merge-settings", "Merge Claude settings"],
     ["migrate-context", "Migrate context structure"],
     ["update-config", "Update buildforce.json"],
     ["cleanup", "Cleanup"],
@@ -242,6 +245,26 @@ export async function executeUpgrade(
         tracker.complete("replace-scripts", "would create .buildforce/scripts/");
       }
 
+      // Check skills for Claude (only buildforce-prefixed skills)
+      tracker.start("replace-skills");
+      if (successfulAgents.includes("claude")) {
+        const skillsSrcPath = path.join(sourceDirs.get("claude")!, ".claude", "skills");
+        if (await fs.pathExists(skillsSrcPath)) {
+          const sourceSkills = await fs.readdir(skillsSrcPath);
+          const buildforceSkills = sourceSkills.filter(name => name.startsWith("buildforce-"));
+          if (buildforceSkills.length > 0) {
+            tracker.complete("replace-skills", `would update ${buildforceSkills.length} buildforce skill(s)`);
+          } else {
+            tracker.skip("replace-skills", "no buildforce skills in release");
+          }
+        } else {
+          tracker.skip("replace-skills", "no skills in release");
+        }
+      } else {
+        tracker.skip("replace-skills", "claude not selected");
+      }
+
+      tracker.skip("merge-settings", "dry-run mode");
       tracker.skip("migrate-context", "dry-run mode");
       tracker.skip("update-config", "dry-run mode");
       tracker.skip("cleanup", "dry-run mode");
@@ -333,6 +356,65 @@ export async function executeUpgrade(
         tracker.complete("replace-scripts", ".buildforce/scripts/");
       } else {
         tracker.skip("replace-scripts", "no scripts in release");
+      }
+
+      // Replace skills for Claude agent (only buildforce-prefixed skills)
+      tracker.start("replace-skills");
+      if (successfulAgents.includes("claude")) {
+        const skillsSrc = path.join(firstSourceDir, ".claude", "skills");
+        const skillsDest = path.join(projectPath, ".claude", "skills");
+
+        if (await fs.pathExists(skillsSrc)) {
+          const sourceSkills = await fs.readdir(skillsSrc);
+          const buildforceSkills = sourceSkills.filter(name => name.startsWith("buildforce-"));
+
+          if (buildforceSkills.length > 0) {
+            await fs.ensureDir(skillsDest);
+
+            // Only backup and replace buildforce-prefixed skills
+            for (const skillName of buildforceSkills) {
+              const skillSrcPath = path.join(skillsSrc, skillName);
+              const skillDestPath = path.join(skillsDest, skillName);
+
+              // Backup existing buildforce skill if it exists
+              if (await fs.pathExists(skillDestPath)) {
+                await fs.copy(skillDestPath, path.join(backupDir, "skills", skillName));
+              }
+
+              // Replace the skill
+              await fs.remove(skillDestPath);
+              await fs.copy(skillSrcPath, skillDestPath);
+            }
+
+            tracker.complete("replace-skills", `${buildforceSkills.length} buildforce skill(s)`);
+          } else {
+            tracker.skip("replace-skills", "no buildforce skills in release");
+          }
+        } else {
+          tracker.skip("replace-skills", "no skills in release");
+        }
+      } else {
+        tracker.skip("replace-skills", "claude not selected");
+      }
+
+      // Merge Claude settings if claude is one of the selected agents
+      tracker.start("merge-settings");
+      if (successfulAgents.includes("claude")) {
+        const templateConfigPath = ".buildforce/templates/hooks/config.json";
+        const mergeResult = await mergeClaudeSettings(projectPath, templateConfigPath, {
+          debug,
+        });
+
+        if (mergeResult.merged) {
+          const detail = mergeResult.hooksAdded
+            ? `${mergeResult.hooksAdded} hook(s)`
+            : "merged";
+          tracker.complete("merge-settings", detail);
+        } else {
+          tracker.skip("merge-settings", mergeResult.reason);
+        }
+      } else {
+        tracker.skip("merge-settings", "claude not selected");
       }
 
       // Migrate context structure using MigrationRunner
@@ -439,6 +521,7 @@ export async function executeUpgrade(
 
         const templatesBackup = path.join(backupDir, "templates");
         const scriptsBackup = path.join(backupDir, "scripts");
+        const skillsBackup = path.join(backupDir, "skills");
 
         if (await fs.pathExists(templatesBackup)) {
           const templatesDest = path.join(projectPath, ".buildforce", "templates");
@@ -450,6 +533,17 @@ export async function executeUpgrade(
           const scriptsDest = path.join(projectPath, ".buildforce", "scripts");
           await fs.remove(scriptsDest);
           await fs.copy(scriptsBackup, scriptsDest);
+        }
+
+        if (await fs.pathExists(skillsBackup)) {
+          const skillsDest = path.join(projectPath, ".claude", "skills");
+          // Restore only the buildforce skills that were backed up
+          const backedUpSkills = await fs.readdir(skillsBackup);
+          for (const skillName of backedUpSkills) {
+            const skillDestPath = path.join(skillsDest, skillName);
+            await fs.remove(skillDestPath);
+            await fs.copy(path.join(skillsBackup, skillName), skillDestPath);
+          }
         }
 
         console.log(MINT_COLOR("\nRollback: Restored previous files from backup"));

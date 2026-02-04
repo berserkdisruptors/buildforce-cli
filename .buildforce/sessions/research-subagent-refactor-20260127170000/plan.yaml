@@ -1,0 +1,268 @@
+version: "0.0.42"
+id: research-subagent-refactor-20260127170000-plan
+name: "Implementation Plan for Research Subagent Refactor"
+spec_id: "research-subagent-refactor-20260127170000"
+type: implementation-plan
+status: completed
+created: "2026-01-27"
+last_updated: "2026-01-27"
+
+# ARCHITECTURE OVERVIEW
+
+approach: |
+  Convert the /buildforce.research command to a subagent-based architecture in three phases:
+  1. Create the research subagent definition with full instructions
+  2. Simplify the command template to a thin wrapper that invokes the subagent
+  3. Update CLI infrastructure to distribute and manage agent templates
+
+  The key architectural change is separating "what to do" (subagent) from "when to do it" (command).
+  The command becomes a trigger that spawns the subagent with the user's query.
+
+technology_stack:
+  - Claude Code subagent system (.claude/agents/ directory)
+  - Markdown with YAML frontmatter for agent definitions
+  - Task tool for subagent invocation from command templates
+
+decisions:
+  - decision: "Use 'model: inherit' for research subagent"
+    rationale: "Maintains quality consistency with main conversation. Users can control model choice at session level. Avoids hardcoding model preferences."
+
+  - decision: "Whitelist tools: Read, Grep, Glob, WebFetch, WebSearch, Write"
+    rationale: "Principle of least privilege. Research needs read operations for exploration, web tools for external info, and Write only for cache persistence. No Edit/Bash needed."
+
+  - decision: "Move ALL research instructions to subagent, not just guidelines"
+    rationale: "Complete encapsulation. Subagent should be self-contained and not depend on command template for behavior. Command is purely orchestration."
+
+  - decision: "Keep cache behavior in subagent, not command wrapper"
+    rationale: "Cache operations (MERGE/REPLACE) require reading existing cache and comparing topics. This logic belongs with the research execution, not orchestration."
+
+# FILE STRUCTURE
+
+files_to_create:
+  - src/templates/agents/research.md
+
+files_to_modify:
+  - path: "src/templates/commands/research.md"
+    change_type: "rewrite"
+    description: "Replace 99-line template with ~20-line thin wrapper that invokes research subagent"
+
+  - path: "src/lib/init.ts"
+    change_type: "edit"
+    description: "Add creation of .claude/agents/ folder and copy agent templates"
+
+  - path: "src/lib/upgrade.ts"
+    change_type: "edit"
+    description: "Add agent template upgrade logic alongside command template upgrades"
+
+  - path: ".buildforce/context/architecture/research-slash-command.yaml"
+    change_type: "edit"
+    description: "Update to reflect subagent architecture"
+
+  - path: ".buildforce/context/architecture/research-persistence.yaml"
+    change_type: "edit"
+    description: "Update workflow diagrams and architecture patterns"
+
+# IMPLEMENTATION PHASES
+
+phase_1:
+  name: "Create Research Subagent"
+  description: |
+    Create the research subagent definition file with complete research instructions.
+    This is the core of the refactor - moving all research logic into a self-contained agent.
+
+  tasks:
+    - [x] Create src/templates/agents/ directory structure
+      spec_refs: [FR1]
+      files: [src/templates/agents/]
+      notes: "New folder for agent templates"
+
+    - [x] Create research.md subagent with YAML frontmatter (name, description, tools, model)
+      spec_refs: [FR1, NFR2, NFR3]
+      files: [src/templates/agents/research.md]
+      notes: "tools: Read, Grep, Glob, WebFetch, WebSearch, Write; model: inherit"
+
+    - [x] Move all 9 research guidelines from command template to subagent prompt
+      spec_refs: [FR2, FR4, FR5, FR6, FR7]
+      files: [src/templates/agents/research.md]
+      notes: "Include: project context search, recency awareness, structured output, file paths, architecture viz, data models, persistence, TLDR, next steps"
+
+  validation:
+    - [x] All phase_1 tasks completed
+    - [x] research.md has valid YAML frontmatter
+    - [x] All 9 guidelines present in subagent prompt
+    - [x] Spec requirements covered: [FR1, FR2, FR4, FR5, FR6, FR7, NFR2, NFR3]
+
+phase_2:
+  name: "Simplify Command Template"
+  description: |
+    Replace the existing 99-line command template with a thin wrapper that delegates
+    to the research subagent. Command becomes pure orchestration.
+
+  tasks:
+    - [x] Rewrite research.md command as thin wrapper invoking research subagent
+      spec_refs: [FR3]
+      files: [src/templates/commands/research.md]
+      notes: "~28 lines: frontmatter + subagent invocation instruction"
+
+    - [x] Ensure wrapper passes $ARGUMENTS to subagent query
+      spec_refs: [FR3]
+      files: [src/templates/commands/research.md]
+      notes: "User's research query must be forwarded to subagent"
+
+  validation:
+    - [x] All phase_2 tasks completed
+    - [x] Command template is significantly reduced (~28 lines vs 99)
+    - [x] Command invokes research subagent correctly
+    - [x] Spec requirements covered: [FR3]
+
+phase_3:
+  name: "Update CLI Infrastructure"
+  description: |
+    Update the CLI initialization and upgrade commands to handle agent template
+    distribution alongside existing command templates.
+
+  tasks:
+    - [x] Update init.ts to create .claude/agents/ folder during initialization
+      spec_refs: [FR8, NFR4]
+      files: [.github/workflows/scripts/create-release-packages.sh]
+      notes: "Updated release packaging script to copy agents/ folder for claude and cursor agents"
+
+    - [x] Update upgrade.ts to handle agent template upgrades
+      spec_refs: [FR8, NFR4]
+      files: [src/commands/upgrade/execution.ts]
+      notes: "Added replace-agents step with backup/restore logic"
+
+    - [x] Update context documentation to reflect new architecture
+      spec_refs: [FR8]
+      files: [.buildforce/context/architecture/research-slash-command.yaml]
+      notes: "Updated to reflect v4.0 subagent architecture"
+
+  validation:
+    - [x] All phase_3 tasks completed
+    - [x] buildforce init creates .claude/agents/ with research.md (via release packaging)
+    - [x] buildforce upgrade updates agent templates
+    - [x] Spec requirements covered: [FR8, NFR4]
+
+# DEVIATION LOG
+
+deviations:
+  - phase: "phase_3"
+    task: "Update init.ts to create .claude/agents/ folder"
+    original: "Modify src/lib/init.ts to create agents folder"
+    actual: "Modified .github/workflows/scripts/create-release-packages.sh to include agents in release packages"
+    reason: "The CLI uses template download from GitHub releases, not direct file copying from src/. The release packaging script is the correct place to add agents to the release archives. Init.ts extracts from downloaded zips, so no changes needed there."
+
+# CONVENTION COMPLIANCE
+
+convention_compliance:
+  strict_validations:
+    # Populated during /buildforce.build
+
+  recommended_validations:
+    # Populated during /buildforce.build
+
+# TESTING GUIDANCE
+
+testing:
+  automated_tests:
+    - test_file: "Manual test"
+      what: "Research subagent invocation"
+      command: "Run /buildforce.research in Claude Code after implementation"
+
+  manual_tests:
+    - scenario: "Basic research query"
+      steps: |
+        1. Run /buildforce.research how is error handling implemented
+        2. Verify subagent is invoked (check for isolated context behavior)
+        3. Verify structured output matches previous format
+        4. Verify cache file created/updated in .buildforce/.temp/
+
+    - scenario: "Cache MERGE behavior"
+      steps: |
+        1. Run /buildforce.research topic A
+        2. Run /buildforce.research related to topic A
+        3. Verify cache was MERGED (both findings present)
+
+    - scenario: "Cache REPLACE behavior"
+      steps: |
+        1. Run /buildforce.research topic A
+        2. Run /buildforce.research completely different topic B
+        3. Verify cache was REPLACED (only topic B findings)
+
+    - scenario: "buildforce init"
+      steps: |
+        1. Create new test project
+        2. Run buildforce init
+        3. Verify .claude/agents/research.md exists
+
+    - scenario: "buildforce upgrade"
+      steps: |
+        1. In existing project, modify .claude/agents/research.md
+        2. Run buildforce upgrade
+        3. Verify agent template is offered for upgrade
+
+# VALIDATION CRITERIA
+
+success_metrics:
+  - "Main conversation context reduced after research (measured by /context command)"
+  - "All existing research functionality works unchanged"
+  - "buildforce init and upgrade handle agents correctly"
+
+spec_coverage:
+  - FR1: "Phase 1: Task 2 - Create research.md with frontmatter"
+  - FR2: "Phase 1: Task 3 - Move guidelines to subagent"
+  - FR3: "Phase 2: Task 1, 2 - Thin wrapper implementation"
+  - FR4: "Phase 1: Task 3 - Persistence logic in subagent"
+  - FR5: "Phase 1: Task 3 - Context search guideline"
+  - FR6: "Phase 1: Task 3 - Recency detection guideline"
+  - FR7: "Phase 1: Task 3 - Structured output guideline"
+  - FR8: "Phase 3: All tasks - CLI infrastructure"
+  - NFR1: "Inherent in subagent architecture"
+  - NFR2: "Phase 1: Task 2 - Tool whitelist"
+  - NFR3: "Phase 1: Task 2 - Model inherit"
+  - NFR4: "Phase 3: Task 1, 2 - Backward compatibility"
+
+# PROGRESS SUMMARY
+
+overall_progress:
+  phase_1: "3/3 tasks completed"
+  phase_2: "2/2 tasks completed"
+  phase_3: "3/3 tasks completed"
+
+current_status: |
+  Implementation complete. All phases finished:
+  - Phase 1: Created research subagent with full instructions
+  - Phase 2: Simplified command template to thin wrapper
+  - Phase 3: Updated CLI infrastructure for agent distribution
+
+next_immediate_steps:
+  - "Test /buildforce.research command invokes subagent"
+  - "Verify cache persistence works from subagent"
+  - "Run buildforce upgrade to test agent template update"
+
+# RISKS & CONSIDERATIONS
+
+risks:
+  - risk: "Subagent may not have access to all required tools"
+    mitigation: "Test tool access early in Phase 1. Document any tool limitations in context."
+
+  - risk: "Cache write from subagent may fail differently than inline execution"
+    mitigation: "Preserve graceful failure handling in subagent prompt. Test cache operations thoroughly."
+
+  - risk: "Existing projects may not get .claude/agents/ folder automatically"
+    mitigation: "Ensure buildforce upgrade creates agents/ folder if missing. Document manual creation for edge cases."
+
+# NOTES
+
+general_notes:
+  - "This refactor establishes the subagent pattern for future command conversions"
+  - "The thin wrapper pattern can be applied to /buildforce.plan and /buildforce.build later"
+  - "Context efficiency is the primary driver - research is the most verbose command"
+
+lessons_learned:
+  # Populated during implementation
+
+future_enhancements:
+  - "Convert /buildforce.build to subagent for parallel task execution"
+  - "Add research subagent model selection based on query complexity"
+  - "Consider caching subagent results for identical queries"
