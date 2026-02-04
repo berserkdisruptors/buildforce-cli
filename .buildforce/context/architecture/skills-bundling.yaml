@@ -1,0 +1,130 @@
+id: skills-bundling
+name: Skills Bundling System
+type: structural
+status: production
+created: "2026-02-04"
+last_updated: "2026-02-04"
+
+summary: |
+  Release packaging functionality that bundles Claude Code skills from src/templates/skills/
+  into .claude/skills/ in release ZIP packages. Skills are stored as directories containing
+  SKILL.md files with optional YAML frontmatter for agent filtering. Follows the same
+  pattern as generate_agents() for consistency. Currently Claude-only feature.
+
+responsibilities:
+  - Bundle skill folders from src/templates/skills/ into release packages
+  - Support agent filtering via 'agents:' YAML frontmatter in SKILL.md
+  - Preserve entire skill folder structure (SKILL.md plus any additional files)
+  - Deploy skills to .claude/skills/ directory in target project
+  - Exclude skills folder from .buildforce/templates/ copy (avoid duplication)
+  - Log filtering decisions during package generation
+
+dependencies:
+  internal:
+    - cli-architecture: "Part of create-release-packages.sh workflow"
+    - upgrade-command: "Skills are replaced during upgrade"
+    - init-command: "Skills are deployed during init"
+  external:
+    - bash: "Shell scripting in create-release-packages.sh"
+    - awk: "YAML frontmatter parsing for agent filtering"
+    - grep: "Word boundary matching for agent name detection"
+
+files:
+  primary:
+    - .github/workflows/scripts/create-release-packages.sh
+  secondary:
+    - src/templates/skills/buildforce-context-extract/SKILL.md
+    - src/commands/upgrade/execution.ts
+    - src/commands/init/setup.ts
+
+interfaces:
+  exports:
+    - name: "generate_skills"
+      signature: "(agent: string, output_dir: string) => void"
+      description: "Bash function that copies skill folders to output directory with agent filtering"
+
+design_decisions:
+  - decision: "Follow generate_agents() pattern for consistency"
+    rationale: "Agents and skills have similar bundling requirements. Reusing the proven pattern reduces complexity and ensures consistent behavior."
+
+  - decision: "Skills are Claude-only feature (for now)"
+    rationale: "Only Claude Code supports skills in .claude/skills/. Other AI assistants don't have equivalent skill systems. Can be extended when other agents add skill support."
+
+  - decision: "Copy entire skill folder, not just SKILL.md"
+    rationale: "Skills may contain additional files (examples, schemas, etc.). Preserving folder structure allows for richer skill definitions in the future."
+
+  - decision: "Support agent filtering via frontmatter"
+    rationale: "Same pattern as commands and agents. Allows skills to be agent-specific (e.g., a skill that only works with Claude's tool system)."
+
+  - decision: "Exclude skills from .buildforce/templates/ copy"
+    rationale: "Skills go directly to .claude/skills/, not to templates. Prevents duplication and confusion about where skills live."
+
+skill_structure: |
+  src/templates/skills/
+  └── {skill-name}/
+      └── SKILL.md          # Required - skill definition with optional frontmatter
+      └── [other files]     # Optional - examples, schemas, etc.
+
+  SKILL.md Frontmatter (optional):
+  ---
+  name: skill-name
+  description: Brief description
+  agents: [claude]          # Optional - if present, only bundle for listed agents
+  ---
+
+  Output in release package:
+  .claude/skills/
+  └── {skill-name}/
+      └── SKILL.md
+      └── [other files]
+
+bundling_flow: |
+  1. create-release-packages.sh runs generate_skills() for Claude agent
+  2. For each directory in src/templates/skills/:
+     a. Check if SKILL.md exists (skip if not)
+     b. Read SKILL.md content and parse frontmatter
+     c. Check 'agents:' field - if present and doesn't include current agent, skip
+     d. Copy entire skill folder to output_dir/{skill-name}/
+     e. Log filtering/copying decisions
+  3. build_variant() excludes skills from .buildforce/templates/ copy
+  4. ZIP package contains .claude/skills/{skill-name}/SKILL.md
+
+agent_filtering: |
+  Agent filtering logic (same as generate_agents):
+
+  1. Read SKILL.md content with line ending normalization
+  2. Extract 'agents:' field from YAML frontmatter using awk
+  3. If 'agents:' field exists:
+     - Use word boundary matching (grep -w) to check if current agent is in list
+     - If not found: skip skill with log message "[filter] Skipping skill X for Y"
+     - If found: include skill with log message "[filter] Including skill X for Y"
+  4. If 'agents:' field missing: include skill for all agents
+
+  Examples:
+    agents: [claude]           → Only bundle for claude
+    agents: [claude, cursor]   → Bundle for claude and cursor
+    (no agents field)          → Bundle for all agents
+
+evolution:
+  - version: "1.0"
+    date: "2026-02-04"
+    changes: "Initial implementation with generate_skills() function, agent filtering, and build_variant() integration for Claude"
+
+related_specs:
+  - skills-bundling-config-concat-20260204000000
+
+notes: |
+  Skills bundling enables the full auto-context-extractor workflow by ensuring
+  the buildforce-context-extract skill is deployed to .claude/skills/ during
+  init and upgrade.
+
+  The skills system works in tandem with settings merge:
+  1. Skills bundling deploys the skill to .claude/skills/
+  2. Settings merge configures the Stop hook to call the skill
+
+  Without both pieces, the skill exists but never activates.
+
+  Future enhancements:
+  - Support skills bundling for other agents when they add skill support
+  - Add skill version tracking
+  - Support skill dependencies (one skill requiring another)

@@ -1,0 +1,134 @@
+version: "0.0.43"
+id: skills-bundling-config-concat-20260204000000
+name: "Skills Bundling and Config Concatenation"
+type: feature
+status: completed
+created: "2026-02-04"
+last_updated: "2026-02-04"
+
+summary: |
+  Add skills bundling to the release packaging system (similar to agents) and implement
+  config concatenation to merge template hooks/config.json with user's .claude/settings.local.json
+  during init and upgrade commands.
+
+# INTENT / PROBLEM STATEMENT
+
+problem: |
+  Currently, the Buildforce CLI has two gaps in its template distribution system:
+  1. Skills folder (src/templates/skills/) exists with a working skill but has NO bundling
+     logic in create-release-packages.sh - skills are not deployed to .claude/skills/
+  2. Hooks configuration (src/templates/hooks/config.json) is copied to .buildforce/templates/
+     but NOT merged with user's Claude Code settings (.claude/settings.local.json)
+
+  This means users must manually configure Claude Code settings to get Buildforce hooks
+  working, creating friction and inconsistency in the development experience.
+
+motivation: |
+  By bundling skills like we bundle agents, and by merging config during init/upgrade,
+  we enable automatic activation of Buildforce features without manual user configuration.
+  The auto-context-extractor skill requires hooks to be configured in settings.local.json
+  to trigger on the Stop event. Without this automation, the skill exists but never activates.
+
+# GOALS
+
+primary_goals:
+  - Bundle skills from src/templates/skills/ to .claude/skills/ in release packages (Claude only)
+  - Merge template hooks/config.json into user's .claude/settings.local.json during init
+  - Merge template hooks/config.json into user's .claude/settings.local.json during upgrade
+
+secondary_goals:
+  - Preserve existing user permissions and hooks (don't overwrite, merge intelligently)
+  - Support agent filtering for skills via frontmatter (agents: [claude])
+  - Provide clear logging when settings are merged
+
+# REQUIREMENTS
+
+functional_requirements:
+  - FR1: Add generate_skills() function to create-release-packages.sh that copies skill folders from src/templates/skills/ to agent-specific skills directory
+  - FR2: generate_skills() must support agent filtering via 'agents:' YAML frontmatter in SKILL.md (same pattern as generate_agents)
+  - FR3: Update build_variant() to call generate_skills() for Claude agent (similar to generate_agents)
+  - FR4: Skills must be bundled preserving folder structure (e.g., buildforce-context-extract/SKILL.md)
+  - FR5: Init command must merge .buildforce/templates/hooks/config.json into .claude/settings.local.json
+  - FR6: Upgrade command must merge .buildforce/templates/hooks/config.json into .claude/settings.local.json
+  - FR7: Config merge must be additive - never remove existing user permissions or hooks
+  - FR8: Config merge must deduplicate array entries (don't add same hook twice)
+  - FR9: If settings.local.json doesn't exist, create it with template content
+  - FR10: If hooks/config.json doesn't exist in templates, skip merge gracefully
+
+non_functional_requirements:
+  - NFR1: Skills bundling must work with existing --local flag for testing
+  - NFR2: Config merge must not fail silently - log what was merged
+  - NFR3: "[REMOVED] Backup user's settings.local.json before merge during upgrade - deemed unnecessary since merge is additive-only"
+  - NFR4: Config merge should complete quickly (<1s)
+
+# SCOPE
+
+in_scope:
+  - New generate_skills() function in create-release-packages.sh
+  - Update build_variant() for Claude to call generate_skills()
+  - Settings merge logic in src/commands/init/setup.ts
+  - Settings merge logic in src/commands/upgrade/execution.ts
+  - JSON deep-merge utility for settings files
+  - Backup of settings before merge during upgrade
+
+out_of_scope:
+  - Skills bundling for agents other than Claude (Claude-specific feature)
+  - Modifications to skill content (SKILL.md files)
+  - Custom merge strategies (use simple additive merge)
+  - User configuration for enabling/disabling merge
+  - Migration of existing settings (just merge new content)
+
+# DESIGN PRINCIPLES
+
+design_principles:
+  - "Reuse existing patterns - generate_skills() should mirror generate_agents()"
+  - "Be additive, not destructive - merge preserves all existing user config"
+  - "Fail gracefully - missing files should not cause errors"
+  - "Maintain backward compatibility - projects without skills/hooks work unchanged"
+
+# ACCEPTANCE CRITERIA
+
+acceptance_criteria:
+  - AC1: After buildforce init, .claude/skills/ contains bundled skill folders
+  - AC2: After buildforce init, .claude/settings.local.json contains merged hooks from template
+  - AC3: After buildforce upgrade, .claude/skills/ contains updated skill folders
+  - AC4: After buildforce upgrade, .claude/settings.local.json contains merged hooks (existing preserved)
+  - AC5: Existing user permissions in settings.local.json are preserved after merge
+  - AC6: Duplicate hooks are not added (idempotent merge)
+  - AC7: Skills with agents: [cursor] frontmatter are NOT bundled for Claude
+  - AC8: Release packages built with --local contain skills in .claude/skills/
+
+# ASSUMPTIONS & DEPENDENCIES
+
+assumptions:
+  - Claude Code reads skills from .claude/skills/ directory
+  - Claude Code reads hooks configuration from .claude/settings.local.json
+  - JSON deep-merge libraries (lodash or similar) are available
+  - Skills use SKILL.md format with optional YAML frontmatter
+
+dependencies:
+  internal:
+    - create-release-packages.sh: "Main bundling script to extend"
+    - setup.ts: "Init command setup to add merge step"
+    - execution.ts: "Upgrade command execution to add merge step"
+    - extract.ts: "Template extraction may need awareness of skills"
+  external:
+    - fs-extra: "Already used for file operations"
+    - lodash: "May be needed for deep-merge (or use native approach)"
+
+# OPEN QUESTIONS
+
+open_questions: []
+
+# NOTES
+
+notes: |
+  This feature enables the full auto-context-extractor workflow by ensuring:
+  1. The skill is deployed to .claude/skills/ (via generate_skills)
+  2. The Stop hook is configured in settings.local.json (via config merge)
+
+  Without both pieces, the skill exists in templates but never activates.
+
+  The config.json merge is specifically for hooks configuration, not general
+  Claude Code settings. The template file at src/templates/hooks/config.json
+  contains only the hooks section that Buildforce needs.

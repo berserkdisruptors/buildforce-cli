@@ -1,0 +1,204 @@
+id: skills-hooks-bundling-research
+created: "2026-02-04"
+last_updated: "2026-02-04"
+
+summary: |
+  Research into Buildforce CLI template bundling system to understand how to add
+  skills bundling (similar to agents) and config concatenation for hooks during
+  init/upgrade commands. The system uses create-release-packages.sh for packaging
+  templates into ZIP files distributed via GitHub releases.
+
+key_findings:
+  - name: Template bundling happens in create-release-packages.sh
+    description: |
+      The script at .github/workflows/scripts/create-release-packages.sh handles
+      all template packaging. It processes commands, agents, templates, scripts,
+      and context folders into ZIP packages for each agent+script combination.
+    evidence: Lines 40-135 define generate_commands() and generate_agents() functions
+
+  - name: Agents are bundled only for Claude
+    description: |
+      The generate_agents() function (lines 101-135) handles agent bundling.
+      It's only called for Claude in build_variant() (lines 213-217):
+      `if [[ -d src/templates/agents ]]; then mkdir -p "$base_dir/.claude/agents"; generate_agents claude "$base_dir/.claude/agents"; fi`
+    evidence: create-release-packages.sh lines 101-135, 213-217
+
+  - name: Skills folder structure exists but not bundled
+    description: |
+      The src/templates/skills/ folder exists with buildforce-context-extract skill,
+      but there's no bundling logic for skills in create-release-packages.sh.
+      Skills use SKILL.md format with YAML frontmatter.
+    evidence: src/templates/skills/buildforce-context-extract/SKILL.md exists
+
+  - name: Hooks config exists but not bundled
+    description: |
+      src/templates/hooks/config.json contains Claude Code hooks configuration,
+      but there's no bundling or concatenation logic in init/upgrade commands.
+    evidence: src/templates/hooks/config.json with Stop hook for context extraction
+
+  - name: Settings files are user-specific, not managed
+    description: |
+      .claude/settings.local.json contains user permissions and hooks.
+      Currently not managed by init/upgrade - users must configure manually.
+    evidence: .claude/settings.local.json in project root
+
+  - name: Templates copy logic excludes commands and agents
+    description: |
+      In build_variant(), templates are copied with explicit exclusion:
+      `find src/templates -type f -not -path "src/templates/commands/*" -not -path "src/templates/agents/*"`
+      Skills and hooks folders would need similar handling or inclusion.
+    evidence: create-release-packages.sh lines 166-178
+
+  - name: Agent filtering via frontmatter
+    description: |
+      Both commands and agents support `agents: [claude]` YAML frontmatter for
+      filtering which agents receive which files. This pattern should be reused
+      for skills.
+    evidence: generate_commands() and generate_agents() parse agents field
+
+  - name: Init creates buildforce.json but not settings
+    description: |
+      setup.ts creates .buildforce/buildforce.json and updates .gitignore but has
+      no logic for merging Claude Code settings files.
+    evidence: src/commands/init/setup.ts lines 167-242
+
+  - name: Upgrade replaces commands, templates, scripts
+    description: |
+      execution.ts handles upgrade with backup/restore for commands, agents, templates, scripts.
+      No settings concatenation logic exists.
+    evidence: src/commands/upgrade/execution.ts lines 256-336
+
+file_paths:
+  primary:
+    - .github/workflows/scripts/create-release-packages.sh
+    - src/commands/init/setup.ts
+    - src/commands/upgrade/execution.ts
+    - src/templates/skills/buildforce-context-extract/SKILL.md
+    - src/templates/hooks/config.json
+    - src/templates/agents/buildforce-structural-extractor.md
+    - src/config/agents.ts
+    - src/constants.ts
+  secondary:
+    - src/lib/extract.ts
+    - src/utils/config.ts
+    - .claude/settings.local.json
+
+mermaid_diagrams:
+  - name: Template Bundling Flow
+    diagram: |
+      flowchart TB
+        subgraph Source["Source (src/templates/)"]
+          CMD[commands/*.md]
+          AGENTS[agents/*.md]
+          TPL[*.yaml templates]
+          SKILLS[skills/*/SKILL.md]
+          HOOKS[hooks/config.json]
+        end
+
+        subgraph Packaging["create-release-packages.sh"]
+          GC[generate_commands]
+          GA[generate_agents]
+          GS["generate_skills (NEW)"]
+          BV[build_variant]
+        end
+
+        subgraph Output["ZIP Package"]
+          AGT_CMD[.claude/commands/]
+          AGT_AGENTS[.claude/agents/]
+          AGT_SKILLS[".claude/skills/ (NEW)"]
+          BF_TPL[.buildforce/templates/]
+          BF_HOOKS[".buildforce/templates/hooks/ (EXISTS)"]
+        end
+
+        CMD --> GC --> AGT_CMD
+        AGENTS --> GA --> AGT_AGENTS
+        SKILLS -.->|NOT IMPLEMENTED| GS -.-> AGT_SKILLS
+        TPL --> BV --> BF_TPL
+        HOOKS --> BV --> BF_HOOKS
+
+  - name: Settings Concatenation Flow (Proposed)
+    diagram: |
+      flowchart TB
+        subgraph Init["buildforce init / upgrade"]
+          READ_TPL["Read template hooks/config.json"]
+          READ_USER["Read user .claude/settings.local.json"]
+          MERGE["Deep merge JSON objects"]
+          WRITE["Write merged settings"]
+        end
+
+        subgraph Files
+          TPL_CFG[".buildforce/templates/hooks/config.json"]
+          USER_CFG[".claude/settings.local.json"]
+          USER_CFG2["./claude/settings.json"]
+        end
+
+        TPL_CFG --> READ_TPL
+        USER_CFG --> READ_USER
+        USER_CFG2 -.->|Alternative| READ_USER
+        READ_TPL --> MERGE
+        READ_USER --> MERGE
+        MERGE --> WRITE --> USER_CFG
+
+data_models:
+  - name: Claude Code Settings Structure
+    properties:
+      - name: permissions
+        type: object
+        description: Permission rules for tools
+        children:
+          - name: allow
+            type: string[]
+            description: Allowed tool patterns
+          - name: deny
+            type: string[]
+            description: Denied tool patterns
+          - name: ask
+            type: string[]
+            description: Ask-before-use patterns
+      - name: hooks
+        type: object
+        description: Event hooks configuration
+        children:
+          - name: Stop
+            type: array
+            description: Hooks triggered on conversation stop
+          - name: PreToolUse
+            type: array
+            description: Hooks before tool execution
+          - name: PostToolUse
+            type: array
+            description: Hooks after tool execution
+
+  - name: SKILL.md Frontmatter
+    properties:
+      - name: name
+        type: string
+        description: Skill identifier (kebab-case)
+      - name: description
+        type: string
+        description: Brief skill description
+      - name: user-invocable
+        type: boolean
+        description: Whether skill can be called directly
+      - name: context
+        type: string
+        description: Context handling (fork, inherit)
+      - name: allowed-tools
+        type: string[]
+        description: Tools available to the skill
+
+tldr:
+  - Template bundling is controlled by create-release-packages.sh with generate_commands() and generate_agents() functions
+  - Skills folder (src/templates/skills/) exists but has NO bundling logic - needs new generate_skills() function
+  - Hooks config (src/templates/hooks/config.json) is copied to .buildforce/templates/ but NOT concatenated with user settings
+  - Claude Code settings files (.claude/settings.local.json or ./claude/settings.json) need JSON deep-merge during init/upgrade
+  - Agent filtering pattern (agents: [claude] frontmatter) already exists and should be reused for skills
+  - Both init (setup.ts) and upgrade (execution.ts) need new steps for settings concatenation
+
+next_steps:
+  - Plan the implementation with /buildforce.plan covering:
+    1. Add generate_skills() function to create-release-packages.sh
+    2. Update build_variant() to call generate_skills() for Claude
+    3. Add settings concatenation logic to init/setup.ts
+    4. Add settings concatenation logic to upgrade/execution.ts
+    5. Test with local artifacts

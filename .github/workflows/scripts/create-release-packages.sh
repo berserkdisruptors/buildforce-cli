@@ -134,6 +134,43 @@ generate_agents() {
   done
 }
 
+generate_skills() {
+  local agent=$1 output_dir=$2
+  mkdir -p "$output_dir"
+
+  # Skills are stored as directories containing SKILL.md
+  for skill_dir in src/templates/skills/*/; do
+    [[ -d "$skill_dir" ]] || continue
+    local skill_file="$skill_dir/SKILL.md"
+    [[ -f "$skill_file" ]] || continue
+
+    local skill_name agents_field
+    skill_name=$(basename "$skill_dir")
+
+    # Normalize line endings and read SKILL.md
+    file_content=$(tr -d '\r' < "$skill_file")
+
+    # Check for agent-specific filtering via 'agents:' field in SKILL.md frontmatter
+    # If 'agents:' field exists, only include if current agent is in the list
+    agents_field=$(printf '%s\n' "$file_content" | awk '/^agents:/ {sub(/^agents:[[:space:]]*/, ""); print; exit}' 2>/dev/null || true)
+    if [[ -n "$agents_field" ]]; then
+      # Use word boundary matching for reliable agent name detection
+      if ! echo "$agents_field" | grep -qw "$agent"; then
+        echo "  [filter] Skipping skill $skill_name for $agent (agents: $agents_field)"
+        continue
+      else
+        echo "  [filter] Including skill $skill_name for $agent (agents: $agents_field)"
+      fi
+    fi
+
+    # Copy the entire skill directory structure (preserves all files in the skill folder)
+    local dest_skill_dir="$output_dir/$skill_name"
+    mkdir -p "$dest_skill_dir"
+    cp -r "$skill_dir"/* "$dest_skill_dir/"
+    echo "  Copied skill: $skill_name -> $dest_skill_dir"
+  done
+}
+
 build_variant() {
   local agent=$1 script=$2
   local base_dir="$GENRELEASES_DIR/sdd-${agent}-package-${script}"
@@ -165,9 +202,9 @@ build_variant() {
 
   if [[ -d src/templates ]]; then
     mkdir -p "$SPEC_DIR/templates"
-    # Copy template files, excluding commands and agents subdirectories
-    # (commands go to agent-specific folders, agents go to .claude/agents/)
-    find src/templates -type f -not -path "src/templates/commands/*" -not -path "src/templates/agents/*" | while read -r file; do
+    # Copy template files, excluding commands, agents, and skills subdirectories
+    # (commands go to agent-specific folders, agents go to .claude/agents/, skills go to .claude/skills/)
+    find src/templates -type f -not -path "src/templates/commands/*" -not -path "src/templates/agents/*" -not -path "src/templates/skills/*" | while read -r file; do
       # Get the relative path from src/templates
       rel_path="${file#src/templates/}"
       dest_file="$SPEC_DIR/templates/$rel_path"
@@ -214,6 +251,11 @@ build_variant() {
       if [[ -d src/templates/agents ]]; then
         mkdir -p "$base_dir/.claude/agents"
         generate_agents claude "$base_dir/.claude/agents"
+      fi
+      # Claude Code supports skills - generate them if any exist. TODO: add support for other agents
+      if [[ -d src/templates/skills ]]; then
+        mkdir -p "$base_dir/.claude/skills"
+        generate_skills claude "$base_dir/.claude/skills"
       fi
       ;;
     gemini)

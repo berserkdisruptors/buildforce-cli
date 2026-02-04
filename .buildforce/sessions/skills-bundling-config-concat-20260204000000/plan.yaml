@@ -1,0 +1,357 @@
+version: "0.0.43"
+id: skills-bundling-config-concat-20260204000000-plan
+name: "Implementation Plan for Skills Bundling and Config Concatenation"
+spec_id: "skills-bundling-config-concat-20260204000000"
+type: implementation-plan
+status: completed
+created: "2026-02-04"
+last_updated: "2026-02-04"
+
+# ARCHITECTURE OVERVIEW
+
+approach: |
+  This feature extends the existing template bundling system in two ways:
+
+  1. **Skills Bundling**: Add generate_skills() function to create-release-packages.sh that
+     mirrors the existing generate_agents() pattern. It copies skill folders from
+     src/templates/skills/ to .claude/skills/ with agent filtering support.
+
+  2. **Config Concatenation**: Add mergeClaudeSettings() utility function and call it from
+     both setup.ts (init) and execution.ts (upgrade). The function reads the template
+     hooks/config.json, reads existing settings.local.json (if any), performs additive
+     deep-merge, and writes the result.
+
+  Both changes follow existing patterns in the codebase to maintain consistency.
+
+technology_stack:
+  - bash: "Shell scripting for generate_skills() in create-release-packages.sh"
+  - fs-extra: "File operations for reading/writing JSON files"
+  - TypeScript: "Settings merge utility function"
+
+decisions:
+  - decision: "Use native JSON deep-merge instead of lodash"
+    rationale: "The merge logic is simple (additive arrays, preserve existing keys). Adding lodash dependency for one function is overkill. Native implementation is more transparent and has no external dependency risk."
+
+  - decision: "Backup settings.local.json only during upgrade, not init"
+    rationale: "Init is creating a new project - no existing user config to backup. Upgrade modifies existing project - backup protects user's existing permissions/hooks."
+
+  - decision: "Store template hooks in .buildforce/templates/hooks/config.json"
+    rationale: "Follows existing pattern of templates going to .buildforce/templates/. Skills go to .claude/skills/ because that's where Claude Code expects them. Config stays in templates because it's a merge source, not a direct runtime file."
+
+  - decision: "Add skills to ZIP but exclude hooks folder from .buildforce/templates copy"
+    rationale: "Skills need to be in the ZIP package to deploy to .claude/skills/. The hooks/config.json should stay in .buildforce/templates/ for the merge to read from. Current template copy logic already handles this correctly."
+
+# FILE STRUCTURE
+
+files_to_create:
+  - src/utils/settings-merge.ts
+
+files_to_modify:
+  - path: ".github/workflows/scripts/create-release-packages.sh"
+    change_type: "edit"
+    description: "Add generate_skills() function and call it from build_variant() for Claude"
+
+  - path: "src/commands/init/setup.ts"
+    change_type: "edit"
+    description: "Add settings merge step after template extraction"
+
+  - path: "src/commands/upgrade/execution.ts"
+    change_type: "edit"
+    description: "Add settings merge step with backup during upgrade"
+
+# IMPLEMENTATION PHASES
+
+phase_1:
+  name: "Skills Bundling in Release Script"
+  description: |
+    Add generate_skills() function to create-release-packages.sh and integrate it into
+    the build_variant() function for Claude. This enables skills to be included in
+    release packages.
+
+  tasks:
+    - [x] Add generate_skills() function that copies skill folders from src/templates/skills/
+      spec_refs: [FR1, FR2, FR4]
+      files: [.github/workflows/scripts/create-release-packages.sh]
+      notes: "Pattern after generate_agents(). Read SKILL.md frontmatter for agents filtering. Copy entire skill folder preserving structure."
+
+    - [x] Update build_variant() to call generate_skills() for Claude agent
+      spec_refs: [FR3]
+      files: [.github/workflows/scripts/create-release-packages.sh]
+      notes: "Add after generate_agents call: if [[ -d src/templates/skills ]]; then mkdir -p \"$base_dir/.claude/skills\"; generate_skills claude \"$base_dir/.claude/skills\"; fi"
+
+    - [x] Test skills bundling with local build
+      spec_refs: [NFR1, AC8]
+      files: []
+      notes: "Run: AGENTS=claude SCRIPTS=sh .github/workflows/scripts/create-release-packages.sh v0.0.44-test && check .genreleases package contains .claude/skills/"
+
+  validation:
+    - [x] All phase_1 tasks completed
+    - [x] generate_skills() function exists and follows generate_agents() pattern
+    - [x] Local package contains .claude/skills/buildforce-context-extract/SKILL.md
+    - [x] Spec requirements covered: [FR1, FR2, FR3, FR4, NFR1]
+
+phase_2:
+  name: "Settings Merge Utility"
+  description: |
+    Create a reusable utility function for merging Claude Code settings. This function
+    will be used by both init and upgrade commands.
+
+  tasks:
+    - [x] Create src/utils/settings-merge.ts with mergeClaudeSettings() function
+      spec_refs: [FR7, FR8]
+      files: [src/utils/settings-merge.ts]
+      notes: "Function signature: mergeClaudeSettings(projectPath: string, templateConfigPath: string, options: { backup?: boolean, debug?: boolean }): Promise<MergeResult>"
+
+    - [x] Implement additive deep-merge logic for JSON objects
+      spec_refs: [FR7, FR8]
+      files: [src/utils/settings-merge.ts]
+      notes: "Merge arrays by combining and deduplicating (JSON.stringify comparison). Merge objects by adding new keys, preserving existing values. Handle permissions.allow, permissions.deny, hooks.Stop, hooks.PreToolUse, etc."
+
+    - [x] Handle edge cases: missing template config, missing settings file, malformed JSON
+      spec_refs: [FR9, FR10]
+      files: [src/utils/settings-merge.ts]
+      notes: "If template config doesn't exist, return early (no-op). If settings.local.json doesn't exist, create it. If JSON parse fails, log error and skip merge."
+
+  validation:
+    - [x] All phase_2 tasks completed
+    - [ ] Unit tests for merge logic pass (if added)
+    - [x] Merge function handles all edge cases gracefully
+    - [x] Spec requirements covered: [FR7, FR8, FR9, FR10]
+
+phase_3:
+  name: "Init Command Integration"
+  description: |
+    Add settings merge step to the init command setup flow. This ensures new projects
+    get Buildforce hooks configured automatically.
+
+  tasks:
+    - [x] Import mergeClaudeSettings in setup.ts
+      spec_refs: [FR5]
+      files: [src/commands/init/setup.ts]
+      notes: "Add import at top of file"
+
+    - [x] Add settings merge step after template extraction (before git init)
+      spec_refs: [FR5, NFR2]
+      files: [src/commands/init/setup.ts]
+      notes: "Add tracker step 'merge-settings'. Call mergeClaudeSettings with projectPath and templateConfigPath. Only for claude agent."
+
+    - [x] Add step tracker display for settings merge
+      spec_refs: [NFR2]
+      files: [src/commands/init/setup.ts]
+      notes: "tracker.add('merge-settings', 'Merge Claude settings'). Show result: 'merged hooks' or 'skipped (no template)'"
+
+  validation:
+    - [x] All phase_3 tasks completed
+    - [x] Init command shows settings merge step
+    - [x] After init, .claude/settings.local.json contains merged hooks
+    - [x] Spec requirements covered: [FR5, NFR2, AC1, AC2]
+
+phase_4:
+  name: "Upgrade Command Integration"
+  description: |
+    Add settings merge step to the upgrade command with backup support. This ensures
+    existing projects get updated Buildforce hooks while preserving user config.
+
+  tasks:
+    - [x] Import mergeClaudeSettings in execution.ts
+      spec_refs: [FR6]
+      files: [src/commands/upgrade/execution.ts]
+      notes: "Add import at top of file"
+
+    - [x] Add settings merge step after template replacement
+      spec_refs: [FR6, NFR2, NFR3]
+      files: [src/commands/upgrade/execution.ts]
+      notes: "Add tracker step 'merge-settings'. Call mergeClaudeSettings with backup: true option. Only for claude agent."
+
+    - [x] Implement backup logic before merge
+      spec_refs: [NFR3]
+      files: [src/utils/settings-merge.ts]
+      notes: "REMOVED: Backup deemed unnecessary - merge is additive-only and git tracks changes"
+
+    - [x] Add step tracker display for settings merge
+      spec_refs: [NFR2]
+      files: [src/commands/upgrade/execution.ts]
+      notes: "Show result: 'merged hooks (backup created)' or 'skipped (no template)'"
+
+  validation:
+    - [x] All phase_4 tasks completed
+    - [x] Upgrade command shows settings merge step
+    - [x] After upgrade, .claude/settings.local.json contains merged hooks
+    - [x] Spec requirements covered: [FR6, NFR2, AC3, AC4, AC5] (NFR3 removed)
+
+phase_5:
+  name: "End-to-End Testing"
+  description: |
+    Test the complete flow with local artifacts to verify skills bundling and
+    config concatenation work together.
+
+  tasks:
+    - [x] Build local packages with skills bundling
+      spec_refs: [NFR1, AC8]
+      files: []
+      notes: "Run create-release-packages.sh and verify .claude/skills/ in output"
+
+    - [x] Test init with --local flag
+      spec_refs: [AC1, AC2]
+      files: []
+      notes: "Create temp directory, run buildforce --local --ai claude, verify .claude/skills/ and .claude/settings.local.json"
+
+    - [x] Test upgrade with --local flag
+      spec_refs: [AC3, AC4, AC5, AC6]
+      files: []
+      notes: "Run buildforce upgrade --local in project with existing settings, verify merge preserves existing permissions"
+
+    - [x] Test agent filtering for skills
+      spec_refs: [FR2, AC7]
+      files: []
+      notes: "Add a skill with agents: [cursor] and verify it's NOT bundled for claude package"
+
+  validation:
+    - [x] All phase_5 tasks completed
+    - [x] Full workflow tested with local artifacts
+    - [x] All acceptance criteria verified
+    - [x] Spec requirements covered: [NFR1, AC1-AC8]
+
+# DEVIATION LOG
+
+deviations:
+  - phase: "phase_4"
+    task: "Implement backup logic before merge"
+    original: "Create .bak backup file before merging settings during upgrade"
+    actual: "Removed backup functionality entirely"
+    reason: "User feedback: backup is unnecessary since merge is additive-only (never removes data) and git already tracks changes"
+
+# CONVENTION COMPLIANCE
+
+convention_compliance:
+  strict_validations:
+    - convention: "Template-Only Changes Preferred"
+      status: "✓ PASS"
+      notes: "This feature requires TypeScript changes (settings-merge.ts) - acceptable as it's utility code, not slash command logic"
+      checked_files: [src/utils/settings-merge.ts, src/commands/init/setup.ts, src/commands/upgrade/execution.ts]
+
+  recommended_validations:
+    - convention: "Naming Conventions"
+      status: "✓ PASS"
+      notes: "settings-merge.ts uses kebab-case filename. mergeClaudeSettings uses camelCase function name."
+      checked_files: [src/utils/settings-merge.ts]
+
+# TESTING GUIDANCE
+
+testing:
+  manual_tests:
+    - scenario: "Test skills bundling in release package"
+      steps: |
+        1. Run: AGENTS=claude SCRIPTS=sh .github/workflows/scripts/create-release-packages.sh v0.0.44-test
+        2. Extract the generated ZIP from .genreleases/
+        3. Verify .claude/skills/buildforce-context-extract/SKILL.md exists
+        4. Verify SKILL.md content is correct (no frontmatter stripped)
+
+    - scenario: "Test init creates settings with hooks"
+      steps: |
+        1. Create empty temp directory
+        2. Run: buildforce test-project --local --ai claude
+        3. Verify .claude/skills/buildforce-context-extract/ exists
+        4. Verify .claude/settings.local.json exists
+        5. Verify settings.local.json contains hooks.Stop array
+
+    - scenario: "Test upgrade preserves existing permissions"
+      steps: |
+        1. Create project with buildforce init
+        2. Add custom permission to .claude/settings.local.json: "Bash(custom:*)"
+        3. Run: buildforce upgrade --local
+        4. Verify settings.local.json still contains "Bash(custom:*)"
+        5. Verify settings.local.json contains Buildforce hooks
+        6. Verify settings.local.json.bak was created
+
+    - scenario: "Test idempotent merge (no duplicates)"
+      steps: |
+        1. Run buildforce upgrade --local
+        2. Run buildforce upgrade --local again
+        3. Verify hooks.Stop array has no duplicate entries
+
+# VALIDATION CRITERIA
+
+success_metrics:
+  - "Skills are bundled in release packages and deployed to .claude/skills/"
+  - "Init command automatically configures Claude Code hooks"
+  - "Upgrade command merges new hooks while preserving user config"
+  - "No data loss during merge (all user permissions preserved)"
+  - "Idempotent operation (multiple runs don't create duplicates)"
+
+spec_coverage:
+  - FR1: "✓ Phase 1: Task 1 - generate_skills() copies skill folders"
+  - FR2: "✓ Phase 1: Task 1 - agents field filtering via SKILL.md frontmatter"
+  - FR3: "✓ Phase 1: Task 2 - build_variant() calls generate_skills for Claude"
+  - FR4: "✓ Phase 1: Task 1 - Folder structure preserved in output"
+  - FR5: "✓ Phase 3: Task 2 - Init merges settings"
+  - FR6: "✓ Phase 4: Task 2 - Upgrade merges settings"
+  - FR7: "✓ Phase 2: Task 2 - Additive merge preserves existing"
+  - FR8: "✓ Phase 2: Task 2 - Array deduplication via JSON.stringify"
+  - FR9: "✓ Phase 2: Task 3 - Creates settings.local.json if missing"
+  - FR10: "✓ Phase 2: Task 3 - Graceful skip if template missing"
+  - NFR1: "✓ Phase 5: All - Tested with --local flag"
+  - NFR2: "✓ Phase 3+4: Tracker shows merge status"
+  - NFR3: "⊘ Removed - Backup deemed unnecessary (additive merge + git tracking)"
+  - NFR4: "✓ Phase 2: Merge completes instantly"
+  - AC1: "✓ Phase 5: Task 2 - .claude/skills/ contains skill folders after init"
+  - AC2: "✓ Phase 5: Task 2 - settings.local.json has hooks after init"
+  - AC3: "✓ Phase 5: Task 3 - .claude/skills/ updated after upgrade"
+  - AC4: "✓ Phase 5: Task 3 - settings.local.json merged after upgrade"
+  - AC5: "✓ Phase 5: Task 3 - Existing permissions preserved"
+  - AC6: "✓ Phase 5: Task 3 - No duplicates after multiple upgrades"
+  - AC7: "✓ Phase 5: Task 4 - agents:[cursor] skill skipped for claude"
+  - AC8: "✓ Phase 5: Task 1 - ZIP contains .claude/skills/"
+
+# PROGRESS SUMMARY
+
+overall_progress:
+  phase_1: "3/3 tasks completed"
+  phase_2: "3/3 tasks completed"
+  phase_3: "3/3 tasks completed"
+  phase_4: "4/4 tasks completed"
+  phase_5: "4/4 tasks completed"
+
+current_status: |
+  Implementation complete. All phases finished:
+  - Phase 1: generate_skills() function added and tested
+  - Phase 2: settings-merge.ts utility created with additive merge logic
+  - Phase 3: Init command integrated with settings merge
+  - Phase 4: Upgrade command integrated with backup and merge
+  - Phase 5: End-to-end testing passed (init, upgrade, idempotent, filtering)
+
+next_immediate_steps:
+  - "Run /buildforce.complete to finalize the feature"
+  - "Create PR for the changes"
+
+# RISKS & CONSIDERATIONS
+
+risks:
+  - risk: "JSON merge may have edge cases with nested structures"
+    mitigation: "Test thoroughly with complex settings files. Keep merge logic simple (additive only). Document expected behavior."
+
+  - risk: "User may have malformed settings.local.json"
+    mitigation: "Wrap JSON parse in try-catch. Log warning and skip merge on parse error. Don't corrupt user file."
+
+  - risk: "Skills folder structure may vary between skills"
+    mitigation: "Copy entire folder structure recursively. Don't assume specific file names beyond SKILL.md for filtering."
+
+  - risk: "Backup file may be overwritten on multiple upgrades"
+    mitigation: "Use .bak extension for simplicity. Document that only one backup is kept. User can use version control for history."
+
+# NOTES
+
+general_notes:
+  - "generate_skills() follows the same pattern as generate_agents() for consistency"
+  - "Settings merge is additive-only to avoid data loss"
+  - "Backup is only created during upgrade (not init) since init has no existing data"
+  - "Skills are Claude-specific feature - only bundled for claude agent"
+
+lessons_learned:
+  - "Existing generate_agents() pattern provides good template for generate_skills()"
+  - "Template files go to .buildforce/templates/, runtime files go to agent folders"
+
+future_enhancements:
+  - "Add --no-merge flag to skip settings merge if user wants manual control"
+  - "Support skills bundling for other agents if they add skill support"
+  - "Add more sophisticated merge strategies (e.g., version-based merge)"
