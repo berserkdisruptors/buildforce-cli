@@ -1,0 +1,110 @@
+# Explore Command Architecture Context
+# Created: 2026-02-05
+# Source: explore-command-20260202090346 spec session
+
+id: explore-command
+name: "/buildforce.explore Command"
+type: structural
+status: production
+created: "2026-02-05"
+last_updated: "2026-02-05"
+
+summary: |
+  Session-aware brainstorming command that uses Context Explorer sub-agents to dynamically
+  retrieve and synthesize context from the repository into natural conversation. Enables users
+  to discuss their codebase with an AI that "knows" the project through automatic, invisible
+  context retrieval. Mirrors the extract command architecture but with reversed data flow -
+  extract WRITES context, explore READS context.
+
+responsibilities:
+  - Intent analysis (continuation, new topic, question, open exploration)
+  - Selective dispatch of Context Explorers based on detected intent
+  - Conversational synthesis of findings (not report-style enumeration)
+  - Session state tracking for multi-turn continuity
+  - Async persistence of key findings via Archiver (location varies by session state)
+
+dependencies:
+  internal:
+    - context-repo: "Requires extracted context in architecture/, conventions/, verification/ domains"
+    - _index.yaml: "Uses context index for navigation and discovery"
+    - research-cache: "Persists findings to .buildforce/.temp/research-cache.yaml when no active session"
+    - session-research: "Appends findings to .buildforce/sessions/{session}/research.yaml when active session exists (cautious mode)"
+  external:
+    - task-tool: "Claude Code Task tool for sub-agent spawning"
+
+files:
+  primary:
+    - src/templates/commands/explore.md
+  secondary:
+    - src/templates/agents/buildforce-structural-explorer.md
+    - src/templates/agents/buildforce-convention-explorer.md
+    - src/templates/agents/buildforce-verification-explorer.md
+    - src/templates/agents/buildforce-archiver.md
+
+interfaces:
+  command:
+    - name: "/buildforce.explore"
+      signature: "[optional-topic-or-question]"
+      description: "Initiates conversational exploration; topic is optional"
+  sub_agents:
+    - name: "Structural Explorer"
+      type: "buildforce-structural-explorer"
+      domain: "architecture/"
+      tools: "Read, Glob, Grep (read-only)"
+    - name: "Convention Explorer"
+      type: "buildforce-convention-explorer"
+      domain: "conventions/"
+      tools: "Read, Glob, Grep (read-only)"
+    - name: "Verification Explorer"
+      type: "buildforce-verification-explorer"
+      domain: "verification/"
+      tools: "Read, Glob, Grep (read-only)"
+    - name: "Archiver"
+      type: "buildforce-archiver"
+      purpose: "Async persistence with dual-mode: cache mode (research-cache.yaml) when no session, session mode (research.yaml append-only) when active session"
+      model: "sonnet"
+      permission_mode: "bypassPermissions"
+
+design_decisions:
+  - decision: "Use same three-domain architecture as extract (structural, conventions, verification)"
+    rationale: "Consistency with existing patterns, reuses domain expertise, aligns with context repo structure"
+
+  - decision: "Explorers return structured YAML findings, not raw file content"
+    rationale: "Enables manager to synthesize intelligently; findings include relevance scoring, excerpts, connections, and gaps"
+
+  - decision: "Async persistence via dedicated Session Persister sub-agent running in background"
+    rationale: "User flow never blocked; use Task tool with run_in_background: true for concurrent execution"
+
+  - decision: "Session Persister uses permissionMode: bypassPermissions"
+    rationale: "Skips permission checks so writes to research-cache.yaml don't require user confirmation; safe since only writes to .buildforce/.temp/"
+
+  - decision: "Selective explorer dispatch based on intent classification"
+    rationale: "Performance optimization - no need to search all domains for focused queries; reduces latency"
+
+  - decision: "Dual-mode persistence based on session state"
+    rationale: "No active session → write freely to research-cache.yaml (scratch pad). Active session → append cautiously to session's research.yaml (foundational file, high bar for writes)"
+
+evolution:
+  - version: "1.0"
+    date: "2026-02-05"
+    changes: "Initial implementation with three Explorer sub-agents and Session Persister"
+
+related_specs:
+  - explore-command-20260202090346
+
+notes: |
+  Performance target: Total user-perceived latency under 5 seconds (explorers <3s, synthesis <2s).
+
+  Dual-mode persistence via Archiver:
+  - No active session (cache mode): Writes to .buildforce/.temp/research-cache.yaml freely. This is
+    a scratch pad for exploration findings not yet tied to a spec session.
+  - Active session (session mode): Appends to .buildforce/sessions/{session}/research.yaml with
+    extreme caution. The research.yaml is foundational to the session's plan - only genuinely new
+    discoveries qualify. Default is to skip writing unless clearly additive.
+
+  This is a proof-of-concept implementation that validates the Explorer pattern for future
+  context provisioning features. Success here informs the future "always-on" context
+  provisioning skill that will inject context automatically during any agent action.
+
+  Known consideration: Background subagent file writes have known Claude Code bugs (#13890, #4462).
+  Workaround strategy documented in plan if file writes don't persist.

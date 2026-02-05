@@ -267,6 +267,15 @@ domains:
         tags: [ slash-command, extract, context-mining, sub-agents, claude-code-only, coverage-map ]
         related_context: [ slash-commands, cli-architecture, upgrade-command ]
 
+      - id: explore-command
+        file: architecture/explore-command.yaml
+        type: structural
+        status: extracted
+        depth: shallow
+        description: Session-aware brainstorming command using Context Explorers for conversational context retrieval
+        tags: [ slash-command, explore, context-retrieval, sub-agents, conversational, session-state ]
+        related_context: [ slash-commands, extract-command, research-slash-command, cli-architecture ]
+
   conventions:
     description: |
       Convention context about HOW things are done here.
@@ -427,8 +436,8 @@ domains:
 
 summary:
   overall_coverage: 100
-  total_items: 35
-  extracted_items: 35
+  total_items: 36
+  extracted_items: 36
   iterations_completed: 2
 
 # ============================================================================
