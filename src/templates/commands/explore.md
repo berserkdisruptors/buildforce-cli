@@ -207,8 +207,8 @@ On each subsequent user message:
 Task tool parameters:
 - subagent_type: "buildforce-archiver"
 - prompt: Include session state, key findings, topics explored
-- run_in_background: true  # Non-blocking
-- model: haiku  # Fast and efficient for simple write
+- run_in_background: true
+- model: sonnet
 ```
 
 The archiver will store findings to the appropriate location without blocking the conversation.
