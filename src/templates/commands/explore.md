@@ -1,6 +1,6 @@
 ---
 version: "0.0.42"
-description: Session-aware brainstorming with dynamic context provisioning using Context Explorer sub-agents.
+description: Context-aware brainstorming with dynamic context provisioning using Context Explorer sub-agents.
 agents: [claude]
 ---
 
@@ -12,17 +12,13 @@ $ARGUMENTS
 
 **Key Principle**: This is a conversation, not a research report. Respond as a knowledgeable colleague who deeply understands the codebase.
 
+**This is an exploratory brainstorming session.** The user will ask follow-up questions, challenge ideas, shift topics, and explore tangents - all without re-invoking `/buildforce.explore`. Treat every subsequent user message as a continuation of this session. Stay in exploration mode across multiple iterations until the user explicitly moves on to a different workflow.
+
 ---
 
 ## Prerequisites Check
 
-1. Read `.buildforce/context/_index.yaml` FROM CURRENT WORKING DIRECTORY
-   - If NOT exists → Inform user: "No context repository found. Run `/buildforce.extract` first to build your context."
-   - If exists but empty/minimal → Warn: "Context repository exists but has limited content. Responses may be sparse."
-
-2. Check for existing research cache:
-   - Read `.buildforce/.temp/research-cache.yaml` if it exists
-   - Use prior findings to inform this conversation (session continuity)
+Read `.buildforce/context/_index.yaml` - if it does NOT exist, inform user: "No context repository found. Run `/buildforce.extract` first to build your context." Otherwise, proceed.
 
 ---
 
@@ -89,7 +85,7 @@ For each relevant explorer:
 Task tool parameters:
 - subagent_type: "buildforce-structural-explorer" | "buildforce-convention-explorer" | "buildforce-verification-explorer"
 - prompt: Include query, scope (broad|focused|deep), and session context
-- model: inherit
+- model: haiku
 ```
 
 **Scope guidance:**
@@ -131,9 +127,8 @@ Combine findings from all dispatched explorers:
 ### 3.2 Check for Sufficient Context
 
 If all explorers return empty or low-relevance findings:
-- Acknowledge the gap honestly
-- Suggest running `/buildforce.extract` to build context
-- Offer to reason from first principles without documented context
+- Consider whether a reformulated query might surface better results (try once with broader or more specific terms, but do not retry more than once to avoid looping)
+- If still empty after a retry, acknowledge the gap honestly and reason from first principles without documented context
 
 ---
 
@@ -190,81 +185,35 @@ What aspect would you like to dig into - the refresh flow, how it connects to bi
 
 ---
 
-## Step 5: Update Session State (In-Memory)
+## Step 5: Continue Conversation
 
-Track for subsequent turns:
+On each subsequent user message:
 
-```yaml
-session_state:
-  turn: {N}
-  topics_discussed:
-    {topic}: {depth: deep | shallow | mentioned}
-  context_surfaced:
-    - {file}: {sections surfaced}
-  open_questions:
-    - {question raised but not answered}
-  unexplored_connections:
-    - from: {topic}
-      to: {related topic}
-      nature: {relationship}
-```
-
-This state informs:
-- When to re-dispatch explorers (topic shift)
-- When to use existing context (continuation)
-- What gaps remain to address
+1. **Parse new intent** in context of conversation history
+2. **Decide: re-dispatch or respond?**
+   - Topic shift → dispatch relevant explorers
+   - Same topic, need depth → dispatch with "deep" scope
+   - Same topic, sufficient context → respond from existing understanding
+   - Clarification → respond without dispatch
+3. **Synthesize** with accumulated understanding
 
 ---
 
-## Step 6: Async Session Persistence (Infrequent)
+## Step 6: Archive Exploration Session Findings
 
-**Only dispatch the Session Persister when significant new findings have accumulated.**
-
-### When to Persist
-
-- After 3+ turns with substantive findings
-- When major new topic has been explored
-- Before ending a long session
-- When user indicates they're wrapping up
-
-### When NOT to Persist
-
-- Every single turn (too frequent)
-- For clarification questions
-- When no new context was surfaced
-- For meta-discussion about the conversation
-
-### Dispatch Session Persister
-
-When persistence is warranted, dispatch the Session Persister in the background:
+**This step is mandatory.** After every synthesized response (Steps 4 and 5), dispatch the Archiver in the background to capture key findings. Do not skip this step.
 
 ```
 Task tool parameters:
-- subagent_type: "buildforce-session-persister"
+- subagent_type: "buildforce-archiver"
 - prompt: Include session state, key findings, topics explored
 - run_in_background: true  # Non-blocking
 - model: haiku  # Fast and efficient for simple write
 ```
 
-The persister will write to `.buildforce/.temp/research-cache.yaml` without blocking the conversation.
+The archiver will store findings to the appropriate location without blocking the conversation.
 
-**User should never wait for saves** - persistence is invisible to them.
-
----
-
-## Step 7: Continue Conversation
-
-On each subsequent user message:
-
-1. **Read session state** (in-memory from prior turn)
-2. **Parse new intent** in context of session history
-3. **Decide: re-dispatch or respond?**
-   - Topic shift → dispatch relevant explorers
-   - Same topic, need depth → dispatch with "deep" scope
-   - Same topic, sufficient context → respond from existing understanding
-   - Clarification → respond without dispatch
-4. **Synthesize** with accumulated understanding
-5. **Update session state**
+**User should never wait for saves** - archiving is invisible to them.
 
 ---
 
@@ -295,8 +244,8 @@ If findings from different domains conflict:
 - **Invisible retrieval**: Users shouldn't feel like they're waiting for a search
 - **Conversational, not report-like**: Lead with understanding, not sourcing
 - **Targeted, not exhaustive**: Fetch only what's needed for the current exchange
-- **Session continuity**: Build understanding over multiple turns
 - **Honest about gaps**: Acknowledge when context doesn't exist, don't fabricate
+- **Token efficient**: Only dispatch explorers when new context is actually needed
 
 ---
 
@@ -312,6 +261,8 @@ User prompt → Analyze intent → Select explorers → Dispatch in parallel
          [question?] → Dispatch based on question domain
                     ↓
          [open?] → Dispatch all three (broad)
+                    ↓
+         Synthesize response → Dispatch archiver (background, always)
 ```
 
 Context: {$ARGUMENTS}
