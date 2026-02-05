@@ -382,19 +382,26 @@ export async function executeUpgrade(
       });
       tracker.complete("update-config", `version ${version}`);
 
-      // Ensure .buildforce/.temp is in .gitignore
+      // Ensure .buildforce entries are in .gitignore
       const gitignorePath = path.join(projectPath, ".gitignore");
       if (await fs.pathExists(gitignorePath)) {
-        const gitignoreContent = await fs.readFile(gitignorePath, "utf8");
+        let gitignoreContent = await fs.readFile(gitignorePath, "utf8");
+        let gitignoreModified = false;
 
-        // Check if .buildforce/.temp is already in gitignore
-        if (!gitignoreContent.includes(".buildforce/.temp")) {
-          const updatedContent = gitignoreContent.trimEnd() + "\n.buildforce/.temp\n";
-          await fs.writeFile(gitignorePath, updatedContent, "utf8");
+        const entries = [".buildforce/.temp", ".buildforce/scripts", ".buildforce/templates"];
+        for (const entry of entries) {
+          if (!gitignoreContent.includes(entry)) {
+            gitignoreContent = gitignoreContent.trimEnd() + "\n" + entry + "\n";
+            gitignoreModified = true;
 
-          if (debug) {
-            console.log(chalk.gray(`\nUpdated .gitignore: added .buildforce/.temp`));
+            if (debug) {
+              console.log(chalk.gray(`\nUpdated .gitignore: added ${entry}`));
+            }
           }
+        }
+
+        if (gitignoreModified) {
+          await fs.writeFile(gitignorePath, gitignoreContent, "utf8");
         }
       }
 
