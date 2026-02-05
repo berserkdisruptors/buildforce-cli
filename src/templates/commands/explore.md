@@ -22,6 +22,45 @@ Read `.buildforce/context/_index.yaml` - if it does NOT exist, inform user: "No 
 
 ---
 
+## CRITICAL: Why This Workflow Exists
+
+**The purpose of `/buildforce.explore` is to enhance response quality and depth, not speed.**
+
+By default, you (the agent) do not tap into the user's context repository. This command exists to fix that gap. The Context Explorers query structured context that was carefully extracted about this specific codebase - architectural decisions, conventions, verification standards, design rationale - information you cannot get from reading source files alone.
+
+Source files tell you WHAT the code does. The context repository tells you WHY it was built that way, what patterns to follow, what pitfalls to avoid, and how components relate. Both are valuable, but context comes first.
+
+### The Correct Order: Context First, Then Source
+
+**You MUST consult the context repository before reading source files directly.** The workflow is:
+
+1. **Dispatch Context Explorers** to gather curated context about the topic
+2. **Synthesize findings** with the structured knowledge from the repository
+3. **Then, if needed**, use your default agentic search (Glob, Grep, Read) to:
+   - Confirm specific implementation details
+   - Find information not covered in the context repository
+   - Dive deeper into areas the user wants to explore
+
+**Do NOT skip step 1.** Specifically, do not:
+- Jump straight to reading source files (Glob, Grep, Read) to answer the question
+- Skip explorers because you think you could answer "faster" without them
+- Bypass the workflow because the user's request seems detailed or actionable
+
+The context repository exists precisely because raw source files lack the curated understanding that makes responses valuable.
+
+### The Only Exception
+
+Skip dispatching explorers ONLY when the user's query has nothing to do with this codebase:
+- Asking about third-party services or libraries to evaluate for integration
+- General programming questions unrelated to the project
+- External concepts the context repository cannot possibly contain
+
+In these cases, respond directly without explorers - dispatching them would return nothing useful.
+
+**When in doubt, dispatch the explorers.** An empty result is informative; skipping them is not.
+
+---
+
 ## Step 1: Analyze Intent
 
 Parse the user's prompt ($ARGUMENTS) and any session history:
@@ -130,6 +169,25 @@ If all explorers return empty or low-relevance findings:
 - Consider whether a reformulated query might surface better results (try once with broader or more specific terms, but do not retry more than once to avoid looping)
 - If still empty after a retry, acknowledge the gap honestly and reason from first principles without documented context
 
+### 3.3 CRITICAL: Distinguish "Not Found" from "Tangentially Related"
+
+**This is a common failure mode. Pay close attention.**
+
+When the user asks about X and explorers return findings about Y (something related but not X):
+
+| Situation | Correct Response | WRONG Response |
+|-----------|------------------|----------------|
+| User asks about "skills system" but codebase has no skills | "The codebase doesn't have a skills system yet." | Finding the closest thing (sub-agents) and talking about that as if it answers the question |
+| User asks about "authentication" but no auth exists | "There's no authentication implementation in this codebase." | Discussing the CLI's general architecture because it's tangentially related |
+| User asks about feature X that doesn't exist | "Feature X doesn't exist in the current codebase. Would you like to explore how it might be implemented?" | Presenting information about feature Y that shares some keywords |
+
+**The test**: Before synthesizing, ask yourself: "Did I find what the user actually asked about, or did I find something adjacent?" If adjacent, you MUST acknowledge that the actual thing doesn't exist.
+
+**Tangentially related findings are still useful** - but only AFTER you've acknowledged the gap:
+> "The codebase doesn't have a skills system. However, it does have a sub-agent architecture that could potentially support skills in the future - want me to explain how that works?"
+
+Never pretend that tangentially related information answers the user's actual question.
+
 ---
 
 ## Step 4: Synthesize Response
@@ -201,7 +259,26 @@ On each subsequent user message:
 
 ## Step 6: Archive Exploration Session Findings
 
-**This step is mandatory.** After every synthesized response (Steps 4 and 5), dispatch the Archiver in the background to capture key findings. Do not skip this step.
+**This step is mandatory.** Dispatch the Archiver in the background to capture key findings. Do not skip this step.
+
+### 6.1 CRITICAL: When to Spawn the Archiver
+
+**Spawn the Archiver ONLY after you have completely finished your response to the user.**
+
+The correct sequence is:
+1. Synthesize your response (Step 4 or 5)
+2. **Present your complete response to the user** including any follow-up questions
+3. **Then, as your final action before waiting for user input**, dispatch the Archiver
+
+**DO NOT** dispatch the Archiver:
+- While you are still searching for context
+- Before you have presented your response
+- In the middle of your response
+- At the same time as explorer dispatches
+
+The Archiver is the **last thing you do** after a complete request/response cycle.
+
+### 6.2 Archiver Dispatch
 
 ```
 Task tool parameters:
@@ -214,6 +291,20 @@ Task tool parameters:
 The archiver will store findings to the appropriate location without blocking the conversation.
 
 **User should never wait for saves** - archiving is invisible to them.
+
+### 6.3 CRITICAL: Ignore Archiver Completion Events
+
+When the Archiver completes in the background, Claude Code will notify you with a message like "Agent completed" or similar. **You MUST ignore this notification entirely.**
+
+**DO NOT:**
+- Respond to the archiver completion event
+- Say things like "Session findings archived" or "Research saved"
+- Offer follow-up questions again after archiver completion
+- Acknowledge the archiver's work in any way to the user
+
+The archiver is invisible infrastructure. Its completion is not a conversation turn. If you see an archiver completion notification, **do nothing** - wait silently for the user's next actual message.
+
+If you already asked the user a follow-up question before the archiver completed, that question stands. Do not repeat it or rephrase it when the archiver finishes.
 
 ---
 
@@ -262,7 +353,11 @@ User prompt → Analyze intent → Select explorers → Dispatch in parallel
                     ↓
          [open?] → Dispatch all three (broad)
                     ↓
-         Synthesize response → Dispatch archiver (background, always)
+         Synthesize response → Present COMPLETE response to user
+                    ↓
+         THEN (as final action) → Dispatch archiver (background)
+                    ↓
+         Archiver completes → IGNORE (do not respond)
 ```
 
 Context: {$ARGUMENTS}

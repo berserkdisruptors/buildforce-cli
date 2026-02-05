@@ -30,6 +30,25 @@ Review the findings provided in your prompt. Determine whether they contain anyt
 
 Read `.buildforce/buildforce.json` to check for an active session:
 
+### CRITICAL: Only Two Valid Storage Locations
+
+**You may ONLY write to these two locations. No exceptions.**
+
+| Session State | Target File | Mode |
+|---------------|-------------|------|
+| No active session | `.buildforce/.temp/research-cache.yaml` | Cache (relaxed) |
+| Active session | `.buildforce/sessions/{currentSession}/research.yaml` | Session (cautious) |
+
+### FORBIDDEN - Never Write Here
+
+**NEVER create files or directories in any of these locations:**
+- `.buildforce/context/` - This is the curated context repository. Only `/buildforce.extract` and `/buildforce.complete` write here.
+- `.buildforce/sessions/{otherSession}/` - Never write to sessions other than the current one
+- Any path outside `.buildforce/`
+- Any new subdirectories you invent
+
+If you find yourself wanting to write somewhere not in the table above, **STOP**. Return `{ "ok": true }` without writing.
+
 ### No active session → Cache mode (relaxed)
 
 - Target: `.buildforce/.temp/research-cache.yaml`

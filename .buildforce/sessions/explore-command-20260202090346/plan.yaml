@@ -9,7 +9,7 @@ spec_id: "explore-command-20260202090346"
 type: implementation-plan
 status: completed
 created: "2026-02-02"
-last_updated: "2026-02-05"
+last_updated: "2026-02-05"  # v1.1 bug fixes
 
 # ARCHITECTURE OVERVIEW
 # Describe the high-level implementation approach and key technical decisions.
@@ -183,7 +183,40 @@ phase_3:
 # Format: phase -> task -> original plan -> actual implementation -> reason for deviation
 
 deviations:
-  # To be populated during implementation
+  # Post-implementation refinements (v1.1) - 2026-02-05
+
+  - phase: "Phase 3 (Session Persister / Archiver)"
+    task: "Archiver storage location constraints"
+    original_plan: "Archiver writes to research-cache.yaml or session research.yaml based on session state"
+    actual_implementation: |
+      Added explicit FORBIDDEN paths section to archiver template:
+      - .buildforce/context/ - only extract/complete write here
+      - Other sessions besides current
+      - Anything outside .buildforce/
+      - Any invented subdirectories
+      Archiver now has a clear table of only two valid targets and explicit instruction to return { "ok": true } without writing if tempted to write elsewhere.
+    reason: "Bug: Archiver was creating arbitrary folders in context/ directory which is absolutely forbidden. Needed explicit negative constraints, not just positive guidance."
+
+  - phase: "Phase 2 (Explore Command Template)"
+    task: "Findings synthesis - gap acknowledgment"
+    original_plan: "Error Handling section covered 'No Context Found' scenario"
+    actual_implementation: |
+      Added new Section 3.3 "CRITICAL: Distinguish 'Not Found' from 'Tangentially Related'" with:
+      - Table of correct vs wrong responses for common scenarios
+      - Self-test question: "Did I find what the user asked about, or something adjacent?"
+      - Guidance on using tangential findings properly (acknowledge gap first)
+    reason: "Bug: Agent was finding tangentially related things and presenting them as answers instead of admitting the requested functionality doesn't exist. Example: asked about 'skills system' → answered about sub-agents."
+
+  - phase: "Phase 2 (Explore Command Template)"
+    task: "Archiver dispatch timing"
+    original_plan: "'After every synthesized response (Steps 4 and 5), dispatch the Archiver'"
+    actual_implementation: |
+      Rewrote Step 6 with explicit subsections:
+      - 6.1: Crystal clear timing - archiver is "last thing you do after complete request/response cycle"
+      - 6.2: Dispatch parameters (unchanged)
+      - 6.3: "CRITICAL: Ignore Archiver Completion Events" - explicit instruction to not respond
+      Updated Quick Reference flowchart to show: "Present COMPLETE response → THEN dispatch archiver → Archiver completes → IGNORE"
+    reason: "Bug: Agent was dispatching archiver prematurely (while still searching) and then responding to archiver completion events with redundant messages like 'Session findings archived. What else...' which polluted the UX."
 
 # CONVENTION COMPLIANCE
 # Track validation results for strict and recommended enforcement levels
@@ -355,7 +388,17 @@ general_notes:
   - "WATCH: Background subagent file writes have known bugs (#13890, #4462) - test early and apply workaround if needed"
 
 lessons_learned:
-  # To be populated during implementation
+  - lesson: "Explicit negative constraints are essential for sub-agents"
+    detail: "Telling an agent WHERE to write is not enough - you must also explicitly tell it where NOT to write. Sub-agents will 'creatively' decide alternative locations if not explicitly forbidden."
+
+  - lesson: "Distinguish 'not found' from 'tangentially related' in synthesis instructions"
+    detail: "LLMs naturally try to be helpful by finding related information. Without explicit instruction, they'll present adjacent findings as if they answer the question. Must force explicit gap acknowledgment."
+
+  - lesson: "Background task completion events trigger agent responses"
+    detail: "When using run_in_background: true, the completion notification causes the main agent to respond again. This pollutes UX with redundant messages. Must explicitly instruct agent to ignore these events."
+
+  - lesson: "Timing instructions need to be crystal clear with sequencing"
+    detail: "'After the response' is ambiguous. Agent interpreted it as 'after I start responding'. Need explicit: 'ONLY after you have completely finished presenting your response and are about to wait for user input.'"
 
 future_enhancements:
   - "Automatic context provisioning skill (always-on, not explicit command)"

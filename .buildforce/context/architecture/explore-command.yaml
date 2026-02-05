@@ -7,7 +7,7 @@ name: "/buildforce.explore Command"
 type: structural
 status: production
 created: "2026-02-05"
-last_updated: "2026-02-05"
+last_updated: "2026-02-05"  # v1.1 bug fixes
 
 summary: |
   Session-aware brainstorming command that uses Context Explorer sub-agents to dynamically
@@ -72,10 +72,10 @@ design_decisions:
   - decision: "Explorers return structured YAML findings, not raw file content"
     rationale: "Enables manager to synthesize intelligently; findings include relevance scoring, excerpts, connections, and gaps"
 
-  - decision: "Async persistence via dedicated Session Persister sub-agent running in background"
+  - decision: "Async persistence via dedicated Archiver sub-agent running in background"
     rationale: "User flow never blocked; use Task tool with run_in_background: true for concurrent execution"
 
-  - decision: "Session Persister uses permissionMode: bypassPermissions"
+  - decision: "Archiver uses permissionMode: bypassPermissions"
     rationale: "Skips permission checks so writes to research-cache.yaml don't require user confirmation; safe since only writes to .buildforce/.temp/"
 
   - decision: "Selective explorer dispatch based on intent classification"
@@ -84,10 +84,30 @@ design_decisions:
   - decision: "Dual-mode persistence based on session state"
     rationale: "No active session → write freely to research-cache.yaml (scratch pad). Active session → append cautiously to session's research.yaml (foundational file, high bar for writes)"
 
+  - decision: "Archiver has explicit forbidden paths to prevent writes outside allowed locations"
+    rationale: "Prevent archiver from creating arbitrary directories in context/ or other forbidden locations. Only two valid targets: .buildforce/.temp/research-cache.yaml and .buildforce/sessions/{session}/research.yaml"
+
+  - decision: "Explicit 'not found vs tangentially related' distinction in synthesis"
+    rationale: "Prevent the agent from presenting tangentially related information as if it answers the user's actual question. Must acknowledge when requested functionality doesn't exist."
+
+  - decision: "Archiver spawned only AFTER complete response presented to user"
+    rationale: "Prevents premature archiving while still searching for context. Archiver is the final action before waiting for user input."
+
+  - decision: "Main agent explicitly ignores archiver completion events"
+    rationale: "Prevents UX pollution where agent responds to archiver completion with redundant messages like 'Session findings archived'. Archiver is invisible infrastructure."
+
 evolution:
   - version: "1.0"
     date: "2026-02-05"
     changes: "Initial implementation with three Explorer sub-agents and Session Persister"
+
+  - version: "1.1"
+    date: "2026-02-05"
+    changes: |
+      Bug fixes for three UX issues:
+      1. Archiver now has explicit forbidden paths - prevents writes to context/ or arbitrary locations
+      2. Added 'not found vs tangentially related' distinction - agent must acknowledge when requested functionality doesn't exist
+      3. Fixed archiver timing - now spawned only after complete response, and main agent ignores completion events
 
 related_specs:
   - explore-command-20260202090346
@@ -101,6 +121,11 @@ notes: |
   - Active session (session mode): Appends to .buildforce/sessions/{session}/research.yaml with
     extreme caution. The research.yaml is foundational to the session's plan - only genuinely new
     discoveries qualify. Default is to skip writing unless clearly additive.
+
+  Critical constraints (v1.1):
+  - Archiver FORBIDDEN from writing to: context/, other sessions, paths outside .buildforce/, invented subdirectories
+  - Agent must distinguish "not found" from "tangentially related" - never present adjacent info as an answer
+  - Archiver spawned ONLY after complete response presented; completion events are ignored by main agent
 
   This is a proof-of-concept implementation that validates the Explorer pattern for future
   context provisioning features. Success here informs the future "always-on" context
