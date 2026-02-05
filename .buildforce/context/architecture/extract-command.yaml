@@ -3,7 +3,7 @@ name: Extract Command
 type: structural
 status: production
 created: "2026-01-28"
-last_updated: "2026-02-02"
+last_updated: "2026-02-05"
 
 summary: |
   Claude Code-specific slash command for iterative context extraction from fresh codebases.
@@ -13,7 +13,7 @@ summary: |
 
 responsibilities:
   - Scan fresh codebases to discover extractable context items
-  - Orchestrate parallel extraction via Context Extractor sub-agents (cm-1-structural, cm-2-convention, cm-3-verification)
+  - Orchestrate parallel extraction via Context Extractor sub-agents (buildforce-structural-extractor, buildforce-conventions-extractor, buildforce-verification-extractor)
   - Maintain root _index.yaml as both context index AND coverage map
   - Track extraction depth (none → shallow → moderate → deep) per item
   - Validate extractor proposals before writing to context files
@@ -30,9 +30,9 @@ dependencies:
 files:
   primary:
     - src/templates/commands/extract.md
-    - src/templates/agents/cm-1-structural.md
-    - src/templates/agents/cm-2-convention.md
-    - src/templates/agents/cm-3-verification.md
+    - src/templates/agents/buildforce-structural-extractor.md
+    - src/templates/agents/buildforce-conventions-extractor.md
+    - src/templates/agents/buildforce-verification-extractor.md
     - src/templates/extraction-progress-template.yaml
   secondary:
     - .github/workflows/scripts/create-release-packages.sh
@@ -94,10 +94,12 @@ architecture_patterns:
     7. Updates _index.yaml with new status/depth
 
   context_extractors: |
-    Three specialized sub-agents (cm-1, cm-2, cm-3):
-    - cm-1-structural: Extracts architecture context (modules, features, components)
-    - cm-2-convention: Extracts convention context (patterns, standards, practices)
-    - cm-3-verification: Extracts verification context (test expectations, quality standards)
+    Three specialized sub-agents:
+    - buildforce-structural-extractor: Extracts architecture context (modules, features, components)
+    - buildforce-conventions-extractor: Extracts convention context (patterns, standards, practices)
+    - buildforce-verification-extractor: Extracts verification context (test expectations, quality standards)
+
+    See sub-agent-architecture context file for detailed agent specification and conventions.
 
     Each extractor:
     1. Reads its domain's _extraction-progress.yaml plan
@@ -121,6 +123,10 @@ evolution:
 
 related_specs:
   - claude-code-extract-command-20260127152345
+
+related_context:
+  - sub-agent-architecture
+  - agent-template-conventions
 
 sub_agent_orchestration:
   spawning_pattern: |

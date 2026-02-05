@@ -1,0 +1,372 @@
+id: sub-agent-architecture
+name: "Sub-Agent Distribution Architecture"
+type: structural
+status: production
+created: "2026-02-05"
+last_updated: "2026-02-05"
+
+summary: |
+  Claude Code sub-agent pattern enabling parallel context operations via the Task tool.
+  Buildforce uses two agent families (Explorers for read-only retrieval, Extractors for
+  proposal-based creation) plus a special Archiver for background persistence. Agents are
+  defined in src/templates/agents/ and distributed to .claude/agents/ during release packaging.
+
+  Distribution pipeline: Source templates → Release packaging (filtered by agents: field) →
+  GitHub Releases ZIP → Init extraction or Upgrade replacement → User's .claude/agents/
+
+responsibilities:
+  - Define reusable agent templates with frontmatter specification
+  - Enable parallel execution of context operations via Task tool
+  - Separate read-only (Explorer) from write-capable (Extractor/Archiver) operations
+  - Support background execution for non-blocking persistence
+  - Filter agent distribution by target AI assistant (agents field)
+  - Package agents into Claude-specific releases via create-release-packages.sh
+  - Distribute agents via ZIP extraction during init and upgrade commands
+
+dependencies:
+  internal:
+    - extract-command: "Spawns Extractor sub-agents for context extraction"
+    - explore-command: "Spawns Explorer sub-agents for context retrieval"
+    - cli-architecture: "Agent templates distributed via release packaging"
+    - init-command: "Extracts ZIP containing .claude/agents/ folder"
+    - upgrade-command: "Replaces .claude/agents/ folder during upgrades"
+  external:
+    - Claude Code Task tool: "Required for sub-agent spawning - Claude Code specific"
+    - Claude Code agents directory: ".claude/agents/ for agent registration"
+    - create-release-packages.sh: "Build script that packages agents into releases"
+
+files:
+  primary:
+    - src/templates/agents/buildforce-structural-extractor.md
+    - src/templates/agents/buildforce-conventions-extractor.md
+    - src/templates/agents/buildforce-verification-extractor.md
+    - src/templates/agents/buildforce-structural-explorer.md
+    - src/templates/agents/buildforce-convention-explorer.md
+    - src/templates/agents/buildforce-verification-explorer.md
+    - src/templates/agents/buildforce-archiver.md
+  secondary:
+    - .github/workflows/scripts/create-release-packages.sh
+    - src/commands/init/setup.ts
+    - src/commands/upgrade/execution.ts
+    - src/lib/extract.ts
+    - src/config/agents.ts
+    - .claude/agents/
+
+design_decisions:
+  - decision: "Naming convention: buildforce-{domain}-{role}"
+    rationale: |
+      Consistent naming enables predictable agent discovery. Domain indicates context type
+      (structural, convention, verification). Role indicates capability (explorer=read,
+      extractor=propose, archiver=persist). The buildforce- prefix provides namespace isolation.
+
+  - decision: "Two agent families: Explorers vs Extractors"
+    rationale: |
+      Separation of concerns: Explorers are read-only and optimized for speed (context retrieval
+      during /buildforce.explore). Extractors return proposals without direct writes (context
+      creation during /buildforce.extract). This prevents accidental modifications during
+      exploration and enables validation before writes during extraction.
+
+  - decision: "Archiver has bypassPermissions and runs in background"
+    rationale: |
+      The Archiver must write without blocking conversation flow. bypassPermissions allows writes
+      without user approval prompts. run_in_background: true in Task tool ensures non-blocking
+      execution. Users should never be aware of or wait for archiving operations.
+
+  - decision: "Agents filtered by 'agents' frontmatter field during release packaging"
+    rationale: |
+      Sub-agents require Claude Code's Task tool which other AI assistants don't have.
+      The agents: [claude] field in frontmatter ensures these templates are only included
+      in Claude Code release packages. create-release-packages.sh filters based on this field.
+
+  - decision: "Extractors return proposals, not direct writes"
+    rationale: |
+      Centralizes conflict resolution in the orchestrating command (Context Manager).
+      Prevents race conditions when extractors run in parallel. Enables intelligent merge
+      for overlapping discoveries. The orchestrator validates proposals before writing.
+
+  - decision: "Explorers dispatched with haiku model for speed"
+    rationale: |
+      Context retrieval prioritizes speed over depth. Haiku model provides fast responses
+      for targeted searches. The explore command dispatches explorers with model: haiku
+      in Task tool parameters to minimize latency.
+
+  - decision: "Agents stripped of 'agents:' field before packaging"
+    rationale: |
+      The agents: field is internal metadata for the build system, not runtime information.
+      Stripping it keeps distributed agents clean and prevents confusion about its purpose.
+      The generate_agents() function removes this field via awk before writing output.
+
+  - decision: "Full replacement strategy for agent upgrades"
+    rationale: |
+      During upgrades, the entire .claude/agents/ folder is replaced rather than merged.
+      This ensures clean updates without stale agents accumulating. The upgrade command
+      backs up existing agents before replacement to enable rollback on failure.
+
+architecture_patterns:
+  agent_frontmatter_specification: |
+    All agent templates use YAML frontmatter with these fields:
+
+    Required fields:
+    - name: Unique agent identifier (e.g., buildforce-structural-extractor)
+    - description: Purpose description used by Claude Code for agent selection
+    - tools: Comma-separated list of available tools (Read, Glob, Grep, Write)
+    - agents: Array of AI assistants that support this agent (e.g., [claude])
+
+    Optional fields:
+    - model: Model to use (inherit | haiku | sonnet). Default: inherit (from parent)
+    - permissionMode: Permission mode (bypassPermissions for background agents)
+
+    Example frontmatter:
+    ```yaml
+    ---
+    name: buildforce-structural-extractor
+    description: Context Extractor for structural/architecture context...
+    tools: Read, Glob, Grep
+    model: inherit
+    agents: [claude]
+    ---
+    ```
+
+  agent_families: |
+    Two distinct families serve different purposes:
+
+    EXPLORERS (read-only, speed-optimized):
+    - buildforce-structural-explorer: Architecture/structural context retrieval
+    - buildforce-convention-explorer: Convention/standards context retrieval
+    - buildforce-verification-explorer: Verification/quality context retrieval
+    - Tools: Read, Glob, Grep (no Write)
+    - Model: haiku (dispatched via Task tool)
+    - Pattern: Search _index.yaml, read targeted files, return YAML findings
+
+    EXTRACTORS (proposal-based, depth-focused):
+    - buildforce-structural-extractor: Architecture context extraction
+    - buildforce-conventions-extractor: Convention context extraction
+    - buildforce-verification-extractor: Verification context extraction
+    - Tools: Read, Glob, Grep (no Write - proposals only)
+    - Model: inherit
+    - Pattern: Read extraction plan, analyze codebase, return YAML proposals
+
+    ARCHIVER (background persistence):
+    - buildforce-archiver: Persists exploration findings
+    - Tools: Write, Read, Glob, Grep (has Write)
+    - Model: sonnet (explicit)
+    - permissionMode: bypassPermissions
+    - Pattern: Run in background, write to research cache or session file
+
+  task_tool_spawning: |
+    Sub-agents are spawned via Claude Code's Task tool with these parameters:
+
+    For Explorers (during /buildforce.explore):
+    ```
+    Task tool parameters:
+    - subagent_type: "buildforce-structural-explorer" | "buildforce-convention-explorer" | "buildforce-verification-explorer"
+    - prompt: Include query, scope (broad|focused|deep), and session context
+    - model: haiku
+    ```
+
+    For Extractors (during /buildforce.extract):
+    ```
+    Task tool parameters:
+    - subagent_type: "buildforce-structural-extractor" | "buildforce-conventions-extractor" | "buildforce-verification-extractor"
+    - prompt: (agents read plan from _extraction-progress.yaml)
+    ```
+
+    For Archiver (after explore response):
+    ```
+    Task tool parameters:
+    - subagent_type: "buildforce-archiver"
+    - prompt: Include session state, key findings, topics explored
+    - run_in_background: true
+    - model: sonnet
+    ```
+
+    CRITICAL: Multiple independent agents should be dispatched in parallel (single message
+    with multiple Task tool calls) for speed. The orchestrating command handles coordination.
+
+  registration_mechanism: |
+    Agents are registered via Claude Code's .claude/agents/ directory:
+
+    1. Source: Agent templates in src/templates/agents/*.md
+    2. Build: create-release-packages.sh processes templates during release
+    3. Filter: agents: field in frontmatter determines which packages include each agent
+    4. Output: For Claude packages, agents copied to .claude/agents/ directory
+    5. Discovery: Claude Code automatically discovers agents in .claude/agents/
+
+    The generate_agents() function in create-release-packages.sh:
+    - Reads each template from src/templates/agents/
+    - Checks agents: field for current agent (claude)
+    - Strips agents: field from output (internal metadata)
+    - Copies to .claude/agents/{name}.md
+
+  distribution_mechanism: |
+    Agent Distribution Pipeline:
+
+    BUILD PHASE (create-release-packages.sh):
+    1. generate_agents() function processes src/templates/agents/*.md
+    2. For each template:
+       a. Read frontmatter, extract agents: field
+       b. If agents: exists, check if current agent (e.g., "claude") is in list
+       c. Skip template if current agent not in list (with "[filter] Skipping" log)
+       d. Include template if match found (with "[filter] Including" log)
+    3. Strip agents: field from output (line 127-131 via awk)
+    4. Write processed template to output directory
+    5. Only Claude variant calls generate_agents() (lines 214-217)
+    6. Package into ZIP: buildforce-cli-template-claude-{sh|ps}-{version}.zip
+
+    INIT PHASE (setup.ts + extract.ts):
+    1. downloadTemplateFromGithub() fetches ZIP from GitHub Releases
+    2. AdmZip extracts entire ZIP to temp directory
+    3. Files copied to project path (merge mode for existing dirs)
+    4. .claude/agents/ is included in ZIP, extracted automatically
+    5. No special agent handling - part of normal extraction flow
+
+    UPGRADE PHASE (execution.ts lines 283-301):
+    1. For each agent in successfulAgents:
+       a. Get folder from AGENT_FOLDER_MAP (claude -> ".claude/")
+       b. Construct paths: source = extractedDir/.claude/agents, dest = projectPath/.claude/agents
+       c. If source exists AND destination exists, backup dest to temp dir
+       d. Remove destination folder entirely (fs.remove)
+       e. Copy source to destination (fs.copy)
+    2. Full replacement strategy - no merge, clean slate each upgrade
+    3. Backup enables rollback on failure
+
+    Key Files:
+    - .github/workflows/scripts/create-release-packages.sh (generate_agents lines 101-135)
+    - src/commands/init/setup.ts (downloadAndExtractTemplate call)
+    - src/lib/extract.ts (ZIP extraction logic)
+    - src/commands/upgrade/execution.ts (agent replacement lines 283-301)
+    - src/config/agents.ts (AGENT_FOLDER_MAP)
+
+  commands_vs_agents_distribution: |
+    Commands and Agents follow similar but distinct distribution paths:
+
+    COMMANDS (src/templates/commands/*.md):
+    - generate_commands() function processes templates
+    - Same agents: field filtering as agents
+    - Different output formats per agent (md, toml, prompt.md)
+    - Different output directories per agent (commands/, prompts/, workflows/)
+    - All 11 agents receive commands
+
+    AGENTS (src/templates/agents/*.md):
+    - generate_agents() function processes templates
+    - Same agents: field filtering as commands
+    - Output always .md format
+    - Output always to .claude/agents/ directory
+    - ONLY Claude receives agents (Task tool requirement)
+
+    The key difference: agents are Claude Code-specific because only Claude Code
+    has the Task tool for spawning sub-agents. Other AI assistants lack this capability.
+
+  input_output_patterns: |
+    INPUT (via Task tool prompt parameter):
+    - Explorers receive: query, scope, session context
+    - Extractors receive: (implicit - read from _extraction-progress.yaml)
+    - Archiver receives: session state, key findings, topics explored
+
+    OUTPUT (via natural language response with YAML):
+    Explorers return:
+    ```yaml
+    query_understood: "{interpretation}"
+    findings:
+      - source: {domain}/{file}.yaml
+        relevance: high | medium | low
+        excerpt: "{relevant content}"
+        why_relevant: "{explanation}"
+    connections: [{topic, nature}]
+    gaps: ["{missing info}"]
+    suggested_deeper: [{query, reason}]
+    ```
+
+    Extractors return:
+    ```yaml
+    contributions:
+      - action: create | update
+        target_item: {id}
+        file: {domain}/{id}.yaml
+        depth_achieved: shallow | moderate | deep
+        reason: "{why valuable}"
+        content: "{YAML following _schema.yaml}"
+    new_discoveries: [{id, name, domain, notes}]
+    questions_for_user: ["{clarifying questions}"]
+    verification_status: [{question, answered, evidence}]
+    ```
+
+    Archiver returns:
+    ```json
+    { "ok": true }
+    ```
+
+extension_points:
+  adding_new_agents: |
+    To create a new agent:
+
+    1. Create template file: src/templates/agents/buildforce-{domain}-{role}.md
+    2. Include required frontmatter:
+       - name: buildforce-{domain}-{role}
+       - description: Purpose and when to use
+       - tools: Tool list (Read, Glob, Grep for read-only; add Write for writers)
+       - model: inherit (or explicit if needed)
+       - agents: [claude]
+    3. Add permissionMode: bypassPermissions only if background writes needed
+    4. Define agent instructions with ## sections:
+       - ## Step N: Action steps
+       - ## Return Format: Output structure
+       - ## Guidelines: Behavioral guidelines
+    5. Test locally (agents auto-discovered from .claude/agents/)
+    6. Release packaging will distribute to appropriate agent packages
+
+  adding_new_domains: |
+    To add a new context domain with agents:
+
+    1. Create domain in .buildforce/context/{domain}/
+    2. Create extractor: buildforce-{domain}-extractor.md
+    3. Create explorer: buildforce-{domain}-explorer.md
+    4. Update orchestrating commands to dispatch new agents
+    5. Add domain to _index.yaml structure
+
+evolution:
+  - version: "1.0"
+    date: "2026-01-28"
+    changes: "Initial implementation with cm-1-*, cm-2-*, cm-3-* naming for extract command"
+  - version: "2.0"
+    date: "2026-02-05"
+    changes: "Renamed to buildforce-{domain}-{role} pattern. Added Explorer family for explore command. Added Archiver for background persistence."
+  - version: "2.1"
+    date: "2026-02-05"
+    changes: "Added comprehensive distribution mechanism documentation covering release packaging (generate_agents), init extraction, and upgrade replacement flows."
+
+related_specs:
+  - claude-code-extract-command-20260127152345
+  - explore-command-20260202090346
+
+related_context:
+  - extract-command
+  - explore-command
+  - agent-template-conventions
+  - cli-architecture
+
+notes: |
+  The sub-agent architecture is Claude Code-specific due to the Task tool requirement.
+  Other AI assistants (Gemini, Copilot, Cursor, etc.) do not have equivalent sub-agent
+  capabilities, so these templates are filtered out during release packaging.
+
+  Key constraints:
+  - Task tool required for spawning (Claude Code only)
+  - Parallel execution for speed (single message, multiple Task calls)
+  - Proposals pattern prevents race conditions in extractors
+  - Background execution pattern (run_in_background) for non-blocking archiving
+  - bypassPermissions for write-capable background agents
+
+  Distribution specifics:
+  - Only Claude packages include agents (generate_agents only called for claude)
+  - agents: field is build-time metadata, stripped from output
+  - Init extracts agents as part of normal ZIP extraction
+  - Upgrade does full folder replacement (backup + remove + copy)
+  - AGENT_FOLDER_MAP drives upgrade path resolution
+
+  Creating new agents:
+  1. Add template to src/templates/agents/{name}.md
+  2. Include frontmatter with name, description, tools, model, agents fields
+  3. Define agent's purpose and return format in body
+  4. Test locally (agents auto-discovered from .claude/agents/)
+  5. Release packaging will distribute to appropriate agent packages

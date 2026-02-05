@@ -58,7 +58,7 @@ version: "2.1"
 
 # Timestamps (populated by /buildforce.extract on first run)
 generated_at: "2026-02-02"
-last_updated: "2026-02-02"
+last_updated: "2026-02-05"
 
 # ============================================================================
 # CODEBASE PROFILE
@@ -274,7 +274,16 @@ domains:
         depth: shallow
         description: Session-aware brainstorming command using Context Explorers for conversational context retrieval
         tags: [ slash-command, explore, context-retrieval, sub-agents, conversational, session-state ]
-        related_context: [ slash-commands, extract-command, research-slash-command, cli-architecture ]
+        related_context: [ slash-commands, extract-command, research-slash-command, cli-architecture, sub-agent-architecture ]
+
+      - id: sub-agent-architecture
+        file: architecture/sub-agent-architecture.yaml
+        type: structural
+        status: extracted
+        depth: deep
+        description: Claude Code sub-agent pattern with Explorer/Extractor/Archiver families, Task tool spawning, and distribution mechanism
+        tags: [ core, architecture, sub-agents, task-tool, claude-code-only, agent-families, distribution ]
+        related_context: [ extract-command, explore-command, cli-architecture, agent-template-conventions ]
 
   conventions:
     description: |
@@ -375,6 +384,16 @@ domains:
         enforcement: strict
         related_context: [ yaml-extension-standard ]
 
+      - id: agent-template-conventions
+        file: conventions/agent-template-conventions.yaml
+        type: convention
+        status: extracted
+        depth: moderate
+        description: Conventions for writing buildforce agent templates (frontmatter, tools, output formats)
+        sub_type: code-convention
+        enforcement: strict
+        related_context: [ sub-agent-architecture, extract-command, explore-command ]
+
   verification:
     description: |
       Verification context about HOW to know if code is right.
@@ -436,9 +455,9 @@ domains:
 
 summary:
   overall_coverage: 100
-  total_items: 36
-  extracted_items: 36
-  iterations_completed: 2
+  total_items: 38
+  extracted_items: 38
+  iterations_completed: 4
 
 # ============================================================================
 # EXTRACTION STATE
