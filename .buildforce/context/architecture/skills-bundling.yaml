@@ -3,13 +3,14 @@ name: Skills Bundling System
 type: structural
 status: production
 created: "2026-02-04"
-last_updated: "2026-02-04"
+last_updated: "2026-02-09"
 
 summary: |
   Release packaging functionality that bundles Claude Code skills from src/templates/skills/
   into .claude/skills/ in release ZIP packages. Skills are stored as directories containing
-  SKILL.md files with optional YAML frontmatter for agent filtering. Follows the same
-  pattern as generate_agents() for consistency. Currently Claude-only feature.
+  SKILL.md files with YAML frontmatter for agent filtering and skill configuration.
+  Follows the same pattern as generate_agents() for consistency. Currently Claude-only feature.
+  Primary consumer: buildforce-context-extract skill for automatic context extraction.
 
 responsibilities:
   - Bundle skill folders from src/templates/skills/ into release packages
@@ -112,6 +113,20 @@ evolution:
 
 related_specs:
   - skills-bundling-config-concat-20260204000000
+
+extract_skill_integration: |
+  The skills bundling system is critical to the extract skill deployment chain:
+  1. Source: src/templates/skills/buildforce-context-extract/SKILL.md (with YAML frontmatter)
+  2. Bundling: generate_skills() copies to .claude/skills/buildforce-context-extract/ in release ZIP
+  3. Deployment: init/upgrade extracts to user's .claude/skills/ directory
+  4. Activation: Stop hook (configured by settings-merge) calls the skill after conversations
+  5. Command: extract.md thin wrapper also delegates to the skill for manual invocation
+
+  The SKILL.md frontmatter includes:
+  - name: buildforce-context-extract
+  - user-invocable: true
+  - context: fork
+  - allowed-tools: [Read, Write, Edit, Glob, Grep, Bash, Task]
 
 notes: |
   Skills bundling enables the full auto-context-extractor workflow by ensuring

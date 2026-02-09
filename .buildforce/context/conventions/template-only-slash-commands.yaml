@@ -4,7 +4,7 @@ type: convention
 sub_type: architectural-pattern
 enforcement: strict
 created: "2026-01-26"
-last_updated: "2026-02-02"
+last_updated: "2026-02-09"
 
 description: |
   All slash commands are implemented as markdown templates in src/templates/commands/,
@@ -101,6 +101,16 @@ edge_cases:
     explanation: |
       Some commands like /buildforce.extract are Claude Code-only (use Task tool).
       The template still contains all logic; agent restriction is documented in frontmatter.
+
+  - case: "Skill delegation pattern"
+    explanation: |
+      Commands can delegate to Claude Code skills (.claude/skills/). The extract.md command
+      is a thin wrapper: "Call the buildforce-context-extract skill with these arguments: $ARGUMENTS".
+      This is valid because: (1) the command template still exists in src/templates/commands/,
+      (2) the logic lives in a skill SKILL.md (still markdown, still AI-interpretable),
+      (3) enables Stop hook activation without user invocation. The skill-delegation pattern
+      extends template-only commands by allowing the same logic to be triggered from multiple
+      entry points (command invocation and event hooks).
 
 enforcement_mechanism:
   primary: "Code review - PRs adding TypeScript command handlers are rejected"
