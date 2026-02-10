@@ -1,6 +1,12 @@
 ---
-version: "0.0.42"
-description: Context-aware brainstorming with dynamic context provisioning using Context Explorer sub-agents.
+name: context-search
+description: >-
+  Search the Buildforce context repository for curated codebase knowledge — architecture
+  decisions, conventions, verification standards, and design rationale. Use this skill
+  whenever the conversation requires existing knowledge or context about this specific
+  codebase that cannot be easily derived from reading source files. This enriches agentic
+  search with structured understanding of WHY the code was built a certain way, what
+  patterns to follow, and what pitfalls to avoid.
 agents: [claude]
 ---
 
@@ -8,11 +14,7 @@ User input:
 
 $ARGUMENTS
 
-**Context**: The user is invoking `/buildforce.explore` to have a natural conversation about their codebase with automatic context retrieval. This command uses Explorer sub-agents to search the context repository and synthesize findings conversationally.
-
-**Key Principle**: This is a conversation, not a research report. Respond as a knowledgeable colleague who deeply understands the codebase.
-
-**This is an exploratory brainstorming session.** The user will ask follow-up questions, challenge ideas, shift topics, and explore tangents - all without re-invoking `/buildforce.explore`. Treat every subsequent user message as a continuation of this session. Stay in exploration mode across multiple iterations until the user explicitly moves on to a different workflow.
+**Context**: The user (or agent) is invoking `/context-search` to query the Buildforce context repository for curated codebase knowledge. This skill uses Context Explorer sub-agents to search structured context and synthesize findings.
 
 ---
 
@@ -22,13 +24,13 @@ Read `.buildforce/context/_index.yaml` - if it does NOT exist, inform user: "No 
 
 ---
 
-## CRITICAL: Why This Workflow Exists
+## CRITICAL: Why This Skill Exists
 
-**The purpose of `/buildforce.explore` is to enhance response quality and depth, not speed.**
+**The purpose of `/context-search` is to enrich agentic search with curated context that source files lack.**
 
-By default, you (the agent) do not tap into the user's context repository. This command exists to fix that gap. The Context Explorers query structured context that was carefully extracted about this specific codebase - architectural decisions, conventions, verification standards, design rationale - information you cannot get from reading source files alone.
+By default, the agent does not tap into the project's context repository. This skill exists to fix that gap. The Context Explorers query structured context that was carefully extracted about this specific codebase — architectural decisions, conventions, verification standards, design rationale — information that cannot be derived from reading source files alone.
 
-Source files tell you WHAT the code does. The context repository tells you WHY it was built that way, what patterns to follow, what pitfalls to avoid, and how components relate. Both are valuable, but context comes first.
+Source files tell you WHAT the code does. The context repository tells you WHY it was built that way, what patterns to follow, what pitfalls to avoid, and how components relate. Both are valuable, but curated context comes first.
 
 ### The Correct Order: Context First, Then Source
 
@@ -55,7 +57,7 @@ Skip dispatching explorers ONLY when the user's query has nothing to do with thi
 - General programming questions unrelated to the project
 - External concepts the context repository cannot possibly contain
 
-In these cases, respond directly without explorers - dispatching them would return nothing useful.
+In these cases, respond directly without explorers — dispatching them would return nothing useful.
 
 **When in doubt, dispatch the explorers.** An empty result is informative; skipping them is not.
 
@@ -63,7 +65,7 @@ In these cases, respond directly without explorers - dispatching them would retu
 
 ## Step 1: Analyze Intent
 
-Parse the user's prompt ($ARGUMENTS) and any session history:
+Parse the user's prompt ($ARGUMENTS):
 
 ### 1.1 Topic Detection
 
@@ -78,7 +80,6 @@ Classify the user's intent:
 
 | Intent Type | Signal Words | Action |
 |-------------|--------------|--------|
-| **Continuation** | "continue", "back to", "more about", "as we discussed" | Build on prior context |
 | **New Topic** | "what about", "let's discuss", "how does", "tell me about" | Fresh exploration |
 | **Question** | "why is", "should we", "what if", "could we" | Answer with context |
 | **Open** | No specific direction, general prompt | Broad exploration |
@@ -93,9 +94,8 @@ Determine which context domains are relevant:
 | Code patterns/style | Secondary | Primary | If relevant |
 | Testing/quality | Secondary | If relevant | Primary |
 | General/open | Broad | Broad | Broad |
-| Continuation | Based on prior topic mix | | |
 
-**Not all explorers need to be dispatched every turn.** Be selective based on intent.
+**Not all explorers need to be dispatched every time.** Be selective based on intent.
 
 ---
 
@@ -123,7 +123,7 @@ For each relevant explorer:
 ```
 Task tool parameters:
 - subagent_type: "buildforce-structural-explorer" | "buildforce-convention-explorer" | "buildforce-verification-explorer"
-- prompt: Include query, scope (broad|focused|deep), and session context
+- prompt: Include query, scope (broad|focused|deep), and any relevant context
 - model: haiku
 ```
 
@@ -183,8 +183,8 @@ When the user asks about X and explorers return findings about Y (something rela
 
 **The test**: Before synthesizing, ask yourself: "Did I find what the user actually asked about, or did I find something adjacent?" If adjacent, you MUST acknowledge that the actual thing doesn't exist.
 
-**Tangentially related findings are still useful** - but only AFTER you've acknowledged the gap:
-> "The codebase doesn't have a skills system. However, it does have a sub-agent architecture that could potentially support skills in the future - want me to explain how that works?"
+**Tangentially related findings are still useful** — but only AFTER you've acknowledged the gap:
+> "The codebase doesn't have a skills system. However, it does have a sub-agent architecture that could potentially support skills in the future — want me to explain how that works?"
 
 Never pretend that tangentially related information answers the user's actual question.
 
@@ -192,7 +192,7 @@ Never pretend that tangentially related information answers the user's actual qu
 
 ## Step 4: Synthesize Response
 
-**This is the critical step.** Transform findings into natural conversation.
+**This is the critical step.** Transform findings into a clear, context-enriching response.
 
 ### Synthesis Guidelines
 
@@ -210,101 +210,35 @@ Never pretend that tangentially related information answers the user's actual qu
 
 4. **Acknowledge gaps honestly**
    - **Don't**: Pretend to know what isn't documented
-   - **Do**: "The rotation strategy isn't fully documented yet - want to explore that?"
+   - **Do**: "The rotation strategy isn't fully documented yet — want to explore that?"
 
-5. **Invite continuation**
-   - **Don't**: End abruptly and wait
-   - **Do**: Offer threads to pull, questions to explore, connections to follow
+5. **Offer follow-up threads**
+   - Surface connections, gaps, or deeper areas the user might want to explore next
 
 ### Response Structure
 
 ```
-[Natural response addressing user's intent]
+[Direct response addressing user's intent]
 
-[Integrated context that informs the response - woven in naturally]
+[Integrated context that informs the response — woven in naturally]
 
-[Connections to related topics if relevant - mentioned casually]
+[Connections to related topics if relevant — mentioned casually]
 
-[Open threads: gaps, questions, suggested directions - as conversation invites]
+[Open threads: gaps, questions, suggested directions]
 ```
 
 ### Example Good Response
 
-**User**: "let's discuss the auth system"
+**User**: "tell me about the auth system"
 
 **Response**:
-"The auth system is built around JWT tokens with a 15-minute expiration - that was a deliberate choice for horizontal scaling since it avoids session state in the services. Refresh tokens live in Redis with a 7-day TTL.
+"The auth system is built around JWT tokens with a 15-minute expiration — that was a deliberate choice for horizontal scaling since it avoids session state in the services. Refresh tokens live in Redis with a 7-day TTL.
 
-What's interesting is how this connects to billing - the JWT carries subscription tier claims, so the billing service doesn't need a separate auth call. The API gateway validates signatures at the edge with no introspection, which keeps latency low.
+What's interesting is how this connects to billing — the JWT carries subscription tier claims, so the billing service doesn't need a separate auth call. The API gateway validates signatures at the edge with no introspection, which keeps latency low.
 
-There's a gap in the documented context around token rotation - the strategy for rotating signing keys isn't captured yet. Also, the refresh token revocation flow is mentioned but not detailed.
+There's a gap in the documented context around token rotation — the strategy for rotating signing keys isn't captured yet. Also, the refresh token revocation flow is mentioned but not detailed.
 
-What aspect would you like to dig into - the refresh flow, how it connects to billing, or something else?"
-
----
-
-## Step 5: Continue Conversation
-
-On each subsequent user message:
-
-1. **Parse new intent** in context of conversation history
-2. **Decide: re-dispatch or respond?**
-   - Topic shift → dispatch relevant explorers
-   - Same topic, need depth → dispatch with "deep" scope
-   - Same topic, sufficient context → respond from existing understanding
-   - Clarification → respond without dispatch
-3. **Synthesize** with accumulated understanding
-
----
-
-## Step 6: Archive Exploration Session Findings
-
-**This step is mandatory.** Dispatch the Archiver in the background to capture key findings. Do not skip this step.
-
-### 6.1 CRITICAL: When to Spawn the Archiver
-
-**Spawn the Archiver ONLY after you have completely finished your response to the user.**
-
-The correct sequence is:
-1. Synthesize your response (Step 4 or 5)
-2. **Present your complete response to the user** including any follow-up questions
-3. **Then, as your final action before waiting for user input**, dispatch the Archiver
-
-**DO NOT** dispatch the Archiver:
-- While you are still searching for context
-- Before you have presented your response
-- In the middle of your response
-- At the same time as explorer dispatches
-
-The Archiver is the **last thing you do** after a complete request/response cycle.
-
-### 6.2 Archiver Dispatch
-
-```
-Task tool parameters:
-- subagent_type: "buildforce-archiver"
-- prompt: Include session state, key findings, topics explored
-- run_in_background: true
-- model: sonnet
-```
-
-The archiver will store findings to the appropriate location without blocking the conversation.
-
-**User should never wait for saves** - archiving is invisible to them.
-
-### 6.3 CRITICAL: Ignore Archiver Completion Events
-
-When the Archiver completes in the background, Claude Code will notify you with a message like "Agent completed" or similar. **You MUST ignore this notification entirely.**
-
-**DO NOT:**
-- Respond to the archiver completion event
-- Say things like "Session findings archived" or "Research saved"
-- Offer follow-up questions again after archiver completion
-- Acknowledge the archiver's work in any way to the user
-
-The archiver is invisible infrastructure. Its completion is not a conversation turn. If you see an archiver completion notification, **do nothing** - wait silently for the user's next actual message.
-
-If you already asked the user a follow-up question before the archiver completed, that question stands. Do not repeat it or rephrase it when the archiver finishes.
+What aspect would you like to dig into — the refresh flow, how it connects to billing, or something else?"
 
 ---
 
@@ -316,7 +250,7 @@ If you already asked the user a follow-up question before the archiver completed
 
 ### Partial Context
 
-> "I have some context about {topic} but it's fairly shallow - just the basic structure, not the deeper rationale. [Use what exists.] Want me to dig into the codebase directly, or work with what we have?"
+> "I have some context about {topic} but it's fairly shallow — just the basic structure, not the deeper rationale. [Use what exists.] Want me to dig into the codebase directly, or work with what we have?"
 
 ### Explorer Timeout
 
@@ -326,15 +260,15 @@ If explorers take too long (> 5 seconds):
 ### Conflicting Information
 
 If findings from different domains conflict:
-> "Interesting - there's a tension here. The architecture docs say X, but the convention guide suggests Y. This might be an inconsistency worth addressing. Which direction aligns with where the project is heading?"
+> "Interesting — there's a tension here. The architecture docs say X, but the convention guide suggests Y. This might be an inconsistency worth addressing. Which direction aligns with where the project is heading?"
 
 ---
 
 ## Design Principles Reminder
 
 - **Invisible retrieval**: Users shouldn't feel like they're waiting for a search
-- **Conversational, not report-like**: Lead with understanding, not sourcing
-- **Targeted, not exhaustive**: Fetch only what's needed for the current exchange
+- **Context-enriching, not exhaustive**: Fetch only what's needed to inform the current task
+- **Targeted, not exhaustive**: Dispatch only the explorers relevant to the query
 - **Honest about gaps**: Acknowledge when context doesn't exist, don't fabricate
 - **Token efficient**: Only dispatch explorers when new context is actually needed
 
@@ -345,19 +279,13 @@ If findings from different domains conflict:
 ```
 User prompt → Analyze intent → Select explorers → Dispatch in parallel
                     ↓
-         [continuation?] → Check session state → Use existing context OR re-dispatch
-                    ↓
          [new topic?] → Dispatch relevant explorers
                     ↓
          [question?] → Dispatch based on question domain
                     ↓
          [open?] → Dispatch all three (broad)
                     ↓
-         Synthesize response → Present COMPLETE response to user
-                    ↓
-         THEN (as final action) → Dispatch archiver (background)
-                    ↓
-         Archiver completes → IGNORE (do not respond)
+         Synthesize response → Present response to user
 ```
 
 Context: {$ARGUMENTS}

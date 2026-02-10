@@ -134,6 +134,50 @@ generate_agents() {
   done
 }
 
+generate_skills() {
+  local agent=$1 output_dir=$2
+  [[ -d src/templates/skills ]] || return
+  for skill_dir in src/templates/skills/*/; do
+    [[ -d "$skill_dir" ]] || continue
+    local skill_name skill_file agents_field
+    skill_name=$(basename "$skill_dir")
+    skill_file="$skill_dir/SKILL.md"
+    [[ -f "$skill_file" ]] || continue
+
+    # Normalize line endings
+    file_content=$(tr -d '\r' < "$skill_file")
+
+    # Check for agent-specific filtering (same as commands/agents)
+    agents_field=$(printf '%s\n' "$file_content" | awk '/^agents:/ {sub(/^agents:[[:space:]]*/, ""); print; exit}' 2>/dev/null || true)
+    if [[ -n "$agents_field" ]]; then
+      if ! echo "$agents_field" | grep -qw "$agent"; then
+        echo "  [filter] Skipping skill $skill_name for $agent (agents: $agents_field)"
+        continue
+      else
+        echo "  [filter] Including skill $skill_name for $agent (agents: $agents_field)"
+      fi
+    fi
+
+    # Remove the agents: field from frontmatter before copying
+    local body
+    body=$(printf '%s\n' "$file_content" | awk '
+      /^---$/ { print; if (++dash_count == 1) in_frontmatter=1; else in_frontmatter=0; next }
+      in_frontmatter && /^agents:/ { next }
+      { print }
+    ')
+
+    mkdir -p "$output_dir/$skill_name"
+    echo "$body" > "$output_dir/$skill_name/SKILL.md"
+
+    # Copy any supporting files in the skill directory (exclude SKILL.md itself)
+    for support_file in "$skill_dir"*; do
+      [[ -f "$support_file" ]] || continue
+      [[ "$(basename "$support_file")" == "SKILL.md" ]] && continue
+      cp "$support_file" "$output_dir/$skill_name/"
+    done
+  done
+}
+
 build_variant() {
   local agent=$1 script=$2
   local base_dir="$GENRELEASES_DIR/sdd-${agent}-package-${script}"
@@ -167,7 +211,7 @@ build_variant() {
     mkdir -p "$SPEC_DIR/templates"
     # Copy template files, excluding commands and agents subdirectories
     # (commands go to agent-specific folders, agents go to .claude/agents/)
-    find src/templates -type f -not -path "src/templates/commands/*" -not -path "src/templates/agents/*" | while read -r file; do
+    find src/templates -type f -not -path "src/templates/commands/*" -not -path "src/templates/agents/*" -not -path "src/templates/skills/*" -not -path "src/templates/hooks/*" | while read -r file; do
       # Get the relative path from src/templates
       rel_path="${file#src/templates/}"
       dest_file="$SPEC_DIR/templates/$rel_path"
@@ -214,6 +258,20 @@ build_variant() {
       if [[ -d src/templates/agents ]]; then
         mkdir -p "$base_dir/.claude/agents"
         generate_agents claude "$base_dir/.claude/agents"
+      fi
+      # Claude Code supports skills - generate them if any exist
+      if [[ -d src/templates/skills ]]; then
+        mkdir -p "$base_dir/.claude/skills"
+        generate_skills claude "$base_dir/.claude/skills"
+      fi
+      # Claude Code hooks - copy hook scripts if any exist
+      if [[ -d src/templates/hooks ]]; then
+        mkdir -p "$base_dir/.claude/hooks"
+        for hook_file in src/templates/hooks/*; do
+          [[ -f "$hook_file" ]] || continue
+          cp "$hook_file" "$base_dir/.claude/hooks/"
+        done
+        echo "Copied hooks -> .claude/hooks"
       fi
       ;;
     gemini)

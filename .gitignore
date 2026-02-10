@@ -25,5 +25,6 @@ inspiration/
 .claude/commands/**
 .claude/agents/**
 .claude/hooks/**
+.claude/skills/**
 .cursor/commands/**
 .genreleases/

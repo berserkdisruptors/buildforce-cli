@@ -6,6 +6,7 @@ import chalk from "chalk";
 import { StepTracker } from "../../lib/step-tracker.js";
 import { downloadTemplateFromGithub } from "../../lib/github.js";
 import { saveBuildforceConfig } from "../../utils/config.js";
+import { mergeHooksSettings } from "../../utils/hooks.js";
 import { AGENT_FOLDER_MAP, MINT_COLOR } from "../../constants.js";
 import { resolveLocalArtifact } from "../../lib/local-artifacts.js";
 import { createMigrationRunner } from "./migrations/registry.js";
@@ -220,6 +221,29 @@ export async function executeUpgrade(
             console.log(chalk.gray(`  would create ${agentFolder}/agents/`));
           }
         }
+
+        // Check if source has skills (e.g., .claude/skills for Claude Code)
+        const skillsSrcPath = path.join(sourceDir, agentFolder, "skills");
+        const skillsPath = path.join(projectPath, agentFolder, "skills");
+        if (await fs.pathExists(skillsSrcPath)) {
+          if (await fs.pathExists(skillsPath)) {
+            console.log(chalk.gray(`  would update ${agentFolder}/skills/`));
+          } else {
+            console.log(chalk.gray(`  would create ${agentFolder}/skills/`));
+          }
+        }
+
+        // Check if source has hooks (e.g., .claude/hooks for Claude Code)
+        const hooksSrcPath = path.join(sourceDir, agentFolder, "hooks");
+        const hooksPath = path.join(projectPath, agentFolder, "hooks");
+        if (await fs.pathExists(hooksSrcPath)) {
+          if (await fs.pathExists(hooksPath)) {
+            console.log(chalk.gray(`  would update ${agentFolder}/hooks/`));
+          } else {
+            console.log(chalk.gray(`  would create ${agentFolder}/hooks/`));
+          }
+          console.log(chalk.gray(`  would merge hooks config into ${agentFolder}settings.local.json`));
+        }
       }
 
       const templatesPath = path.join(projectPath, ".buildforce", "templates");
@@ -297,6 +321,41 @@ export async function executeUpgrade(
           await fs.ensureDir(path.dirname(agentsDest));
           await fs.remove(agentsDest);
           await fs.copy(agentsSrc, agentsDest);
+        }
+
+        // Replace skills (e.g., .claude/skills/ for Claude Code)
+        const skillsSrc = path.join(sourceDir, agentFolder, "skills");
+        const skillsDest = path.join(projectPath, agentFolder, "skills");
+
+        if (await fs.pathExists(skillsSrc)) {
+          // Backup skills if they exist
+          if (await fs.pathExists(skillsDest)) {
+            await fs.copy(skillsDest, path.join(backupDir, agent, "skills"));
+          }
+
+          // Replace skills
+          await fs.ensureDir(path.dirname(skillsDest));
+          await fs.remove(skillsDest);
+          await fs.copy(skillsSrc, skillsDest);
+        }
+
+        // Replace hooks (e.g., .claude/hooks/ for Claude Code)
+        const hooksSrc = path.join(sourceDir, agentFolder, "hooks");
+        const hooksDest = path.join(projectPath, agentFolder, "hooks");
+
+        if (await fs.pathExists(hooksSrc)) {
+          // Backup hooks if they exist
+          if (await fs.pathExists(hooksDest)) {
+            await fs.copy(hooksDest, path.join(backupDir, agent, "hooks"));
+          }
+
+          // Replace hooks
+          await fs.ensureDir(path.dirname(hooksDest));
+          await fs.remove(hooksDest);
+          await fs.copy(hooksSrc, hooksDest);
+
+          // Merge hooks configuration into settings.local.json
+          await mergeHooksSettings(projectPath, agentFolder);
         }
       }
 
@@ -441,6 +500,20 @@ export async function executeUpgrade(
             const agentsDest = path.join(projectPath, agentFolder, "agents");
             await fs.remove(agentsDest);
             await fs.copy(agentsBackup, agentsDest);
+          }
+
+          const skillsBackup = path.join(backupDir, agent, "skills");
+          if (await fs.pathExists(skillsBackup)) {
+            const skillsDest = path.join(projectPath, agentFolder, "skills");
+            await fs.remove(skillsDest);
+            await fs.copy(skillsBackup, skillsDest);
+          }
+
+          const hooksBackup = path.join(backupDir, agent, "hooks");
+          if (await fs.pathExists(hooksBackup)) {
+            const hooksDest = path.join(projectPath, agentFolder, "hooks");
+            await fs.remove(hooksDest);
+            await fs.copy(hooksBackup, hooksDest);
           }
         }
 

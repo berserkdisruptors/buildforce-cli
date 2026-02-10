@@ -9,7 +9,9 @@ import {
   initGitRepo,
 } from "../../utils/index.js";
 import { createConfigContent } from "../../utils/config.js";
+import { mergeHooksSettings } from "../../utils/hooks.js";
 import { resolveLocalArtifact } from "../../lib/local-artifacts.js";
+import { AGENT_FOLDER_MAP } from "../../constants.js";
 
 /**
  * Execute project setup steps with progress tracking
@@ -194,6 +196,17 @@ export async function setupProject(
     }
 
     tracker.complete("config", ".buildforce/buildforce.json");
+
+    // Merge hooks settings for agents that support them (e.g. Claude Code)
+    for (const agent of successfulAgents) {
+      const agentFolder = AGENT_FOLDER_MAP[agent];
+      if (agentFolder) {
+        const result = await mergeHooksSettings(projectPath, agentFolder);
+        if (result.updated && debug) {
+          console.log(chalk.gray(`\nMerged hooks config into ${agentFolder}settings.local.json`));
+        }
+      }
+    }
 
     // Ensure buildforce.json and .temp folder are in .gitignore
     const gitignorePath = path.join(projectPath, ".gitignore");
