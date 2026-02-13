@@ -1,64 +1,110 @@
 id: extract-command
-name: Extract Command
+name: Extract Command & Skill
 type: structural
 status: production
 created: "2026-01-28"
-last_updated: "2026-02-02"
+last_updated: "2026-02-09"
 
 summary: |
-  Claude Code-specific slash command for iterative context extraction from fresh codebases.
-  Uses Context Manager + Context Extractors sub-agent architecture to parallelize extraction across
-  three domains (architecture, conventions, verification). Solves the "cold start" problem for
-  new repositories by bootstrapping the context repository with discovered and extracted items.
+  Claude Code-specific context extraction system with a two-layer architecture:
+  1. Thin command layer (extract.md) that delegates to the skill
+  2. Full skill layer (buildforce-context-extract SKILL.md) containing all extraction logic
+
+  The skill handles three unified extraction modes:
+  - Cold Start: Bootstraps context repository from scratch when no _index.yaml exists
+  - Focused: Deep-dives into specific areas based on user prompts
+  - Incremental: Automatic updates triggered by Stop hook after code changes
+
+  Uses parallel sub-agent architecture (buildforce-structural-extractor, buildforce-conventions-extractor,
+  buildforce-verification-extractor) to extract across three domains (architecture, conventions, verification).
+  Solves the "cold start" problem for new repositories and maintains context freshness via Stop hook.
 
 responsibilities:
-  - Scan fresh codebases to discover extractable context items
-  - Orchestrate parallel extraction via Context Extractor sub-agents (cm-1-structural, cm-2-convention, cm-3-verification)
+  - Route to correct extraction mode (cold start, focused, incremental) based on _index.yaml state and user input
+  - Scan fresh codebases to discover extractable context items (cold start mode)
+  - Interpret user prompts for targeted extraction (focused mode)
+  - Detect and filter meaningful code changes via git diff (incremental mode)
+  - Orchestrate parallel extraction via Context Extractor sub-agents (buildforce-structural-extractor, buildforce-conventions-extractor, buildforce-verification-extractor)
   - Maintain root _index.yaml as both context index AND coverage map
-  - Track extraction depth (none → shallow → moderate → deep) per item
+  - Track extraction depth (none -> shallow -> moderate -> deep) per item
   - Validate extractor proposals before writing to context files
-  - Support iterative depth extraction based on user focus prompts
+  - Merge new context into existing files (context preservation rule)
+  - Activate automatically via Stop hook for incremental updates
 
 dependencies:
   internal:
     - cli-architecture: "Template distributed via agent-specific release packaging"
-    - slash-commands: "Part of the slash command system"
+    - slash-commands: "Part of the slash command system (extract.md is the command entry point)"
+    - skills-bundling: "Skill deployed via generate_skills() in release packaging"
+    - settings-merge-utility: "Stop hook configured via mergeClaudeSettings for incremental mode activation"
     - upgrade-command: "v2.1 migration adds coverage map fields to _index.yaml"
   external:
     - Claude Code Task tool: "Required for sub-agent spawning - extract command is Claude Code only"
+    - Claude Code Skills: "Skill loaded from .claude/skills/buildforce-context-extract/SKILL.md"
+    - Claude Code Hooks: "Stop hook in .claude/settings.local.json triggers incremental mode"
 
 files:
   primary:
+    - src/templates/skills/buildforce-context-extract/SKILL.md
     - src/templates/commands/extract.md
-    - src/templates/agents/cm-1-structural.md
-    - src/templates/agents/cm-2-convention.md
-    - src/templates/agents/cm-3-verification.md
-    - src/templates/extraction-progress-template.yaml
+    - src/templates/agents/buildforce-structural-extractor.md
+    - src/templates/agents/buildforce-conventions-extractor.md
+    - src/templates/agents/buildforce-verification-extractor.md
+    - .buildforce/templates/extraction-progress-template.yaml
   secondary:
+    - .buildforce/templates/hooks/config.json
     - .github/workflows/scripts/create-release-packages.sh
+    - src/utils/settings-merge.ts
 
 workflow:
-  first_run:
-    - step: "Scan codebase structure"
-      action: "Analyze project files to identify modules, patterns, conventions"
-    - step: "Create/update _index.yaml"
-      action: "Populate domains.*.items[] with discovered items (status=discovered, depth=none)"
-    - step: "Spawn Context Extractors"
-      action: "Launch cm-1, cm-2, cm-3 sub-agents in parallel via Task tool"
-    - step: "Validate proposals"
-      action: "Context Manager receives extractor proposals and validates against _index.yaml"
-    - step: "Write context files"
-      action: "Create context files for approved proposals, update _index.yaml status to extracted"
+  mode_routing:
+    - step: "Read _index.yaml"
+      action: "Check version and existence to determine mode"
+    - step: "Route to mode"
+      action: |
+        Decision tree:
+        1. No _index.yaml or version < 2.1 -> COLD START
+        2. _index.yaml exists, version >= 2.1:
+           - $ARGUMENTS non-empty -> FOCUSED
+           - $ARGUMENTS empty -> INCREMENTAL
 
-  subsequent_runs:
-    - step: "Interpret user prompt"
-      action: "Parse focus area from user input (e.g., 'go deeper on authentication')"
+  cold_start:
+    - step: "Scan codebase structure"
+      action: "Read README, root configs, list directories (depth 3), identify languages/frameworks"
+    - step: "Create/update _index.yaml"
+      action: "Set version 2.1, populate domains.*.items[] with discovered items (status=discovered, depth=none)"
     - step: "Generate mining plans"
-      action: "Create focused extraction plans for relevant items"
-    - step: "Execute targeted extraction"
-      action: "Spawn extractors with specific focus areas"
-    - step: "Update coverage"
-      action: "Increase depth level for extracted items"
+      action: "Create _extraction-progress.yaml in each domain folder with all items at target_depth: shallow"
+    - step: "Deploy extractors"
+      action: "Spawn all three sub-agents in parallel via Task tool"
+    - step: "Validate and write"
+      action: "Receive proposals, validate, merge into context files, update _index.yaml"
+
+  focused:
+    - step: "Interpret user prompt"
+      action: "Parse focus area (e.g., 'go deeper on X', 'what about Y?', general topic)"
+    - step: "Generate focused plans"
+      action: "Create _extraction-progress.yaml targeting specific items at current_depth + 1"
+    - step: "Deploy extractors"
+      action: "Spawn extractors with focused mining plans"
+    - step: "Validate and write"
+      action: "Merge proposals into existing files (context preservation rule)"
+
+  incremental:
+    - step: "Get changed files"
+      action: "Run git diff --name-status HEAD and git status --porcelain"
+    - step: "Filter trivial changes"
+      action: "Disregard root-level *.md, lock files, .buildforce/*, .gitignored, whitespace-only"
+    - step: "Assess significance"
+      action: "Proceed if meaningful changes; skip if minor (renaming, comments, typos)"
+    - step: "Identify affected modules"
+      action: "Group files by directory, derive semantic module names"
+    - step: "Generate scoped plans"
+      action: "Create _extraction-progress.yaml targeting only affected modules at moderate depth"
+    - step: "Deploy extractors"
+      action: "Spawn extractors with scoped plans"
+    - step: "Compact output"
+      action: "3-line summary: N created, M updated"
 
 design_decisions:
   - decision: "Claude Code only - not available to other agents"
@@ -82,28 +128,83 @@ design_decisions:
   - decision: "Agent-specific filtering via frontmatter agents field"
     rationale: "Template includes 'agents: [claude]' in YAML frontmatter. Release packaging script (create-release-packages.sh) filters templates based on this field. Non-Claude packages don't include extract.md."
 
+  - decision: "Skill-based architecture over command-embedded logic"
+    rationale: |
+      The extract.md command is a thin wrapper that calls the buildforce-context-extract skill.
+      This enables: (1) Stop hook activation for incremental mode without user invocation,
+      (2) Skill reuse across both command and hook entry points, (3) Clean separation of
+      entry point (command) from logic (skill). The SKILL.md contains all mode routing,
+      extraction orchestration, and output formatting logic.
+
+  - decision: "Stop hook for automatic incremental extraction"
+    rationale: |
+      The Stop hook in .claude/settings.local.json calls the skill after every conversation.
+      When invoked without arguments ($ARGUMENTS is empty), the skill routes to incremental mode.
+      This keeps context fresh without manual /buildforce.extract invocations. The hook is
+      configured via .buildforce/templates/hooks/config.json merged by settings-merge utility.
+
+  - decision: "Renamed sub-agents from cm-* to buildforce-*-extractor"
+    rationale: |
+      Original names (cm-1-structural, cm-2-convention, cm-3-verification) used cryptic abbreviation.
+      New names (buildforce-structural-extractor, buildforce-conventions-extractor, buildforce-verification-extractor)
+      are self-documenting and follow the buildforce namespace convention. The descriptive naming
+      improves discoverability in .claude/agents/ directory.
+
+  - decision: "Unified mode routing in single SKILL.md"
+    rationale: |
+      All three extraction modes (cold start, focused, incremental) share the same deployment
+      and validation logic (Steps 4-5). A single skill file with mode routing at Step 0
+      eliminates code duplication. The decision tree is deterministic:
+      no _index.yaml -> cold start; arguments present -> focused; no arguments -> incremental.
+
+  - decision: "Context preservation as critical rule"
+    rationale: |
+      Existing context files contain accumulated knowledge from multiple extraction iterations.
+      The MERGE, DON'T REPLACE rule ensures updates add new sections and append to lists
+      rather than overwriting. This prevents loss of evolution history, architecture patterns,
+      and design decisions that extractors didn't specifically analyze in the current iteration.
+
 architecture_patterns:
+  two_layer_architecture: |
+    The extract system has two layers:
+
+    Layer 1 - Command Entry Point (extract.md):
+      - Thin wrapper: "Call the buildforce-context-extract skill with these arguments: $ARGUMENTS"
+      - Exists for user invocation via /buildforce.extract
+      - Passes through user arguments to the skill
+
+    Layer 2 - Skill Logic (SKILL.md in .claude/skills/buildforce-context-extract/):
+      - Contains all extraction logic: mode routing, plan generation, extractor deployment
+      - Entry points: command invocation (with args) OR Stop hook (without args)
+      - YAML frontmatter: name, description, user-invocable, context: fork, allowed-tools
+
   context_manager: |
-    The Context Manager (main extract.md template) orchestrates extraction:
-    1. Reads _index.yaml to understand current coverage state
-    2. Generates per-iteration _extraction-progress.yaml plans
-    3. Spawns Context Extractors via Claude Code Task tool
-    4. Receives proposals from extractors
-    5. Validates proposals against existing context
-    6. Writes approved context files
-    7. Updates _index.yaml with new status/depth
+    The SKILL.md acts as Context Manager, orchestrating extraction:
+    1. Routes to mode (cold start, focused, incremental) based on _index.yaml state
+    2. Reads _index.yaml to understand current coverage state
+    3. Generates per-iteration _extraction-progress.yaml plans
+    4. Spawns Context Extractors via Claude Code Task tool (3 parallel sub-agents)
+    5. Receives proposals from extractors
+    6. Validates proposals against existing context
+    7. Writes approved context files (with merge rules for updates)
+    8. Updates _index.yaml with new status/depth
+    9. Verifies materialization (N contributions = M files written)
+    10. Cleans up ephemeral plan files
 
   context_extractors: |
-    Three specialized sub-agents (cm-1, cm-2, cm-3):
-    - cm-1-structural: Extracts architecture context (modules, features, components)
-    - cm-2-convention: Extracts convention context (patterns, standards, practices)
-    - cm-3-verification: Extracts verification context (test expectations, quality standards)
+    Three specialized sub-agents:
+    - buildforce-structural-extractor: Architecture context (modules, features, components)
+    - buildforce-conventions-extractor: Convention context (patterns, standards, practices)
+    - buildforce-verification-extractor: Verification context (test expectations, quality standards)
 
     Each extractor:
     1. Reads its domain's _extraction-progress.yaml plan
-    2. Analyzes relevant codebase areas
-    3. Returns structured YAML proposals
-    4. Never writes directly to context files
+    2. Reads its domain's _schema.yaml for output format
+    3. Analyzes relevant codebase areas
+    4. Returns structured YAML proposals (contributions, new_discoveries, questions_for_user)
+    5. Never writes directly to context files
+
+    Extractor frontmatter: name, description, tools (Read, Glob, Grep), model: inherit, agents: [claude]
 
   coverage_map: |
     Root _index.yaml serves dual purpose:
@@ -114,17 +215,41 @@ architecture_patterns:
     - status: discovered | in-progress | extracted
     - depth: none | shallow | moderate | deep
 
+  deployment_chain: |
+    Full deployment chain from source to runtime activation:
+
+    1. Source: src/templates/skills/buildforce-context-extract/SKILL.md
+    2. Packaging: generate_skills() in create-release-packages.sh bundles to .claude/skills/
+    3. Hook config: .buildforce/templates/hooks/config.json defines Stop hook
+    4. Merge: mergeClaudeSettings() in settings-merge.ts adds hook to .claude/settings.local.json
+    5. Runtime (command): User invokes /buildforce.extract -> extract.md -> skill
+    6. Runtime (hook): Conversation ends -> Stop hook -> skill (incremental mode)
+
 evolution:
   - version: "1.0"
     date: "2026-01-28"
     changes: "Initial implementation with Context Manager + Extractors architecture, parallel execution, iterative depth model"
+
+  - version: "2.0"
+    date: "2026-02-09"
+    changes: |
+      Major architectural evolution to skill-based system:
+      - Extracted all logic from extract.md into SKILL.md (buildforce-context-extract skill)
+      - extract.md is now a thin wrapper delegating to the skill
+      - Added three unified extraction modes: cold start, focused, incremental
+      - Added Stop hook activation for automatic incremental extraction
+      - Renamed sub-agents from cm-* to buildforce-*-extractor
+      - Added context preservation (MERGE, DON'T REPLACE) as critical rule
+      - Added incremental mode with git diff analysis and change significance filtering
+      - Added verification before cleanup (N contributions = M files written)
+      - Skill deployed via skills-bundling and activated via settings-merge hook configuration
 
 related_specs:
   - claude-code-extract-command-20260127152345
 
 sub_agent_orchestration:
   spawning_pattern: |
-    Context Manager (extract.md) spawns three extractors in PARALLEL:
+    SKILL.md (acting as Context Manager) spawns three extractors in PARALLEL:
     1. Creates _extraction-progress.yaml in each domain folder
     2. Uses Claude Code Task tool with three simultaneous calls
     3. Each extractor runs independently, reading its plan
@@ -137,9 +262,18 @@ sub_agent_orchestration:
     2. READ: .buildforce/context/{domain}/_schema.yaml
     3. ANALYZE: Codebase files relevant to target items
     4. ANSWER: Verification criteria from plan
-    5. RETURN: Structured YAML proposals
+    5. RETURN: Structured YAML proposals (contributions, new_discoveries, questions_for_user, verification_status)
 
     Extractors NEVER write files directly - proposals only.
+
+  extractor_naming: |
+    Sub-agents (renamed in v2.0):
+    - buildforce-structural-extractor (was cm-1-structural)
+    - buildforce-conventions-extractor (was cm-2-convention)
+    - buildforce-verification-extractor (was cm-3-verification)
+
+    Located in: src/templates/agents/buildforce-*-extractor.md
+    Deployed to: .claude/agents/buildforce-*-extractor.md
 
   coordination: |
     No inter-extractor communication:
@@ -147,6 +281,7 @@ sub_agent_orchestration:
     - Context Manager handles all coordination
     - Parallel execution avoids sequential bottlenecks
     - Race conditions prevented by proposal-based writes
+    - Error handling: if an extractor times out (>120s) or fails, skip it and continue
 
 proposal_validation_flow:
   receive_proposals: |
@@ -257,17 +392,73 @@ critical_rules:
     - Log table showing each file + action + status
     - Only proceed to cleanup if counts match
 
+activation_mechanisms:
+  command_invocation: |
+    User types /buildforce.extract [args]:
+    1. Claude Code loads extract.md from .buildforce/commands/
+    2. extract.md contains: "Call the buildforce-context-extract skill with these arguments: $ARGUMENTS"
+    3. Claude Code loads SKILL.md from .claude/skills/buildforce-context-extract/
+    4. SKILL.md routes to FOCUSED mode (args non-empty) or relies on mode routing
+
+  stop_hook_invocation: |
+    Conversation ends (Stop event):
+    1. Claude Code reads .claude/settings.local.json
+    2. hooks.Stop contains: { type: "agent", prompt: "Call the buildforce-context-extract skill", timeout: 150 }
+    3. Skill invoked WITHOUT arguments ($ARGUMENTS is empty)
+    4. SKILL.md routes to INCREMENTAL mode (version >= 2.1, no arguments)
+    5. Analyzes git changes, filters trivial, extracts if significant
+
+  hook_configuration: |
+    The Stop hook is configured automatically during init/upgrade:
+    1. .buildforce/templates/hooks/config.json defines hook content
+    2. mergeClaudeSettings() in settings-merge.ts reads config.json
+    3. Merges into .claude/settings.local.json with additive-only strategy
+    4. Deduplicates to prevent multiple hook entries from repeated upgrades
+
+extension_points:
+  adding_extraction_mode: |
+    To add a new extraction mode:
+    1. Add routing condition in SKILL.md Step 0 (mode routing decision tree)
+    2. Create new Step N with mode-specific logic
+    3. Reuse shared Step 4 (Deploy Extractors) and Step 5 (Apply & Output)
+
+  adding_extractor: |
+    To add a new domain extractor:
+    1. Create src/templates/agents/buildforce-{domain}-extractor.md with frontmatter
+    2. Add domain to _index.yaml under domains.{domain}
+    3. Add _extraction-progress.yaml generation for new domain in SKILL.md Step 4.1
+    4. Add parallel Task call in Step 4.2
+
+  customizing_incremental_filters: |
+    The incremental mode filter rules (Step 3.2) determine which changes trigger extraction:
+    - Root-level *.md files are trivial (README, CHANGELOG)
+    - Lock files are trivial
+    - .buildforce/ files are trivial (internal context changes)
+    - Whitespace-only changes are trivial
+    Modify these rules to adjust sensitivity to code changes.
+
 notes: |
   First agent-specific slash command in Buildforce CLI. Sets precedent for future agent-specific features.
+  Evolved into a two-layer architecture: thin command + full skill.
 
   Key innovations:
   - Sub-agent orchestration pattern for complex multi-domain extraction
   - Coverage map in _index.yaml enables progress tracking across sessions
   - Iterative depth model gives users control over extraction scope
+  - Stop hook activation for automatic incremental context maintenance
+  - Skill-based architecture enabling both manual and automatic invocation
+  - Context preservation (MERGE, DON'T REPLACE) prevents knowledge loss
 
   Requirements for v2.1 schema:
   - Root _index.yaml must have domains.*.items[] arrays (not separate domain _index.yaml files)
   - Items track status and depth for coverage map functionality
   - Migration from v2.0 consolidates domain indexes into root
 
-  Template line count: 167 lines (under 200 line limit per NFR1)
+  Deployment requirements:
+  - skills-bundling must include the skill in release packages
+  - settings-merge must configure the Stop hook for incremental activation
+  - Both pieces required: skill exists AND hook activates it
+
+  Output modes:
+  - Full output (cold start & focused): Visual coverage map + iteration summary
+  - Compact output (incremental): 3-line summary (N created, M updated)

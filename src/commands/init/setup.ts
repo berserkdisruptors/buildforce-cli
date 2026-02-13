@@ -10,6 +10,7 @@ import {
 } from "../../utils/index.js";
 import { createConfigContent } from "../../utils/config.js";
 import { resolveLocalArtifact } from "../../lib/local-artifacts.js";
+import { mergeClaudeSettings } from "../../utils/settings-merge.js";
 
 /**
  * Execute project setup steps with progress tracking
@@ -48,6 +49,7 @@ export async function setupProject(
     ["extracted-summary", "Extraction summary"],
     ["chmod", "Ensure scripts executable"],
     ["config", "Create configuration file"],
+    ["merge-settings", "Merge Claude settings"],
     ["cleanup", "Cleanup"],
     ["git", "Initialize git repository"],
     ["final", "Finalize"],
@@ -239,6 +241,26 @@ export async function setupProject(
       if (modified) {
         await fs.writeFile(gitignorePath, gitignoreContent, "utf8");
       }
+    }
+
+    // Merge Claude settings if claude is one of the selected agents
+    tracker.start("merge-settings");
+    if (successfulAgents.includes("claude")) {
+      const templateConfigPath = ".buildforce/templates/hooks/config.json";
+      const mergeResult = await mergeClaudeSettings(projectPath, templateConfigPath, {
+        debug,
+      });
+
+      if (mergeResult.merged) {
+        const detail = mergeResult.hooksAdded
+          ? `${mergeResult.hooksAdded} hook(s) added`
+          : "settings created";
+        tracker.complete("merge-settings", detail);
+      } else {
+        tracker.skip("merge-settings", mergeResult.reason);
+      }
+    } else {
+      tracker.skip("merge-settings", "claude not selected");
     }
 
     // Git step

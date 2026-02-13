@@ -3,7 +3,7 @@ name: "Slash Commands System"
 type: structural
 status: production
 created: "2025-01-15"
-last_updated: "2026-02-02"
+last_updated: "2026-02-09"
 
 summary: |
   Spec-driven development workflow implemented via 4 core slash commands plus 2 utility commands.
@@ -36,9 +36,10 @@ files:
     - src/templates/commands/document.md
     - src/templates/commands/extract.md
   secondary:
-    - src/templates/agents/cm-1-structural.md
-    - src/templates/agents/cm-2-convention.md
-    - src/templates/agents/cm-3-verification.md
+    - src/templates/skills/buildforce-context-extract/SKILL.md
+    - src/templates/agents/buildforce-structural-extractor.md
+    - src/templates/agents/buildforce-conventions-extractor.md
+    - src/templates/agents/buildforce-verification-extractor.md
     - .buildforce/context/_index.yaml (searched by RESEARCH, updated by DOCUMENT, COMPLETE, and EXTRACT)
 
 workflow:
@@ -104,18 +105,18 @@ workflow:
         - "Uses 7 numbered guidelines with ALWAYS/NEVER emphasis (29 lines)"
 
     - command: "/buildforce.extract"
-      purpose: "Bootstrap context repository from fresh codebases (Claude Code only)"
-      input: "Optional focus prompt for targeted extraction"
+      purpose: "Context extraction with three modes: cold start, focused deep-dive, incremental updates (Claude Code only)"
+      input: "Optional focus prompt for targeted extraction; empty triggers incremental mode"
       output: "Context files + _index.yaml coverage map updates"
       key_features:
         - "Claude Code only (uses Task tool for sub-agent spawning)"
-        - "Context Manager + Context Extractors architecture"
-        - "Parallel extraction across architecture, conventions, verification domains"
-        - "Iterative depth model (none → shallow → moderate → deep)"
-        - "Extractors return proposals validated by Context Manager before writing"
+        - "Two-layer architecture: thin command (extract.md) delegates to skill (SKILL.md)"
+        - "Three unified modes: cold start, focused, incremental"
+        - "Stop hook activation for automatic incremental extraction after conversations"
+        - "Parallel extraction via buildforce-*-extractor sub-agents"
+        - "Iterative depth model (none -> shallow -> moderate -> deep)"
+        - "Context preservation: MERGE, DON'T REPLACE rule for updates"
         - "Root _index.yaml serves as both index AND coverage map"
-        - "Solves cold start problem for new repositories"
-        - "Template: 167 lines with embedded sub-agent prompts"
 
 design_principles:
   - "Compact but powerful: Enhance user queries without teaching build agents HOW to work"
@@ -148,6 +149,10 @@ evolution:
   - version: "2.2"
     date: "2026-01-28"
     changes: "Added /buildforce.extract command (Claude Code only) for bootstrapping context repositories from fresh codebases. Uses Context Manager + Context Extractors sub-agent architecture with parallel extraction. Implements iterative depth model and coverage map in _index.yaml. First agent-specific slash command."
+
+  - version: "2.3"
+    date: "2026-02-09"
+    changes: "Evolved /buildforce.extract to skill-based architecture. extract.md is now a thin wrapper delegating to buildforce-context-extract SKILL.md. Added three unified extraction modes (cold start, focused, incremental). Stop hook enables automatic incremental extraction. Sub-agents renamed from cm-* to buildforce-*-extractor."
 
 related_specs:
   - "slash-commands-20250101120000 (initial system design)"
