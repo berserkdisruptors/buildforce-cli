@@ -87,7 +87,7 @@ phase_1:
   validation:
     - [x] All phase_1 tasks completed
     - [x] generate_skills() function exists and follows generate_agents() pattern
-    - [x] Local package contains .claude/skills/buildforce-context-extract/SKILL.md
+    - [x] Local package contains .claude/skills/context-extract/SKILL.md
     - [x] Spec requirements covered: [FR1, FR2, FR3, FR4, NFR1]
 
 phase_2:
@@ -244,14 +244,14 @@ testing:
       steps: |
         1. Run: AGENTS=claude SCRIPTS=sh .github/workflows/scripts/create-release-packages.sh v0.0.44-test
         2. Extract the generated ZIP from .genreleases/
-        3. Verify .claude/skills/buildforce-context-extract/SKILL.md exists
+        3. Verify .claude/skills/context-extract/SKILL.md exists
         4. Verify SKILL.md content is correct (no frontmatter stripped)
 
     - scenario: "Test init creates settings with hooks"
       steps: |
         1. Create empty temp directory
         2. Run: buildforce test-project --local --ai claude
-        3. Verify .claude/skills/buildforce-context-extract/ exists
+        3. Verify .claude/skills/context-extract/ exists
         4. Verify .claude/settings.local.json exists
         5. Verify settings.local.json contains hooks.Stop array
 

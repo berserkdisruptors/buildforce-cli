@@ -47,7 +47,7 @@ functional_requirements:
   - FR1: Add generate_skills() function to create-release-packages.sh that copies skill folders from src/templates/skills/ to agent-specific skills directory
   - FR2: generate_skills() must support agent filtering via 'agents:' YAML frontmatter in SKILL.md (same pattern as generate_agents)
   - FR3: Update build_variant() to call generate_skills() for Claude agent (similar to generate_agents)
-  - FR4: Skills must be bundled preserving folder structure (e.g., buildforce-context-extract/SKILL.md)
+  - FR4: Skills must be bundled preserving folder structure (e.g., context-extract/SKILL.md)
   - FR5: Init command must merge .buildforce/templates/hooks/config.json into .claude/settings.local.json
   - FR6: Upgrade command must merge .buildforce/templates/hooks/config.json into .claude/settings.local.json
   - FR7: Config merge must be additive - never remove existing user permissions or hooks

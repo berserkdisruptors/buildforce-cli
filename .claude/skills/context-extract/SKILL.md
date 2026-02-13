@@ -1,5 +1,5 @@
 ---
-name: buildforce-context-extract
+name: context-extract
 description: Extract and update context files based on recent implementation changes
 user-invocable: true
 context: fork
@@ -121,7 +121,7 @@ Parse `$ARGUMENTS`:
 
 ## Step 3: Incremental Mode
 
-Use this mode when triggered automatically (e.g., Stop hook) with no user arguments.
+Use this mode when invoked with no user arguments.
 
 ### 3.1 Get Changed Files
 

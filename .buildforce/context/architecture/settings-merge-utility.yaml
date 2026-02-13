@@ -125,8 +125,8 @@ related_specs:
   - skills-bundling-config-concat-20260204000000
 
 notes: |
-  This utility enables automatic activation of Buildforce features by ensuring
-  the Stop hook is configured to call the buildforce-context-extract skill.
+  This utility enables configuration of Buildforce features by merging
+  template settings into user's Claude Code settings.
 
   The merge is designed to be:
   - Safe: Never removes user data

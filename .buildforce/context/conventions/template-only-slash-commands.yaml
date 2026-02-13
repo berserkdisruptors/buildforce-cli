@@ -105,12 +105,12 @@ edge_cases:
   - case: "Skill delegation pattern"
     explanation: |
       Commands can delegate to Claude Code skills (.claude/skills/). The extract.md command
-      is a thin wrapper: "Call the buildforce-context-extract skill with these arguments: $ARGUMENTS".
+      is a thin wrapper: "Call the context-extract skill with these arguments: $ARGUMENTS".
       This is valid because: (1) the command template still exists in src/templates/commands/,
       (2) the logic lives in a skill SKILL.md (still markdown, still AI-interpretable),
-      (3) enables Stop hook activation without user invocation. The skill-delegation pattern
+      (3) the skill can also be invoked directly. The skill-delegation pattern
       extends template-only commands by allowing the same logic to be triggered from multiple
-      entry points (command invocation and event hooks).
+      entry points (command invocation and direct skill invocation).
 
 enforcement_mechanism:
   primary: "Code review - PRs adding TypeScript command handlers are rejected"

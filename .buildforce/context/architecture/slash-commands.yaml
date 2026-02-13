@@ -36,7 +36,7 @@ files:
     - src/templates/commands/document.md
     - src/templates/commands/extract.md
   secondary:
-    - src/templates/skills/buildforce-context-extract/SKILL.md
+    - src/templates/skills/context-extract/SKILL.md
     - src/templates/agents/buildforce-structural-extractor.md
     - src/templates/agents/buildforce-conventions-extractor.md
     - src/templates/agents/buildforce-verification-extractor.md
@@ -112,7 +112,6 @@ workflow:
         - "Claude Code only (uses Task tool for sub-agent spawning)"
         - "Two-layer architecture: thin command (extract.md) delegates to skill (SKILL.md)"
         - "Three unified modes: cold start, focused, incremental"
-        - "Stop hook activation for automatic incremental extraction after conversations"
         - "Parallel extraction via buildforce-*-extractor sub-agents"
         - "Iterative depth model (none -> shallow -> moderate -> deep)"
         - "Context preservation: MERGE, DON'T REPLACE rule for updates"
@@ -152,7 +151,7 @@ evolution:
 
   - version: "2.3"
     date: "2026-02-09"
-    changes: "Evolved /buildforce.extract to skill-based architecture. extract.md is now a thin wrapper delegating to buildforce-context-extract SKILL.md. Added three unified extraction modes (cold start, focused, incremental). Stop hook enables automatic incremental extraction. Sub-agents renamed from cm-* to buildforce-*-extractor."
+    changes: "Evolved /buildforce.extract to skill-based architecture. extract.md is now a thin wrapper delegating to context-extract SKILL.md. Added three unified extraction modes (cold start, focused, incremental). Sub-agents renamed from cm-* to buildforce-*-extractor."
 
 related_specs:
   - "slash-commands-20250101120000 (initial system design)"

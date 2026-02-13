@@ -25,10 +25,10 @@ key_findings:
 
   - name: Skills folder structure exists but not bundled
     description: |
-      The src/templates/skills/ folder exists with buildforce-context-extract skill,
+      The src/templates/skills/ folder exists with context-extract skill,
       but there's no bundling logic for skills in create-release-packages.sh.
       Skills use SKILL.md format with YAML frontmatter.
-    evidence: src/templates/skills/buildforce-context-extract/SKILL.md exists
+    evidence: src/templates/skills/context-extract/SKILL.md exists
 
   - name: Hooks config exists but not bundled
     description: |
@@ -73,7 +73,7 @@ file_paths:
     - .github/workflows/scripts/create-release-packages.sh
     - src/commands/init/setup.ts
     - src/commands/upgrade/execution.ts
-    - src/templates/skills/buildforce-context-extract/SKILL.md
+    - src/templates/skills/context-extract/SKILL.md
     - src/templates/hooks/config.json
     - src/templates/agents/buildforce-structural-extractor.md
     - src/config/agents.ts

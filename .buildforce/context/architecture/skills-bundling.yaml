@@ -10,7 +10,7 @@ summary: |
   into .claude/skills/ in release ZIP packages. Skills are stored as directories containing
   SKILL.md files with YAML frontmatter for agent filtering and skill configuration.
   Follows the same pattern as generate_agents() for consistency. Currently Claude-only feature.
-  Primary consumer: buildforce-context-extract skill for automatic context extraction.
+  Primary consumer: context-extract skill for automatic context extraction.
 
 responsibilities:
   - Bundle skill folders from src/templates/skills/ into release packages
@@ -34,7 +34,7 @@ files:
   primary:
     - .github/workflows/scripts/create-release-packages.sh
   secondary:
-    - src/templates/skills/buildforce-context-extract/SKILL.md
+    - src/templates/skills/context-extract/SKILL.md
     - src/commands/upgrade/execution.ts
     - src/commands/init/setup.ts
 
@@ -116,28 +116,22 @@ related_specs:
 
 extract_skill_integration: |
   The skills bundling system is critical to the extract skill deployment chain:
-  1. Source: src/templates/skills/buildforce-context-extract/SKILL.md (with YAML frontmatter)
-  2. Bundling: generate_skills() copies to .claude/skills/buildforce-context-extract/ in release ZIP
+  1. Source: src/templates/skills/context-extract/SKILL.md (with YAML frontmatter)
+  2. Bundling: generate_skills() copies to .claude/skills/context-extract/ in release ZIP
   3. Deployment: init/upgrade extracts to user's .claude/skills/ directory
-  4. Activation: Stop hook (configured by settings-merge) calls the skill after conversations
-  5. Command: extract.md thin wrapper also delegates to the skill for manual invocation
+  4. Command: extract.md thin wrapper delegates to the skill for invocation
+  5. Direct: User can also invoke the context-extract skill directly
 
   The SKILL.md frontmatter includes:
-  - name: buildforce-context-extract
+  - name: context-extract
   - user-invocable: true
   - context: fork
   - allowed-tools: [Read, Write, Edit, Glob, Grep, Bash, Task]
 
 notes: |
   Skills bundling enables the full auto-context-extractor workflow by ensuring
-  the buildforce-context-extract skill is deployed to .claude/skills/ during
+  the context-extract skill is deployed to .claude/skills/ during
   init and upgrade.
-
-  The skills system works in tandem with settings merge:
-  1. Skills bundling deploys the skill to .claude/skills/
-  2. Settings merge configures the Stop hook to call the skill
-
-  Without both pieces, the skill exists but never activates.
 
   Future enhancements:
   - Support skills bundling for other agents when they add skill support
