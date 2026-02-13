@@ -26,7 +26,7 @@ responsibilities:
 dependencies:
   internal:
     - extract-command: "Spawns Extractor sub-agents for context extraction"
-    - explore-command: "Spawns Explorer sub-agents for context retrieval"
+    - context-search-skill: "Spawns Explorer sub-agents for context retrieval"
     - cli-architecture: "Agent templates distributed via release packaging"
     - init-command: "Extracts ZIP containing .claude/agents/ folder"
     - upgrade-command: "Replaces .claude/agents/ folder during upgrades"
@@ -40,6 +40,7 @@ files:
     - src/templates/agents/buildforce-structural-extractor.md
     - src/templates/agents/buildforce-conventions-extractor.md
     - src/templates/agents/buildforce-verification-extractor.md
+    - src/templates/agents/buildforce-explorer.md
     - src/templates/agents/buildforce-structural-explorer.md
     - src/templates/agents/buildforce-convention-explorer.md
     - src/templates/agents/buildforce-verification-explorer.md
@@ -337,11 +338,13 @@ evolution:
 
 related_specs:
   - claude-code-extract-command-20260127152345
-  - explore-command-20260202090346
+  - context-search-skill
+  - explorer-agent-20260202090346
 
 related_context:
   - extract-command
-  - explore-command
+  - context-search-skill
+  - explorer-agent
   - agent-template-conventions
   - cli-architecture
 

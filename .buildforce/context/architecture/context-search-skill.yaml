@@ -1,0 +1,155 @@
+# Context Search Skill Architecture Context
+# Created: 2026-02-05
+# Updated: 2026-02-10 — Converted from /buildforce.explore slash command to context-search skill
+# Source: explore-command-20260202090346 spec session (original), manual conversion (v2.0)
+
+id: context-search-skill
+name: "context-search Skill"
+type: structural
+status: production
+created: "2026-02-05"
+last_updated: "2026-02-10"  # v2.0 skill conversion
+
+summary: |
+  Claude Code skill that searches the Buildforce context repository for curated codebase knowledge.
+  Both users (/context-search) and the agent (proactive invocation) can use it to enrich agentic
+  search with structured understanding that source files lack — architecture decisions, conventions,
+  verification standards, and design rationale. Uses a PreToolUse hook to transparently redirect
+  Claude's built-in Explore sub-agent through the context repository instead of raw file search.
+
+responsibilities:
+  - Intent analysis (new topic, question, open exploration)
+  - Selective dispatch of Context Explorers based on detected intent
+  - Synthesis of findings into context-enriching responses
+  - Transparent interception of built-in Explore agent via PreToolUse hook
+
+dependencies:
+  internal:
+    - context-repo: "Requires extracted context in architecture/, conventions/, verification/ domains"
+    - _index.yaml: "Uses context index for navigation and discovery"
+  external:
+    - task-tool: "Claude Code Task tool for sub-agent spawning"
+    - hooks-system: "Claude Code PreToolUse hooks for Explore agent redirection"
+    - skills-system: "Claude Code Skills for user-invocable and model-invocable activation"
+
+files:
+  primary:
+    - src/templates/skills/context-search/SKILL.md
+  secondary:
+    - src/templates/agents/buildforce-explorer.md
+    - src/templates/agents/buildforce-structural-explorer.md
+    - src/templates/agents/buildforce-convention-explorer.md
+    - src/templates/agents/buildforce-verification-explorer.md
+    - src/templates/hooks/setup-explorer-subagent.sh
+    - src/utils/hooks.ts
+  distribution:
+    - .github/workflows/scripts/create-release-packages.sh
+    - src/commands/init/setup.ts
+    - src/commands/upgrade/execution.ts
+
+interfaces:
+  skill:
+    - name: "context-search"
+      invocation: "/context-search [optional-topic-or-question]"
+      user_invocable: true
+      model_invocable: true
+      description: "Searches the context repository for curated codebase knowledge"
+  hook:
+    - name: "setup-explorer-subagent"
+      event: "PreToolUse"
+      matcher: "Task"
+      description: "Intercepts Task calls with subagent_type=Explore and redirects to buildforce-explorer"
+      config_location: ".claude/settings.local.json"
+  sub_agents:
+    - name: "Buildforce Explorer"
+      type: "buildforce-explorer"
+      purpose: "Wrapper that reads context-search SKILL.md and executes it; replaces built-in Explore"
+      tools: "Task, Read, Glob, Grep"
+    - name: "Structural Explorer"
+      type: "buildforce-structural-explorer"
+      domain: "architecture/"
+      tools: "Read, Glob, Grep (read-only)"
+    - name: "Convention Explorer"
+      type: "buildforce-convention-explorer"
+      domain: "conventions/"
+      tools: "Read, Glob, Grep (read-only)"
+    - name: "Verification Explorer"
+      type: "buildforce-verification-explorer"
+      domain: "verification/"
+      tools: "Read, Glob, Grep (read-only)"
+
+design_decisions:
+  - decision: "Convert from slash command to Claude Code Skill"
+    rationale: "Skills support proactive model invocation — Claude can automatically use the skill when the conversation needs curated context, without the user typing /context-search. The description field is loaded into context so Claude knows when to use it."
+
+  - decision: "Redirect built-in Explore agent via PreToolUse hook"
+    rationale: "Claude Code's default Explore agent does raw file search. By intercepting Task calls with subagent_type=Explore, all exploration transparently goes through the context repository first. This makes context enrichment automatic without requiring user awareness."
+
+  - decision: "Hook writes to settings.local.json via mergeHooksSettings utility"
+    rationale: "settings.local.json is a user-specific file with accumulated permissions. The utility idempotently merges hook config without clobbering existing settings. Both init and upgrade call it."
+
+  - decision: "Rename from buildforce.explore to context-search"
+    rationale: "Avoids collision with Claude Code's built-in Explore agent type. The name 'context-search' clearly signals the purpose — searching curated context, not exploring raw files."
+
+  - decision: "Remove archiver and session persistence"
+    rationale: "As a skill (not a workflow), context-search is a focused search tool. Persistence added complexity without clear value for single-query context retrieval."
+
+  - decision: "Remove brainstorming/session framing"
+    rationale: "Moving from workflow mentality to tool mentality. Both user and agent should understand this is a context search utility, not a multi-turn conversation session."
+
+  - decision: "Use same three-domain architecture as extract (structural, conventions, verification)"
+    rationale: "Consistency with existing patterns, reuses domain expertise, aligns with context repo structure"
+
+  - decision: "Explorers return structured YAML findings, not raw file content"
+    rationale: "Enables manager to synthesize intelligently; findings include relevance scoring, excerpts, connections, and gaps"
+
+  - decision: "Selective explorer dispatch based on intent classification"
+    rationale: "Performance optimization — no need to search all domains for focused queries; reduces latency"
+
+  - decision: "Explicit 'not found vs tangentially related' distinction in synthesis"
+    rationale: "Prevent the agent from presenting tangentially related information as if it answers the user's actual question. Must acknowledge when requested functionality doesn't exist."
+
+  - decision: "ensureHooksExecutable sets chmod on hook scripts during init/upgrade"
+    rationale: "ZIP extraction and fs.copy don't preserve execute bits. Without this, the hook script fails with 'Permission denied' on first run after upgrade."
+
+evolution:
+  - version: "1.0"
+    date: "2026-02-05"
+    changes: "Initial implementation as /buildforce.explore slash command with Explorers and Archiver"
+
+  - version: "1.1"
+    date: "2026-02-05"
+    changes: |
+      Bug fixes: Archiver forbidden paths, 'not found vs tangentially related' distinction,
+      archiver timing (spawned only after complete response, completion events ignored)
+
+  - version: "2.0"
+    date: "2026-02-10"
+    changes: |
+      Major conversion from slash command to Claude Code Skill:
+      - Renamed from /buildforce.explore to /context-search
+      - Converted to .claude/skills/context-search/SKILL.md format
+      - Added PreToolUse hook (setup-explorer-subagent.sh) to redirect built-in Explore agent
+      - Added buildforce-explorer wrapper sub-agent
+      - Removed archiver and session persistence
+      - Removed brainstorming/session framing
+      - Added skills + hooks support to build script (generate_skills, hooks copying)
+      - Added skills + hooks backup/replace/rollback to upgrade command
+      - Added mergeHooksSettings utility for idempotent settings.local.json merging
+      - Added ensureHooksExecutable for chmod on deployed hook scripts
+
+related_specs:
+  - explore-command-20260202090346
+
+notes: |
+  The hook-based Explore redirection is the key architectural innovation in v2.0. It solves the
+  problem that Claude Code's built-in Explore agent does raw file search, which bypasses the
+  curated context repository entirely. By intercepting at the PreToolUse level, any time Claude
+  would normally dispatch an Explore agent (including proactively), the query goes through
+  the context repository first.
+
+  The buildforce-explorer wrapper agent is intentionally thin — it reads SKILL.md and follows
+  its instructions. This keeps the skill as the single source of truth for context search logic.
+
+  Distribution chain: src/templates/ → build script → .genreleases/ ZIP → init/upgrade extracts
+  to .claude/skills/, .claude/agents/, .claude/hooks/ → mergeHooksSettings writes settings.local.json.
