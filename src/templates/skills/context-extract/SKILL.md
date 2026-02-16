@@ -1,6 +1,7 @@
 ---
 name: context-extract
 description: Extract and update context files based on recent implementation changes
+agents: [claude, cursor, opencode]
 user-invocable: true
 context: fork
 allowed-tools:

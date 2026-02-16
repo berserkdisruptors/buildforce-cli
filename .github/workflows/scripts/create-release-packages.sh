@@ -2,16 +2,14 @@
 set -euo pipefail
 
 # create-release-packages.sh (workflow-local)
-# Build Buildforce CLI template release archives for each supported AI assistant and script type.
+# Build Buildforce CLI template release archives for each supported AI assistant.
 # Usage: .github/workflows/scripts/create-release-packages.sh <version>
 #   Version argument should include leading 'v'.
-#   Optionally set AGENTS and/or SCRIPTS env vars to limit what gets built.
-#     AGENTS  : space or comma separated subset of: claude gemini copilot cursor qwen opencode windsurf codex (default: all)
-#     SCRIPTS : space or comma separated subset of: sh ps (default: both)
+#   Optionally set AGENTS env var to limit what gets built.
+#     AGENTS  : space or comma separated subset of: claude cursor opencode (default: all)
 #   Examples:
-#     AGENTS=claude SCRIPTS=sh $0 v0.2.0
-#     AGENTS="copilot,gemini" $0 v0.2.0
-#     SCRIPTS=ps $0 v0.2.0
+#     AGENTS=claude $0 v0.2.0
+#     AGENTS="cursor,opencode" $0 v0.2.0
 
 if [[ $# -ne 1 ]]; then
   echo "Usage: $0 <version-with-v-prefix>" >&2
@@ -103,13 +101,13 @@ generate_skills() {
   done
 }
 
-build_variant() {
-  local agent=$1 script=$2
-  local base_dir="$GENRELEASES_DIR/sdd-${agent}-package-${script}"
-  echo "Building $agent ($script) package..."
+build_package() {
+  local agent=$1
+  local base_dir="$GENRELEASES_DIR/sdd-${agent}-package"
+  echo "Building $agent package..."
   mkdir -p "$base_dir"
 
-  # Copy base structure but filter scripts by variant
+  # Copy base structure
   SPEC_DIR="$base_dir/.buildforce"
   mkdir -p "$SPEC_DIR"
 
@@ -122,57 +120,64 @@ build_variant() {
   fi
   case $agent in
     claude)
-      # Claude Code supports sub-agents - generate them if any exist
+      # Claude Code sub-agents
       if [[ -d src/templates/agents ]]; then
         mkdir -p "$base_dir/.claude/agents"
         generate_agents claude "$base_dir/.claude/agents"
       fi
-      # Claude Code supports skills - generate them if any exist
+      # Claude Code skills
       if [[ -d src/templates/skills ]]; then
         mkdir -p "$base_dir/.claude/skills"
         generate_skills claude "$base_dir/.claude/skills"
       fi
-      # Claude Code hooks - copy hook scripts to .claude/hooks/
-      # (config.json is handled by mergeAgentSettings in the CLI, not distributed)
-      if [[ -d src/templates/hooks ]]; then
+      # Claude Code hooks (Claude-specific script only)
+      if [[ -f src/templates/hooks/setup-explorer-subagent.sh ]]; then
         mkdir -p "$base_dir/.claude/hooks"
-        for hook_file in src/templates/hooks/*; do
-          [[ -f "$hook_file" ]] || continue
-          [[ "$hook_file" == *.json ]] && continue
-          cp "$hook_file" "$base_dir/.claude/hooks/"
-        done
-        echo "Copied hook scripts -> .claude/hooks"
+        cp src/templates/hooks/setup-explorer-subagent.sh "$base_dir/.claude/hooks/"
       fi
       ;;
-    gemini)
-      [[ -f agent_templates/gemini/GEMINI.md ]] && cp agent_templates/gemini/GEMINI.md "$base_dir/GEMINI.md" ;;
-    copilot)
-      ;;
     cursor)
+      # Cursor sub-agents
+      if [[ -d src/templates/agents ]]; then
+        mkdir -p "$base_dir/.cursor/agents"
+        generate_agents cursor "$base_dir/.cursor/agents"
+      fi
+      # Cursor skills
+      if [[ -d src/templates/skills ]]; then
+        mkdir -p "$base_dir/.cursor/skills"
+        generate_skills cursor "$base_dir/.cursor/skills"
+      fi
+      # Cursor hooks (Cursor-specific script only)
+      if [[ -f src/templates/hooks/cursor-setup-explorer-subagent.sh ]]; then
+        mkdir -p "$base_dir/.cursor/hooks"
+        cp src/templates/hooks/cursor-setup-explorer-subagent.sh "$base_dir/.cursor/hooks/"
+      fi
       ;;
-    qwen)
-      [[ -f agent_templates/qwen/QWEN.md ]] && cp agent_templates/qwen/QWEN.md "$base_dir/QWEN.md" ;;
     opencode)
-      ;;
-    windsurf)
-      ;;
-    codex)
-      ;;
-    kilocode)
-      ;;
-    auggie)
-      ;;
-    roo)
+      # OpenCode sub-agents
+      if [[ -d src/templates/agents ]]; then
+        mkdir -p "$base_dir/.opencode/agents"
+        generate_agents opencode "$base_dir/.opencode/agents"
+      fi
+      # OpenCode skills
+      if [[ -d src/templates/skills ]]; then
+        mkdir -p "$base_dir/.opencode/skills"
+        generate_skills opencode "$base_dir/.opencode/skills"
+      fi
+      # OpenCode plugin
+      if [[ -f src/templates/hooks/opencode-explorer-plugin.ts ]]; then
+        mkdir -p "$base_dir/.opencode/plugins"
+        cp src/templates/hooks/opencode-explorer-plugin.ts \
+           "$base_dir/.opencode/plugins/buildforce-explorer-redirect.ts"
+      fi
       ;;
   esac
-  ( cd "$base_dir" && zip -r "../buildforce-cli-template-${agent}-${script}-${NEW_VERSION}.zip" . )
-  echo "Created $GENRELEASES_DIR/buildforce-cli-template-${agent}-${script}-${NEW_VERSION}.zip"
+  ( cd "$base_dir" && zip -r "../buildforce-cli-template-${agent}-${NEW_VERSION}.zip" . )
+  echo "Created $GENRELEASES_DIR/buildforce-cli-template-${agent}-${NEW_VERSION}.zip"
 }
 
 # Determine agent list
-ALL_AGENTS=(claude gemini copilot cursor qwen opencode windsurf codex kilocode auggie roo)
-ALL_SCRIPTS=(sh ps)
-
+ALL_AGENTS=(claude cursor opencode)
 
 norm_list() {
   # convert comma+space separated -> space separated unique while preserving order of first occurrence
@@ -200,20 +205,10 @@ else
   AGENT_LIST=("${ALL_AGENTS[@]}")
 fi
 
-if [[ -n ${SCRIPTS:-} ]]; then
-  mapfile -t SCRIPT_LIST < <(printf '%s' "$SCRIPTS" | norm_list)
-  validate_subset script ALL_SCRIPTS "${SCRIPT_LIST[@]}" || exit 1
-else
-  SCRIPT_LIST=("${ALL_SCRIPTS[@]}")
-fi
-
 echo "Agents: ${AGENT_LIST[*]}"
-echo "Scripts: ${SCRIPT_LIST[*]}"
 
 for agent in "${AGENT_LIST[@]}"; do
-  for script in "${SCRIPT_LIST[@]}"; do
-    build_variant "$agent" "$script"
-  done
+  build_package "$agent"
 done
 
 echo "Archives in $GENRELEASES_DIR:"

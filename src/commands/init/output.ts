@@ -1,4 +1,3 @@
-import path from "path";
 import chalk from "chalk";
 import { MINT_COLOR, GREEN_COLOR } from "../../constants.js";
 import { createBox } from "../../utils/box.js";
@@ -97,22 +96,6 @@ export function displayNextSteps(
 
   let stepNum = 2;
 
-  // Add Codex-specific setup step if needed
-  if (selectedAi === "codex") {
-    const codexPath = path.join(projectPath, ".codex");
-    const cmd =
-      process.platform === "win32"
-        ? `setx CODEX_HOME "${codexPath}"`
-        : `export CODEX_HOME="${codexPath}"`;
-
-    stepsLines.push(
-      `${stepNum}. Set ${MINT_COLOR(
-        "CODEX_HOME"
-      )} environment variable before running Codex: ${MINT_COLOR(cmd)}`
-    );
-    stepNum++;
-  }
-
   stepsLines.push(
     `${stepNum}. Start using the spec-driven workflow with ${MINT_COLOR(
       "slash commands"
@@ -146,22 +129,6 @@ export function displayNextSteps(
 
   console.log();
   console.log(createBox(stepsLines.join("\n"), { title: "Next Steps" }));
-
-  // Codex warning
-  if (selectedAi === "codex") {
-    const warningText =
-      MINT_COLOR(chalk.bold("Important Note:")) +
-      "\n\n" +
-      `Custom prompts do not yet support arguments in Codex. You may need to manually specify additional project instructions directly in prompt files located in ${MINT_COLOR(
-        ".codex/prompts/"
-      )}.\n\n` +
-      `For more information, see: ${MINT_COLOR(
-        "https://github.com/openai/codex/issues/2890"
-      )}`;
-
-    console.log();
-    console.log(createBox(warningText, { title: "Slash Commands in Codex" }));
-  }
 
   const proTipsLines = [
     `1. Use ${MINT_COLOR("/buildforce.research")} and then ${MINT_COLOR(

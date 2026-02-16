@@ -135,11 +135,7 @@ export function checkAgentTool(
 ): void {
   const agentChecks: Record<string, string> = {
     claude: "https://docs.anthropic.com/en/docs/claude-code/setup",
-    gemini: "https://github.com/google-gemini/gemini-cli",
-    qwen: "https://github.com/QwenLM/qwen-code",
     opencode: "https://opencode.ai",
-    codex: "https://github.com/openai/codex",
-    auggie: "https://docs.augmentcode.com/cli/setup-auggie/install-auggie-cli",
   };
 
   if (agentChecks[selectedAi]) {

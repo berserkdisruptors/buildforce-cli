@@ -235,22 +235,21 @@ export async function executeUpgrade(
         }
       }
 
-      // Check skills for Claude
+      // Check skills for all agents
       tracker.start("replace-skills");
-      if (successfulAgents.includes("claude")) {
-        const skillsSrcPath = path.join(sourceDirs.get("claude")!, ".claude", "skills");
+      let dryRunSkillCount = 0;
+      for (const agent of successfulAgents) {
+        const agentFolder = AGENT_FOLDER_MAP[agent];
+        const skillsSrcPath = path.join(sourceDirs.get(agent)!, agentFolder, "skills");
         if (await fs.pathExists(skillsSrcPath)) {
           const sourceSkills = await fs.readdir(skillsSrcPath);
-          if (sourceSkills.length > 0) {
-            tracker.complete("replace-skills", `would update ${sourceSkills.length} skill(s)`);
-          } else {
-            tracker.skip("replace-skills", "no skills in release");
-          }
-        } else {
-          tracker.skip("replace-skills", "no skills in release");
+          dryRunSkillCount += sourceSkills.length;
         }
+      }
+      if (dryRunSkillCount > 0) {
+        tracker.complete("replace-skills", `would update ${dryRunSkillCount} skill(s)`);
       } else {
-        tracker.skip("replace-skills", "claude not selected");
+        tracker.skip("replace-skills", "no skills in release");
       }
 
       tracker.skip("merge-settings", "dry-run mode");
@@ -322,11 +321,15 @@ export async function executeUpgrade(
       const firstAgent = successfulAgents[0];
       const firstSourceDir = sourceDirs.get(firstAgent)!;
 
-      // Replace skills for Claude agent
+      // Replace skills for all agents
       tracker.start("replace-skills");
-      if (successfulAgents.includes("claude")) {
-        const skillsSrc = path.join(firstSourceDir, ".claude", "skills");
-        const skillsDest = path.join(projectPath, ".claude", "skills");
+      let totalSkillsReplaced = 0;
+
+      for (const agent of successfulAgents) {
+        const agentFolder = AGENT_FOLDER_MAP[agent];
+        const sourceDir = sourceDirs.get(agent)!;
+        const skillsSrc = path.join(sourceDir, agentFolder, "skills");
+        const skillsDest = path.join(projectPath, agentFolder, "skills");
 
         if (await fs.pathExists(skillsSrc)) {
           const sourceSkills = await fs.readdir(skillsSrc);
@@ -340,7 +343,7 @@ export async function executeUpgrade(
 
               // Backup existing skill if it exists
               if (await fs.pathExists(skillDestPath)) {
-                await fs.copy(skillDestPath, path.join(backupDir, "skills", skillName));
+                await fs.copy(skillDestPath, path.join(backupDir, agent, "skills", skillName));
               }
 
               // Replace the skill
@@ -348,35 +351,41 @@ export async function executeUpgrade(
               await fs.copy(skillSrcPath, skillDestPath);
             }
 
-            tracker.complete("replace-skills", `${sourceSkills.length} skill(s)`);
-          } else {
-            tracker.skip("replace-skills", "no skills in release");
+            totalSkillsReplaced += sourceSkills.length;
           }
-        } else {
-          tracker.skip("replace-skills", "no skills in release");
         }
-      } else {
-        tracker.skip("replace-skills", "claude not selected");
       }
 
-      // Merge agent settings if claude is one of the selected agents
+      if (totalSkillsReplaced > 0) {
+        tracker.complete("replace-skills", `${totalSkillsReplaced} skill(s)`);
+      } else {
+        tracker.skip("replace-skills", "no skills in release");
+      }
+
+      // Merge agent settings for all successful agents
       tracker.start("merge-settings");
-      if (successfulAgents.includes("claude")) {
-        const agentFolder = AGENT_FOLDER_MAP["claude"];
+      let totalHooksAdded = 0;
+      let anyMerged = false;
+
+      for (const agent of successfulAgents) {
+        const agentFolder = AGENT_FOLDER_MAP[agent];
         const mergeResult = await mergeAgentSettings(projectPath, agentFolder, {
           debug,
         });
 
         if (mergeResult.merged) {
-          const detail = mergeResult.hooksAdded
-            ? `${mergeResult.hooksAdded} hook(s)`
-            : "merged";
-          tracker.complete("merge-settings", detail);
-        } else {
-          tracker.skip("merge-settings", mergeResult.reason);
+          anyMerged = true;
+          totalHooksAdded += mergeResult.hooksAdded || 0;
         }
+      }
+
+      if (anyMerged) {
+        const detail = totalHooksAdded
+          ? `${totalHooksAdded} hook(s)`
+          : "merged";
+        tracker.complete("merge-settings", detail);
       } else {
-        tracker.skip("merge-settings", "claude not selected");
+        tracker.skip("merge-settings", "no agents required settings merge");
       }
 
       // Migrate context structure using MigrationRunner
@@ -471,18 +480,8 @@ export async function executeUpgrade(
           }
         }
 
-        const skillsBackup = path.join(backupDir, "skills");
-
-        if (await fs.pathExists(skillsBackup)) {
-          const skillsDest = path.join(projectPath, ".claude", "skills");
-          // Restore only the buildforce skills that were backed up
-          const backedUpSkills = await fs.readdir(skillsBackup);
-          for (const skillName of backedUpSkills) {
-            const skillDestPath = path.join(skillsDest, skillName);
-            await fs.remove(skillDestPath);
-            await fs.copy(path.join(skillsBackup, skillName), skillDestPath);
-          }
-        }
+        // Skills are now backed up per-agent inside the agent backup dir
+        // (handled by the per-agent skills restore above)
 
         console.log(MINT_COLOR("\nRollback: Restored previous files from backup"));
       } catch (rollbackError: any) {

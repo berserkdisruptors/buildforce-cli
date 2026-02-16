@@ -191,7 +191,7 @@ program
   )
   .option(
     "--ai <assistant...>",
-    "AI assistant(s) to use (can specify multiple): claude, gemini, copilot, cursor, qwen, opencode, codex, windsurf, kilocode, auggie, or roo"
+    "AI assistant(s) to use (can specify multiple): claude, cursor, or opencode"
   )
   .option(
     "--ignore-agent-tools",
@@ -250,7 +250,7 @@ program
   )
   .option(
     "--ai <assistant...>",
-    "Override or add AI assistant(s) (can specify multiple): claude, gemini, copilot, cursor, qwen, opencode, codex, windsurf, kilocode, auggie, roo"
+    "Override or add AI assistant(s) (can specify multiple): claude, cursor, or opencode"
   )
   .option("--dry-run", "Preview changes without applying them")
   .option("--debug", "Show verbose diagnostic output")

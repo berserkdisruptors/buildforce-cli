@@ -229,24 +229,30 @@ export async function setupProject(
       }
     }
 
-    // Merge agent settings if claude is one of the selected agents
+    // Merge agent settings for all successful agents
     tracker.start("merge-settings");
-    if (successfulAgents.includes("claude")) {
-      const agentFolder = AGENT_FOLDER_MAP["claude"];
+    let totalHooksAdded = 0;
+    let anyMerged = false;
+
+    for (const agent of successfulAgents) {
+      const agentFolder = AGENT_FOLDER_MAP[agent];
       const mergeResult = await mergeAgentSettings(projectPath, agentFolder, {
         debug,
       });
 
       if (mergeResult.merged) {
-        const detail = mergeResult.hooksAdded
-          ? `${mergeResult.hooksAdded} hook(s) added`
-          : "settings created";
-        tracker.complete("merge-settings", detail);
-      } else {
-        tracker.skip("merge-settings", mergeResult.reason);
+        anyMerged = true;
+        totalHooksAdded += mergeResult.hooksAdded || 0;
       }
+    }
+
+    if (anyMerged) {
+      const detail = totalHooksAdded
+        ? `${totalHooksAdded} hook(s) added`
+        : "settings created";
+      tracker.complete("merge-settings", detail);
     } else {
-      tracker.skip("merge-settings", "claude not selected");
+      tracker.skip("merge-settings", "no agents required settings merge");
     }
 
     // Git step
