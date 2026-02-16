@@ -41,7 +41,7 @@ files:
     - src/templates/agents/buildforce-convention-explorer.md
     - src/templates/agents/buildforce-verification-explorer.md
     - src/templates/hooks/setup-explorer-subagent.sh
-    - src/utils/hooks.ts
+    - src/utils/settings-merge.ts
   distribution:
     - .github/workflows/scripts/create-release-packages.sh
     - src/commands/init/setup.ts

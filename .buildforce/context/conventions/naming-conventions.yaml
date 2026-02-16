@@ -4,7 +4,7 @@ type: convention
 sub_type: naming-convention
 enforcement: recommended
 created: "2026-01-26"
-last_updated: "2026-02-02"
+last_updated: "2026-02-16"
 
 description: |
   Naming conventions ensure consistency across the codebase. These rules apply to files,
@@ -41,36 +41,38 @@ file_naming:
     location: ".buildforce/context/_index.yaml"
     rationale: "Single unified index for all domains; underscore indicates meta-file"
 
-  template_files:
-    pattern: "kebab-case with descriptive suffix"
+  skill_files:
+    pattern: "SKILL.md in kebab-case directory"
     examples:
-      - "spec-template.yaml"
-      - "plan-template.yaml"
-    location: ".buildforce/templates/"
+      - "context-extract/SKILL.md"
+      - "context-search/SKILL.md"
+    location: "src/templates/skills/"
 
-  command_templates:
-    pattern: "command-name.md"
+  agent_templates:
+    pattern: "buildforce-{domain}-{role}.md"
     examples:
-      - "plan.md"
-      - "build.md"
-      - "complete.md"
-    location: "src/templates/commands/"
+      - "buildforce-structural-explorer.md"
+      - "buildforce-conventions-extractor.md"
+      - "buildforce-explorer.md"
+    location: "src/templates/agents/"
+
+  hook_scripts:
+    pattern: "descriptive-kebab-case.{sh,ts}"
+    examples:
+      - "setup-explorer-subagent.sh"
+      - "cursor-setup-explorer-subagent.sh"
+      - "opencode-explorer-plugin.ts"
+    location: "src/templates/hooks/"
 
 folder_naming:
-  session_folders:
-    pattern: "{semantic-slug}-{timestamp}"
-    slug_rules:
-      - "3-5 words, kebab-case"
-      - "Max 35 characters"
-      - "Must start with lowercase letter"
-      - "Lowercase alphanumeric and hyphens only"
-    timestamp_format: "YYYYMMDDHHmmss (14 digits UTC)"
-    total_max_length: 50
+  context_domains:
+    pattern: "singular-noun"
     examples:
-      - "add-auth-jwt-20250122143052"
-      - "refactor-error-handling-20260115093000"
-    validation_regex: "^[a-z][a-z0-9-]*-[0-9]{14}$"
-    rationale: "Slug first for readability; timestamp for uniqueness and chronological sorting"
+      - "architecture/"
+      - "conventions/"
+      - "verification/"
+    location: ".buildforce/context/"
+    rationale: "Domain-based organization aligned with context taxonomy"
 
 variable_naming:
   typescript:
@@ -136,13 +138,12 @@ edge_cases:
   - case: "Agent-specific files"
     rule: "Use agent name in folder, not filename"
     examples:
-      - ".claude/commands/buildforce.plan.md"
-      - ".cursor/commands/buildforce.plan.md"
-    rationale: "Same command, different agent folders"
+      - ".claude/hooks/setup-explorer-subagent.sh"
+      - ".cursor/hooks/cursor-setup-explorer-subagent.sh"
+    rationale: "Same functionality, different agent folders"
 
 enforcement_mechanism:
-  session_folders: "Validated by create-session-files.sh (regex + length check)"
-  context_files: "Enforced by template instructions in /complete, /document, /extract"
+  context_files: "Enforced by template instructions in extract skill"
   typescript: "tsconfig.json forceConsistentCasingInFileNames: true"
   bash: "Convention only (no automated enforcement)"
 
@@ -161,7 +162,6 @@ template: |
   SPEC_DIR=".buildforce"     # UPPER_SNAKE_CASE
 
 reference_files:
-  - "src/scripts/bash/create-session-files.sh (validates folder naming)"
   - "tsconfig.json (forceConsistentCasingInFileNames)"
-  - "src/templates/commands/complete.md (context file naming rules)"
-  - "src/templates/commands/document.md (context file naming rules)"
+  - "src/templates/skills/context-extract/SKILL.md (context file naming rules)"
+  - "src/templates/agents/buildforce-explorer.md (agent naming pattern)"

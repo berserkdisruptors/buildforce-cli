@@ -3,20 +3,21 @@ name: Local Testing Workflow
 type: verification
 source: manual
 created: "2026-02-02"
-last_updated: "2026-02-02"
+last_updated: "2026-02-16"
 
 description: |
   Workflow for testing template changes locally before committing. This is essential
-  when modifying slash commands, sub-agents, or any files in src/templates/.
+  when modifying skills, hooks, sub-agents, or any files in src/templates/.
 
   Since there are no automated tests for templates, this manual workflow is the
   primary verification method for template changes.
 
 scope:
-  - Slash command templates (src/templates/commands/*.md)
+  - Skill definitions (src/templates/skills/*/SKILL.md)
   - Sub-agent definitions (src/templates/agents/*.md)
-  - YAML templates (src/templates/*.yaml)
+  - Hook scripts (src/templates/hooks/*.sh, *.ts)
   - Release packaging scripts (.github/workflows/scripts/create-release-packages.sh)
+  - Settings merge utility (src/utils/settings-merge.ts)
   - Any change that affects the distributed package structure
 
 workflow:
@@ -32,9 +33,10 @@ workflow:
     expected_output: "ZIP files created in release-packages/ directory"
     notes: |
       Creates packages like:
-      - buildforce-cli-template-claude-sh.zip
-      - buildforce-cli-template-cursor-ps.zip
-      - etc. (22 combinations: 11 agents × 2 script types)
+      - buildforce-cli-template-claude.zip
+      - buildforce-cli-template-cursor.zip
+      - buildforce-cli-template-opencode.zip
+      (3 packages: one per supported agent, no script variants)
 
   step_3_test_upgrade:
     command: "node ./dist/cli.js upgrade --local"
@@ -44,8 +46,9 @@ workflow:
       Tests that:
       - Local artifact resolution works
       - Template extraction succeeds
-      - User content (.buildforce/context/, .buildforce/sessions/) is preserved
-      - New templates are applied correctly
+      - User content (.buildforce/context/) is preserved
+      - Skills, hooks, and agents are applied correctly
+      - Agent settings are merged properly
 
   step_4_test_init:
     command: "node ./dist/cli.js init . --local"
@@ -102,17 +105,20 @@ common_issues:
 
 verification_checklist:
   after_upgrade:
-    - "[ ] Templates in agent folder updated (check file timestamps)"
+    - "[ ] Skills in .claude/skills/ updated (check file timestamps)"
+    - "[ ] Agents in .claude/agents/ updated"
+    - "[ ] Hooks in .claude/hooks/ updated"
     - "[ ] Context files preserved (.buildforce/context/ unchanged)"
-    - "[ ] Session files preserved (.buildforce/sessions/ unchanged)"
     - "[ ] buildforce.json version updated"
-    - "[ ] New commands appear in agent folder"
+    - "[ ] Agent settings merged (settings.local.json, hooks.json)"
 
   after_init:
     - "[ ] .buildforce/ folder created with correct structure"
-    - "[ ] Agent folder created (e.g., .claude/)"
-    - "[ ] Commands deployed with buildforce.* prefix"
-    - "[ ] Scripts have execute permissions (ls -la .buildforce/scripts/)"
+    - "[ ] Agent folders created (.claude/, .cursor/, .opencode/)"
+    - "[ ] Skills deployed to .claude/skills/"
+    - "[ ] Agents deployed to .claude/agents/"
+    - "[ ] Hook scripts have execute permissions"
+    - "[ ] Agent settings files created/merged"
     - "[ ] buildforce.json created with correct settings"
 
 related_context:

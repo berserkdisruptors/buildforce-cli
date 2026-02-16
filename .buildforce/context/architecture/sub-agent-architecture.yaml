@@ -3,7 +3,7 @@ name: "Sub-Agent Distribution Architecture"
 type: structural
 status: production
 created: "2026-02-05"
-last_updated: "2026-02-05"
+last_updated: "2026-02-16"
 
 summary: |
   Claude Code sub-agent pattern enabling parallel context operations via the Task tool.
@@ -238,25 +238,29 @@ architecture_patterns:
     - src/commands/upgrade/execution.ts (agent replacement lines 283-301)
     - src/config/agents.ts (AGENT_FOLDER_MAP)
 
-  commands_vs_agents_distribution: |
-    Commands and Agents follow similar but distinct distribution paths:
-
-    COMMANDS (src/templates/commands/*.md):
-    - generate_commands() function processes templates
-    - Same agents: field filtering as agents
-    - Different output formats per agent (md, toml, prompt.md)
-    - Different output directories per agent (commands/, prompts/, workflows/)
-    - All 11 agents receive commands
+  agents_and_skills_distribution: |
+    Agents and Skills follow parallel distribution paths:
 
     AGENTS (src/templates/agents/*.md):
     - generate_agents() function processes templates
-    - Same agents: field filtering as commands
-    - Output always .md format
-    - Output always to .claude/agents/ directory
+    - agents: field filtering for target AI assistants
+    - Output always .md format to .claude/agents/
     - ONLY Claude receives agents (Task tool requirement)
 
-    The key difference: agents are Claude Code-specific because only Claude Code
-    has the Task tool for spawning sub-agents. Other AI assistants lack this capability.
+    SKILLS (src/templates/skills/*/SKILL.md):
+    - generate_skills() function processes skill directories
+    - agents: field filtering in SKILL.md frontmatter
+    - Entire skill directory copied to .claude/skills/
+    - Currently Claude-only but extensible
+
+    HOOKS (src/templates/hooks/):
+    - Direct file copy to agent hook directories
+    - Claude: .claude/hooks/setup-explorer-subagent.sh
+    - Cursor: .cursor/hooks/cursor-setup-explorer-subagent.sh
+    - OpenCode: .opencode/plugins/buildforce-explorer-redirect.ts (via settings-merge)
+
+    Note: Commands (generate_commands) were removed in v3.0. Only 3 agents supported
+    (Claude Code, Cursor, OpenCode).
 
   input_output_patterns: |
     INPUT (via Task tool prompt parameter):
@@ -335,6 +339,9 @@ evolution:
   - version: "2.1"
     date: "2026-02-05"
     changes: "Added comprehensive distribution mechanism documentation covering release packaging (generate_agents), init extraction, and upgrade replacement flows."
+  - version: "3.0"
+    date: "2026-02-16"
+    changes: "Updated for pure context layer refactoring. Commands distribution removed (no generate_commands). Only 3 agents supported. Added hooks distribution for Cursor and OpenCode. Skills distribution via generate_skills()."
 
 related_specs:
   - claude-code-extract-command-20260127152345
@@ -350,8 +357,8 @@ related_context:
 
 notes: |
   The sub-agent architecture is Claude Code-specific due to the Task tool requirement.
-  Other AI assistants (Gemini, Copilot, Cursor, etc.) do not have equivalent sub-agent
-  capabilities, so these templates are filtered out during release packaging.
+  Only 3 AI assistants are now supported (Claude Code, Cursor, OpenCode). Cursor and
+  OpenCode use hook-based explorer redirection but don't support sub-agents directly.
 
   Key constraints:
   - Task tool required for spawning (Claude Code only)

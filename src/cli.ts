@@ -5,7 +5,6 @@ import chalk from "chalk";
 import { initCommand } from "./commands/init/index.js";
 import { upgradeCommand } from "./commands/upgrade/index.js";
 import { checkCommand } from "./commands/check.js";
-import { examplesCommand } from "./commands/examples.js";
 import { generateBanner } from "./lib/interactive.js";
 import { MINT_COLOR, TAGLINE } from "./constants.js";
 import { createBox } from "./utils/box.js";
@@ -276,13 +275,6 @@ program
   .description("Check that all required tools are installed")
   .action(() => {
     checkCommand();
-  });
-
-program
-  .command("examples")
-  .description("View workflow examples interactively")
-  .action(async () => {
-    await examplesCommand();
   });
 
 program.parse(process.argv);

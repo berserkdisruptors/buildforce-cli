@@ -3,30 +3,30 @@ name: Upgrade Command
 type: structural
 status: production
 created: 2025-10-28
-last_updated: "2026-02-04"
+last_updated: "2026-02-16"
 
 summary: |
-  Slash command for upgrading existing Buildforce projects to the latest templates, scripts,
-  skills, and slash commands while preserving user-created content (context repository and specs).
+  CLI command for upgrading existing Buildforce projects to the latest skills, hooks,
+  and agents while preserving user-created content (context repository).
   Automatically detects project configuration and supports selective override via flags.
   Supports local artifact loading via --local flag for offline workflows and testing.
-  Updates .gitignore to include .buildforce/.temp entry for temporary file exclusion.
-  For Claude users, merges template hooks configuration into .claude/settings.local.json.
+  Merges agent settings (hooks, permissions) during upgrade for Claude, Cursor, and OpenCode.
 
 responsibilities:
-  - Upgrade slash commands, templates, scripts, and skills to latest versions from GitHub Releases or local artifacts
-  - Replace .claude/skills/ with latest skill bundles (Claude only)
-  - Merge template hooks/config.json into .claude/settings.local.json (Claude only, additive merge)
-  - Preserve user-created content (.buildforce/context/ and .buildforce/specs/)
-  - Auto-detect AI assistant and script type from buildforce.json configuration
-  - Support configuration overrides via --ai and --script flags
+  - Upgrade skills, agents, and hooks to latest versions from GitHub Releases or local artifacts
+  - Replace .claude/skills/ with latest skill bundles
+  - Replace .claude/agents/ with latest agent templates
+  - Replace hook scripts for Claude, Cursor, and OpenCode
+  - Merge agent settings (hooks, permissions) via mergeAgentSettings()
+  - Preserve user-created content (.buildforce/context/)
+  - Auto-detect AI assistant from buildforce.json configuration
+  - Support configuration overrides via --ai flag
   - Provide interactive AI assistant selection prompts matching init command experience
   - Pre-select existing AI assistants as defaults in interactive prompts
   - Support local artifact loading via --local flag for offline/testing workflows
   - Provide dry-run mode to preview changes before applying
   - Display upgrade progress with clear status indicators
   - Update buildforce.json with version metadata after successful upgrade
-  - Update .gitignore to include .buildforce/.temp entry if not already present
   - Implement atomic operations with rollback on failure
   - Handle backward compatibility with projects initialized by older CLI versions
 
@@ -62,8 +62,8 @@ files:
 interfaces:
   exports:
     - name: "buildforce upgrade"
-      signature: "CLI command with options: --ai, --script, --dry-run, --debug, --github-token, --skip-tls"
-      description: "Upgrades project templates to latest version while preserving context and specs"
+      signature: "CLI command with options: --ai, --dry-run, --debug, --github-token, --skip-tls"
+      description: "Upgrades project skills, hooks, and agents to latest version while preserving context"
 
 command_signature:
   syntax: "buildforce upgrade [options]"
@@ -71,11 +71,7 @@ command_signature:
     - name: "--ai"
       type: "string"
       required: false
-      description: "Override AI assistant choice (claude, copilot, cursor, etc.)"
-    - name: "--script"
-      type: "string"
-      required: false
-      description: "Override script type choice (sh, ps)"
+      description: "Override AI assistant choice (claude, cursor, opencode)"
     - name: "--local"
       type: "string"
       required: false
@@ -99,7 +95,7 @@ command_signature:
   examples:
     - "buildforce upgrade"
     - "buildforce upgrade --dry-run"
-    - "buildforce upgrade --ai claude --script sh"
+    - "buildforce upgrade --ai claude"
     - "buildforce upgrade --local"
     - "buildforce upgrade --local=/path/to/artifacts"
     - "buildforce upgrade --github-token ghp_xxx"
@@ -277,6 +273,15 @@ evolution:
   - version: "1.5"
     date: "2026-02-04"
     changes: "Added skills replacement step for Claude (replaces .claude/skills/ with latest from release). Added settings merge step that merges .buildforce/templates/hooks/config.json into .claude/settings.local.json using additive deep-merge (preserves existing permissions and hooks, deduplicates arrays). Both steps only run when claude is selected as AI assistant."
+
+  - version: "2.0"
+    date: "2026-02-16"
+    changes: |
+      Major refactoring for pure context layer. Removed replace-commands, replace-templates,
+      replace-scripts steps. Added replace-skills and merge-settings steps. Removed --script
+      flag and scriptType from config. Upgrade now replaces skills, hooks, and agents instead
+      of commands and templates. Settings merge supports all 3 agents (Claude, Cursor, OpenCode)
+      via unified mergeAgentSettings() API. Rollback covers skills and hooks directories.
 
 related_specs:
   - add-upgrade-command-20251027000000

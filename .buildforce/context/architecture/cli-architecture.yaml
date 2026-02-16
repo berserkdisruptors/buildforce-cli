@@ -3,33 +3,38 @@ name: Buildforce CLI Architecture
 type: structural
 status: production
 created: 2025-10-27
-last_updated: "2026-02-05"
+last_updated: "2026-02-16"
 
 summary: |
   Comprehensive architecture of the Buildforce CLI tool - a Node.js-based command-line
-  interface that initializes spec-driven development projects with template distribution
-  via GitHub Releases or local artifacts, context management systems, and multi-agent support
-  for 11+ AI assistants. Supports offline workflows through local artifact resolution.
+  interface that initializes context-layer projects with template distribution via GitHub
+  Releases or local artifacts. Supports 3 AI assistants (Claude Code, Cursor, OpenCode)
+  with skills, hooks, and sub-agents for pure context read/write operations. No plan/build
+  workflow - only context extraction and search mechanisms. Supports offline workflows
+  through local artifact resolution.
 
 responsibilities:
-  - Project initialization with agent-specific templates
+  - Project initialization with agent-specific templates (Claude Code, Cursor, OpenCode)
   - Template distribution and extraction from GitHub Releases or local artifacts
   - Local artifact resolution for offline workflows and testing
   - Context/knowledge management system for accumulated learning
+  - Skills deployment (context-extract, context-search) to agent directories
+  - Hooks deployment and settings merge for explorer sub-agent redirection
   - Progress tracking and user interaction flows
-  - AI assistant detection and configuration
+  - AI assistant detection and configuration (3 supported: claude, cursor, opencode)
   - Git repository initialization and management
-  - Script permission setup for POSIX systems
   - Project configuration persistence and management via buildforce.json
   - Project upgrade capabilities with preservation of user content
+  - Agent settings merge (hooks, permissions) during init and upgrade
 
 dependencies:
   internal:
-    - slash-commands: "Core workflow commands initialized via project templates"
-    - document-command: "Context file creation system for knowledge capture"
-    - research-slash-command: "Context discovery and research capabilities"
-    - spec-command: "Specification template system"
-    - plan-template: "Implementation planning structure"
+    - extract-command: "Context extraction skill for bootstrapping and updating context"
+    - context-search-skill: "Context search skill for querying the context repository"
+    - explorer-agent: "Hook-based explorer redirection through context repository"
+    - sub-agent-architecture: "Sub-agent pattern for parallel context operations"
+    - skills-bundling: "Skills packaging for release distribution"
+    - settings-merge-utility: "Agent settings merge for hooks and permissions"
     - upgrade-command: "Project upgrade system for keeping templates current"
     - local-artifact-resolution: "Local artifact discovery and resolution system"
   external:
@@ -53,21 +58,13 @@ files:
     - src/commands/upgrade/index.ts
     - src/commands/upgrade/validation.ts
     - src/commands/upgrade/execution.ts
-    - src/commands/upgrade/context-migration.ts
-    - src/commands/session/index.ts
-    - src/commands/session/utils.ts
     - src/lib/github.ts
     - src/lib/extract.ts
     - src/lib/local-artifacts.ts
     - src/lib/step-tracker.ts
     - src/config/agents.ts
+    - src/utils/settings-merge.ts
     - src/context/_index.yaml
-    - src/context/architecture/_index.yaml
-    - src/context/architecture/_schema.yaml
-    - src/context/conventions/_index.yaml
-    - src/context/conventions/_schema.yaml
-    - src/context/verification/_index.yaml
-    - src/context/verification/_schema.yaml
     - .github/workflows/scripts/create-release-packages.sh
   secondary:
     - src/commands/init/validation.ts
@@ -82,26 +79,24 @@ files:
     - src/utils/config.ts
     - src/types.ts
     - src/constants.ts
-    - src/scripts/powershell/get-spec-paths.ps1
-    - src/scripts/powershell/common.ps1
 
 interfaces:
   exports:
     - name: "buildforce [project-name]"
-      signature: "CLI command with options: --ai, --script, --here, --local, --force, --no-git, --skip-tls, --debug, --github-token"
-      description: "Initializes a new Buildforce project with specified AI assistant and script type"
+      signature: "CLI command with options: --ai, --here, --local, --force, --no-git, --skip-tls, --debug, --github-token"
+      description: "Initializes a new Buildforce project with specified AI assistant(s)"
 
     - name: "buildforce upgrade"
-      signature: "CLI command with options: --ai, --script, --local, --dry-run, --debug, --github-token, --skip-tls"
-      description: "Upgrades project templates to latest version while preserving context and specs"
+      signature: "CLI command with options: --ai, --local, --dry-run, --debug, --github-token, --skip-tls"
+      description: "Upgrades project skills, hooks, and agents to latest version while preserving context"
 
     - name: "buildforce check"
       signature: "CLI diagnostic command"
-      description: "Verifies installed tools (git, AI assistants, IDEs)"
+      description: "Verifies installed tools (git, claude, cursor-agent, opencode)"
 
-    - name: "buildforce session"
-      signature: "CLI interactive command"
-      description: "Displays interactive picker for switching between active development sessions"
+    - name: "buildforce examples"
+      signature: "CLI informational command"
+      description: "Displays workflow examples extracted from README"
 
 design_decisions:
   - decision: "Template distribution via GitHub Releases"
@@ -126,10 +121,10 @@ design_decisions:
     rationale: "More readable than JSON for humans and AI agents. Better suited for multi-line content and hierarchical structures. Easier to parse and validate."
 
   - decision: "Persist configuration in buildforce.json during init"
-    rationale: "Enables upgrade command to auto-detect project settings (AI assistant, script type) without re-prompting users. Single source of truth for project configuration."
+    rationale: "Enables upgrade command to auto-detect project settings (AI assistants) without re-prompting users. Single source of truth for project configuration."
 
-  - decision: "Upgrade command preserves user content (.buildforce/context/ and .buildforce/sessions/)"
-    rationale: "User-created content represents significant investment and must never be modified during upgrades. Only system files (templates, scripts, commands) are updated. The sessions folder (formerly specs) stores development session artifacts including spec.yaml, plan.yaml, and research.yaml files."
+  - decision: "Upgrade command preserves user content (.buildforce/context/)"
+    rationale: "User-created content represents significant investment and must never be modified during upgrades. Only system files (skills, hooks, agents) are updated."
 
   - decision: "Support local artifact resolution via --local flag"
     rationale: "Enables offline workflows, local testing during development, and faster iteration cycles. Developers can test locally-built artifacts without publishing to GitHub Releases."
@@ -143,11 +138,14 @@ design_decisions:
   - decision: "Shared box utility component for visual consistency"
     rationale: "Created centralized createBox utility in src/utils/box.ts that wraps boxen library with standardized #D3FFCA border color. Eliminates code duplication (removed custom boxSection from cli.ts and examples.ts), ensures consistent rounded appearance across all commands, and provides single source of truth for box styling. All commands (init, help, examples) now use shared utility for unified visual experience."
   
-  - decision: "Nest BuildForce commands in buildforce/ subdirectory"
-    rationale: "Provides namespace isolation to prevent collision with user-defined custom commands. All 11 agents deploy commands to {agent-folder}/commands/buildforce/ (or prompts/buildforce/ for Copilot), improving discoverability and following common organizational patterns. Users can easily distinguish BuildForce commands from their own."
-  
-  - decision: "Prefix BuildForce commands with buildforce. in flat directory"
-    rationale: "Provides namespace isolation without subdirectory nesting. All 11 agents deploy commands with buildforce. prefix (e.g., buildforce.plan.md) to {agent-folder}/commands/ (or prompts/ for Copilot). Flat structure simplifies discovery while preventing collision with user-defined commands. Dot notation in invocation (/buildforce.plan) is intuitive and widely recognized in CLI systems."
+  - decision: "Pure context layer - no plan/build workflow"
+    rationale: "Buildforce CLI focuses exclusively on context read/write mechanisms. Skills (context-extract, context-search) and hooks provide the context layer. No slash commands, no plan/build/complete workflow. AI assistants use skills and hooks directly."
+
+  - decision: "Three supported AI assistants only (Claude Code, Cursor, OpenCode)"
+    rationale: "Reduced from 11 agents to 3. These three have meaningful hook/skill support. Other agents lacked equivalent capabilities. Simplifies maintenance, testing, and release packaging."
+
+  - decision: "Agent settings merge via mergeAgentSettings utility"
+    rationale: "Each agent has different settings mechanisms: Claude uses settings.local.json with hooks, Cursor uses hooks.json, OpenCode uses plugins. The utility dispatches to agent-specific merge strategies while maintaining a unified API."
 
 architecture_patterns:
   entry_point: |
@@ -181,29 +179,22 @@ architecture_patterns:
     Main Command: buildforce [project-name]
     - Accepts positional project name or --here flag
     - Supports . as shorthand for current directory
-    - Options: --ai, --script, --local, --ignore-agent-tools, --no-git, --force, --skip-tls, --debug, --github-token
+    - Options: --ai, --local, --ignore-agent-tools, --no-git, --force, --skip-tls, --debug, --github-token
 
     Diagnostic Command: buildforce check
-    - Verifies tool installations (git, AI assistants, IDEs)
+    - Verifies tool installations (git, claude, cursor-agent, opencode)
     - Uses StepTracker for visual output
-
-    Session Management Command: buildforce session
-    - Interactive picker for switching between active development sessions
-    - Uses inquirer for arrow key navigation and selection
-    - Derives active sessions from .buildforce/sessions/ + spec.yaml status filtering
 
   initialization_flow: |
     1. Input Validation (validation.ts)
        - validateProjectSetup() - Checks name/path conflicts
-       - validateAiAssistant() - Verifies AI choice
-       - validateScriptType() - Verifies script type
+       - validateAiAssistant() - Verifies AI choice (claude, cursor, opencode)
        - checkAgentTool() - Confirms AI agent installed
 
     2. User Interaction (interactive.ts)
        - showBanner() - Standardized 3-line banner display (figlet title, tagline, instruction)
        - generateBanner() - Shared banner generation function for all CLI entry points
-       - selectWithArrows() - Interactive menu
-       - Collect AI assistant and script type
+       - selectMultipleWithCheckboxes() - Multi-select AI assistants
 
     3. Project Setup (setup.ts)
        - If --local flag provided:
@@ -213,7 +204,8 @@ architecture_patterns:
        - downloadAndExtractTemplate() - Extract and merge files
        - ensureExecutableScripts() - Set permissions on .sh files
        - createConfigContent() - Generate buildforce.json
-       - updateGitignore() - Add .buildforce/buildforce.json and .buildforce/.temp entries
+       - mergeAgentSettings() - Merge hooks/permissions into agent settings files
+       - updateGitignore() - Add .buildforce/buildforce.json entry
        - initGitRepo() - Initialize git with first commit
 
     4. Output Display (output.ts)
@@ -225,37 +217,32 @@ architecture_patterns:
     GitHub Release Integration:
     - API: GitHub REST API /repos/{owner}/{repo}/releases
     - Authentication: Optional Bearer token (GH_TOKEN or GITHUB_TOKEN)
-    - Asset Pattern: buildforce-cli-template-{aiAssistant}-{scriptType}.zip
+    - Asset Pattern: buildforce-cli-template-{aiAssistant}.zip (no script variant)
     - Headers: Accept application/vnd.github+json + application/octet-stream
 
     Template Structure:
     - .buildforce/context/ - Context management system
-    - .buildforce/sessions/ - Development session artifacts (spec.yaml, plan.yaml, research.yaml)
-    - .buildforce/scripts/ - Automation scripts
-    - .buildforce/templates/ - Local templates
-    - buildforce.json - Project configuration with aiAssistant, scriptType, version, sessionsFolder
-    - Agent folders (.claude/, .github/, etc.) - Agent-specific files with commands nested in buildforce/ subdirectory
+    - buildforce.json - Project configuration with aiAssistants, version
+    - Agent folders (.claude/, .cursor/, .opencode/) - Agent-specific files
     - .claude/agents/ - Sub-agent templates (Claude Code only)
+    - .claude/skills/ - Skill definitions (Claude Code only)
+    - .claude/hooks/ - Hook scripts (Claude Code)
+    - .cursor/hooks/ - Hook scripts (Cursor)
+    - .opencode/plugins/ - Plugin files (OpenCode)
 
     Extraction Flow:
     1. Download ZIP to temp directory
     2. Extract to temp location
     3. Detect nested directory structure
     4. Copy files to project path (merge mode)
-    5. Clean up temp files
+    5. Merge agent settings (hooks, permissions)
+    6. Clean up temp files
 
-    Sub-Agent Distribution (Claude Code only):
-    - Source: src/templates/agents/*.md with agents: [claude] frontmatter
-    - Build: generate_agents() in create-release-packages.sh filters and processes
-    - Package: Agents included in Claude ZIP at .claude/agents/
-    - Init: Extracted automatically as part of ZIP (no special handling)
-    - Upgrade: Full replacement of .claude/agents/ folder (backup + remove + copy)
-    - Other agents don't support sub-agents (no Task tool equivalent)
-
-    Key difference from commands distribution:
-    - Commands go to all 11 agents with format variations (md, toml, prompt.md)
-    - Agents go ONLY to Claude (Task tool is Claude Code-specific)
-    - Both use same agents: field filtering mechanism
+    Distribution Components:
+    - Agents: generate_agents() - Sub-agent templates to .claude/agents/
+    - Skills: generate_skills() - Skill directories to .claude/skills/
+    - Hooks: Direct copy from src/templates/hooks/ to agent hook directories
+    - All filtered by agents: field in frontmatter
 
     See sub-agent-architecture context file for detailed agent specification.
 
@@ -327,35 +314,30 @@ architecture_patterns:
     - Clean migration: deletes original files after successful copy
 
   agent_configuration: |
-    Supported Assistants (11+):
-    - Claude → .claude/commands/buildforce.*.md
-    - Copilot → .github/prompts/buildforce.*.prompt.md
-    - Cursor → .cursor/commands/buildforce.*.md
-    - Gemini → .gemini/commands/buildforce.*.toml
-    - Qwen → .qwen/commands/buildforce.*.toml
-    - Windsurf → .windsurf/workflows/buildforce.*.md
-    - Kilocode → .kilocode/workflows/buildforce.*.md
-    - Auggie → .augment/commands/buildforce.*.md
-    - Roo → .roo/commands/buildforce.*.md
-    - OpenCode → .opencode/command/buildforce.*.md
-    - Codex → .codex/prompts/buildforce.*.md
+    Supported Assistants (3):
+    - Claude Code → .claude/ (agents, skills, hooks, settings.local.json)
+    - Cursor → .cursor/ (hooks, hooks.json)
+    - OpenCode → .opencode/ (plugins)
 
-    Command Deployment Structure:
-    - All BuildForce commands use buildforce. prefix in flat directory
-    - Format varies by agent: .md (Claude, Cursor), .toml (Gemini, Qwen), .prompt.md (Copilot)
-    - 5 slash commands deployed: research, spec, build, complete, document
-    - Namespace isolation via filename prefix prevents collision with user-defined commands
-    - Invocation pattern: /buildforce.plan, /buildforce.research, /buildforce.build, etc.
+    Deployment Structure:
+    - No slash commands - pure context layer via skills and hooks
+    - Claude: Skills in .claude/skills/, agents in .claude/agents/, hooks in .claude/hooks/
+    - Cursor: Hooks in .cursor/hooks/
+    - OpenCode: Plugins in .opencode/plugins/
+
+    Settings Merge Strategy (per agent):
+    - Claude: mergeAgentSettings() → .claude/settings.local.json (PreToolUse hooks)
+    - Cursor: mergeAgentSettings() → .cursor/hooks.json (preToolUse hooks)
+    - OpenCode: mergeAgentSettings() → .opencode/plugins/buildforce-explorer-redirect.ts
 
     Detection Mechanism:
     - Uses which(tool) to find executables in PATH
-    - Special handling for Claude CLI (~/.claude/local/claude)
+    - Checks: claude, cursor-agent, opencode
     - Validates agent availability before setup
 
     Configuration:
     - Each agent gets dedicated folder for credentials/config
     - Security notice recommends .gitignore for agent folders
-    - Agent-specific slash command prompts in templates
 
   progress_tracking: |
     StepTracker Class:
@@ -382,10 +364,8 @@ core_modules:
     - "init/output.ts - User-facing messaging and guidance"
     - "upgrade/index.ts - Main orchestrator for project upgrades"
     - "upgrade/validation.ts - Prerequisite validation for upgrades"
-    - "upgrade/execution.ts - Selective file replacement and upgrade execution"
-    - "session/index.ts - Interactive session switcher with inquirer picker"
-    - "session/utils.ts - Session discovery and filtering utilities"
-    - "check.ts - Diagnostic tool verification command"
+    - "upgrade/execution.ts - Skills, hooks, and agents replacement with upgrade execution"
+    - "check.ts - Diagnostic tool verification command (claude, cursor-agent, opencode)"
 
   libraries:
     - "github.ts - GitHub Release API integration and authentication"
@@ -404,50 +384,54 @@ core_modules:
     - "github.ts - GitHub token authentication"
     - "commands.ts - Shell command execution wrapper"
     - "config.ts - Configuration file read/write (buildforce.json management)"
+    - "settings-merge.ts - Agent settings merge utility (hooks, permissions) for Claude, Cursor, OpenCode"
     - "box.ts - Shared box component utility with standardized #D3FFCA borders"
 
   configuration:
-    - "agents.ts - AI assistant definitions and folder mappings"
+    - "agents.ts - AI assistant definitions (claude, cursor, opencode) and folder mappings"
     - "constants.ts - Tagline, repository metadata, and centralized MINT_COLOR/GREEN_COLOR exports (both use #D3FFCA branding color)"
-    - "types.ts - TypeScript interfaces and type definitions"
+    - "types.ts - TypeScript interfaces and type definitions (no scriptType, no sessionsFolder, no currentSession)"
 
 workflow_integration: |
-  The CLI initializes projects with templates containing:
+  The CLI initializes projects with a pure context layer containing:
 
-  1. Slash Command Prompts:
-     - /research - Context gathering from .buildforce/context/_index.yaml
-     - /buildforce.plan - Requirements specification and planning with spec-template.yaml and plan-template.yaml
-     - /build - Execution with progress tracking
-     - /document - Context file creation/updates
-     - /complete - Finalization and validation
+  1. Skills (Claude Code):
+     - context-extract: Bootstraps and updates the context repository
+     - context-search: Searches curated context for codebase knowledge
 
-  2. YAML Templates:
-     - spec-template.yaml - Structured requirements definition
-     - plan-template.yaml - Phase-based implementation plan
+  2. Hooks:
+     - Claude: PreToolUse hook redirects Explore → buildforce-explorer
+     - Cursor: preToolUse hook redirects explore → buildforce-explorer
+     - OpenCode: Plugin redirects Explore → buildforce-explorer
 
-  3. Context System:
-     - _index.yaml - Context registry
-     - _schema.yaml - Schema validation
-     - *.yaml - Individual context files
+  3. Sub-Agents (Claude Code):
+     - buildforce-explorer: Wrapper that reads context-search skill
+     - buildforce-structural-explorer: Architecture domain search
+     - buildforce-convention-explorer: Convention domain search
+     - buildforce-verification-explorer: Verification domain search
+     - buildforce-structural-extractor: Architecture extraction proposals
+     - buildforce-conventions-extractor: Convention extraction proposals
+     - buildforce-verification-extractor: Verification extraction proposals
 
-  4. Shell Scripts:
-     - Automation scripts in .buildforce/scripts/
+  4. Context System:
+     - _index.yaml - Context registry and coverage map
+     - _schema.yaml - Schema validation per domain
+     - *.yaml - Individual context files in architecture/, conventions/, verification/
 
   5. Configuration:
-     - buildforce.json - Project configuration (aiAssistant, scriptType, version)
-     - Agent folders - AI-specific settings
+     - buildforce.json - Project configuration (aiAssistants, version)
+     - Agent settings files - Merged hooks/permissions
 
   6. Upgrade System:
-     - buildforce upgrade - Update templates to latest version
-     - Preserves user content (.buildforce/context/, .buildforce/sessions/)
-     - Auto-detects configuration from buildforce.json (including sessionsFolder field)
+     - buildforce upgrade - Update skills, hooks, and agents to latest version
+     - Preserves user content (.buildforce/context/)
+     - Auto-detects configuration from buildforce.json
      - Supports dry-run and override flags
 
-  This creates a complete Spec-Driven Development workflow where AI assistants have:
-  - Structured guidance through slash commands
-  - Persistent knowledge via context files
-  - Clear implementation phases
-  - Cross-session learning capabilities
+  This creates a pure context layer where AI assistants have:
+  - Automatic context enrichment via explorer hook redirection
+  - Context extraction for building and maintaining knowledge
+  - Persistent knowledge via curated context files
   - Seamless upgrade path for new features and improvements
 
 evolution:
@@ -507,6 +491,21 @@ evolution:
     date: "2026-01-28"
     changes: "Added agent-specific command filtering in release packaging. Templates can include 'agents: [claude]' in YAML frontmatter to restrict distribution to specific agents. Updated create-release-packages.sh generate_commands() function to parse frontmatter and filter templates. First use case: extract.md command for Claude Code only. Also added MigrationRunner pattern for database-migration-inspired upgrade system with separate migration files (v2.0.ts, v2.1.ts) and registry."
 
+  - version: "3.0"
+    date: "2026-02-16"
+    changes: |
+      Major refactoring: Pure context layer. Removed all slash commands (research, plan, build,
+      complete, document, extract) and plan/build workflow. Reduced from 11 AI assistants to 3
+      (Claude Code, Cursor, OpenCode). Removed session management, script types (sh/ps),
+      PowerShell scripts, bash automation scripts. Removed templates (spec-template, plan-template,
+      research-template). Added hooks system for all 3 agents (PreToolUse explorer redirection).
+      Added skills (context-extract, context-search). Added explorer sub-agents for all 3 domains.
+      New settings-merge utility with agent-specific strategies (Claude: settings.local.json,
+      Cursor: hooks.json, OpenCode: plugins). Simplified release packaging (no generate_commands,
+      no script variants). BuildforceConfig simplified (removed sessionsFolder, currentSession,
+      scriptType). Upgrade command now replaces skills, hooks, and agents instead of commands,
+      templates, and scripts.
+
 related_specs:
   - "standardize-cli-title-display-20250130220000"
   - "standardize-color-scheme-mint-20251031011544"
@@ -523,7 +522,10 @@ related_specs:
 related_context:
   - sub-agent-architecture
   - extract-command
-  - explore-command
+  - context-search-skill
+  - explorer-agent
+  - settings-merge-utility
+  - skills-bundling
 
 extension_points:
   command_registration: |
@@ -538,30 +540,25 @@ extension_points:
          .option("--flag", "description")
          .action(async (options) => { await commandHandler(options) });
 
-    Current commands: init (default), upgrade, check, examples, session
+    Current commands: init (default), upgrade, check, examples
     All commands follow same pattern: validation -> execution -> output phases
 
   agent_support: |
     Adding new AI agent support:
     1. Add entry to AI_CHOICES in src/config/agents.ts
-    2. Add folder mapping to AGENT_FOLDER_MAP (e.g., ".claude/")
-    3. Update create-release-packages.sh build_variant() case statement
-    4. Create agent-specific command format in generate_commands()
-
-    Agent format variations:
-    - Markdown (.md): claude, copilot, cursor, opencode, windsurf, codex, kilocode, auggie, roo
-    - TOML (.toml): gemini, qwen
-    - Special path patterns: copilot uses .github/prompts/, opencode uses .opencode/command/
+    2. Add folder mapping to AGENT_FOLDER_MAP (e.g., ".newagent/")
+    3. Update create-release-packages.sh build_package() case statement
+    4. Add agent-specific merge strategy to settings-merge.ts
+    5. Create hook script in src/templates/hooks/ if needed
 
   template_distribution: |
     Templates are packaged at build time via create-release-packages.sh:
-    1. Each agent + script variant gets its own ZIP package
-    2. Commands transform from src/templates/commands/*.md
-    3. Agent filtering via "agents:" YAML frontmatter field
-    4. Package structure: .buildforce/ + agent-specific folder
-
-    Extension: Add new template by creating src/templates/commands/{name}.md
-    with YAML frontmatter (version, description, optional scripts section)
+    1. Each agent gets its own ZIP package (no script variants)
+    2. Skills bundled via generate_skills()
+    3. Agents bundled via generate_agents()
+    4. Hooks copied directly from src/templates/hooks/
+    5. Agent filtering via "agents:" YAML frontmatter field
+    6. Package structure: .buildforce/ + agent-specific folder
 
   help_customization: |
     CLI help is fully customized via program.configureHelp() in cli.ts:
@@ -588,10 +585,11 @@ integration_points:
     - Config utilities for buildforce.json management
 
   template_to_runtime: |
-    Build-time templates (src/templates/) -> Runtime commands (agent folders)
-    - create-release-packages.sh transforms templates
-    - Variables substituted: {SCRIPT}, {ARGS}, __AGENT__
-    - Paths rewritten: src/scripts/ -> .buildforce/scripts/
+    Build-time templates (src/templates/) -> Runtime files (agent folders)
+    - create-release-packages.sh packages agents, skills, and hooks
+    - Agents: agents: field stripped from frontmatter before packaging
+    - Skills: Entire skill directories copied to .claude/skills/
+    - Hooks: Scripts copied to agent hook directories
 
 notes: |
   Key architectural strengths:

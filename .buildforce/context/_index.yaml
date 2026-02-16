@@ -14,17 +14,17 @@ version: "2.1"
 # 1. ARCHITECTURE (architecture/)
 #    Answers: WHAT exists already?
 #    Contains: Structural understanding of modules, features, components, and their relationships
-#    Used by: /buildforce.research, /buildforce.plan, /buildforce.build
+#    Used by: context-search skill, context-extract skill
 #
 # 2. CONVENTIONS (conventions/)
 #    Answers: HOW do we do things here?
 #    Contains: Coding standards, patterns, and practices
-#    Used by: /buildforce.plan, /buildforce.build (validation)
+#    Used by: context-search skill, AI agents during development
 #
 # 3. VERIFICATION (verification/)
 #    Answers: HOW do I know it's right?
 #    Contains: Quality standards, test expectations, known risks
-#    Used by: /buildforce.build (self-review), PR Review Actions
+#    Used by: context-search skill, PR Review Actions
 #
 # For more details on the context taxonomy, see:
 # https://buildforce.dev/concepts/context-taxonomy
@@ -58,7 +58,7 @@ version: "2.1"
 
 # Timestamps (populated by /buildforce.extract on first run)
 generated_at: "2026-02-02"
-last_updated: "2026-02-13"
+last_updated: "2026-02-16"
 
 # ============================================================================
 # CODEBASE PROFILE
@@ -67,10 +67,11 @@ last_updated: "2026-02-13"
 # Provides high-level overview of the project for AI agents.
 
 codebase_profile:
-  languages: [typescript, bash, powershell]
+  languages: [typescript, bash]
   frameworks: [commander, inquirer]
-  project_type: "cli tool"
-  scale: "small (~5k LOC)"
+  project_type: "cli tool - pure context layer"
+  scale: "small (~4k LOC)"
+  supported_agents: [claude, cursor, opencode]
 
 # ============================================================================
 # CONTEXT DOMAINS
@@ -87,104 +88,77 @@ domains:
     coverage: 0
     average_depth: none
     items:
-      - id: slash-commands
-        file: architecture/slash-commands.yaml
-        type: structural
-        status: extracted
-        depth: moderate
-        description: Core slash command system enabling spec-driven development workflow for AI agents
-        tags: [ core, workflow, agents ]
-        related_context: [ research-slash-command, plan-command, build-command, complete-command, document-command, plan-template, cli-architecture ]
-
-      - id: research-slash-command
-        file: architecture/research-slash-command.yaml
-        type: structural
-        status: extracted
-        depth: shallow
-        description: Slash command for gathering context from project knowledge, codebase, and external sources
-        tags: [ core, workflow, research, context-gathering ]
-        related_context: [ slash-commands, cli-architecture, document-command ]
-
-      - id: build-command
-        file: architecture/build-command.yaml
-        type: structural
-        status: extracted
-        depth: shallow
-        description: Slash command for implementing features following spec and plan with progress tracking
-        tags: [ slash-command, build, command-iteration, compression, workflow-enhancement, script-execution ]
-        related_context: [ slash-commands, plan-template, plan-command ]
-
-      - id: plan-template
-        file: architecture/plan-template.yaml
-        type: structural
-        status: extracted
-        depth: shallow
-        description: YAML template structure for implementation plans with task tracking and validation
-        tags: [ template, plan-template, build-agent, progress-tracking, checkbox-tracking, deviation-logging, spec-traceability, workflow-enhancement ]
-        related_context: [ build-command, plan-command, slash-commands ]
-
-      - id: document-command
-        file: architecture/document-command.yaml
-        type: structural
-        status: extracted
-        depth: shallow
-        description: Enhanced /document command with /complete UX patterns, empty context detection, and completion summaries
-        tags: [ slash-command, document, context-creation, template-only, kebab-case-naming, intelligent-merge, auto-detection, workflow-utility, ux-enhancement ]
-        related_context: [ slash-commands, complete-command, cli-architecture, research-slash-command ]
-
-      - id: readme-documentation
-        file: architecture/readme-documentation.yaml
-        type: structural
-        status: extracted
-        depth: shallow
-        description: Primary documentation for Buildforce CLI covering installation, workflow, and contribution
-        tags: [ documentation, readme, onboarding, spec-driven-development, philosophy, installation, quick-start, workflow, slash-commands, troubleshooting, contribution-guidelines, roadmap, changelog ]
-        related_context: [ cli-architecture, slash-commands ]
-
-      - id: plan-command
-        file: architecture/plan-command.yaml
-        type: structural
-        status: extracted
-        depth: shallow
-        description: Template-based /buildforce.plan command for creating/updating specifications and plans with state-based CREATE vs UPDATE logic
-        tags: [ slash-command, plan, template-only, state-tracking, timestamp-naming, agent-driven, workflow-core ]
-        related_context: [ slash-commands, plan-template, complete-command ]
-
-      - id: complete-command
-        file: architecture/complete-command.yaml
-        type: structural
-        status: extracted
-        depth: shallow
-        description: Template-only /complete command for finalizing specs with agent-driven context file management
-        tags: [ slash-command, complete, template-only, context-management, semantic-naming, intelligent-merge, workflow-core ]
-        related_context: [ slash-commands, plan-command, document-command ]
-
-      - id: upgrade-command
-        file: architecture/upgrade-command.yaml
-        type: structural
-        status: extracted
-        depth: shallow
-        description: Slash command for upgrading projects to latest templates while preserving user content
-        tags: [ slash-command, upgrade, template-upgrade, preservation, dry-run, atomic-operations, backward-compatibility, workflow-utility ]
-        related_context: [ slash-commands, cli-architecture, plan-command, complete-command, local-artifact-resolution ]
-
       - id: cli-architecture
         file: architecture/cli-architecture.yaml
         type: structural
         status: extracted
         depth: moderate
-        description: Comprehensive CLI architecture with template distribution, context management, and multi-agent support
-        tags: [ core, architecture, cli, commander, github-releases, context-system, agent-support, initialization, workflow-foundation ]
-        related_context: [ slash-commands, document-command, research-slash-command, plan-command, plan-template, upgrade-command, local-artifact-resolution ]
+        description: CLI architecture with template distribution, context layer, and 3-agent support
+        tags: [ core, architecture, cli, commander, context-layer, skills, hooks ]
+        related_context: [ extract-command, context-search-skill, explorer-agent, upgrade-command, skills-bundling, settings-merge-utility ]
 
-      - id: research-persistence
-        file: architecture/research-persistence.yaml
+      - id: upgrade-command
+        file: architecture/upgrade-command.yaml
         type: structural
         status: extracted
-        depth: shallow
-        description: Conversation-based research materialization system enabling structured research.yaml artifacts
-        tags: [ research, persistence, materialization, conversation-based, workflow-enhancement, template-only ]
-        related_context: [ research-slash-command, plan-command, build-command, complete-command ]
+        depth: moderate
+        description: CLI command for upgrading skills, hooks, and agents while preserving context
+        tags: [ upgrade, skills, hooks, agents, preservation, dry-run, atomic-operations ]
+        related_context: [ cli-architecture, local-artifact-resolution, settings-merge-utility, skills-bundling ]
+
+      - id: extract-command
+        file: architecture/extract-skill.yaml
+        type: structural
+        status: extracted
+        depth: deep
+        description: Context extraction skill with three unified modes (cold start, focused, incremental)
+        tags: [ skill, extract, context-mining, sub-agents, claude-code-only, coverage-map, incremental ]
+        related_context: [ cli-architecture, skills-bundling, settings-merge-utility ]
+
+      - id: context-search-skill
+        file: architecture/context-search-skill.yaml
+        type: structural
+        status: extracted
+        depth: moderate
+        description: Skill for searching the context repository with hook-based Explore agent redirection
+        tags: [ skill, context-search, context-retrieval, sub-agents, hooks, model-invocable ]
+        related_context: [ extract-command, cli-architecture, sub-agent-architecture, explorer-agent ]
+
+      - id: explorer-agent
+        file: architecture/explorer-agent.yaml
+        type: structural
+        status: extracted
+        depth: moderate
+        description: Explorer wrapper agent and hooks (Claude/Cursor/OpenCode) redirecting through context repository
+        tags: [ agent, hook, explore-redirect, context-search, multi-agent ]
+        related_context: [ context-search-skill, sub-agent-architecture, cli-architecture, settings-merge-utility ]
+
+      - id: sub-agent-architecture
+        file: architecture/sub-agent-architecture.yaml
+        type: structural
+        status: extracted
+        depth: deep
+        description: Sub-agent pattern with Explorer/Extractor families, Task tool spawning, and distribution
+        tags: [ core, architecture, sub-agents, task-tool, claude-code-only, agent-families ]
+        related_context: [ extract-command, context-search-skill, explorer-agent, cli-architecture, agent-template-conventions ]
+
+      - id: settings-merge-utility
+        file: architecture/settings-merge-utility.yaml
+        type: structural
+        status: extracted
+        depth: moderate
+        description: Multi-agent settings merge utility (Claude, Cursor, OpenCode) with additive strategy
+        tags: [ utility, settings, multi-agent, merge, hooks, permissions ]
+        related_context: [ upgrade-command, cli-architecture, explorer-agent ]
+
+      - id: skills-bundling
+        file: architecture/skills-bundling.yaml
+        type: structural
+        status: extracted
+        depth: moderate
+        description: Release packaging for skills, agents, and hooks with agent filtering
+        tags: [ release-packaging, skills, bundling, agent-filtering ]
+        related_context: [ upgrade-command, cli-architecture, settings-merge-utility, extract-command ]
 
       - id: local-artifact-resolution
         file: architecture/local-artifact-resolution.yaml
@@ -192,125 +166,45 @@ domains:
         status: extracted
         depth: shallow
         description: Local artifact resolution system for offline workflows and faster testing iterations
-        tags: [ artifact-resolution, offline-support, local-development, testing, glob-pattern, workflow-utility ]
+        tags: [ artifact-resolution, offline-support, local-development, testing ]
         related_context: [ cli-architecture, upgrade-command ]
 
-      - id: examples-command
-        file: architecture/examples-command.yaml
+      - id: readme-documentation
+        file: architecture/readme-documentation.yaml
         type: structural
         status: extracted
         depth: shallow
-        description: Interactive CLI command for displaying workflow examples extracted dynamically from README.md
-        tags: [ cli-command, workflow, examples, interactive, documentation, discoverability ]
-        related_context: [ cli-architecture, readme-documentation ]
-
-      - id: session-management-cli
-        file: architecture/session-management-cli.yaml
-        type: structural
-        status: extracted
-        depth: shallow
-        description: Interactive CLI command for managing and switching between active development sessions
-        tags: [ cli-command, session-management, interactive, inquirer, workflow, state-tracking ]
-        related_context: [ cli-architecture, state-tracking, plan-command ]
+        description: Primary documentation for Buildforce CLI
+        tags: [ documentation, readme, onboarding ]
+        related_context: [ cli-architecture ]
 
       - id: yaml-extension-standard
         file: architecture/yaml-extension-standard.yaml
         type: structural
         status: extracted
         depth: shallow
-        description: Codebase standard enforcing .yaml extension for all YAML files to eliminate inconsistency
-        tags: [ pattern, standard, yaml, file-extensions, consistency, breaking-change, codebase-wide ]
-        related_context: [ cli-architecture, plan-command, build-command, complete-command, document-command, research-slash-command ]
-
-      - id: state-tracking
-        file: architecture/state-tracking.yaml
-        type: structural
-        status: extracted
-        depth: moderate
-        description: JSON-based state tracking using buildforce.json to manage active spec sessions
-        tags: [ core, state-management, buildforce-json, configuration, workflow-foundation ]
-        related_context: [ plan-command, research-persistence, complete-command, cli-architecture ]
+        description: Codebase standard enforcing .yaml extension for all YAML files
+        tags: [ pattern, standard, yaml, file-extensions, consistency ]
+        related_context: [ cli-architecture ]
 
       - id: template-versioning
         file: architecture/template-versioning.yaml
         type: structural
         status: extracted
         depth: shallow
-        description: Automatic version injection for templates in release workflow with pre-commit strategy
-        tags: [ release-workflow, templates, versioning, github-actions, automation, workflow-enhancement ]
-        related_context: [ cli-architecture, plan-template, upgrade-command ]
+        description: Automatic version injection for templates in release workflow
+        tags: [ release-workflow, templates, versioning, github-actions ]
+        related_context: [ cli-architecture, upgrade-command ]
 
       - id: commit-enforcement
         file: architecture/commit-enforcement.yaml
         type: structural
         status: extracted
         depth: shallow
-        description: Commit message and branch naming enforcement using commitlint, husky, and GitHub Actions
-        tags: [ commit-enforcement, conventional-commits, commitlint, husky, commitizen, git-hooks, branch-naming, github-actions, contribution-standards, developer-experience ]
+        description: Commit message and branch naming enforcement
+        tags: [ commit-enforcement, conventional-commits, commitlint, husky ]
         related_context: [ readme-documentation, cli-architecture ]
 
-      - id: command-naming-standard
-        file: architecture/command-naming-standard.yaml
-        type: structural
-        status: extracted
-        depth: shallow
-        description: Slash command naming convention using /buildforce.* prefix for namespace isolation
-        tags: [ pattern, naming-convention, slash-commands, namespace-isolation, documentation-consistency ]
-        related_context: [ slash-commands, readme-documentation, cli-architecture ]
-
-      - id: extract-command
-        file: architecture/extract-skill.yaml
-        type: structural
-        status: extracted
-        depth: deep
-        description: Two-layer context extraction system with skill-based architecture and three unified modes
-        tags: [ slash-command, skill, extract, context-mining, sub-agents, claude-code-only, coverage-map, stop-hook, incremental ]
-        related_context: [ slash-commands, cli-architecture, upgrade-command, skills-bundling, settings-merge-utility ]
-
-      - id: settings-merge-utility
-        file: architecture/settings-merge-utility.yaml
-        type: structural
-        status: extracted
-        depth: shallow
-        description: TypeScript utility for merging Claude Code settings with additive deep-merge strategy
-        tags: [ utility, settings, claude-code, merge, hooks, permissions ]
-        related_context: [ upgrade-command, cli-architecture ]
-
-      - id: skills-bundling
-        file: architecture/skills-bundling.yaml
-        type: structural
-        status: extracted
-        depth: moderate
-        description: Release packaging system for bundling Claude Code skills with agent filtering and extract skill integration
-        tags: [ release-packaging, skills, claude-code, bundling, agent-filtering, extract-skill-deployment ]
-        related_context: [ upgrade-command, cli-architecture, settings-merge-utility, extract-command ]
-
-      - id: context-search-skill
-        file: architecture/context-search-skill.yaml
-        type: structural
-        status: extracted
-        depth: moderate
-        description: Claude Code skill for searching the context repository with hook-based Explore agent redirection
-        tags: [ skill, context-search, context-retrieval, sub-agents, hooks, model-invocable, user-invocable ]
-        related_context: [ extract-command, research-slash-command, cli-architecture, sub-agent-architecture ]
-
-      - id: explorer-agent
-        file: architecture/explorer-agent.yaml
-        type: structural
-        status: extracted
-        depth: moderate
-        description: Buildforce Explorer wrapper agent and PreToolUse hook that intercepts built-in Explore and redirects through context repository
-        tags: [ agent, hook, explore-redirect, context-search, pretooluse, settings-merge ]
-        related_context: [ context-search-skill, sub-agent-architecture, cli-architecture ]
-
-      - id: sub-agent-architecture
-        file: architecture/sub-agent-architecture.yaml
-        type: structural
-        status: extracted
-        depth: deep
-        description: Claude Code sub-agent pattern with Explorer/Extractor/Archiver families, Task tool spawning, and distribution mechanism
-        tags: [ core, architecture, sub-agents, task-tool, claude-code-only, agent-families, distribution ]
-        related_context: [ extract-command, context-search-skill, explorer-agent, cli-architecture, agent-template-conventions ]
 
   conventions:
     description: |
@@ -320,15 +214,6 @@ domains:
     coverage: 0
     average_depth: none
     items:
-      - id: template-only-slash-commands
-        file: conventions/template-only-slash-commands.yaml
-        type: convention
-        status: extracted
-        depth: moderate
-        description: Template-Only Slash Commands
-        sub_type: architectural-pattern
-        enforcement: strict
-
       - id: context-repository-pattern
         file: conventions/context-repository-pattern.yaml
         type: convention
@@ -337,15 +222,6 @@ domains:
         description: Context Repository Pattern
         sub_type: architectural-pattern
         enforcement: recommended
-
-      - id: bash-script-context-loading
-        file: conventions/bash-script-context-loading.yaml
-        type: convention
-        status: extracted
-        depth: shallow
-        description: Bash Script Context Loading
-        sub_type: code-convention
-        enforcement: strict
 
       - id: error-handling-in-templates
         file: conventions/error-handling-in-templates.yaml
@@ -363,15 +239,6 @@ domains:
         depth: shallow
         description: Manual Workflow Testing
         sub_type: testing-standard
-        enforcement: recommended
-
-      - id: template-only-changes-preferred
-        file: conventions/template-only-changes-preferred.yaml
-        type: convention
-        status: extracted
-        depth: shallow
-        description: Template-Only Changes Preferred
-        sub_type: dependency-rule
         enforcement: recommended
 
       - id: buildforcejson-replaces-current-spec
@@ -492,9 +359,9 @@ domains:
 
 summary:
   overall_coverage: 100
-  total_items: 42
-  extracted_items: 42
-  iterations_completed: 4
+  total_items: 27
+  extracted_items: 27
+  iterations_completed: 5
 
 # ============================================================================
 # EXTRACTION STATE
@@ -504,18 +371,14 @@ summary:
 
 extraction:
   needs_clarification:
-    - "Should the migration system (MigrationRunner) be documented as a separate context item?"
     - "Should linting tools (ESLint/Prettier) be added to the quality gates?"
-    - "Should the vitest setup be completed (add vitest to package.json deps, update test script)?"
   recommended_focus:
-    - id: build-command
-      reason: "Core workflow command - could benefit from moderate depth with extension points"
-    - id: plan-command
-      reason: "Core workflow command - could benefit from moderate depth with state flow details"
-    - id: complete-command
-      reason: "Core workflow command - could benefit from moderate depth with context creation details"
+    - id: cli-architecture
+      reason: "Core item updated significantly - could benefit from deep depth reviewing the new 3-agent model"
+    - id: explorer-agent
+      reason: "Now supports 3 agents (Claude, Cursor, OpenCode) - could document per-agent hook differences in depth"
     - id: settings-merge-utility
-      reason: "Key enabler for skill activation - could benefit from moderate depth documenting the hook configuration flow"
+      reason: "Major expansion to multi-agent strategies - could benefit from deep depth on each strategy"
   new_discoveries:
     - id: migration-runner
       domain: architecture
@@ -525,15 +388,7 @@ extraction:
       domain: architecture
       description: "Visual progress tracking class for hierarchical step display"
       priority: low
-    - id: commit-conventions
-      domain: conventions
-      description: "Commitlint configuration with Husky hooks enforcing conventional commits"
-      priority: medium
     - id: release-automation
       domain: architecture
-      description: "Sophisticated release automation with version calculation and npm publishing"
+      description: "Simplified release automation with no script variants"
       priority: low
-    - id: skill-delegation-pattern
-      domain: conventions
-      description: "Convention for commands delegating to skills for multi-entry-point activation (command + hook)"
-      priority: medium
