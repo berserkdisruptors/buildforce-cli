@@ -1,0 +1,173 @@
+# Explorer Agent Architecture Context
+# Created: 2026-02-10
+
+id: explorer-agent
+name: "Buildforce Explorer Agent & Hook"
+type: structural
+status: production
+created: "2026-02-10"
+last_updated: "2026-02-10"
+
+summary: |
+  The buildforce-explorer agent is a thin wrapper that transparently replaces Claude Code's
+  built-in Explore sub-agent. A PreToolUse hook intercepts every Task call with
+  subagent_type=Explore and rewrites it to buildforce-explorer, which then reads and executes
+  the context-search skill (SKILL.md). This ensures all exploration — whether triggered by
+  the user or proactively by the agent — goes through the curated context repository instead
+  of raw file search.
+
+  The explorer agent itself contains no search logic. It delegates entirely to the
+  context-search skill, keeping the skill as the single source of truth.
+
+responsibilities:
+  - Intercept Claude Code's built-in Explore sub-agent dispatch via PreToolUse hook
+  - Rewrite the subagent_type from "Explore" to "buildforce-explorer" transparently
+  - Read and execute the context-search skill instructions
+  - Pass the original Explore prompt through as $ARGUMENTS to the skill
+
+dependencies:
+  internal:
+    - context-search-skill: "Contains all search logic — the explorer agent just reads and follows SKILL.md"
+    - hooks-utility: "src/utils/hooks.ts merges hook config into settings.local.json and sets executable permissions"
+  external:
+    - Claude Code hooks system: "PreToolUse event for intercepting tool calls before execution"
+    - Claude Code Task tool: "The tool being intercepted — all sub-agent dispatches go through Task"
+    - Claude Code settings.local.json: "Hook registration lives here, merged idempotently by init/upgrade"
+
+files:
+  primary:
+    - src/templates/agents/buildforce-explorer.md
+    - src/templates/hooks/setup-explorer-subagent.sh
+  secondary:
+    - src/utils/hooks.ts
+    - src/templates/skills/context-search/SKILL.md
+
+interfaces:
+  hook:
+    - name: "setup-explorer-subagent"
+      event: "PreToolUse"
+      matcher: "Task"
+      trigger: "subagent_type == 'Explore' in tool_input"
+      action: "Rewrites subagent_type to 'buildforce-explorer', preserves original prompt"
+      config_location: ".claude/settings.local.json → hooks.PreToolUse[]"
+      script_location: ".claude/hooks/setup-explorer-subagent.sh"
+  agent:
+    - name: "buildforce-explorer"
+      tools: "Task, Read, Glob, Grep"
+      model: "inherit"
+      behavior: "Reads .claude/skills/context-search/SKILL.md and follows its instructions"
+
+design_decisions:
+  - decision: "Hook intercepts at PreToolUse rather than blocking/denying the call"
+    rationale: |
+      Using updatedInput to rewrite the subagent_type is transparent — the caller (Claude)
+      doesn't know the redirection happened. This is cleaner than blocking the Explore call
+      and having the agent retry with a different type. The hook allows the call through
+      with modified input, so there's no error handling or retry logic needed.
+
+  - decision: "Explorer agent is intentionally thin — only reads SKILL.md"
+    rationale: |
+      The context-search skill is the single source of truth for all search logic. If the
+      skill evolves (new explorers, different synthesis), the wrapper agent doesn't need to
+      change. This also means the user-invocable /context-search and the hook-redirected
+      Explore path execute identical logic.
+
+  - decision: "Hook only fires when subagent_type is exactly 'Explore'"
+    rationale: |
+      The hook checks for the literal string "Explore" — Claude Code's built-in Explore agent.
+      It does not intercept other sub-agent types (general-purpose, Plan, etc.) or custom
+      buildforce agents. This surgical targeting prevents interference with other Task tool usage.
+
+  - decision: "Hook script uses jq for JSON processing"
+    rationale: |
+      Claude Code hooks receive JSON on stdin and expect JSON on stdout. jq is the standard
+      tool for this. The script reads tool_input.subagent_type, and if it matches "Explore",
+      outputs a hookSpecificOutput with updatedInput. If it doesn't match, the script outputs
+      nothing (exit 0), which tells Claude Code to proceed normally.
+
+  - decision: "Hook config merged into settings.local.json, not settings.json"
+    rationale: |
+      settings.local.json is the local-only settings file (not committed to git). Hook
+      configuration is project-local infrastructure that shouldn't be in version control
+      alongside the shared settings.json. The mergeHooksSettings utility handles this
+      idempotently — safe to run multiple times without duplication.
+
+  - decision: "ensureHooksExecutable runs after every mergeHooksSettings call"
+    rationale: |
+      ZIP extraction and fs.copy don't preserve Unix execute bits. Without chmod, the hook
+      script fails with "Permission denied" on first run. Running chmod unconditionally
+      after merge is cheap and prevents a confusing failure mode.
+
+  - decision: "Hook script exits 0 even when no rewrite happens"
+    rationale: |
+      A non-zero exit would be treated as a hook error by Claude Code. When the Task call
+      is not an Explore dispatch (e.g., spawning an Extractor), the script must exit cleanly
+      with no output, letting the call proceed unmodified.
+
+hook_mechanism: |
+  The full interception flow:
+
+  1. Claude dispatches Task with subagent_type: "Explore" (built-in behavior)
+  2. Claude Code fires PreToolUse hooks registered for the "Task" matcher
+  3. setup-explorer-subagent.sh receives the full tool call as JSON on stdin
+  4. Script extracts subagent_type from tool_input via jq
+  5. If "Explore": outputs JSON with updatedInput that rewrites subagent_type
+     to "buildforce-explorer" and preserves the original prompt
+  6. If not "Explore": outputs nothing and exits 0 (no-op)
+  7. Claude Code applies updatedInput, replacing the original tool_input
+  8. Task now spawns buildforce-explorer instead of built-in Explore
+  9. buildforce-explorer reads SKILL.md and dispatches Context Explorers
+
+  The hook JSON output structure:
+  ```json
+  {
+    "hookSpecificOutput": {
+      "hookEventName": "PreToolUse",
+      "permissionDecision": "allow",
+      "updatedInput": {
+        "subagent_type": "buildforce-explorer",
+        "prompt": "<original prompt>"
+      }
+    }
+  }
+  ```
+
+  The settings.local.json hook registration:
+  ```json
+  {
+    "hooks": {
+      "PreToolUse": [{
+        "matcher": "Task",
+        "hooks": [{
+          "type": "command",
+          "command": ".claude/hooks/setup-explorer-subagent.sh"
+        }]
+      }]
+    }
+  }
+  ```
+
+distribution: |
+  The explorer agent and hook are distributed through the standard Buildforce pipeline:
+
+  BUILD: create-release-packages.sh
+  - Agent: generate_agents() processes buildforce-explorer.md (agents: [claude] filtered)
+  - Hook: Direct file copy from src/templates/hooks/ to .claude/hooks/ (Claude case only)
+
+  INIT: setup.ts
+  - Agent: Extracted from ZIP as part of .claude/agents/ (generic extraction)
+  - Hook: Extracted from ZIP as part of .claude/hooks/ (generic extraction)
+  - Config: mergeHooksSettings() adds hook entry to settings.local.json
+  - Permissions: ensureHooksExecutable() sets chmod on .sh files
+
+  UPGRADE: execution.ts
+  - Agent: Replaced as part of .claude/agents/ full replacement (backup + remove + copy)
+  - Hook: Replaced as part of .claude/hooks/ full replacement (backup + remove + copy)
+  - Config: mergeHooksSettings() re-merges hook entry (idempotent)
+  - Permissions: ensureHooksExecutable() re-sets chmod
+  - Rollback: Hook directory restored from backup on failure
+
+related_context:
+  - context-search-skill
+  - sub-agent-architecture
+  - cli-architecture

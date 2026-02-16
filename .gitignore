@@ -18,8 +18,13 @@ dist/
 
 inspiration/
 .buildforce/scripts
+.buildforce/templates
 .buildforce/buildforce.json
+.buildforce/.temp
+
 .claude/commands/**
+.claude/agents/**
+.claude/hooks/**
+.claude/skills/**
 .cursor/commands/**
 .genreleases/
-.buildforce/.temp

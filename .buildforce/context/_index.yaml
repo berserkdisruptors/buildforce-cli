@@ -58,7 +58,7 @@ version: "2.1"
 
 # Timestamps (populated by /buildforce.extract on first run)
 generated_at: "2026-02-02"
-last_updated: "2026-02-09"
+last_updated: "2026-02-13"
 
 # ============================================================================
 # CODEBASE PROFILE
@@ -259,7 +259,7 @@ domains:
         related_context: [ slash-commands, readme-documentation, cli-architecture ]
 
       - id: extract-command
-        file: architecture/extract-command.yaml
+        file: architecture/extract-skill.yaml
         type: structural
         status: extracted
         depth: deep
@@ -284,6 +284,33 @@ domains:
         description: Release packaging system for bundling Claude Code skills with agent filtering and extract skill integration
         tags: [ release-packaging, skills, claude-code, bundling, agent-filtering, extract-skill-deployment ]
         related_context: [ upgrade-command, cli-architecture, settings-merge-utility, extract-command ]
+
+      - id: context-search-skill
+        file: architecture/context-search-skill.yaml
+        type: structural
+        status: extracted
+        depth: moderate
+        description: Claude Code skill for searching the context repository with hook-based Explore agent redirection
+        tags: [ skill, context-search, context-retrieval, sub-agents, hooks, model-invocable, user-invocable ]
+        related_context: [ extract-command, research-slash-command, cli-architecture, sub-agent-architecture ]
+
+      - id: explorer-agent
+        file: architecture/explorer-agent.yaml
+        type: structural
+        status: extracted
+        depth: moderate
+        description: Buildforce Explorer wrapper agent and PreToolUse hook that intercepts built-in Explore and redirects through context repository
+        tags: [ agent, hook, explore-redirect, context-search, pretooluse, settings-merge ]
+        related_context: [ context-search-skill, sub-agent-architecture, cli-architecture ]
+
+      - id: sub-agent-architecture
+        file: architecture/sub-agent-architecture.yaml
+        type: structural
+        status: extracted
+        depth: deep
+        description: Claude Code sub-agent pattern with Explorer/Extractor/Archiver families, Task tool spawning, and distribution mechanism
+        tags: [ core, architecture, sub-agents, task-tool, claude-code-only, agent-families, distribution ]
+        related_context: [ extract-command, context-search-skill, explorer-agent, cli-architecture, agent-template-conventions ]
 
   conventions:
     description: |
@@ -384,6 +411,26 @@ domains:
         enforcement: strict
         related_context: [ yaml-extension-standard ]
 
+      - id: agent-template-conventions
+        file: conventions/agent-template-conventions.yaml
+        type: convention
+        status: extracted
+        depth: moderate
+        description: Conventions for writing buildforce agent templates (frontmatter, tools, output formats)
+        sub_type: code-convention
+        enforcement: strict
+        related_context: [ sub-agent-architecture, extract-command, context-search-skill ]
+
+      - id: skill-naming-conventions
+        file: conventions/skill-naming-conventions.yaml
+        type: convention
+        status: extracted
+        depth: shallow
+        description: Naming conventions for Buildforce skills (buildforce- prefix, kebab-case)
+        sub_type: naming-convention
+        enforcement: strict
+        related_context: [ skills-bundling, extract-command ]
+
   verification:
     description: |
       Verification context about HOW to know if code is right.
@@ -445,9 +492,9 @@ domains:
 
 summary:
   overall_coverage: 100
-  total_items: 37
-  extracted_items: 37
-  iterations_completed: 3
+  total_items: 42
+  extracted_items: 42
+  iterations_completed: 4
 
 # ============================================================================
 # EXTRACTION STATE

@@ -3,7 +3,7 @@ name: Extract Command & Skill
 type: structural
 status: production
 created: "2026-01-28"
-last_updated: "2026-02-09"
+last_updated: "2026-02-13"
 
 summary: |
   Claude Code-specific context extraction system with a two-layer architecture:
@@ -231,6 +231,10 @@ evolution:
 
 related_specs:
   - claude-code-extract-command-20260127152345
+
+related_context:
+  - sub-agent-architecture
+  - agent-template-conventions
 
 sub_agent_orchestration:
   spawning_pattern: |

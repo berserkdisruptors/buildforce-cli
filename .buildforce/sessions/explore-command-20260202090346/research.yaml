@@ -1,0 +1,196 @@
+id: explore-command-20260202090346-research
+created: "2026-02-02"
+last_updated: "2026-02-02"
+
+summary: |
+  Research comparing the current /buildforce.extract command with requirements for the new /buildforce.explore command.
+  Extract uses sub-agents to WRITE context to the repository, while Explore will use sub-agents to READ context
+  for conversational synthesis. Both share the three-domain architecture (structural, conventions, verification)
+  but serve fundamentally different purposes: extraction vs retrieval.
+
+key_findings:
+  - finding: "Extract command uses Context Extractors (write mode) while Explore needs Context Explorers (read mode)"
+    source: "explore-poc.md lines 159-168"
+    importance: high
+
+  - finding: "Extract takes minutes per iteration (deep analysis), Explore must respond in seconds (<5s total latency)"
+    source: "explore-poc.md lines 789-800"
+    importance: high
+
+  - finding: "Extract produces YAML file proposals, Explore produces conversational synthesis"
+    source: "explore-poc.md lines 116-123"
+    importance: high
+
+  - finding: "Both use three parallel sub-agents mapped to the same domains (architecture, conventions, verification)"
+    source: "extract.md lines 98-108, explore-poc.md lines 143-156"
+    importance: high
+
+  - finding: "Extract uses Task tool for sub-agent spawning - Explore will need the same pattern"
+    source: "extract-command.yaml line 28"
+    importance: medium
+
+  - finding: "Extract sub-agents return structured YAML proposals for validation before write"
+    source: "buildforce-structural-extractor.md lines 66-97"
+    importance: medium
+
+  - finding: "Explore sub-agents (Explorers) return findings with excerpts, connections, gaps, and suggested_deeper queries"
+    source: "explore-poc.md lines 255-287"
+    importance: high
+
+  - finding: "Explore requires session state tracking across turns (topics, context surfaced, open questions)"
+    source: "explore-poc.md lines 327-347, 591-656"
+    importance: high
+
+  - finding: "Explore Manager must synthesize findings conversationally, not enumerate them report-style"
+    source: "explore-poc.md lines 289-325"
+    importance: high
+
+  - finding: "Explorer dispatch is selective based on intent, not always all three"
+    source: "explore-poc.md lines 239-249"
+    importance: medium
+
+file_paths:
+  primary:
+    - .buildforce/.temp/explore-poc.md
+    - src/templates/commands/extract.md
+    - src/templates/agents/buildforce-structural-extractor.md
+    - src/templates/agents/buildforce-conventions-extractor.md
+    - src/templates/agents/buildforce-verification-extractor.md
+    - .buildforce/context/architecture/extract-command.yaml
+
+  secondary:
+    - .buildforce/context/_index.yaml
+    - .buildforce/buildforce.json
+
+mermaid_diagrams:
+  - title: "Extract vs Explore Architecture Comparison"
+    diagram: |
+      flowchart TB
+          subgraph Extract["/buildforce.extract (WRITE)"]
+              EM[Extract Manager]
+              EM --> SE1[CM-1 Structural]
+              EM --> SE2[CM-2 Convention]
+              EM --> SE3[CM-3 Verification]
+              SE1 --> |"proposals"| EM
+              SE2 --> |"proposals"| EM
+              SE3 --> |"proposals"| EM
+              EM --> |"validated writes"| CR[(Context Repo)]
+          end
+
+          subgraph Explore["/buildforce.explore (READ)"]
+              XM[Explore Manager]
+              XM --> |"query"| CE1[CE-1 Structural]
+              XM --> |"query"| CE2[CE-2 Convention]
+              XM --> |"query"| CE3[CE-3 Verification]
+              CR2[(Context Repo)] --> |"read"| CE1
+              CR2 --> |"read"| CE2
+              CR2 --> |"read"| CE3
+              CE1 --> |"findings"| XM
+              CE2 --> |"findings"| XM
+              CE3 --> |"findings"| XM
+              XM --> |"synthesis"| User[Conversation]
+          end
+
+  - title: "Explore Session Flow"
+    diagram: |
+      sequenceDiagram
+          participant U as User
+          participant EM as Explore Manager
+          participant CE as Context Explorers
+          participant CR as Context Repo
+
+          U->>EM: /buildforce.explore "let's discuss auth"
+          EM->>EM: Analyze intent + session history
+          EM->>CE: Dispatch relevant explorers (parallel)
+          CE->>CR: Read _index.yaml + relevant files
+          CE->>EM: Return findings (< 3 seconds)
+          EM->>EM: Synthesize conversationally
+          EM->>U: Natural response with context
+          Note over EM: Update session state
+          U->>EM: Follow-up question
+          EM->>EM: Check session state
+          alt Topic shift detected
+              EM->>CE: Re-dispatch with new query
+          else Same topic, sufficient context
+              EM->>U: Respond from existing understanding
+          end
+
+data_models:
+  - name: "Explorer Findings Return Format"
+    source: "explore-poc.md lines 255-287"
+    schema: |
+      query_understood: string  # Explorer's interpretation of the query
+      findings:
+        - source: string        # e.g., "architecture/auth-service.yaml"
+          relevance: enum       # high | medium | low
+          excerpt: string       # Relevant content, not entire file
+          why_relevant: string  # Brief explanation
+      connections:
+        - topic: string         # Related topic
+          nature: string        # How it connects
+      gaps:
+        - string                # Info not found in context
+      suggested_deeper:
+        - query: string         # Follow-up query
+          reason: string        # Why valuable
+
+  - name: "Explore Session State"
+    source: "explore-poc.md lines 591-638"
+    schema: |
+      explore_session:
+        started_at: datetime
+        turns: integer
+        topics:
+          {topic_name}:
+            depth: enum         # deep | shallow | mentioned
+            first_mentioned: string
+            last_mentioned: string
+        context_surfaced:
+          - file: string
+            sections: array
+            turn: integer
+        open_questions:
+          - question: string
+            raised_turn: integer
+            status: enum        # open | addressed_turn_{N}
+        unexplored_connections:
+          - from: string
+            to: string
+            nature: string
+            suggested_turn: integer
+
+  - name: "Extractor Proposal Format (existing)"
+    source: "buildforce-structural-extractor.md lines 68-97"
+    schema: |
+      contributions:
+        - action: enum          # create | update
+          target_item: string
+          file: string
+          depth_achieved: enum  # shallow | moderate | deep
+          reason: string
+          content: string       # Full YAML content for file
+      new_discoveries:
+        - id: string
+          name: string
+          domain: string
+          notes: string
+      questions_for_user:
+        - string
+      verification_status:
+        - question: string
+          answered: boolean
+          evidence: string
+
+tldr:
+  - "Extract WRITES context (minutes), Explore READS context (seconds) - fundamentally different operations"
+  - "Both use three parallel sub-agents for the same domains but with opposite data flow directions"
+  - "Explore requires new 'Explorer' sub-agents (CE-1, CE-2, CE-3) that return findings, not file proposals"
+  - "Explore Manager must synthesize findings conversationally, not enumerate them as reports"
+  - "Session state tracking is critical for Explore - must track topics, surfaced context, and open questions"
+  - "Performance requirement: <5 seconds total user-perceived latency (Explorers <3s, synthesis <2s)"
+  - "Explorer dispatch is selective based on intent classification, not always all three domains"
+
+next_steps:
+  suggested_action: "Ready to plan implementation"
+  command: "/buildforce.plan"
+  notes: "Implementation requires new command template (explore.md) and three new explorer agent templates"

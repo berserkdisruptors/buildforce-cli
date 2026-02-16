@@ -3,7 +3,7 @@ name: Buildforce CLI Architecture
 type: structural
 status: production
 created: 2025-10-27
-last_updated: "2026-02-02"
+last_updated: "2026-02-05"
 
 summary: |
   Comprehensive architecture of the Buildforce CLI tool - a Node.js-based command-line
@@ -235,6 +235,7 @@ architecture_patterns:
     - .buildforce/templates/ - Local templates
     - buildforce.json - Project configuration with aiAssistant, scriptType, version, sessionsFolder
     - Agent folders (.claude/, .github/, etc.) - Agent-specific files with commands nested in buildforce/ subdirectory
+    - .claude/agents/ - Sub-agent templates (Claude Code only)
 
     Extraction Flow:
     1. Download ZIP to temp directory
@@ -242,6 +243,21 @@ architecture_patterns:
     3. Detect nested directory structure
     4. Copy files to project path (merge mode)
     5. Clean up temp files
+
+    Sub-Agent Distribution (Claude Code only):
+    - Source: src/templates/agents/*.md with agents: [claude] frontmatter
+    - Build: generate_agents() in create-release-packages.sh filters and processes
+    - Package: Agents included in Claude ZIP at .claude/agents/
+    - Init: Extracted automatically as part of ZIP (no special handling)
+    - Upgrade: Full replacement of .claude/agents/ folder (backup + remove + copy)
+    - Other agents don't support sub-agents (no Task tool equivalent)
+
+    Key difference from commands distribution:
+    - Commands go to all 11 agents with format variations (md, toml, prompt.md)
+    - Agents go ONLY to Claude (Task tool is Claude Code-specific)
+    - Both use same agents: field filtering mechanism
+
+    See sub-agent-architecture context file for detailed agent specification.
 
   context_management: |
     Directory Structure (v2.0 - Context Taxonomy):
@@ -503,6 +519,11 @@ related_specs:
   - "add-temp-folder-gitignore-upgrade-20251201000000"
   - "context-taxonomy-align-20260123143000"
   - "claude-code-extract-command-20260127152345"
+
+related_context:
+  - sub-agent-architecture
+  - extract-command
+  - explore-command
 
 extension_points:
   command_registration: |

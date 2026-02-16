@@ -202,9 +202,10 @@ build_variant() {
 
   if [[ -d src/templates ]]; then
     mkdir -p "$SPEC_DIR/templates"
-    # Copy template files, excluding commands, agents, and skills subdirectories
-    # (commands go to agent-specific folders, agents go to .claude/agents/, skills go to .claude/skills/)
-    find src/templates -type f -not -path "src/templates/commands/*" -not -path "src/templates/agents/*" -not -path "src/templates/skills/*" | while read -r file; do
+    # Copy template files, excluding commands, agents, skills, and hooks subdirectories
+    # (commands go to agent-specific folders, agents go to .claude/agents/,
+    #  skills go to .claude/skills/, hooks go to .claude/hooks/)
+    find src/templates -type f -not -path "src/templates/commands/*" -not -path "src/templates/agents/*" -not -path "src/templates/skills/*" -not -path "src/templates/hooks/*" | while read -r file; do
       # Get the relative path from src/templates
       rel_path="${file#src/templates/}"
       dest_file="$SPEC_DIR/templates/$rel_path"
@@ -252,10 +253,21 @@ build_variant() {
         mkdir -p "$base_dir/.claude/agents"
         generate_agents claude "$base_dir/.claude/agents"
       fi
-      # Claude Code supports skills - generate them if any exist. TODO: add support for other agents
+      # Claude Code supports skills - generate them if any exist
       if [[ -d src/templates/skills ]]; then
         mkdir -p "$base_dir/.claude/skills"
         generate_skills claude "$base_dir/.claude/skills"
+      fi
+      # Claude Code hooks - copy hook scripts to .claude/hooks/
+      # (config.json is handled by mergeAgentSettings in the CLI, not distributed)
+      if [[ -d src/templates/hooks ]]; then
+        mkdir -p "$base_dir/.claude/hooks"
+        for hook_file in src/templates/hooks/*; do
+          [[ -f "$hook_file" ]] || continue
+          [[ "$hook_file" == *.json ]] && continue
+          cp "$hook_file" "$base_dir/.claude/hooks/"
+        done
+        echo "Copied hook scripts -> .claude/hooks"
       fi
       ;;
     gemini)

@@ -1,0 +1,246 @@
+id: agent-template-conventions
+name: "Agent Template Conventions"
+type: convention
+sub_type: code-convention
+enforcement: strict
+created: "2026-02-05"
+last_updated: "2026-02-05"
+
+description: |
+  Conventions for writing buildforce agent templates. Agent templates are Markdown
+  files with YAML frontmatter that define sub-agents spawned during buildforce
+  operations. These conventions ensure consistency, proper tool access, and
+  predictable behavior across all agents.
+
+  Templates live in src/templates/agents/ and follow the naming pattern
+  buildforce-{domain}-{role}.md where domain indicates the context type
+  (conventions, structural, verification) and role indicates the agent's
+  function (explorer, extractor, archiver).
+
+examples:
+  - file: "src/templates/agents/buildforce-conventions-extractor.md"
+    snippet: |
+      ---
+      name: buildforce-conventions-extractor
+      description: Context Extractor for convention context. Extracts coding standards, patterns, and practices. Use when extracting convention context during /buildforce.extract iterations.
+      tools: Read, Glob, Grep
+      model: inherit
+      agents: [claude]
+      ---
+
+      # Context Extractor: Conventions
+
+      You are a Context Extractor specializing in convention/standards context extraction.
+      You receive an extraction plan with target items, target depths, and verification criteria.
+      Execute the plan and return PROPOSALS (never write files directly).
+
+      ## Step 1: Read Your Plan
+      ...
+
+  - file: "src/templates/agents/buildforce-archiver.md"
+    snippet: |
+      ---
+      name: buildforce-archiver
+      description: Archives exploration artifacts to the appropriate location. Runs in background to avoid blocking conversation flow.
+      tools: Write, Read, Glob, Grep
+      model: sonnet
+      permissionMode: bypassPermissions
+      agents: [claude]
+      ---
+
+violations:
+  - "Using relative tool names or non-standard tool identifiers"
+  - "Omitting required frontmatter fields (name, description, tools, model, agents)"
+  - "Using Write tool in explorer agents (explorers are read-only)"
+  - "Using model: inherit for agents that need explicit model capabilities (like archiver)"
+  - "Naming agents without the buildforce- prefix"
+  - "Missing ## sections to structure agent instructions"
+  - "Returning raw text instead of structured YAML output"
+
+reference_files:
+  - "src/templates/agents/buildforce-conventions-extractor.md"
+  - "src/templates/agents/buildforce-structural-extractor.md"
+  - "src/templates/agents/buildforce-verification-extractor.md"
+  - "src/templates/agents/buildforce-archiver.md"
+  - "src/templates/agents/buildforce-convention-explorer.md"
+  - "src/templates/agents/buildforce-structural-explorer.md"
+  - "src/templates/agents/buildforce-verification-explorer.md"
+
+template: |
+  ---
+  name: buildforce-{domain}-{role}
+  description: {One-line description of purpose and when to use}
+  tools: {Tool list - Read, Glob, Grep for read-only; add Write for writers}
+  model: inherit  # or explicit model like 'sonnet' for specific needs
+  agents: [claude]
+  ---
+
+  # {Title matching the agent's specialization}
+
+  You are a {Role Description} specializing in {domain} context.
+  {Core behavioral instruction in one sentence.}
+
+  ## Step 1: {First Action}
+
+  {Instructions for first step}
+
+  ## Step 2: {Second Action}
+
+  {Instructions for second step}
+
+  ## Step 3: {Third Action}
+
+  {Instructions for third step}
+
+  ## Output Quality
+
+  BAD: {Example of poor output}
+
+  GOOD: {Example of correct output with context}
+
+  ## Return Format
+
+  Return structured YAML:
+
+  ```yaml
+  {output structure following domain conventions}
+  ```
+
+  ## Guidelines
+
+  - {Guideline 1}
+  - {Guideline 2}
+  - {Guideline 3}
+
+  ## What NOT to Do
+
+  - {Anti-pattern 1}
+  - {Anti-pattern 2}
+
+frontmatter_fields:
+  required:
+    - field: name
+      format: "buildforce-{domain}-{role}"
+      examples:
+        - "buildforce-conventions-extractor"
+        - "buildforce-structural-explorer"
+        - "buildforce-archiver"
+      notes: |
+        Domain is omitted when agent is cross-cutting (like archiver).
+        Role indicates function: explorer (retrieval), extractor (analysis), archiver (storage).
+
+    - field: description
+      format: "Single sentence with purpose and usage context"
+      examples:
+        - "Context Extractor for convention context. Extracts coding standards, patterns, and practices. Use when extracting convention context during /buildforce.extract iterations."
+        - "Archives exploration artifacts to the appropriate location. Runs in background to avoid blocking conversation flow."
+      notes: |
+        Description should include WHEN to use the agent, not just WHAT it does.
+        Two parts: what it does + when to use it.
+
+    - field: tools
+      format: "Comma-separated list of tool names"
+      values:
+        read_only: "Read, Glob, Grep"
+        write_capable: "Write, Read, Glob, Grep"
+      notes: |
+        Explorer and Extractor agents use read-only tools.
+        Only Archiver uses Write tool.
+        Order convention: Write first (if present), then Read, Glob, Grep.
+
+    - field: model
+      format: "inherit | {explicit-model-name}"
+      values:
+        inherit: "Use parent conversation's model (default for most agents)"
+        sonnet: "Explicit when reliable decision-making for writes needed"
+      notes: |
+        Use 'inherit' by default to respect cost/capability tradeoffs.
+        Use explicit model when agent needs specific capabilities.
+        Archiver uses 'sonnet' for reliable write/skip decisions.
+
+    - field: agents
+      format: "Array notation"
+      value: "[claude]"
+      notes: |
+        Currently only claude is supported.
+        Array format allows future multi-agent support.
+
+  optional:
+    - field: permissionMode
+      format: "bypassPermissions"
+      when: "Agent needs to write files without user confirmation"
+      notes: |
+        Only used by archiver for background file operations.
+        Requires careful guardrails in agent instructions.
+
+tool_selection_by_role:
+  explorer:
+    tools: "Read, Glob, Grep"
+    rationale: |
+      Explorers are read-only agents that search context repositories.
+      Speed is critical - they should return findings in < 3 seconds.
+      No write access prevents accidental context corruption.
+
+  extractor:
+    tools: "Read, Glob, Grep"
+    rationale: |
+      Extractors analyze source code and return PROPOSALS.
+      They never write files directly - Context Manager validates and writes.
+      Read-only access enforces the proposal-based workflow.
+
+  archiver:
+    tools: "Write, Read, Glob, Grep"
+    rationale: |
+      Archiver needs Write to persist exploration findings.
+      Also needs Read/Glob/Grep to check existing content before writing.
+      Uses permissionMode: bypassPermissions for background operation.
+
+output_format_conventions:
+  extractors:
+    format: "YAML proposals with contributions, new_discoveries, questions_for_user, verification_status"
+    key_sections:
+      - "contributions: list of create/update proposals with content"
+      - "new_discoveries: items found not in original plan"
+      - "questions_for_user: clarifying questions"
+      - "verification_status: answers to verification criteria"
+
+  explorers:
+    format: "YAML findings with query_understood, findings, connections, gaps, suggested_deeper"
+    key_sections:
+      - "query_understood: interpretation of search query"
+      - "findings: list with source, relevance, excerpt, why_relevant"
+      - "connections: related topics discovered"
+      - "gaps: relevant info not found"
+      - "suggested_deeper: follow-up queries"
+
+  archiver:
+    format: "JSON response after completion"
+    response: '{ "ok": true }'
+    notes: |
+      Archiver always returns { "ok": true } to avoid blocking.
+      Actual work is file operations, not structured output.
+
+instruction_structure:
+  required_sections:
+    - "# Title - Agent identity and specialization"
+    - "## Step N: {Action} - Numbered procedural steps"
+    - "## Return Format - Expected output structure with YAML example"
+    - "## Guidelines - Bullet list of behavioral guidelines"
+
+  recommended_sections:
+    - "## Output Quality - BAD/GOOD examples showing expected quality"
+    - "## What NOT to Do - Anti-patterns to avoid"
+    - "## Input - What the agent receives (for agents with structured input)"
+
+  conventions:
+    - "Use ## for main sections, not deeper nesting"
+    - "Number steps sequentially (Step 1, Step 2, Step 3)"
+    - "Include both BAD and GOOD examples in Output Quality"
+    - "Guidelines should be actionable bullet points"
+    - "Emphasize speed for explorers ('Seconds, not minutes')"
+    - "Include behavioral constraints ('Never write files directly')"
+
+related_context:
+  - sub-agent-architecture
+  - extract-command
+  - explore-command

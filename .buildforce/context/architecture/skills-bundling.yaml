@@ -17,7 +17,7 @@ responsibilities:
   - Support agent filtering via 'agents:' YAML frontmatter in SKILL.md
   - Preserve entire skill folder structure (SKILL.md plus any additional files)
   - Deploy skills to .claude/skills/ directory in target project
-  - Exclude skills folder from .buildforce/templates/ copy (avoid duplication)
+  - Exclude skills and hooks folders from .buildforce/templates/ copy (avoid duplication)
   - Log filtering decisions during package generation
 
 dependencies:
@@ -87,7 +87,7 @@ bundling_flow: |
      c. Check 'agents:' field - if present and doesn't include current agent, skip
      d. Copy entire skill folder to output_dir/{skill-name}/
      e. Log filtering/copying decisions
-  3. build_variant() excludes skills from .buildforce/templates/ copy
+  3. build_variant() excludes skills and hooks from .buildforce/templates/ copy
   4. ZIP package contains .claude/skills/{skill-name}/SKILL.md
 
 agent_filtering: |

@@ -138,7 +138,7 @@ phase_3:
     - [x] Add step tracker display for settings merge
       spec_refs: [NFR2]
       files: [src/commands/init/setup.ts]
-      notes: "tracker.add('merge-settings', 'Merge Claude settings'). Show result: 'merged hooks' or 'skipped (no template)'"
+      notes: "tracker.add('merge-settings', 'Merge agent settings'). Show result: 'merged hooks' or 'skipped (no template)'"
 
   validation:
     - [x] All phase_3 tasks completed

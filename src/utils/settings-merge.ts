@@ -1,9 +1,10 @@
 import fs from "fs-extra";
+import { chmodSync, statSync } from "fs";
 import path from "path";
 import chalk from "chalk";
 
 /**
- * Result of merging Claude settings
+ * Result of merging agent settings
  */
 export interface MergeResult {
   merged: boolean;
@@ -24,9 +25,9 @@ interface HooksConfig {
 }
 
 /**
- * Claude Code settings structure
+ * Agent settings structure
  */
-interface ClaudeSettings {
+interface AgentSettings {
   permissions?: {
     allow?: string[];
     deny?: string[];
@@ -35,6 +36,26 @@ interface ClaudeSettings {
   hooks?: HooksConfig;
   [key: string]: unknown;
 }
+
+/**
+ * Buildforce hooks configuration.
+ * Source of truth: src/templates/hooks/config.json
+ *
+ * PreToolUse hook for Task tool redirection (Explore → buildforce-explorer).
+ */
+const BUILDFORCE_HOOKS_CONFIG: HooksConfig = {
+  PreToolUse: [
+    {
+      matcher: "Task",
+      hooks: [
+        {
+          type: "command",
+          command: ".claude/hooks/setup-explorer-subagent.sh",
+        },
+      ],
+    },
+  ],
+};
 
 /**
  * Deep merge two arrays, removing duplicates based on JSON.stringify comparison
@@ -55,16 +76,16 @@ function mergeArraysUnique<T>(existing: T[], incoming: T[]): T[] {
 }
 
 /**
- * Deep merge Claude settings objects (additive only - never removes existing data)
+ * Deep merge agent settings objects (additive only - never removes existing data)
  * - Arrays are merged with deduplication
  * - Objects are merged recursively
  * - Existing values are preserved
  */
 function mergeSettings(
-  existing: ClaudeSettings,
-  incoming: ClaudeSettings
-): ClaudeSettings {
-  const result: ClaudeSettings = { ...existing };
+  existing: AgentSettings,
+  incoming: AgentSettings
+): AgentSettings {
+  const result: AgentSettings = { ...existing };
 
   // Merge permissions
   if (incoming.permissions) {
@@ -110,69 +131,62 @@ function mergeSettings(
 }
 
 /**
- * Merge Claude Code settings from template config into user's settings.local.json
+ * Ensure all .sh files in the hooks directory have executable permissions.
+ * ZIP extraction and fs.copy don't preserve execute bits.
+ */
+async function ensureHooksExecutable(hooksDir: string): Promise<void> {
+  if (process.platform === "win32") return;
+  if (!(await fs.pathExists(hooksDir))) return;
+
+  const entries = await fs.readdir(hooksDir);
+  for (const entry of entries) {
+    if (!entry.endsWith(".sh")) continue;
+    const fullPath = path.join(hooksDir, entry);
+    try {
+      const stats = statSync(fullPath);
+      if (!(stats.mode & 0o111)) {
+        chmodSync(fullPath, stats.mode | 0o755);
+      }
+    } catch {
+      // Skip files we can't stat/chmod
+    }
+  }
+}
+
+/**
+ * Merge Buildforce agent settings into the user's settings.local.json.
+ * For Claude agents, merges the Buildforce hooks configuration and ensures
+ * hook scripts are executable.
  *
  * @param projectPath - Root path of the project
- * @param templateConfigPath - Path to template hooks/config.json (relative to projectPath)
+ * @param agentFolder - Agent folder (e.g. ".claude/") from AGENT_FOLDER_MAP
  * @param options - Merge options
  * @returns MergeResult indicating what was done
  */
-export async function mergeClaudeSettings(
+export async function mergeAgentSettings(
   projectPath: string,
-  templateConfigPath: string,
+  agentFolder: string,
   options: { debug?: boolean } = {}
 ): Promise<MergeResult> {
   const { debug = false } = options;
 
-  const fullTemplatePath = path.join(projectPath, templateConfigPath);
-  const settingsPath = path.join(projectPath, ".claude", "settings.local.json");
-
-  // Check if template config exists
-  if (!(await fs.pathExists(fullTemplatePath))) {
-    if (debug) {
-      console.log(
-        chalk.gray(`[settings-merge] Template config not found: ${fullTemplatePath}`)
-      );
-    }
+  // Currently hooks are Claude-only — skip for other agents
+  if (agentFolder !== ".claude/") {
     return {
       merged: false,
       skipped: true,
-      reason: "no template config",
+      reason: "hooks not applicable for this agent",
     };
   }
 
-  // Read template config
-  // The template config.json contains hooks configuration directly (e.g., { "Stop": [...] })
-  // not the full settings structure. We wrap it in a settings object for merging.
-  let templateHooks: HooksConfig;
-  try {
-    const templateContent = await fs.readFile(fullTemplatePath, "utf8");
-    templateHooks = JSON.parse(templateContent);
-  } catch (e: unknown) {
-    const errorMessage = e instanceof Error ? e.message : String(e);
-    if (debug) {
-      console.log(
-        chalk.yellow(`[settings-merge] Failed to parse template config: ${errorMessage}`)
-      );
-    }
-    return {
-      merged: false,
-      skipped: true,
-      reason: `invalid template JSON: ${errorMessage}`,
-    };
-  }
+  const settingsPath = path.join(projectPath, agentFolder, "settings.local.json");
 
-  // Wrap the hooks config in a full settings structure for merging
-  const templateConfig: ClaudeSettings = {
-    hooks: templateHooks,
-  };
-
-  // Ensure .claude directory exists
-  const claudeDir = path.join(projectPath, ".claude");
-  await fs.ensureDir(claudeDir);
+  // Ensure agent directory exists
+  const agentDir = path.join(projectPath, agentFolder);
+  await fs.ensureDir(agentDir);
 
   // Read existing settings if they exist
-  let existingSettings: ClaudeSettings = {};
+  let existingSettings: AgentSettings = {};
   let settingsExisted = false;
 
   if (await fs.pathExists(settingsPath)) {
@@ -193,21 +207,14 @@ export async function mergeClaudeSettings(
     }
   }
 
-  // Merge settings
-  const mergedSettings = mergeSettings(existingSettings, templateConfig);
+  // Merge Buildforce hooks config into existing settings
+  const mergedSettings = mergeSettings(existingSettings, { hooks: BUILDFORCE_HOOKS_CONFIG });
 
-  // Count what was added
-  const hooksAdded = templateConfig.hooks
-    ? Object.values(templateConfig.hooks).reduce(
-        (sum, arr) => sum + (Array.isArray(arr) ? arr.length : 0),
-        0
-      )
-    : 0;
-
-  const permissionsAdded =
-    (templateConfig.permissions?.allow?.length || 0) +
-    (templateConfig.permissions?.deny?.length || 0) +
-    (templateConfig.permissions?.ask?.length || 0);
+  // Count hooks added
+  const hooksAdded = Object.values(BUILDFORCE_HOOKS_CONFIG).reduce(
+    (sum, arr) => sum + (Array.isArray(arr) ? arr.length : 0),
+    0
+  );
 
   // Write merged settings
   await fs.writeFile(
@@ -218,14 +225,16 @@ export async function mergeClaudeSettings(
 
   if (debug) {
     console.log(chalk.gray(`[settings-merge] Wrote merged settings to: ${settingsPath}`));
-    console.log(chalk.gray(`[settings-merge] Hooks entries: ${hooksAdded}, Permissions entries: ${permissionsAdded}`));
+    console.log(chalk.gray(`[settings-merge] Hooks entries: ${hooksAdded}`));
   }
+
+  // Ensure hook scripts are executable
+  await ensureHooksExecutable(path.join(projectPath, agentFolder, "hooks"));
 
   return {
     merged: true,
     skipped: false,
     reason: settingsExisted ? "merged with existing" : "created new",
     hooksAdded,
-    permissionsAdded,
   };
 }

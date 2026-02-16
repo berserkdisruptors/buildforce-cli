@@ -9,8 +9,9 @@ import {
   initGitRepo,
 } from "../../utils/index.js";
 import { createConfigContent } from "../../utils/config.js";
+import { mergeAgentSettings } from "../../utils/settings-merge.js";
 import { resolveLocalArtifact } from "../../lib/local-artifacts.js";
-import { mergeClaudeSettings } from "../../utils/settings-merge.js";
+import { AGENT_FOLDER_MAP } from "../../constants.js";
 
 /**
  * Execute project setup steps with progress tracking
@@ -49,7 +50,7 @@ export async function setupProject(
     ["extracted-summary", "Extraction summary"],
     ["chmod", "Ensure scripts executable"],
     ["config", "Create configuration file"],
-    ["merge-settings", "Merge Claude settings"],
+    ["merge-settings", "Merge agent settings"],
     ["cleanup", "Cleanup"],
     ["git", "Initialize git repository"],
     ["final", "Finalize"],
@@ -237,17 +238,37 @@ export async function setupProject(
         }
       }
 
+      // Check if .buildforce/scripts is already in gitignore
+      if (!gitignoreContent.includes(".buildforce/scripts")) {
+        gitignoreContent = gitignoreContent.trimEnd() + "\n.buildforce/scripts\n";
+        modified = true;
+
+        if (debug) {
+          console.log(chalk.gray(`\nUpdated .gitignore: added .buildforce/scripts`));
+        }
+      }
+
+      // Check if .buildforce/templates is already in gitignore
+      if (!gitignoreContent.includes(".buildforce/templates")) {
+        gitignoreContent = gitignoreContent.trimEnd() + "\n.buildforce/templates\n";
+        modified = true;
+
+        if (debug) {
+          console.log(chalk.gray(`\nUpdated .gitignore: added .buildforce/templates`));
+        }
+      }
+
       // Write the file only if modifications were made
       if (modified) {
         await fs.writeFile(gitignorePath, gitignoreContent, "utf8");
       }
     }
 
-    // Merge Claude settings if claude is one of the selected agents
+    // Merge agent settings if claude is one of the selected agents
     tracker.start("merge-settings");
     if (successfulAgents.includes("claude")) {
-      const templateConfigPath = ".buildforce/templates/hooks/config.json";
-      const mergeResult = await mergeClaudeSettings(projectPath, templateConfigPath, {
+      const agentFolder = AGENT_FOLDER_MAP["claude"];
+      const mergeResult = await mergeAgentSettings(projectPath, agentFolder, {
         debug,
       });
 

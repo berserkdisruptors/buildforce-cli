@@ -3,17 +3,22 @@ name: Settings Merge Utility
 type: structural
 status: production
 created: "2026-02-04"
-last_updated: "2026-02-04"
+last_updated: "2026-02-13"
 
 summary: |
-  TypeScript utility for merging Claude Code settings from template configuration into
-  user's .claude/settings.local.json file. Uses additive deep-merge strategy that
-  preserves all existing user permissions and hooks while adding new entries from
-  templates. Deduplicates arrays using JSON.stringify comparison to ensure idempotent
-  operations across multiple init/upgrade cycles.
+  Unified TypeScript utility for merging agent settings from template configuration into
+  the agent's settings.local.json file. Agent-agnostic API (mergeAgentSettings) that
+  accepts agentFolder parameter. For Claude agents, also merges hard-coded Buildforce
+  hooks (PreToolUse hook for Explore→buildforce-explorer redirection) and ensures hook
+  scripts are executable. Uses additive deep-merge strategy that preserves all existing
+  user permissions and hooks while adding new entries from templates. Deduplicates arrays
+  using JSON.stringify comparison to ensure idempotent operations across multiple
+  init/upgrade cycles. Consolidates the former hooks.ts utility into a single file.
 
 responsibilities:
-  - Merge template hooks/config.json into .claude/settings.local.json
+  - Merge template hooks/config.json into agent's settings.local.json
+  - Conditionally merge hard-coded Buildforce hooks for Claude agents (PreToolUse hook)
+  - Ensure hook scripts are executable after writing (Claude-only, chmod .sh files)
   - Preserve existing user permissions (allow, deny, ask arrays)
   - Preserve existing user hooks (Stop, PreToolUse, PostToolUse arrays)
   - Deduplicate array entries using JSON.stringify comparison
@@ -24,8 +29,8 @@ responsibilities:
 
 dependencies:
   internal:
-    - init-command: "Calls mergeClaudeSettings after template extraction"
-    - upgrade-command: "Calls mergeClaudeSettings after template replacement"
+    - init-command: "Calls mergeAgentSettings after template extraction"
+    - upgrade-command: "Calls mergeAgentSettings after template replacement"
   external:
     - fs-extra: "^11.2.0 - File system operations (readFile, writeFile, pathExists, ensureDir)"
     - chalk: "^5.4.1 - Debug logging with colored output"
@@ -39,9 +44,9 @@ files:
 
 interfaces:
   exports:
-    - name: "mergeClaudeSettings"
-      signature: "(projectPath: string, templateConfigPath: string, options?: { debug?: boolean }) => Promise<MergeResult>"
-      description: "Merges template hooks configuration into user's Claude Code settings"
+    - name: "mergeAgentSettings"
+      signature: "(projectPath: string, agentFolder: string, templateConfigPath: string, options?: { debug?: boolean }) => Promise<MergeResult>"
+      description: "Merges template config into agent's settings.local.json. For Claude, also merges hard-coded Buildforce hooks and ensures hook scripts are executable."
 
     - name: "MergeResult"
       signature: "interface { merged: boolean; skipped: boolean; reason: string; hooksAdded?: number; permissionsAdded?: number }"
@@ -68,23 +73,24 @@ merge_algorithm: |
      - Template contains hooks content directly: { "Stop": [...], "PreToolUse": [...] }
      - Wrap in settings structure: { hooks: templateContent }
 
-  2. Read existing settings from .claude/settings.local.json
+  2. Read existing settings from {agentFolder}/settings.local.json
      - If file doesn't exist: start with empty object {}
      - If file is malformed: log warning, start with empty object {}
 
-  3. Merge permissions (if present in template):
-     - permissions.allow: concat arrays, deduplicate
-     - permissions.deny: concat arrays, deduplicate
-     - permissions.ask: concat arrays, deduplicate
+  3. Merge template config into existing settings (additive):
+     - permissions.allow/deny/ask: concat arrays, deduplicate
+     - hooks.*: concat arrays, deduplicate
 
-  4. Merge hooks (if present in template):
-     - For each hook type (Stop, PreToolUse, PostToolUse):
-       - Concat existing array with incoming array
-       - Deduplicate using JSON.stringify comparison
+  4. If agentFolder === ".claude/": merge hard-coded Buildforce hooks
+     - BUILDFORCE_HOOKS_CONFIG contains PreToolUse hook for Task tool redirection
+     - Same additive merge with deduplication
 
-  5. Write merged result to .claude/settings.local.json
+  5. Write merged result to {agentFolder}/settings.local.json
      - Pretty-print with 2-space indent
      - Add trailing newline
+
+  6. If agentFolder === ".claude/": ensure hook scripts are executable
+     - chmod +x all .sh files in {agentFolder}/hooks/
 
 data_models:
   - name: "ClaudeSettings"
@@ -121,19 +127,26 @@ evolution:
     date: "2026-02-04"
     changes: "Initial implementation with additive deep-merge, array deduplication, and graceful edge case handling"
 
+  - version: "2.0"
+    date: "2026-02-13"
+    changes: "Unified mergeAgentSettings API (agent-agnostic signature with agentFolder param). Consolidated hooks.ts into settings-merge.ts. Added hard-coded Buildforce hooks merge and ensureHooksExecutable for Claude agents."
+
 related_specs:
   - skills-bundling-config-concat-20260204000000
 
 notes: |
   This utility enables configuration of Buildforce features by merging
-  template settings into user's Claude Code settings.
+  template settings into agent's settings.local.json. Consolidated from
+  two separate files (settings-merge.ts + hooks.ts) into a single
+  agent-agnostic utility.
 
   The merge is designed to be:
   - Safe: Never removes user data
   - Idempotent: Multiple runs don't create duplicates
   - Transparent: Debug logging shows what was done
   - Resilient: Graceful handling of missing/malformed files
+  - Agent-agnostic: Works with any agent folder via agentFolder parameter
 
-  Future enhancements:
-  - Support for merging other Claude Code settings sections if needed
-  - Version tracking to detect when template config changes
+  Claude-specific behavior (agentFolder === ".claude/"):
+  - Merges hard-coded BUILDFORCE_HOOKS_CONFIG (PreToolUse hook for Explore redirect)
+  - Ensures .sh files in hooks directory are executable (chmod)

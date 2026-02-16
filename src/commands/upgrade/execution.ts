@@ -9,7 +9,7 @@ import { saveBuildforceConfig } from "../../utils/config.js";
 import { AGENT_FOLDER_MAP, MINT_COLOR } from "../../constants.js";
 import { resolveLocalArtifact } from "../../lib/local-artifacts.js";
 import { createMigrationRunner } from "./migrations/registry.js";
-import { mergeClaudeSettings } from "../../utils/settings-merge.js";
+import { mergeAgentSettings } from "../../utils/settings-merge.js";
 
 /**
  * Execute the upgrade process
@@ -55,7 +55,7 @@ export async function executeUpgrade(
     ["replace-templates", "Replace templates"],
     ["replace-scripts", "Replace scripts"],
     ["replace-skills", "Replace skills"],
-    ["merge-settings", "Merge Claude settings"],
+    ["merge-settings", "Merge agent settings"],
     ["migrate-context", "Migrate context structure"],
     ["update-config", "Update buildforce.json"],
     ["cleanup", "Cleanup"],
@@ -223,6 +223,29 @@ export async function executeUpgrade(
             console.log(chalk.gray(`  would create ${agentFolder}/agents/`));
           }
         }
+
+        // Check if source has skills (e.g., .claude/skills for Claude Code)
+        const skillsSrcPath = path.join(sourceDir, agentFolder, "skills");
+        const skillsPath = path.join(projectPath, agentFolder, "skills");
+        if (await fs.pathExists(skillsSrcPath)) {
+          if (await fs.pathExists(skillsPath)) {
+            console.log(chalk.gray(`  would update ${agentFolder}/skills/`));
+          } else {
+            console.log(chalk.gray(`  would create ${agentFolder}/skills/`));
+          }
+        }
+
+        // Check if source has hooks (e.g., .claude/hooks for Claude Code)
+        const hooksSrcPath = path.join(sourceDir, agentFolder, "hooks");
+        const hooksPath = path.join(projectPath, agentFolder, "hooks");
+        if (await fs.pathExists(hooksSrcPath)) {
+          if (await fs.pathExists(hooksPath)) {
+            console.log(chalk.gray(`  would update ${agentFolder}/hooks/`));
+          } else {
+            console.log(chalk.gray(`  would create ${agentFolder}/hooks/`));
+          }
+          console.log(chalk.gray(`  would merge hooks config into ${agentFolder}settings.local.json`));
+        }
       }
 
       const templatesPath = path.join(projectPath, ".buildforce", "templates");
@@ -245,17 +268,16 @@ export async function executeUpgrade(
         tracker.complete("replace-scripts", "would create .buildforce/scripts/");
       }
 
-      // Check skills for Claude (only buildforce-prefixed skills)
+      // Check skills for Claude
       tracker.start("replace-skills");
       if (successfulAgents.includes("claude")) {
         const skillsSrcPath = path.join(sourceDirs.get("claude")!, ".claude", "skills");
         if (await fs.pathExists(skillsSrcPath)) {
           const sourceSkills = await fs.readdir(skillsSrcPath);
-          const buildforceSkills = sourceSkills.filter(name => name.startsWith("buildforce-"));
-          if (buildforceSkills.length > 0) {
-            tracker.complete("replace-skills", `would update ${buildforceSkills.length} buildforce skill(s)`);
+          if (sourceSkills.length > 0) {
+            tracker.complete("replace-skills", `would update ${sourceSkills.length} skill(s)`);
           } else {
-            tracker.skip("replace-skills", "no buildforce skills in release");
+            tracker.skip("replace-skills", "no skills in release");
           }
         } else {
           tracker.skip("replace-skills", "no skills in release");
@@ -321,6 +343,38 @@ export async function executeUpgrade(
           await fs.remove(agentsDest);
           await fs.copy(agentsSrc, agentsDest);
         }
+
+        // Replace skills (e.g., .claude/skills/ for Claude Code)
+        const skillsSrc = path.join(sourceDir, agentFolder, "skills");
+        const skillsDest = path.join(projectPath, agentFolder, "skills");
+
+        if (await fs.pathExists(skillsSrc)) {
+          // Backup skills if they exist
+          if (await fs.pathExists(skillsDest)) {
+            await fs.copy(skillsDest, path.join(backupDir, agent, "skills"));
+          }
+
+          // Replace skills
+          await fs.ensureDir(path.dirname(skillsDest));
+          await fs.remove(skillsDest);
+          await fs.copy(skillsSrc, skillsDest);
+        }
+
+        // Replace hooks (e.g., .claude/hooks/ for Claude Code)
+        const hooksSrc = path.join(sourceDir, agentFolder, "hooks");
+        const hooksDest = path.join(projectPath, agentFolder, "hooks");
+
+        if (await fs.pathExists(hooksSrc)) {
+          // Backup hooks if they exist
+          if (await fs.pathExists(hooksDest)) {
+            await fs.copy(hooksDest, path.join(backupDir, agent, "hooks"));
+          }
+
+          // Replace hooks
+          await fs.ensureDir(path.dirname(hooksDest));
+          await fs.remove(hooksDest);
+          await fs.copy(hooksSrc, hooksDest);
+        }
       }
 
       // Replace templates (shared across all agents)
@@ -358,7 +412,7 @@ export async function executeUpgrade(
         tracker.skip("replace-scripts", "no scripts in release");
       }
 
-      // Replace skills for Claude agent (only buildforce-prefixed skills)
+      // Replace skills for Claude agent
       tracker.start("replace-skills");
       if (successfulAgents.includes("claude")) {
         const skillsSrc = path.join(firstSourceDir, ".claude", "skills");
@@ -366,17 +420,15 @@ export async function executeUpgrade(
 
         if (await fs.pathExists(skillsSrc)) {
           const sourceSkills = await fs.readdir(skillsSrc);
-          const buildforceSkills = sourceSkills.filter(name => name.startsWith("buildforce-"));
 
-          if (buildforceSkills.length > 0) {
+          if (sourceSkills.length > 0) {
             await fs.ensureDir(skillsDest);
 
-            // Only backup and replace buildforce-prefixed skills
-            for (const skillName of buildforceSkills) {
+            for (const skillName of sourceSkills) {
               const skillSrcPath = path.join(skillsSrc, skillName);
               const skillDestPath = path.join(skillsDest, skillName);
 
-              // Backup existing buildforce skill if it exists
+              // Backup existing skill if it exists
               if (await fs.pathExists(skillDestPath)) {
                 await fs.copy(skillDestPath, path.join(backupDir, "skills", skillName));
               }
@@ -386,9 +438,9 @@ export async function executeUpgrade(
               await fs.copy(skillSrcPath, skillDestPath);
             }
 
-            tracker.complete("replace-skills", `${buildforceSkills.length} buildforce skill(s)`);
+            tracker.complete("replace-skills", `${sourceSkills.length} skill(s)`);
           } else {
-            tracker.skip("replace-skills", "no buildforce skills in release");
+            tracker.skip("replace-skills", "no skills in release");
           }
         } else {
           tracker.skip("replace-skills", "no skills in release");
@@ -397,11 +449,11 @@ export async function executeUpgrade(
         tracker.skip("replace-skills", "claude not selected");
       }
 
-      // Merge Claude settings if claude is one of the selected agents
+      // Merge agent settings if claude is one of the selected agents
       tracker.start("merge-settings");
       if (successfulAgents.includes("claude")) {
-        const templateConfigPath = ".buildforce/templates/hooks/config.json";
-        const mergeResult = await mergeClaudeSettings(projectPath, templateConfigPath, {
+        const agentFolder = AGENT_FOLDER_MAP["claude"];
+        const mergeResult = await mergeAgentSettings(projectPath, agentFolder, {
           debug,
         });
 
@@ -464,19 +516,26 @@ export async function executeUpgrade(
       });
       tracker.complete("update-config", `version ${version}`);
 
-      // Ensure .buildforce/.temp is in .gitignore
+      // Ensure .buildforce entries are in .gitignore
       const gitignorePath = path.join(projectPath, ".gitignore");
       if (await fs.pathExists(gitignorePath)) {
-        const gitignoreContent = await fs.readFile(gitignorePath, "utf8");
+        let gitignoreContent = await fs.readFile(gitignorePath, "utf8");
+        let gitignoreModified = false;
 
-        // Check if .buildforce/.temp is already in gitignore
-        if (!gitignoreContent.includes(".buildforce/.temp")) {
-          const updatedContent = gitignoreContent.trimEnd() + "\n.buildforce/.temp\n";
-          await fs.writeFile(gitignorePath, updatedContent, "utf8");
+        const entries = [".buildforce/.temp", ".buildforce/scripts", ".buildforce/templates"];
+        for (const entry of entries) {
+          if (!gitignoreContent.includes(entry)) {
+            gitignoreContent = gitignoreContent.trimEnd() + "\n" + entry + "\n";
+            gitignoreModified = true;
 
-          if (debug) {
-            console.log(chalk.gray(`\nUpdated .gitignore: added .buildforce/.temp`));
+            if (debug) {
+              console.log(chalk.gray(`\nUpdated .gitignore: added ${entry}`));
+            }
           }
+        }
+
+        if (gitignoreModified) {
+          await fs.writeFile(gitignorePath, gitignoreContent, "utf8");
         }
       }
 
@@ -516,6 +575,20 @@ export async function executeUpgrade(
             const agentsDest = path.join(projectPath, agentFolder, "agents");
             await fs.remove(agentsDest);
             await fs.copy(agentsBackup, agentsDest);
+          }
+
+          const skillsBackup = path.join(backupDir, agent, "skills");
+          if (await fs.pathExists(skillsBackup)) {
+            const skillsDest = path.join(projectPath, agentFolder, "skills");
+            await fs.remove(skillsDest);
+            await fs.copy(skillsBackup, skillsDest);
+          }
+
+          const hooksBackup = path.join(backupDir, agent, "hooks");
+          if (await fs.pathExists(hooksBackup)) {
+            const hooksDest = path.join(projectPath, agentFolder, "hooks");
+            await fs.remove(hooksDest);
+            await fs.copy(hooksBackup, hooksDest);
           }
         }
 
