@@ -47,7 +47,7 @@ files:
     - src/templates/agents/buildforce-structural-extractor.md
     - src/templates/agents/buildforce-conventions-extractor.md
     - src/templates/agents/buildforce-verification-extractor.md
-    - .buildforce/templates/extraction-progress-template.yaml
+    - src/templates/skills/context-extract/assets/extraction-progress-template.yaml
   secondary:
     - .github/workflows/scripts/create-release-packages.sh
 
