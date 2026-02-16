@@ -1,0 +1,440 @@
+id: extract-command
+name: Extract Command & Skill
+type: structural
+status: production
+created: "2026-01-28"
+last_updated: "2026-02-13"
+
+summary: |
+  Claude Code-specific context extraction system with a two-layer architecture:
+  1. Thin command layer (extract.md) that delegates to the skill
+  2. Full skill layer (context-extract SKILL.md) containing all extraction logic
+
+  The skill handles three unified extraction modes:
+  - Cold Start: Bootstraps context repository from scratch when no _index.yaml exists
+  - Focused: Deep-dives into specific areas based on user prompts
+  - Incremental: Updates based on recent code changes (manually invoked without arguments)
+
+  Uses parallel sub-agent architecture (buildforce-structural-extractor, buildforce-conventions-extractor,
+  buildforce-verification-extractor) to extract across three domains (architecture, conventions, verification).
+  Solves the "cold start" problem for new repositories.
+
+responsibilities:
+  - Route to correct extraction mode (cold start, focused, incremental) based on _index.yaml state and user input
+  - Scan fresh codebases to discover extractable context items (cold start mode)
+  - Interpret user prompts for targeted extraction (focused mode)
+  - Detect and filter meaningful code changes via git diff (incremental mode)
+  - Orchestrate parallel extraction via Context Extractor sub-agents (buildforce-structural-extractor, buildforce-conventions-extractor, buildforce-verification-extractor)
+  - Maintain root _index.yaml as both context index AND coverage map
+  - Track extraction depth (none -> shallow -> moderate -> deep) per item
+  - Validate extractor proposals before writing to context files
+  - Merge new context into existing files (context preservation rule)
+
+dependencies:
+  internal:
+    - cli-architecture: "Template distributed via agent-specific release packaging"
+    - slash-commands: "Part of the slash command system (extract.md is the command entry point)"
+    - skills-bundling: "Skill deployed via generate_skills() in release packaging"
+    - upgrade-command: "v2.1 migration adds coverage map fields to _index.yaml"
+  external:
+    - Claude Code Task tool: "Required for sub-agent spawning - extract command is Claude Code only"
+    - Claude Code Skills: "Skill loaded from .claude/skills/context-extract/SKILL.md"
+
+files:
+  primary:
+    - src/templates/skills/context-extract/SKILL.md
+    - src/templates/commands/extract.md
+    - src/templates/agents/buildforce-structural-extractor.md
+    - src/templates/agents/buildforce-conventions-extractor.md
+    - src/templates/agents/buildforce-verification-extractor.md
+    - .buildforce/templates/extraction-progress-template.yaml
+  secondary:
+    - .github/workflows/scripts/create-release-packages.sh
+
+workflow:
+  mode_routing:
+    - step: "Read _index.yaml"
+      action: "Check version and existence to determine mode"
+    - step: "Route to mode"
+      action: |
+        Decision tree:
+        1. No _index.yaml or version < 2.1 -> COLD START
+        2. _index.yaml exists, version >= 2.1:
+           - $ARGUMENTS non-empty -> FOCUSED
+           - $ARGUMENTS empty -> INCREMENTAL
+
+  cold_start:
+    - step: "Scan codebase structure"
+      action: "Read README, root configs, list directories (depth 3), identify languages/frameworks"
+    - step: "Create/update _index.yaml"
+      action: "Set version 2.1, populate domains.*.items[] with discovered items (status=discovered, depth=none)"
+    - step: "Generate mining plans"
+      action: "Create _extraction-progress.yaml in each domain folder with all items at target_depth: shallow"
+    - step: "Deploy extractors"
+      action: "Spawn all three sub-agents in parallel via Task tool"
+    - step: "Validate and write"
+      action: "Receive proposals, validate, merge into context files, update _index.yaml"
+
+  focused:
+    - step: "Interpret user prompt"
+      action: "Parse focus area (e.g., 'go deeper on X', 'what about Y?', general topic)"
+    - step: "Generate focused plans"
+      action: "Create _extraction-progress.yaml targeting specific items at current_depth + 1"
+    - step: "Deploy extractors"
+      action: "Spawn extractors with focused mining plans"
+    - step: "Validate and write"
+      action: "Merge proposals into existing files (context preservation rule)"
+
+  incremental:
+    - step: "Get changed files"
+      action: "Run git diff --name-status HEAD and git status --porcelain"
+    - step: "Filter trivial changes"
+      action: "Disregard root-level *.md, lock files, .buildforce/*, .gitignored, whitespace-only"
+    - step: "Assess significance"
+      action: "Proceed if meaningful changes; skip if minor (renaming, comments, typos)"
+    - step: "Identify affected modules"
+      action: "Group files by directory, derive semantic module names"
+    - step: "Generate scoped plans"
+      action: "Create _extraction-progress.yaml targeting only affected modules at moderate depth"
+    - step: "Deploy extractors"
+      action: "Spawn extractors with scoped plans"
+    - step: "Compact output"
+      action: "3-line summary: N created, M updated"
+
+design_decisions:
+  - decision: "Claude Code only - not available to other agents"
+    rationale: "Requires Task tool for sub-agent spawning which is unique to Claude Code. Other agents lack this capability. Filtered at build time via agents field in template frontmatter."
+
+  - decision: "Context Extractors return proposals, not direct writes"
+    rationale: "Centralizes conflict resolution in Context Manager. Prevents race conditions when extractors run in parallel. Enables intelligent merge for overlapping discoveries."
+
+  - decision: "Parallel extractor execution"
+    rationale: "Faster extraction by running structural, convention, and verification extractors simultaneously. Context Manager handles coordination and merge."
+
+  - decision: "Ephemeral _extraction-progress.yaml files"
+    rationale: "Per-iteration mining plans are temporary. Only root _index.yaml persists extraction state between sessions."
+
+  - decision: "Iterative depth model (none → shallow → moderate → deep)"
+    rationale: "Progressive disclosure allows users to control extraction scope. Shallow extraction for breadth, deep extraction for critical areas."
+
+  - decision: "Sub-agents in separate files (src/templates/agents/)"
+    rationale: "Claude Code sub-agents require separate markdown files with proper frontmatter (name, description, tools, model). Generated to .claude/agents/ during release packaging."
+
+  - decision: "Agent-specific filtering via frontmatter agents field"
+    rationale: "Template includes 'agents: [claude]' in YAML frontmatter. Release packaging script (create-release-packages.sh) filters templates based on this field. Non-Claude packages don't include extract.md."
+
+  - decision: "Skill-based architecture over command-embedded logic"
+    rationale: |
+      The extract.md command is a thin wrapper that calls the context-extract skill.
+      This enables: (1) Skill reuse from multiple entry points, (2) Clean separation of
+      entry point (command) from logic (skill). The SKILL.md contains all mode routing,
+      extraction orchestration, and output formatting logic.
+
+  - decision: "Renamed sub-agents from cm-* to buildforce-*-extractor"
+    rationale: |
+      Original names (cm-1-structural, cm-2-convention, cm-3-verification) used cryptic abbreviation.
+      New names (buildforce-structural-extractor, buildforce-conventions-extractor, buildforce-verification-extractor)
+      are self-documenting and follow the buildforce namespace convention. The descriptive naming
+      improves discoverability in .claude/agents/ directory.
+
+  - decision: "Unified mode routing in single SKILL.md"
+    rationale: |
+      All three extraction modes (cold start, focused, incremental) share the same deployment
+      and validation logic (Steps 4-5). A single skill file with mode routing at Step 0
+      eliminates code duplication. The decision tree is deterministic:
+      no _index.yaml -> cold start; arguments present -> focused; no arguments -> incremental.
+
+  - decision: "Context preservation as critical rule"
+    rationale: |
+      Existing context files contain accumulated knowledge from multiple extraction iterations.
+      The MERGE, DON'T REPLACE rule ensures updates add new sections and append to lists
+      rather than overwriting. This prevents loss of evolution history, architecture patterns,
+      and design decisions that extractors didn't specifically analyze in the current iteration.
+
+architecture_patterns:
+  two_layer_architecture: |
+    The extract system has two layers:
+
+    Layer 1 - Command Entry Point (extract.md):
+      - Thin wrapper: "Call the context-extract skill with these arguments: $ARGUMENTS"
+      - Exists for user invocation via /buildforce.extract
+      - Passes through user arguments to the skill
+
+    Layer 2 - Skill Logic (SKILL.md in .claude/skills/context-extract/):
+      - Contains all extraction logic: mode routing, plan generation, extractor deployment
+      - Entry point: command invocation or direct skill invocation
+      - YAML frontmatter: name, description, user-invocable, context: fork, allowed-tools
+
+  context_manager: |
+    The SKILL.md acts as Context Manager, orchestrating extraction:
+    1. Routes to mode (cold start, focused, incremental) based on _index.yaml state
+    2. Reads _index.yaml to understand current coverage state
+    3. Generates per-iteration _extraction-progress.yaml plans
+    4. Spawns Context Extractors via Claude Code Task tool (3 parallel sub-agents)
+    5. Receives proposals from extractors
+    6. Validates proposals against existing context
+    7. Writes approved context files (with merge rules for updates)
+    8. Updates _index.yaml with new status/depth
+    9. Verifies materialization (N contributions = M files written)
+    10. Cleans up ephemeral plan files
+
+  context_extractors: |
+    Three specialized sub-agents:
+    - buildforce-structural-extractor: Architecture context (modules, features, components)
+    - buildforce-conventions-extractor: Convention context (patterns, standards, practices)
+    - buildforce-verification-extractor: Verification context (test expectations, quality standards)
+
+    Each extractor:
+    1. Reads its domain's _extraction-progress.yaml plan
+    2. Reads its domain's _schema.yaml for output format
+    3. Analyzes relevant codebase areas
+    4. Returns structured YAML proposals (contributions, new_discoveries, questions_for_user)
+    5. Never writes directly to context files
+
+    Extractor frontmatter: name, description, tools (Read, Glob, Grep), model: inherit, agents: [claude]
+
+  coverage_map: |
+    Root _index.yaml serves dual purpose:
+    - Context index: Registry of all context files with descriptions and tags
+    - Coverage map: Tracks extraction status and depth per item
+
+    Item states:
+    - status: discovered | in-progress | extracted
+    - depth: none | shallow | moderate | deep
+
+  deployment_chain: |
+    Full deployment chain from source to runtime:
+
+    1. Source: src/templates/skills/context-extract/SKILL.md
+    2. Packaging: generate_skills() in create-release-packages.sh bundles to .claude/skills/
+    3. Deployment: init/upgrade extracts to user's .claude/skills/ directory
+    4. Runtime (command): User invokes /buildforce.extract -> extract.md -> skill
+    5. Runtime (direct): User invokes /context-extract skill directly
+
+evolution:
+  - version: "1.0"
+    date: "2026-01-28"
+    changes: "Initial implementation with Context Manager + Extractors architecture, parallel execution, iterative depth model"
+
+  - version: "2.0"
+    date: "2026-02-09"
+    changes: |
+      Major architectural evolution to skill-based system:
+      - Extracted all logic from extract.md into SKILL.md (context-extract skill)
+      - extract.md is now a thin wrapper delegating to the skill
+      - Added three unified extraction modes: cold start, focused, incremental
+      - Renamed sub-agents from cm-* to buildforce-*-extractor
+      - Added context preservation (MERGE, DON'T REPLACE) as critical rule
+      - Added incremental mode with git diff analysis and change significance filtering
+      - Added verification before cleanup (N contributions = M files written)
+      - Skill deployed via skills-bundling
+
+related_specs:
+  - claude-code-extract-command-20260127152345
+
+related_context:
+  - sub-agent-architecture
+  - agent-template-conventions
+
+sub_agent_orchestration:
+  spawning_pattern: |
+    SKILL.md (acting as Context Manager) spawns three extractors in PARALLEL:
+    1. Creates _extraction-progress.yaml in each domain folder
+    2. Uses Claude Code Task tool with three simultaneous calls
+    3. Each extractor runs independently, reading its plan
+    4. Extractors return YAML proposals (not files)
+    5. Context Manager receives all proposals, validates, writes
+
+  extractor_lifecycle: |
+    Each extractor follows identical lifecycle:
+    1. READ: .buildforce/context/{domain}/_extraction-progress.yaml
+    2. READ: .buildforce/context/{domain}/_schema.yaml
+    3. ANALYZE: Codebase files relevant to target items
+    4. ANSWER: Verification criteria from plan
+    5. RETURN: Structured YAML proposals (contributions, new_discoveries, questions_for_user, verification_status)
+
+    Extractors NEVER write files directly - proposals only.
+
+  extractor_naming: |
+    Sub-agents (renamed in v2.0):
+    - buildforce-structural-extractor (was cm-1-structural)
+    - buildforce-conventions-extractor (was cm-2-convention)
+    - buildforce-verification-extractor (was cm-3-verification)
+
+    Located in: src/templates/agents/buildforce-*-extractor.md
+    Deployed to: .claude/agents/buildforce-*-extractor.md
+
+  coordination: |
+    No inter-extractor communication:
+    - Extractors run in isolation
+    - Context Manager handles all coordination
+    - Parallel execution avoids sequential bottlenecks
+    - Race conditions prevented by proposal-based writes
+    - Error handling: if an extractor times out (>120s) or fails, skip it and continue
+
+proposal_validation_flow:
+  receive_proposals: |
+    After all extractors complete:
+    1. Context Manager receives three sets of proposals
+    2. Each proposal set contains:
+       - contributions: Context file creates/updates
+       - new_discoveries: Items found during analysis
+       - questions_for_user: Clarifying questions
+
+  validation_steps: |
+    For each contribution in proposals:
+    1. Check target_item exists in _index.yaml
+    2. Verify action matches current state:
+       - create: item has depth=none
+       - update: item has depth > none
+    3. Validate content follows _schema.yaml
+    4. Check for conflicts with other proposals
+
+  conflict_resolution: |
+    If multiple extractors touch same item (rare):
+    - Prefer deeper depth proposal
+    - Combine insights from both
+    - Context Manager makes final decision
+
+  write_sequence: |
+    After validation:
+    1. For create actions: Write new context file
+    2. For update actions: MERGE into existing file
+       - Read existing file
+       - Add new sections (extension_points, etc.)
+       - Append to lists (design_decisions, evolution)
+       - Preserve structural sections
+    3. Update _index.yaml with status/depth changes
+    4. Add new_discoveries to _index.yaml as discovered items
+
+coverage_tracking_mechanics:
+  index_as_coverage_map: |
+    Root _index.yaml serves dual purpose:
+    - Context registry: Where to find context files
+    - Coverage map: Extraction progress per item
+
+    Item tracking fields:
+    - status: discovered | in-progress | extracted
+    - depth: none | shallow | moderate | deep
+
+  depth_progression: |
+    Depth model follows linear progression:
+    none → shallow → moderate → deep
+
+    What each depth captures:
+    - none: Just discovered, on the map
+    - shallow: Basic structure and purpose
+    - moderate: Relationships, dependencies, integration points
+    - deep: Full rationale, edge cases, extension points
+
+    Target depth calculated from current + 1 (or user override)
+
+  coverage_calculation: |
+    summary.coverage_percentage in _index.yaml:
+    - Calculated: (extracted_items / total_items) * 100
+    - Updated after each extraction iteration
+    - Items with depth > none count as extracted
+
+ephemeral_plan_files:
+  purpose: |
+    _extraction-progress.yaml files are per-iteration:
+    - Generated by Context Manager before spawning
+    - Read by extractors to understand their tasks
+    - Deleted by Context Manager after validation/writes
+
+  plan_structure: |
+    status: pending | in-progress | complete
+    iteration: {number}
+    target_items:
+      - id: {item-id}
+        current_depth: {current}
+        target_depth: {target}
+        priority: high | medium | low
+        notes: {context from previous iterations}
+    verification_criteria:
+      - {specific questions for target items}
+    tasks:
+      - task: {description}
+        status: pending | in-progress | complete
+        findings: {populated by extractor}
+    last_checkpoint: {ISO timestamp}
+
+  cleanup: |
+    After successful write of all proposals:
+    - Delete architecture/_extraction-progress.yaml
+    - Delete conventions/_extraction-progress.yaml
+    - Delete verification/_extraction-progress.yaml
+    - Only _index.yaml persists between iterations
+
+critical_rules:
+  context_preservation: |
+    MERGE, DON'T REPLACE rule applies to all updates:
+    - Read existing file before modification
+    - Add new sections to existing content
+    - Append to lists, don't overwrite
+    - Preserve evolution history, architecture_patterns, related_specs
+    - Update outdated info, but keep surrounding context
+
+  verification_before_cleanup: |
+    Before deleting plan files, verify:
+    - Count contributions received = count files written
+    - Log table showing each file + action + status
+    - Only proceed to cleanup if counts match
+
+activation_mechanisms:
+  command_invocation: |
+    User types /buildforce.extract [args]:
+    1. Claude Code loads extract.md from .buildforce/commands/
+    2. extract.md contains: "Call the context-extract skill with these arguments: $ARGUMENTS"
+    3. Claude Code loads SKILL.md from .claude/skills/context-extract/
+    4. SKILL.md routes to FOCUSED mode (args non-empty) or INCREMENTAL mode (no args)
+
+  direct_skill_invocation: |
+    User types /context-extract [args]:
+    1. Claude Code loads SKILL.md from .claude/skills/context-extract/
+    2. SKILL.md routes based on _index.yaml state and $ARGUMENTS
+
+extension_points:
+  adding_extraction_mode: |
+    To add a new extraction mode:
+    1. Add routing condition in SKILL.md Step 0 (mode routing decision tree)
+    2. Create new Step N with mode-specific logic
+    3. Reuse shared Step 4 (Deploy Extractors) and Step 5 (Apply & Output)
+
+  adding_extractor: |
+    To add a new domain extractor:
+    1. Create src/templates/agents/buildforce-{domain}-extractor.md with frontmatter
+    2. Add domain to _index.yaml under domains.{domain}
+    3. Add _extraction-progress.yaml generation for new domain in SKILL.md Step 4.1
+    4. Add parallel Task call in Step 4.2
+
+  customizing_incremental_filters: |
+    The incremental mode filter rules (Step 3.2) determine which changes trigger extraction:
+    - Root-level *.md files are trivial (README, CHANGELOG)
+    - Lock files are trivial
+    - .buildforce/ files are trivial (internal context changes)
+    - Whitespace-only changes are trivial
+    Modify these rules to adjust sensitivity to code changes.
+
+notes: |
+  First agent-specific slash command in Buildforce CLI. Sets precedent for future agent-specific features.
+  Evolved into a two-layer architecture: thin command + full skill.
+
+  Key innovations:
+  - Sub-agent orchestration pattern for complex multi-domain extraction
+  - Coverage map in _index.yaml enables progress tracking across sessions
+  - Iterative depth model gives users control over extraction scope
+  - Skill-based architecture enabling invocation via command or direct skill call
+  - Context preservation (MERGE, DON'T REPLACE) prevents knowledge loss
+
+  Requirements for v2.1 schema:
+  - Root _index.yaml must have domains.*.items[] arrays (not separate domain _index.yaml files)
+  - Items track status and depth for coverage map functionality
+  - Migration from v2.0 consolidates domain indexes into root
+
+  Deployment requirements:
+  - skills-bundling must include the skill in release packages
+
+  Output modes:
+  - Full output (cold start & focused): Visual coverage map + iteration summary
+  - Compact output (incremental): 3-line summary (N created, M updated)

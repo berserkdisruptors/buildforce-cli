@@ -1,0 +1,161 @@
+version: "0.0.42"
+id: auto-context-extractor-20260203000000
+name: "Automatic Context Extraction via Stop Hook"
+type: feature
+status: in-progress
+created: "2026-02-03"
+last_updated: "2026-02-03"
+
+summary: |
+  A Claude Code skill that automatically extracts and updates context files after
+  implementation work completes, using the Stop hook to trigger extraction based on
+  git changes and task completion or topic shift detection.
+
+# INTENT / PROBLEM STATEMENT
+
+problem: |
+  Currently, context extraction requires manual invocation of /buildforce.complete after
+  implementation work finishes. This creates friction in the development workflow:
+  - Developers forget to run /complete and context becomes stale
+  - Manual context contribution is an extra step that interrupts flow
+  - Context updates lag behind implementation, reducing their usefulness
+  - The /complete command is intended to be eliminated in favor of automatic extraction
+
+motivation: |
+  Automatic context extraction eliminates manual steps and ensures context stays current.
+  By leveraging Claude Code's Stop hook (which fires after Claude finishes responding),
+  we can detect when implementation work completes and automatically spawn the existing
+  context extractor sub-agents (cm-1-structural, cm-2-convention, cm-3-verification) to
+  update context files incrementally. This makes context a living, automatically-maintained
+  artifact rather than a manual burden.
+
+# GOALS
+
+primary_goals:
+  - Eliminate the need for manual /buildforce.complete invocation after implementation work
+  - Automatically detect when meaningful implementation work has finished
+  - Trigger incremental context extraction focused only on changed areas
+  - Maintain context files as a living artifact that stays current with the codebase
+
+secondary_goals:
+  - Provide non-intrusive notifications when context is automatically updated
+  - Support both task-based and topic-shift-based completion detection
+  - Reuse existing extractor infrastructure (cm-1, cm-2, cm-3 sub-agents)
+  - Prevent infinite loops and false triggers from trivial changes
+
+# REQUIREMENTS
+
+functional_requirements:
+  - FR1: Skill activates automatically via Stop hook when Claude finishes responding
+  - FR2: Detect meaningful implementation completion using two trigger conditions (git changes + all tasks complete) OR (git changes + topic shift)
+  - FR3: Analyze git diff to identify which modules/features were modified
+  - FR4: Generate targeted extraction plans for only the changed areas (not full re-extraction)
+  - FR5: Spawn existing extractor sub-agents (buildforce-structural-extractor, buildforce-conventions-extractor, buildforce-verification-extractor) with focused scope
+  - FR6: Update _index.yaml coverage map incrementally for extracted items
+  - FR7: Provide brief notification to user indicating what context was updated (e.g., "Context updated: authentication.yaml created, error-handling.yaml updated")
+  - FR8: Track "current work context" to enable topic shift detection across prompts
+  - FR9: Prevent infinite loops by checking stop_hook_active flag
+  - FR10: Skip extraction for trivial changes (README edits, comments, formatting)
+
+non_functional_requirements:
+  - NFR1: Extraction should complete within 120 seconds (hook timeout)
+  - NFR2: Skill should be invisible to users (user-invocable: false) but run automatically in background
+  - NFR3: Skill must use context: fork and agent: Explore for isolated execution with file access
+  - NFR4: Must not block or interrupt user workflow - extraction happens seamlessly
+  - NFR5: Must be backward compatible with projects that don't use context repository pattern
+
+# SCOPE
+
+in_scope:
+  - Claude Code skill with Stop hook configuration in SKILL.md frontmatter
+  - Trigger logic detecting git changes + task completion OR topic shift
+  - Git diff analysis to identify changed modules/features
+  - Targeted extraction plan generation for changed areas only
+  - Integration with existing cm-1, cm-2, cm-3 extractor sub-agents
+  - Incremental _index.yaml coverage map updates
+  - Topic shift detection using semantic comparison of work context
+  - Infinite loop prevention via stop_hook_active check
+  - Brief user notifications for context updates
+
+out_of_scope:
+  - Modifications to existing extractor sub-agents (cm-1, cm-2, cm-3)
+  - Changes to /buildforce.extract command or Context Manager
+  - Full re-extraction of entire codebase (only incremental, focused extraction)
+  - Git commit hook integration (using Stop hook, not git hooks)
+  - User configuration UI for extraction preferences
+  - Manual override or disable mechanism (v1 is always-on)
+
+# DESIGN PRINCIPLES
+
+design_principles:
+  - "Reuse existing extraction infrastructure - don't reinvent extractors"
+  - "Extract incrementally, not exhaustively - focus only on what changed"
+  - "Non-intrusive automation - don't block or interrupt user workflow"
+  - "Fail gracefully - extraction errors should log but not break user flow"
+  - "Smart triggering - avoid false positives from trivial changes"
+
+# ACCEPTANCE CRITERIA
+
+acceptance_criteria:
+  - AC1: After implementation work completes and all TodoList tasks are marked completed, the next Stop hook triggers automatic extraction
+  - AC2: When user starts a new unrelated task after implementation work, Stop hook detects topic shift and triggers extraction for previous work
+  - AC3: Extraction analyzes git diff and spawns extractors only for changed modules/features, not entire codebase
+  - AC4: After extraction completes, _index.yaml coverage map shows updated status/depth for affected items
+  - AC5: User sees brief notification (e.g., "Context updated: 2 files created, 1 file updated") without workflow interruption
+  - AC6: Trivial changes (README, comments, whitespace) do not trigger extraction
+  - AC7: Skill does not enter infinite loop when stop_hook_active is true
+  - AC8: Skill works in projects without .buildforce/context/ directory (graceful degradation)
+
+# ASSUMPTIONS & DEPENDENCIES
+
+assumptions:
+  - Claude Code Stop hook fires after Claude finishes all tool calls and response generation
+  - Existing extractor sub-agents (buildforce-structural-extractor, buildforce-conventions-extractor, buildforce-verification-extractor) accept focused extraction plans
+  - Git is available and working directory is a git repository
+  - TodoList tool is available for task completion detection
+  - Skill can access transcript to analyze recent implementation work
+
+dependencies:
+  internal:
+    - buildforce-structural-extractor: "cm-1 sub-agent for structural context"
+    - buildforce-conventions-extractor: "cm-2 sub-agent for convention context"
+    - buildforce-verification-extractor: "cm-3 sub-agent for verification context"
+    - _index.yaml: "Coverage map for tracking extraction progress"
+    - /buildforce.extract: "Command that defines extraction workflow (reference only)"
+  external:
+    - git: "Required for diff analysis and change detection"
+    - Claude Code Stop hook: "Event trigger for automatic activation"
+    - Task tool: "For spawning extractor sub-agents"
+    - Bash tool: "For git commands and file operations"
+
+# OPEN QUESTIONS
+
+open_questions: []
+
+# RESOLVED DECISIONS (from planning discussion):
+# - Extraction triggers immediately when tasks complete (not batched)
+# - Trivial change detection logic delegated to implementation agent's judgment
+# - Work context tracked via transcript analysis only (no persistent state file)
+# - Extraction failures show brief error notification to user
+# - Dry run mode supported for testing trigger logic
+
+# NOTES
+
+notes: |
+  This feature is critical for making the context repository pattern sustainable. Manual
+  context extraction creates friction that causes context to become stale. By automating
+  extraction at the right moments (task completion or topic shift), we ensure context
+  stays current without developer effort.
+
+  The Stop hook is the perfect trigger point - it fires after all implementation work
+  is complete but before control returns to the user. This gives us visibility into
+  what was built (via git diff and transcript) while ensuring extraction doesn't
+  interfere with the response the user is waiting for.
+
+  Topic shift detection is key for workflows without explicit task tracking. By comparing
+  the semantic content of recent work with the current prompt, we can infer when the
+  user has moved on to a new feature/area and trigger extraction for the previous work.
+
+  Reusing the existing cm-1, cm-2, cm-3 extractors is essential - they already implement
+  the proposal-based pattern with conflict resolution. We just need to generate targeted
+  extraction plans instead of full-codebase plans.

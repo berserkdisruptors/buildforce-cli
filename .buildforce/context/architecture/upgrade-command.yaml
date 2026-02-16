@@ -3,17 +3,20 @@ name: Upgrade Command
 type: structural
 status: production
 created: 2025-10-28
-last_updated: "2026-01-28"
+last_updated: "2026-02-04"
 
 summary: |
   Slash command for upgrading existing Buildforce projects to the latest templates, scripts,
-  and slash commands while preserving user-created content (context repository and specs).
+  skills, and slash commands while preserving user-created content (context repository and specs).
   Automatically detects project configuration and supports selective override via flags.
   Supports local artifact loading via --local flag for offline workflows and testing.
   Updates .gitignore to include .buildforce/.temp entry for temporary file exclusion.
+  For Claude users, merges template hooks configuration into .claude/settings.local.json.
 
 responsibilities:
-  - Upgrade slash commands, templates, and scripts to latest versions from GitHub Releases or local artifacts
+  - Upgrade slash commands, templates, scripts, and skills to latest versions from GitHub Releases or local artifacts
+  - Replace .claude/skills/ with latest skill bundles (Claude only)
+  - Merge template hooks/config.json into .claude/settings.local.json (Claude only, additive merge)
   - Preserve user-created content (.buildforce/context/ and .buildforce/specs/)
   - Auto-detect AI assistant and script type from buildforce.json configuration
   - Support configuration overrides via --ai and --script flags
@@ -32,6 +35,7 @@ dependencies:
     - cli-architecture: "Uses template download, extraction, and progress tracking infrastructure"
     - init-command: "Shares template distribution and file copying utilities"
     - local-artifact-resolution: "Resolves local artifacts when --local flag provided"
+    - settings-merge-utility: "Merges Claude Code settings during upgrade"
   external:
     - commander: "^12.0.0 - CLI argument parsing for upgrade command"
     - fs-extra: "^11.2.0 - File system operations (copy, remove, ensureDir)"
@@ -52,6 +56,7 @@ files:
     - src/commands/upgrade/migrations/v2.1.ts
     - src/cli.ts
     - src/utils/config.ts
+    - src/utils/settings-merge.ts
     - src/types.ts
 
 interfaces:
@@ -269,12 +274,17 @@ evolution:
     date: "2026-01-28"
     changes: "Refactored migration system to MigrationRunner pattern. Each migration now lives in its own file (migrations/v2.0.ts, migrations/v2.1.ts) with standard interface. MigrationRunner detects current version and runs all needed migrations sequentially. v2.1 migration consolidates domain-specific _index.yaml files into root _index.yaml and supports /buildforce.extract coverage map functionality."
 
+  - version: "1.5"
+    date: "2026-02-04"
+    changes: "Added skills replacement step for Claude (replaces .claude/skills/ with latest from release). Added settings merge step that merges .buildforce/templates/hooks/config.json into .claude/settings.local.json using additive deep-merge (preserves existing permissions and hooks, deduplicates arrays). Both steps only run when claude is selected as AI assistant."
+
 related_specs:
   - add-upgrade-command-20251027000000
   - add-local-flag-init-upgrade-20251028143052
   - upgrade-ai-prompt-20251125143052
   - add-temp-folder-gitignore-upgrade-20251201000000
   - claude-code-extract-command-20260127152345
+  - skills-bundling-config-concat-20260204000000
 
 notes: |
   The upgrade command is a critical feature for maintaining Buildforce projects over time.

@@ -1,0 +1,38 @@
+id: skill-naming-conventions
+name: "Skill Naming Conventions"
+type: convention
+sub_type: naming-convention
+enforcement: recommended
+created: "2026-02-13"
+last_updated: "2026-02-13"
+
+description: |
+  Non-workflow skills (those not prefixed with `buildforce.`) follow a `{noun}-{verb}` naming
+  pattern using the verb/action form, not the noun/gerund form. This was established by the
+  `context-search` skill and applies to all standalone skills.
+
+  Examples:
+    - context-search (not context-searching)
+    - context-extract (not context-extraction)
+    - context-verify (not context-verification)
+
+  Workflow skills that are part of the core buildforce development lifecycle retain the
+  `buildforce.{verb}` prefix (e.g., buildforce.plan, buildforce.build, buildforce.complete).
+
+examples:
+  - file: "skill registration"
+    snippet: |
+      # Correct - verb form
+      context-search
+      context-extract
+      context-verify
+
+      # Incorrect - noun/gerund form
+      context-searching
+      context-extraction
+      context-verification
+
+violations:
+  - "Using noun form instead of verb form (context-extraction instead of context-extract)"
+  - "Using gerund form (context-searching instead of context-search)"
+  - "Prefixing non-workflow skills with buildforce- (context-extract instead of context-extract)"

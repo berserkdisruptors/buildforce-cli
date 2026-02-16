@@ -136,20 +136,25 @@ generate_agents() {
 
 generate_skills() {
   local agent=$1 output_dir=$2
-  [[ -d src/templates/skills ]] || return
+  mkdir -p "$output_dir"
+
+  # Skills are stored as directories containing SKILL.md
   for skill_dir in src/templates/skills/*/; do
     [[ -d "$skill_dir" ]] || continue
-    local skill_name skill_file agents_field
-    skill_name=$(basename "$skill_dir")
-    skill_file="$skill_dir/SKILL.md"
+    local skill_file="$skill_dir/SKILL.md"
     [[ -f "$skill_file" ]] || continue
 
-    # Normalize line endings
+    local skill_name agents_field
+    skill_name=$(basename "$skill_dir")
+
+    # Normalize line endings and read SKILL.md
     file_content=$(tr -d '\r' < "$skill_file")
 
-    # Check for agent-specific filtering (same as commands/agents)
+    # Check for agent-specific filtering via 'agents:' field in SKILL.md frontmatter
+    # If 'agents:' field exists, only include if current agent is in the list
     agents_field=$(printf '%s\n' "$file_content" | awk '/^agents:/ {sub(/^agents:[[:space:]]*/, ""); print; exit}' 2>/dev/null || true)
     if [[ -n "$agents_field" ]]; then
+      # Use word boundary matching for reliable agent name detection
       if ! echo "$agents_field" | grep -qw "$agent"; then
         echo "  [filter] Skipping skill $skill_name for $agent (agents: $agents_field)"
         continue
@@ -158,23 +163,11 @@ generate_skills() {
       fi
     fi
 
-    # Remove the agents: field from frontmatter before copying
-    local body
-    body=$(printf '%s\n' "$file_content" | awk '
-      /^---$/ { print; if (++dash_count == 1) in_frontmatter=1; else in_frontmatter=0; next }
-      in_frontmatter && /^agents:/ { next }
-      { print }
-    ')
-
-    mkdir -p "$output_dir/$skill_name"
-    echo "$body" > "$output_dir/$skill_name/SKILL.md"
-
-    # Copy any supporting files in the skill directory (exclude SKILL.md itself)
-    for support_file in "$skill_dir"*; do
-      [[ -f "$support_file" ]] || continue
-      [[ "$(basename "$support_file")" == "SKILL.md" ]] && continue
-      cp "$support_file" "$output_dir/$skill_name/"
-    done
+    # Copy the entire skill directory structure (preserves all files in the skill folder)
+    local dest_skill_dir="$output_dir/$skill_name"
+    mkdir -p "$dest_skill_dir"
+    cp -r "$skill_dir"/* "$dest_skill_dir/"
+    echo "  Copied skill: $skill_name -> $dest_skill_dir"
   done
 }
 
@@ -209,8 +202,9 @@ build_variant() {
 
   if [[ -d src/templates ]]; then
     mkdir -p "$SPEC_DIR/templates"
-    # Copy template files, excluding commands and agents subdirectories
-    # (commands go to agent-specific folders, agents go to .claude/agents/)
+    # Copy template files, excluding commands, agents, skills, and hooks subdirectories
+    # (commands go to agent-specific folders, agents go to .claude/agents/,
+    #  skills go to .claude/skills/, hooks go to .claude/hooks/)
     find src/templates -type f -not -path "src/templates/commands/*" -not -path "src/templates/agents/*" -not -path "src/templates/skills/*" -not -path "src/templates/hooks/*" | while read -r file; do
       # Get the relative path from src/templates
       rel_path="${file#src/templates/}"
@@ -264,14 +258,16 @@ build_variant() {
         mkdir -p "$base_dir/.claude/skills"
         generate_skills claude "$base_dir/.claude/skills"
       fi
-      # Claude Code hooks - copy hook scripts if any exist
+      # Claude Code hooks - copy hook scripts to .claude/hooks/
+      # (config.json is handled by mergeAgentSettings in the CLI, not distributed)
       if [[ -d src/templates/hooks ]]; then
         mkdir -p "$base_dir/.claude/hooks"
         for hook_file in src/templates/hooks/*; do
           [[ -f "$hook_file" ]] || continue
+          [[ "$hook_file" == *.json ]] && continue
           cp "$hook_file" "$base_dir/.claude/hooks/"
         done
-        echo "Copied hooks -> .claude/hooks"
+        echo "Copied hook scripts -> .claude/hooks"
       fi
       ;;
     gemini)

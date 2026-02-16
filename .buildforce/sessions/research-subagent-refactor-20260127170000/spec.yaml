@@ -1,0 +1,132 @@
+version: "0.0.42"
+id: research-subagent-refactor-20260127170000
+name: "Convert Research Command to Subagent Architecture"
+type: feature
+status: completed
+created: "2026-01-27"
+last_updated: "2026-01-27"
+
+summary: |
+  Refactor the /buildforce.research command from inline template execution to a Claude Code
+  subagent architecture, enabling isolated context windows for research operations and
+  preserving main conversation context for complex multi-step workflows.
+
+# INTENT / PROBLEM STATEMENT
+
+problem: |
+  The current /buildforce.research command executes inline within the main conversation,
+  consuming ~99 lines of instructions in the context window. For complex research tasks
+  involving multiple codebase explorations, web searches, and context file reads, this
+  pollutes the main conversation context with verbose intermediate output. This limits
+  the effectiveness of subsequent commands (/buildforce.plan, /buildforce.build) that
+  need context space for their own operations.
+
+motivation: |
+  Claude Code provides subagent capabilities with isolated 200k token context windows.
+  By delegating research to a subagent, verbose research output stays in the subagent
+  context while only a condensed summary returns to the main conversation. This
+  architecture enables more complex multi-research workflows, preserves main context
+  for planning and building, and establishes a foundation for future multi-agent
+  coordination across buildforce commands.
+
+# GOALS
+
+primary_goals:
+  - Reduce main conversation context consumption during research operations
+  - Preserve all existing research functionality (persistence, cache, structured output)
+  - Enable foundation for multi-agent workflows in future buildforce commands
+
+secondary_goals:
+  - Simplify the research command template to a thin wrapper
+  - Establish a pattern for subagent-based command architecture
+  - Improve user experience by keeping main context clean
+
+# REQUIREMENTS
+
+functional_requirements:
+  - FR1: Create research subagent definition in .claude/agents/research.md with YAML frontmatter
+  - FR2: Move all research instructions (guidelines 1-9) from command template to subagent prompt
+  - FR3: Simplify command template to invoke research subagent via Task tool delegation
+  - FR4: Preserve research persistence behavior (cache MERGE/REPLACE logic in subagent)
+  - FR5: Subagent must search .buildforce/context/_index.yaml as primary source
+  - FR6: Subagent must detect recency indicators and trigger web searches
+  - FR7: Subagent must produce structured output (Research Summary, TLDR, Next Steps)
+  - FR8: Update template distribution to include agents/ folder structure
+
+non_functional_requirements:
+  - NFR1: Subagent context isolation - research output must not pollute main conversation
+  - NFR2: Tool whitelist principle - grant only necessary tools (Read, Grep, Glob, WebFetch, WebSearch, Write)
+  - NFR3: Model inheritance - use same model as main conversation for consistent quality
+  - NFR4: Backward compatibility - existing projects using research command continue working
+
+# SCOPE
+
+in_scope:
+  - Create .claude/agents/research.md subagent definition
+  - Refactor src/templates/commands/research.md to thin wrapper
+  - Update src/templates to include agents/ folder with research.md
+  - Update CLI initialization to create .claude/agents/ directory
+  - Update buildforce upgrade command to handle agent templates
+  - Update context documentation for new architecture
+
+out_of_scope:
+  - Converting other commands (/buildforce.plan, /buildforce.build) to subagents
+  - Adding new research capabilities not in current template
+  - Changing research.yaml artifact format
+  - Modifying cache file structure (.buildforce/.temp/research-cache.yaml)
+
+# DESIGN PRINCIPLES
+
+design_principles:
+  - "Subagent delegation over inline execution for context-heavy operations"
+  - "Preserve existing behavior - refactor architecture, not functionality"
+  - "Thin wrapper pattern - commands become orchestrators, not executors"
+  - "Tool whitelisting - grant minimum necessary permissions"
+
+# ACCEPTANCE CRITERIA
+
+acceptance_criteria:
+  - AC1: /buildforce.research command invokes research subagent instead of inline execution
+  - AC2: Research subagent produces identical output structure to current implementation
+  - AC3: Research persistence (cache MERGE/REPLACE) works unchanged
+  - AC4: Main conversation context shows only summary, not full research exploration
+  - AC5: buildforce init creates .claude/agents/ folder with research.md template
+  - AC6: buildforce upgrade handles agent template updates
+
+# ASSUMPTIONS & DEPENDENCIES
+
+assumptions:
+  - Claude Code supports .claude/agents/ directory for custom subagent definitions
+  - Task tool can invoke custom subagents by name
+  - Subagent has access to all tools specified in tools field
+  - Write tool in subagent can create/update cache files
+
+dependencies:
+  internal:
+    - slash-commands: "Command template infrastructure"
+    - research-persistence: "Cache system for research artifacts"
+    - cli-architecture: "Template distribution and initialization"
+  external:
+    - claude-code: "Subagent capability (Task tool, .claude/agents/ support)"
+
+# OPEN QUESTIONS
+
+open_questions: []
+  # Resolved:
+  # - Model: Use 'inherit' for consistency with main conversation
+  # - Fallback: No fallback logic - fail clearly if subagent cannot be invoked
+  # - Debug flag: No --direct flag - keep implementation simple, subagent-only
+
+# NOTES
+
+notes: |
+  This refactor establishes the subagent architecture pattern that can be applied to other
+  buildforce commands in the future. The key insight is that commands become thin orchestrators
+  while subagents handle the heavy lifting in isolated contexts.
+
+  Key files affected:
+  - NEW: src/templates/agents/research.md (subagent definition)
+  - MODIFY: src/templates/commands/research.md (thin wrapper)
+  - MODIFY: src/lib/init.ts (create agents/ folder)
+  - MODIFY: src/lib/upgrade.ts (handle agent templates)
+  - MODIFY: Context documentation files

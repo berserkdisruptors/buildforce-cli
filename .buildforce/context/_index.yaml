@@ -58,7 +58,7 @@ version: "2.1"
 
 # Timestamps (populated by /buildforce.extract on first run)
 generated_at: "2026-02-02"
-last_updated: "2026-02-05"
+last_updated: "2026-02-13"
 
 # ============================================================================
 # CODEBASE PROFILE
@@ -259,13 +259,31 @@ domains:
         related_context: [ slash-commands, readme-documentation, cli-architecture ]
 
       - id: extract-command
-        file: architecture/extract-command.yaml
+        file: architecture/extract-skill.yaml
+        type: structural
+        status: extracted
+        depth: deep
+        description: Two-layer context extraction system with skill-based architecture and three unified modes
+        tags: [ slash-command, skill, extract, context-mining, sub-agents, claude-code-only, coverage-map, stop-hook, incremental ]
+        related_context: [ slash-commands, cli-architecture, upgrade-command, skills-bundling, settings-merge-utility ]
+
+      - id: settings-merge-utility
+        file: architecture/settings-merge-utility.yaml
+        type: structural
+        status: extracted
+        depth: shallow
+        description: TypeScript utility for merging Claude Code settings with additive deep-merge strategy
+        tags: [ utility, settings, claude-code, merge, hooks, permissions ]
+        related_context: [ upgrade-command, cli-architecture ]
+
+      - id: skills-bundling
+        file: architecture/skills-bundling.yaml
         type: structural
         status: extracted
         depth: moderate
-        description: Claude Code-specific slash command for iterative context extraction from fresh codebases
-        tags: [ slash-command, extract, context-mining, sub-agents, claude-code-only, coverage-map ]
-        related_context: [ slash-commands, cli-architecture, upgrade-command ]
+        description: Release packaging system for bundling Claude Code skills with agent filtering and extract skill integration
+        tags: [ release-packaging, skills, claude-code, bundling, agent-filtering, extract-skill-deployment ]
+        related_context: [ upgrade-command, cli-architecture, settings-merge-utility, extract-command ]
 
       - id: context-search-skill
         file: architecture/context-search-skill.yaml
@@ -403,6 +421,16 @@ domains:
         enforcement: strict
         related_context: [ sub-agent-architecture, extract-command, context-search-skill ]
 
+      - id: skill-naming-conventions
+        file: conventions/skill-naming-conventions.yaml
+        type: convention
+        status: extracted
+        depth: shallow
+        description: Naming conventions for Buildforce skills (buildforce- prefix, kebab-case)
+        sub_type: naming-convention
+        enforcement: strict
+        related_context: [ skills-bundling, extract-command ]
+
   verification:
     description: |
       Verification context about HOW to know if code is right.
@@ -464,8 +492,8 @@ domains:
 
 summary:
   overall_coverage: 100
-  total_items: 39
-  extracted_items: 39
+  total_items: 42
+  extracted_items: 42
   iterations_completed: 4
 
 # ============================================================================
@@ -477,8 +505,8 @@ summary:
 extraction:
   needs_clarification:
     - "Should the migration system (MigrationRunner) be documented as a separate context item?"
-    - "Are there plans to add automated testing? Should we document target test framework preferences?"
     - "Should linting tools (ESLint/Prettier) be added to the quality gates?"
+    - "Should the vitest setup be completed (add vitest to package.json deps, update test script)?"
   recommended_focus:
     - id: build-command
       reason: "Core workflow command - could benefit from moderate depth with extension points"
@@ -486,6 +514,8 @@ extraction:
       reason: "Core workflow command - could benefit from moderate depth with state flow details"
     - id: complete-command
       reason: "Core workflow command - could benefit from moderate depth with context creation details"
+    - id: settings-merge-utility
+      reason: "Key enabler for skill activation - could benefit from moderate depth documenting the hook configuration flow"
   new_discoveries:
     - id: migration-runner
       domain: architecture
@@ -503,3 +533,7 @@ extraction:
       domain: architecture
       description: "Sophisticated release automation with version calculation and npm publishing"
       priority: low
+    - id: skill-delegation-pattern
+      domain: conventions
+      description: "Convention for commands delegating to skills for multi-entry-point activation (command + hook)"
+      priority: medium

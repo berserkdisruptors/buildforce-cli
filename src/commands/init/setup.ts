@@ -9,7 +9,7 @@ import {
   initGitRepo,
 } from "../../utils/index.js";
 import { createConfigContent } from "../../utils/config.js";
-import { mergeHooksSettings } from "../../utils/hooks.js";
+import { mergeAgentSettings } from "../../utils/settings-merge.js";
 import { resolveLocalArtifact } from "../../lib/local-artifacts.js";
 import { AGENT_FOLDER_MAP } from "../../constants.js";
 
@@ -50,6 +50,7 @@ export async function setupProject(
     ["extracted-summary", "Extraction summary"],
     ["chmod", "Ensure scripts executable"],
     ["config", "Create configuration file"],
+    ["merge-settings", "Merge agent settings"],
     ["cleanup", "Cleanup"],
     ["git", "Initialize git repository"],
     ["final", "Finalize"],
@@ -197,17 +198,6 @@ export async function setupProject(
 
     tracker.complete("config", ".buildforce/buildforce.json");
 
-    // Merge hooks settings for agents that support them (e.g. Claude Code)
-    for (const agent of successfulAgents) {
-      const agentFolder = AGENT_FOLDER_MAP[agent];
-      if (agentFolder) {
-        const result = await mergeHooksSettings(projectPath, agentFolder);
-        if (result.updated && debug) {
-          console.log(chalk.gray(`\nMerged hooks config into ${agentFolder}settings.local.json`));
-        }
-      }
-    }
-
     // Ensure buildforce.json and .temp folder are in .gitignore
     const gitignorePath = path.join(projectPath, ".gitignore");
     if (await fs.pathExists(gitignorePath)) {
@@ -272,6 +262,26 @@ export async function setupProject(
       if (modified) {
         await fs.writeFile(gitignorePath, gitignoreContent, "utf8");
       }
+    }
+
+    // Merge agent settings if claude is one of the selected agents
+    tracker.start("merge-settings");
+    if (successfulAgents.includes("claude")) {
+      const agentFolder = AGENT_FOLDER_MAP["claude"];
+      const mergeResult = await mergeAgentSettings(projectPath, agentFolder, {
+        debug,
+      });
+
+      if (mergeResult.merged) {
+        const detail = mergeResult.hooksAdded
+          ? `${mergeResult.hooksAdded} hook(s) added`
+          : "settings created";
+        tracker.complete("merge-settings", detail);
+      } else {
+        tracker.skip("merge-settings", mergeResult.reason);
+      }
+    } else {
+      tracker.skip("merge-settings", "claude not selected");
     }
 
     // Git step
