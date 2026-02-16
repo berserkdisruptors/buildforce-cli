@@ -228,36 +228,6 @@ export async function setupProject(
         }
       }
 
-      // Check if .buildforce/.temp is already in gitignore
-      if (!gitignoreContent.includes(".buildforce/.temp")) {
-        gitignoreContent = gitignoreContent.trimEnd() + "\n.buildforce/.temp\n";
-        modified = true;
-
-        if (debug) {
-          console.log(chalk.gray(`\nUpdated .gitignore: added .buildforce/.temp`));
-        }
-      }
-
-      // Check if .buildforce/scripts is already in gitignore
-      if (!gitignoreContent.includes(".buildforce/scripts")) {
-        gitignoreContent = gitignoreContent.trimEnd() + "\n.buildforce/scripts\n";
-        modified = true;
-
-        if (debug) {
-          console.log(chalk.gray(`\nUpdated .gitignore: added .buildforce/scripts`));
-        }
-      }
-
-      // Check if .buildforce/templates is already in gitignore
-      if (!gitignoreContent.includes(".buildforce/templates")) {
-        gitignoreContent = gitignoreContent.trimEnd() + "\n.buildforce/templates\n";
-        modified = true;
-
-        if (debug) {
-          console.log(chalk.gray(`\nUpdated .gitignore: added .buildforce/templates`));
-        }
-      }
-
       // Write the file only if modifications were made
       if (modified) {
         await fs.writeFile(gitignorePath, gitignoreContent, "utf8");
