@@ -3,7 +3,6 @@ import chalk from "chalk";
 // Re-export agent configurations
 export {
   AI_CHOICES,
-  SCRIPT_TYPE_CHOICES,
   AGENT_FOLDER_MAP,
 } from "./config/agents.js";
 

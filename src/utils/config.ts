@@ -7,7 +7,6 @@ import { BuildforceConfig } from "../types.js";
  */
 export function getDefaultConfig(): BuildforceConfig {
   return {
-    sessionsFolder: "./sessions",
     framework: "buildforce",
   };
 }
@@ -15,18 +14,15 @@ export function getDefaultConfig(): BuildforceConfig {
 /**
  * Create a buildforce.json config file content
  * @param aiAssistants - Optional AI assistant names array
- * @param scriptType - Optional script type (sh or ps)
  * @param version - Optional CLI version
  */
 export function createConfigContent(
   aiAssistants?: string[],
-  scriptType?: string,
   version?: string
 ): string {
   const config: BuildforceConfig = {
     ...getDefaultConfig(),
     ...(aiAssistants && { aiAssistants }),
-    ...(scriptType && { scriptType }),
     ...(version && { version }),
   };
   return JSON.stringify(config, null, 2) + "\n";

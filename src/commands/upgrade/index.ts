@@ -5,8 +5,7 @@ import { showBanner, selectMultipleWithCheckboxes } from "../../lib/interactive.
 import { validateUpgradePrerequisites } from "./validation.js";
 import { executeUpgrade } from "./execution.js";
 import { readBuildforceConfig, saveBuildforceConfig } from "../../utils/config.js";
-import { AI_CHOICES, SCRIPT_TYPE_CHOICES } from "../../constants.js";
-import { selectWithArrows } from "../../lib/interactive.js";
+import { AI_CHOICES } from "../../constants.js";
 
 /**
  * Main upgrade command entry point
@@ -18,7 +17,6 @@ export async function upgradeCommand(options: UpgradeOptions): Promise<void> {
 
   const {
     ai: aiOverride,
-    script: scriptOverride,
     dryRun = false,
     debug = false,
     githubToken,
@@ -117,54 +115,11 @@ export async function upgradeCommand(options: UpgradeOptions): Promise<void> {
     console.log(MINT_COLOR("Migration complete."));
   }
 
-  // Determine script type (override > config > prompt)
-  let selectedScript: string;
-  if (scriptOverride) {
-    // Validate override
-    if (!SCRIPT_TYPE_CHOICES[scriptOverride]) {
-      console.log();
-      console.log(
-        chalk.red("✗ Invalid script type:"),
-        scriptOverride
-      );
-      console.log(
-        MINT_COLOR("Valid options:"),
-        Object.keys(SCRIPT_TYPE_CHOICES).join(", ")
-      );
-      console.log();
-      process.exit(1);
-    }
-    selectedScript = scriptOverride;
-    console.log(
-      MINT_COLOR("Script type (override):"),
-      SCRIPT_TYPE_CHOICES[selectedScript]
-    );
-  } else if (config?.scriptType) {
-    selectedScript = config.scriptType;
-    console.log(
-      MINT_COLOR("Script type (detected):"),
-      SCRIPT_TYPE_CHOICES[selectedScript] || selectedScript
-    );
-  } else {
-    // Backward compatibility: prompt for script type if missing
-    const defaultScript = process.platform === "win32" ? "ps" : "sh";
-    console.log(
-      MINT_COLOR(
-        "No script type found in buildforce.json. Please select one:"
-      )
-    );
-    selectedScript = await selectWithArrows(
-      SCRIPT_TYPE_CHOICES,
-      "Choose script type:",
-      defaultScript
-    );
-  }
-
   console.log();
 
   // Execute upgrade
   try {
-    await executeUpgrade(projectPath, selectedAi, selectedScript, {
+    await executeUpgrade(projectPath, selectedAi, {
       dryRun,
       debug,
       githubToken,

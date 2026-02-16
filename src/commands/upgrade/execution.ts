@@ -19,7 +19,6 @@ import { mergeAgentSettings } from "../../utils/settings-merge.js";
 export async function executeUpgrade(
   projectPath: string,
   selectedAi: string[],
-  selectedScript: string,
   options: {
     dryRun: boolean;
     debug: boolean;
@@ -102,8 +101,7 @@ export async function executeUpgrade(
             tracker.start("fetch");
             const result = await resolveLocalArtifact(
               localDir,
-              agent,
-              selectedScript
+              agent
             );
             localZipPath = result.zipPath;
           } catch (e: any) {
@@ -118,7 +116,6 @@ export async function executeUpgrade(
         const currentDir = process.cwd();
 
         const result = await downloadTemplateFromGithub(agent, currentDir, {
-          scriptType: selectedScript,
           verbose: false,
           showProgress: false,
           debug,
@@ -424,7 +421,6 @@ export async function executeUpgrade(
       tracker.start("update-config");
       saveBuildforceConfig(projectPath, {
         aiAssistants: successfulAgents,
-        scriptType: selectedScript,
         version: version,
       });
       tracker.complete("update-config", `version ${version}`);

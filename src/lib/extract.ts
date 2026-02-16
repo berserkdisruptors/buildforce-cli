@@ -13,7 +13,6 @@ import { MINT_COLOR } from "../constants.js";
 export async function downloadAndExtractTemplate(
   projectPath: string,
   aiAssistant: string,
-  scriptType: string,
   isCurrentDir: boolean = false,
   options: {
     verbose?: boolean;
@@ -45,7 +44,6 @@ export async function downloadAndExtractTemplate(
 
   try {
     const result = await downloadTemplateFromGithub(aiAssistant, currentDir, {
-      scriptType,
       verbose: verbose && !tracker,
       showProgress: !tracker,
       debug,

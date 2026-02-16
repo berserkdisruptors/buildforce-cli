@@ -13,14 +13,12 @@ interface LocalArtifactResult {
  * Resolves a local artifact from the specified directory
  * @param localDir - Directory to search for artifacts (e.g., .genreleases)
  * @param aiAssistant - AI assistant type (claude, gemini, etc.)
- * @param scriptType - Script type (sh or ps)
  * @returns Promise with zipPath and version
  * @throws Error if artifact not found or invalid
  */
 export async function resolveLocalArtifact(
   localDir: string,
-  aiAssistant: string,
-  scriptType: string
+  aiAssistant: string
 ): Promise<LocalArtifactResult> {
   // Resolve the local directory to an absolute path
   const absoluteLocalDir = path.resolve(localDir);
@@ -32,14 +30,14 @@ export async function resolveLocalArtifact(
         `Local artifacts directory not found: ${absoluteLocalDir}\n\n` +
           `Please create the directory or run the artifact generation script:\n` +
           MINT_COLOR(
-            `AGENTS=${aiAssistant} SCRIPTS=${scriptType} .github/workflows/scripts/create-release-packages.sh v0.0.99`
+            `AGENTS=${aiAssistant} .github/workflows/scripts/create-release-packages.sh v0.0.99`
           )
       )
     );
   }
 
   // Build the glob pattern for matching artifacts
-  const pattern = `buildforce-cli-template-${aiAssistant}-${scriptType}-v*.zip`;
+  const pattern = `buildforce-cli-template-${aiAssistant}-v*.zip`;
   const fullPattern = path.join(absoluteLocalDir, pattern);
 
   // Find all matching artifacts
@@ -65,7 +63,7 @@ export async function resolveLocalArtifact(
           `Searched in: ${absoluteLocalDir}${availableList}\n\n` +
           `To generate the required artifact, run:\n` +
           MINT_COLOR(
-            `AGENTS=${aiAssistant} SCRIPTS=${scriptType} .github/workflows/scripts/create-release-packages.sh v0.0.99`
+            `AGENTS=${aiAssistant} .github/workflows/scripts/create-release-packages.sh v0.0.99`
           )
       )
     );
@@ -97,7 +95,7 @@ export async function resolveLocalArtifact(
     throw new Error(
       chalk.red(
         `Invalid artifact filename format: ${filename}\n\n` +
-          `Expected format: buildforce-cli-template-{agent}-{script}-{version}.zip`
+          `Expected format: buildforce-cli-template-{agent}-{version}.zip`
       )
     );
   }

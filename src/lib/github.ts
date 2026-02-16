@@ -14,7 +14,6 @@ export async function downloadTemplateFromGithub(
   aiAssistant: string,
   downloadDir: string,
   options: {
-    scriptType?: string;
     verbose?: boolean;
     showProgress?: boolean;
     debug?: boolean;
@@ -24,7 +23,6 @@ export async function downloadTemplateFromGithub(
   } = {}
 ): Promise<{ zipPath: string; metadata: ReleaseMetadata }> {
   const {
-    scriptType = "sh",
     verbose = true,
     showProgress = true,
     debug = false,
@@ -112,7 +110,7 @@ export async function downloadTemplateFromGithub(
 
   // Find the template asset for the specified AI assistant
   const assets = releaseData.assets || [];
-  const pattern = `buildforce-cli-template-${aiAssistant}-${scriptType}`;
+  const pattern = `buildforce-cli-template-${aiAssistant}`;
   const matchingAssets = assets.filter(
     (asset) => asset.name.includes(pattern) && asset.name.endsWith(".zip")
   );

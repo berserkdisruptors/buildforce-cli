@@ -126,24 +126,6 @@ export function validateAiAssistant(
 }
 
 /**
- * Validate script type selection
- */
-export function validateScriptType(
-  selectedScript: string,
-  scriptTypeChoices: Record<string, string>
-): void {
-  if (!scriptTypeChoices[selectedScript]) {
-    console.error(
-      chalk.red("Error:"),
-      `Invalid script type '${selectedScript}'. Choose from: ${Object.keys(
-        scriptTypeChoices
-      ).join(", ")}`
-    );
-    process.exit(1);
-  }
-}
-
-/**
  * Check agent tool availability
  */
 export function checkAgentTool(

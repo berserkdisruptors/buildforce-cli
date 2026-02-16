@@ -1,4 +1,4 @@
-import { AIChoice, ScriptTypeChoice } from "../types.js";
+import { AIChoice } from "../types.js";
 
 export const AI_CHOICES: AIChoice = {
   copilot: "GitHub Copilot",
@@ -12,11 +12,6 @@ export const AI_CHOICES: AIChoice = {
   kilocode: "Kilo Code",
   auggie: "Auggie CLI",
   roo: "Roo Code",
-};
-
-export const SCRIPT_TYPE_CHOICES: ScriptTypeChoice = {
-  sh: "POSIX Shell (bash/zsh)",
-  ps: "PowerShell",
 };
 
 export const AGENT_FOLDER_MAP: Record<string, string> = {

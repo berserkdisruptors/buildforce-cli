@@ -19,7 +19,6 @@ import { AGENT_FOLDER_MAP } from "../../constants.js";
 export async function setupProject(
   projectPath: string,
   selectedAi: string[],
-  selectedScript: string,
   isHere: boolean,
   options: {
     debug: boolean;
@@ -38,8 +37,6 @@ export async function setupProject(
   tracker.complete("precheck", "ok");
   tracker.add("ai-select", "Select AI assistant(s)");
   tracker.complete("ai-select", selectedAi.join(", "));
-  tracker.add("script-select", "Select script type");
-  tracker.complete("script-select", selectedScript);
 
   // Add pending steps
   const steps = [
@@ -97,8 +94,7 @@ export async function setupProject(
           try {
             const result = await resolveLocalArtifact(
               localDir,
-              agent,
-              selectedScript
+              agent
             );
             localZipPath = result.zipPath;
           } catch (e: any) {
@@ -112,7 +108,6 @@ export async function setupProject(
         const result = await downloadAndExtractTemplate(
           projectPath,
           agent,
-          selectedScript,
           isHere,
           {
             verbose: false,
@@ -173,7 +168,7 @@ export async function setupProject(
     await fs.ensureDir(buildforceDir);
 
     const configPath = path.join(buildforceDir, "buildforce.json");
-    const configContent = createConfigContent(successfulAgents, selectedScript, version);
+    const configContent = createConfigContent(successfulAgents, version);
 
     if (debug) {
       console.log(chalk.gray(`\nWriting config to: ${configPath}`));
