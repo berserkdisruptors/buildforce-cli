@@ -12,7 +12,7 @@ interface LocalArtifactResult {
 /**
  * Resolves a local artifact from the specified directory
  * @param localDir - Directory to search for artifacts (e.g., .genreleases)
- * @param aiAssistant - AI assistant type (claude, cursor, opencode)
+ * @param aiAssistant - AI agent type (claude, cursor, opencode)
  * @returns Promise with zipPath and version
  * @throws Error if artifact not found or invalid
  */

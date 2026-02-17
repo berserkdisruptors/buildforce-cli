@@ -27,6 +27,7 @@ AI coding agents start fresh with each session, leading to inconsistent implemen
 
 - **Consistency**: New features align with existing patterns because the agent sees documented architecture and conventions.
 - **Reliability**: Design decisions, trade-offs, and rationale persist across sessions.
+- **Verification**: Encode testing strategies, validation steps, and quality gates into context that agents reference automatically — so they self-verify against your project's actual standards instead of guessing, and you spend less time reviewing and correcting their work.
 - **Efficiency**: Less time spent re-explaining context, more time building.
 
 Context lives in version-controlled YAML files in `.buildforce/context/` alongside your code. The repository grows smarter with every feature you complete.
@@ -41,6 +42,7 @@ Context lives in version-controlled YAML files in `.buildforce/context/` alongsi
 | Knowledge lives in individual developer heads | Shared context repository for team-wide knowledge                  |
 | Each feature starts from scratch              | Each feature builds on accumulated project context                 |
 | Conventions enforced manually (if at all)     | Conventions documented and surfaced to agent during development    |
+| Agent guesses how to test and validate changes | Agent follows encoded verification steps and testing strategies    |
 
 ## Quick Start
 
@@ -99,21 +101,17 @@ buildforce upgrade --ai claude
 buildforce upgrade --debug
 ```
 
-### Your First Workflow
+### How To Use
 
 After `buildforce init`, open your AI coding agent in the project and start working as usual. Buildforce works transparently in the background:
 
 1. **Context search happens automatically** — when your agent explores the codebase, Buildforce hooks route the exploration through your context repository first, enriching the agent's understanding with curated architectural knowledge.
 
-2. **Extract context after completing work** — run `/context-extract` to capture new knowledge (architecture decisions, conventions, design rationale) into the context repository for future sessions.
+2. **Extract context after completing work** — run the `/context-extract` skill to capture new knowledge (architecture decisions, conventions, design rationale) into the context repository for future sessions.
 
 That's it. No special workflow to follow. Your agent gets smarter context automatically, and you capture knowledge when you want to preserve it.
 
-For a fresh project with no context yet, bootstrap the repository:
-
-```
-/context-extract cold start - analyze this codebase and build initial context
-```
+> For a fresh project with no context yet, bootstrap the repository, by running the `context-extract` skill with no additional arguments. Use it with arguments if you want to extract deeper context on a specific topic.
 
 ## How It Works
 
@@ -124,23 +122,25 @@ Buildforce integrates into your AI coding agent through three mechanisms:
 │         Your AI Coding Agent        |
 └──────────┬──────────────────────────┘
            │
-           │  Agent tries to explore codebase
+           │              Agent tries to explore codebase
            │
      ┌─────▼──────┐
-     │    Hooks    │  Intercept explore calls
+     │    Hooks   │       Intercept explore calls
      └─────┬──────┘
            │
-           │  Redirect to buildforce-explorer
+           │              Redirect to buildforce-explorer
+           |              (which calls the context-search
+           |              skill)
            │
    ┌───────▼────────┐
-   │   Sub-Agents   │  Search context repository
-   │                │  (structural, conventions,
-   │                │   verification explorers)
+   │   Sub-Agents   │     Search context repository
+   │                │     (structural, conventions,
+   │                │     verification explorers)
    └───────┬────────┘
            │
-  ┌────────▼─────────┐
-  │ Context Repository│  .buildforce/context/
-  │ (YAML files)      │  architecture/, conventions/,
+  ┌────────▼───────────┐
+  │ Context Repository │  .buildforce/context/
+  │                    │  architecture/, conventions/,
   │                    │  verification/
   └────────────────────┘
 ```
@@ -159,19 +159,16 @@ This happens transparently — your agent doesn't need to know about Buildforce.
 
 Buildforce installs specialized sub-agents into your agent's configuration:
 
-- **buildforce-explorer**: The main entry point — dispatches queries to domain-specific explorers in parallel, then synthesizes findings
-- **Structural explorer**: Searches architecture context (modules, dependencies, design decisions)
-- **Convention explorer**: Searches coding standards, patterns, and practices
-- **Verification explorer**: Searches testing requirements, CI gates, and quality standards
-- **Extractors** (structural, convention, verification): Used by `/context-extract` to mine the codebase and build context files
+- **Explorers**: Triggered by the `context-search` skill to scan the context repository for architecture, conventions, and verification knowledge.
+- **Extractors**: Used by the `context-extract` skill to extract specific context files from the codebase
 
 ### Skills
 
 Two skills are installed as slash commands that can be invoked manually or triggered automatically:
 
-- **`/context-search`** — Search the context repository for curated codebase knowledge. Dispatches explorers in parallel and synthesizes findings. Normally invoked automatically via hooks when your agent explores, but can also be used manually for direct queries.
+- **`context-search`** — Search the context repository for curated codebase knowledge. Dispatches explorers in parallel and synthesizes findings. Normally invoked automatically via hooks when your agent explores, but can also be used manually for direct queries.
 
-- **`/context-extract`** — Extract and update context files from the codebase. Supports three modes:
+- **`context-extract`** — Extract and update context files from the codebase. Supports three modes:
   - **Cold start**: Bootstrap the entire context repository for a new project
   - **Incremental**: Update context after recent implementation changes
   - **Deep dive**: Focused extraction on specific modules or topics
@@ -198,6 +195,8 @@ These files capture knowledge that source code alone cannot convey: **why** some
 
 Context files are version-controlled YAML, designed to be reviewed in PRs alongside code changes.
 
+> Read more here if you want to get a [deeper understanding of our context taxonomy](https://buildforce.dev/concepts/context-taxonomy)
+
 ## Supported AI Agents
 
 Buildforce currently supports three AI coding agents with full integration (skills, hooks, and sub-agents):
@@ -210,7 +209,7 @@ Buildforce currently supports three AI coding agents with full integration (skil
 
 ### Want support for another agent?
 
-Support for **Gemini CLI**, **Codex CLI**, **GitHub Copilot**, **Windsurf**, **Kilo Code**, **Roo Code**, **Auggie CLI**, and others is planned but not yet implemented. We can't test every agent ourselves, so we're relying on community contributions.
+Support for **Gemini CLI**, **Codex CLI**, **GitHub Copilot**, and others is planned but not yet implemented. We can't test every agent ourselves, so we're relying on community contributions.
 
 If you use an agent that isn't supported yet, we'd love your help adding it. The integration pattern is straightforward — each agent needs:
 

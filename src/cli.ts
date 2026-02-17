@@ -189,8 +189,8 @@ program
     'Name for your new project directory (optional if using --here, or use "." for current directory)'
   )
   .option(
-    "--ai <assistant...>",
-    "AI assistant(s) to use (can specify multiple): claude, cursor, or opencode"
+    "--ai <agent...>",
+    "AI agent(s) to use (can specify multiple): claude, cursor, or opencode"
   )
   .option(
     "--ignore-agent-tools",
@@ -248,8 +248,8 @@ program
     "Upgrade project templates, commands, and scripts to the latest version"
   )
   .option(
-    "--ai <assistant...>",
-    "Override or add AI assistant(s) (can specify multiple): claude, cursor, or opencode"
+    "--ai <agent...>",
+    "Override or add AI agent(s) (can specify multiple): claude, cursor, or opencode"
   )
   .option("--dry-run", "Preview changes without applying them")
   .option("--debug", "Show verbose diagnostic output")

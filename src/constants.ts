@@ -6,7 +6,7 @@ export {
   AGENT_FOLDER_MAP,
 } from "./config/agents.js";
 
-export const TAGLINE = "Consistent, reliable and efficient framework for AI-assisted engineering";
+export const TAGLINE = "The context layer for agentic coding";
 
 // Centralized green color for cohesive UI
 export const MINT_COLOR = chalk.hex("#D3FFCA");

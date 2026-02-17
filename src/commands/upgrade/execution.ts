@@ -44,11 +44,12 @@ export async function executeUpgrade(
   tracker.add("validate", "Validate prerequisites");
   tracker.complete("validate", "ok");
 
-  // Add steps
+  // Add steps (pluralize labels when multiple agents selected)
+  const isMultiAgent = selectedAi.length > 1;
   const steps = [
-    ["fetch", "Fetch latest release"],
-    ["download", "Download template"],
-    ["extract", "Extract to temporary location"],
+    ["fetch", isMultiAgent ? "Fetch latest releases" : "Fetch latest release"],
+    ["download", isMultiAgent ? "Download templates" : "Download template"],
+    ["extract", isMultiAgent ? "Extract to temporary locations" : "Extract to temporary location"],
     ["backup", "Backup current files"],
     ["replace-skills", "Replace skills"],
     ["merge-settings", "Merge agent settings"],
@@ -90,6 +91,8 @@ export async function executeUpgrade(
     renderTracker();
 
     // Download templates for all agents
+    const downloadedAgents: string[] = [];
+
     for (let i = 0; i < selectedAi.length; i++) {
       const agent = selectedAi[i];
       try {
@@ -98,7 +101,7 @@ export async function executeUpgrade(
         if (local) {
           const localDir = typeof local === "string" ? local : ".genreleases";
           try {
-            tracker.start("fetch");
+            tracker.start("fetch", isMultiAgent ? `${agent} (${i + 1}/${selectedAi.length})` : "");
             const result = await resolveLocalArtifact(
               localDir,
               agent
@@ -109,7 +112,7 @@ export async function executeUpgrade(
             throw e;
           }
         } else {
-          tracker.start("fetch");
+          tracker.start("fetch", isMultiAgent ? `${agent} (${i + 1}/${selectedAi.length})` : "");
         }
 
         // Step 2: Download or use local template
@@ -128,11 +131,17 @@ export async function executeUpgrade(
         const meta = result.metadata;
         version = meta.release;
 
+        downloadedAgents.push(agent);
         tracker.complete(
           "fetch",
-          `release ${meta.release} (${agent})`
+          isMultiAgent
+            ? `release ${meta.release} (${downloadedAgents.length}/${selectedAi.length} agents)`
+            : `release ${meta.release} (${agent})`
         );
-        tracker.complete("download", meta.filename);
+        tracker.complete(
+          "download",
+          isMultiAgent ? downloadedAgents.join(", ") : meta.filename
+        );
 
         successfulAgents.push(agent);
       } catch (e: any) {
@@ -165,9 +174,12 @@ export async function executeUpgrade(
     // Extract templates for all successful agents
     const sourceDirs: Map<string, string> = new Map();
 
+    let extractCount = 0;
+
     for (const agent of successfulAgents) {
       const zipPath = zipPaths.get(agent)!;
-      tracker.start("extract");
+      extractCount++;
+      tracker.start("extract", isMultiAgent ? `${agent} (${extractCount}/${successfulAgents.length})` : "");
 
       const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), `buildforce-upgrade-${agent}-`));
       tempDirs.set(agent, tempDir);
@@ -186,7 +198,12 @@ export async function executeUpgrade(
       }
 
       sourceDirs.set(agent, sourceDir);
-      tracker.complete("extract", `${extractedItems.length} items (${agent})`);
+      tracker.complete(
+        "extract",
+        isMultiAgent
+          ? `${extractCount}/${successfulAgents.length} agents`
+          : `${extractedItems.length} items (${agent})`
+      );
     }
 
     if (dryRun) {

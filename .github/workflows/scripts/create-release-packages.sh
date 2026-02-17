@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # create-release-packages.sh (workflow-local)
-# Build Buildforce CLI template release archives for each supported AI assistant.
+# Build Buildforce CLI template release archives for each supported AI agent.
 # Usage: .github/workflows/scripts/create-release-packages.sh <version>
 #   Version argument should include leading 'v'.
 #   Optionally set AGENTS env var to limit what gets built.

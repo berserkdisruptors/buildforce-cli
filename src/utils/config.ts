@@ -13,7 +13,7 @@ export function getDefaultConfig(): BuildforceConfig {
 
 /**
  * Create a buildforce.json config file content
- * @param aiAssistants - Optional AI assistant names array
+ * @param aiAssistants - Optional AI agent names array
  * @param version - Optional CLI version
  */
 export function createConfigContent(

@@ -108,7 +108,7 @@ export async function downloadTemplateFromGithub(
     throw e;
   }
 
-  // Find the template asset for the specified AI assistant
+  // Find the template asset for the specified AI agent
   const assets = releaseData.assets || [];
   const pattern = `buildforce-cli-template-${aiAssistant}`;
   const matchingAssets = assets.filter(

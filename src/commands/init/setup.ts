@@ -35,23 +35,35 @@ export async function setupProject(
   // Pre-steps recorded as completed before live rendering
   tracker.add("precheck", "Check required tools");
   tracker.complete("precheck", "ok");
-  tracker.add("ai-select", "Select AI assistant(s)");
+  tracker.add("ai-select", "Select AI agent(s)");
   tracker.complete("ai-select", selectedAi.join(", "));
 
-  // Add pending steps
-  const steps = [
-    ["fetch", "Fetch latest release"],
-    ["download", "Download template"],
-    ["extract", "Extract template"],
-    ["zip-list", "Archive contents"],
-    ["extracted-summary", "Extraction summary"],
-    ["chmod", "Ensure scripts executable"],
-    ["config", "Create configuration file"],
-    ["merge-settings", "Merge agent settings"],
-    ["cleanup", "Cleanup"],
-    ["git", "Initialize git repository"],
-    ["final", "Finalize"],
-  ];
+  // Add pending steps (pluralize labels when multiple agents selected)
+  const isMultiAgent = selectedAi.length > 1;
+  const steps = isMultiAgent
+    ? [
+        ["fetch", "Fetch latest releases"],
+        ["download", "Download templates"],
+        ["extract", "Extract templates"],
+        ["chmod", "Ensure scripts executable"],
+        ["config", "Create configuration file"],
+        ["merge-settings", "Merge agent settings"],
+        ["git", "Initialize git repository"],
+        ["final", "Finalize"],
+      ]
+    : [
+        ["fetch", "Fetch latest release"],
+        ["download", "Download template"],
+        ["extract", "Extract template"],
+        ["zip-list", "Archive contents"],
+        ["extracted-summary", "Extraction summary"],
+        ["chmod", "Ensure scripts executable"],
+        ["config", "Create configuration file"],
+        ["merge-settings", "Merge agent settings"],
+        ["cleanup", "Cleanup"],
+        ["git", "Initialize git repository"],
+        ["final", "Finalize"],
+      ];
 
   for (const [key, label] of steps) {
     tracker.add(key, label);
@@ -84,6 +96,8 @@ export async function setupProject(
     const successfulAgents: string[] = [];
     const failedAgents: Array<{ agent: string; error: string }> = [];
 
+    const downloadedAgents: string[] = [];
+
     for (let i = 0; i < selectedAi.length; i++) {
       const agent = selectedAi[i];
       try {
@@ -103,7 +117,10 @@ export async function setupProject(
           }
         }
 
-        // Tracker will show progress for current agent
+        // Show per-agent progress for multi-agent downloads
+        if (isMultiAgent) {
+          tracker.start("fetch", `${agent} (${i + 1}/${selectedAi.length})`);
+        }
 
         const result = await downloadAndExtractTemplate(
           projectPath,
@@ -111,13 +128,20 @@ export async function setupProject(
           isHere,
           {
             verbose: false,
-            tracker,
+            tracker: isMultiAgent ? undefined : tracker,
             debug,
             githubToken,
             skipTls,
             localZipPath,
           }
         );
+
+        if (isMultiAgent) {
+          downloadedAgents.push(agent);
+          tracker.complete("fetch", `${downloadedAgents.length}/${selectedAi.length} agents`);
+          tracker.complete("download", downloadedAgents.join(", "));
+          tracker.complete("extract", `${downloadedAgents.length} templates`);
+        }
 
         version = result.version;
         successfulAgents.push(agent);

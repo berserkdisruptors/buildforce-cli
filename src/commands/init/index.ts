@@ -62,19 +62,19 @@ export async function initCommand(options: InitOptions): Promise<void> {
     }
   }
 
-  // AI assistant selection (multi-select)
+  // AI agent selection (multi-select)
   let selectedAi: string[];
   if (inputAiAssistant) {
     // Handle array input from Commander.js variadic option
     const aiArray = Array.isArray(inputAiAssistant) ? inputAiAssistant : [inputAiAssistant];
-    // Validate each assistant
+    // Validate each agent
     aiArray.forEach(ai => validateAiAssistant(ai, AI_CHOICES));
     selectedAi = aiArray;
   } else {
     // Use checkbox multi-select interface
     selectedAi = await selectMultipleWithCheckboxes(
       AI_CHOICES,
-      "Choose your AI assistant(s) (use spacebar to select, enter to confirm):",
+      "Choose your AI agent(s) (use spacebar to select, enter to confirm):",
       ["claude"]
     );
   }
@@ -84,7 +84,7 @@ export async function initCommand(options: InitOptions): Promise<void> {
     checkAgentTool(selectedAi[0], AI_CHOICES, checkTool);
   }
 
-  console.log(MINT_COLOR("Selected AI assistant(s):"), selectedAi.join(", "));
+  console.log(MINT_COLOR("Selected AI agent(s):"), selectedAi.join(", "));
   console.log(MINT_COLOR(`(${selectedAi.length} agent${selectedAi.length > 1 ? "s" : ""})`));
   console.log();
 

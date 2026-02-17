@@ -30,7 +30,7 @@ export function checkCommand(): void {
   tracker.add("git", "Git version control");
   tracker.add("claude", "Claude Code CLI");
   tracker.add("cursor-agent", "Cursor IDE agent");
-  tracker.add("opencode", "opencode");
+  tracker.add("opencode", "OpenCode CLI");
 
   const gitOk = checkToolForTracker("git", tracker);
   const claudeOk = checkToolForTracker("claude", tracker);
@@ -49,7 +49,7 @@ export function checkCommand(): void {
 
   if (!claudeOk && !cursorOk && !opencodeOk) {
     console.log(
-      chalk.dim("Tip: Install an AI assistant for the best experience")
+      chalk.dim("Tip: Install an AI agent for the best experience")
     );
   }
 }

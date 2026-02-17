@@ -108,7 +108,7 @@ export async function validateProjectSetup(
 }
 
 /**
- * Validate AI assistant selection
+ * Validate AI agent selection
  */
 export function validateAiAssistant(
   selectedAi: string,
@@ -117,7 +117,7 @@ export function validateAiAssistant(
   if (!aiChoices[selectedAi]) {
     console.error(
       chalk.red("Error:"),
-      `Invalid AI assistant '${selectedAi}'. Choose from: ${Object.keys(
+      `Invalid AI agent '${selectedAi}'. Choose from: ${Object.keys(
         aiChoices
       ).join(", ")}`
     );

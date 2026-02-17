@@ -54,17 +54,17 @@ export async function upgradeCommand(options: UpgradeOptions): Promise<void> {
     needsMigration = true;
   }
 
-  // Determine AI assistant(s) (override > prompt with defaults)
+  // Determine AI agent(s) (override > prompt with defaults)
   let selectedAi: string[];
   if (aiOverride) {
     // Handle array input from Commander.js variadic option
     const aiArray = Array.isArray(aiOverride) ? aiOverride : [aiOverride];
-    // Validate each assistant
+    // Validate each agent
     for (const ai of aiArray) {
       if (!AI_CHOICES[ai]) {
         console.log();
         console.log(
-          chalk.red("✗ Invalid AI assistant:"),
+          chalk.red("✗ Invalid AI agent:"),
           ai
         );
         console.log(MINT_COLOR("Valid options:"), Object.keys(AI_CHOICES).join(", "));
@@ -78,11 +78,11 @@ export async function upgradeCommand(options: UpgradeOptions): Promise<void> {
     selectedAi = Array.from(new Set([...existingAgents, ...aiArray]));
 
     console.log(
-      MINT_COLOR("AI assistant(s) (merged):"),
+      MINT_COLOR("AI agent(s) (merged):"),
       selectedAi.join(", ")
     );
   } else {
-    // Always prompt for AI assistant selection (matching init command behavior)
+    // Always prompt for AI agent selection (matching init command behavior)
     const existingAi = config?.aiAssistants && config.aiAssistants.length > 0
       ? config.aiAssistants
       : ["claude"];
@@ -91,20 +91,20 @@ export async function upgradeCommand(options: UpgradeOptions): Promise<void> {
     if (config?.aiAssistants && config.aiAssistants.length > 0) {
       console.log(
         MINT_COLOR(
-          `Modify your AI assistant(s) (current: ${config.aiAssistants.join(", ")}):`
+          `Modify your AI agent(s) (current: ${config.aiAssistants.join(", ")}):`
         )
       );
     } else {
       console.log(
         MINT_COLOR(
-          "No AI assistant found in buildforce.json. Please select one or more:"
+          "No AI agent found in buildforce.json. Please select one or more:"
         )
       );
     }
 
     selectedAi = await selectMultipleWithCheckboxes(
       AI_CHOICES,
-      "Choose your AI assistant(s) (use spacebar to select, enter to confirm):",
+      "Choose your AI agent(s) (use spacebar to select, enter to confirm):",
       existingAi
     );
   }
