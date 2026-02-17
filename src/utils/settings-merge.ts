@@ -28,6 +28,7 @@ interface HooksConfig {
  * Agent settings structure
  */
 interface AgentSettings {
+  version?: number;
   permissions?: {
     allow?: string[];
     deny?: string[];
@@ -60,16 +61,12 @@ const CLAUDE_HOOKS_CONFIG: HooksConfig = {
  * preToolUse hook for Task tool redirection (explore → buildforce-explorer).
  */
 const CURSOR_HOOKS_CONFIG = {
+  version: 1,
   hooks: {
     preToolUse: [
       {
         matcher: "Task",
-        hooks: [
-          {
-            type: "command",
-            command: ".cursor/hooks/cursor-setup-explorer-subagent.sh",
-          },
-        ],
+        command: ".cursor/hooks/cursor-setup-explorer-subagent.sh",
       },
     ],
   },
@@ -104,6 +101,11 @@ function mergeSettings(
   incoming: AgentSettings
 ): AgentSettings {
   const result: AgentSettings = { ...existing };
+
+  // Merge version (incoming takes precedence)
+  if (incoming.version !== undefined) {
+    result.version = incoming.version;
+  }
 
   // Merge permissions
   if (incoming.permissions) {
@@ -265,7 +267,7 @@ async function mergeCursorSettings(
   const settingsPath = path.join(agentDir, "hooks.json");
   const { settingsExisted } = await mergeJsonSettingsFile(
     settingsPath,
-    CURSOR_HOOKS_CONFIG as unknown as AgentSettings,
+    CURSOR_HOOKS_CONFIG,
     debug
   );
 
