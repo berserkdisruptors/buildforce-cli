@@ -150,7 +150,7 @@ Buildforce integrates into your AI coding agent through three mechanisms:
 Hooks intercept your agent's explore/search calls and redirect them through the Buildforce context repository. Each supported agent has its own hook mechanism:
 
 - **Claude Code**: PreToolUse hook in `.claude/settings.local.json` that intercepts Task tool calls with `subagent_type: "Explore"` and redirects to `buildforce-explorer`
-- **Cursor**: preToolUse hook in `.cursor/hooks.json` with a shell script (`.cursor/hooks/cursor-setup-explorer-subagent.sh`) that performs the same redirection
+- **Cursor**: preToolUse hook in `.cursor/hooks.json` with a shell script (`.cursor/hooks/setup-explorer-subagent.sh`) that performs the same redirection
 - **OpenCode**: Plugin in `.opencode/plugins/` that intercepts task tool calls and redirects explore requests
 
 This happens transparently — your agent doesn't need to know about Buildforce. It just gets better context.

@@ -17,7 +17,7 @@ summary: |
 
   Hook implementations:
   - Claude: PreToolUse bash hook (.claude/hooks/setup-explorer-subagent.sh)
-  - Cursor: preToolUse bash hook (.cursor/hooks/cursor-setup-explorer-subagent.sh)
+  - Cursor: preToolUse bash hook (.cursor/hooks/setup-explorer-subagent.sh)
   - OpenCode: TypeScript plugin (.opencode/plugins/buildforce-explorer-redirect.ts)
 
   The explorer agent itself contains no search logic. It delegates entirely to the
@@ -42,13 +42,12 @@ dependencies:
 files:
   primary:
     - src/templates/agents/buildforce-explorer.md
-    - src/templates/hooks/setup-explorer-subagent.sh
-    - src/templates/hooks/cursor-setup-explorer-subagent.sh
-    - src/templates/hooks/opencode-explorer-plugin.ts
+    - src/templates/hooks/claude/setup-explorer-subagent.sh
+    - src/templates/hooks/cursor/setup-explorer-subagent.sh
+    - src/templates/hooks/opencode/setup-explorer-subagent.ts
   secondary:
     - src/utils/settings-merge.ts
     - src/templates/skills/context-search/SKILL.md
-    - src/templates/hooks/config.json
 
 interfaces:
   hook:

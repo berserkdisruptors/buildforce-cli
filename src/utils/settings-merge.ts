@@ -66,7 +66,7 @@ const CURSOR_HOOKS_CONFIG = {
     preToolUse: [
       {
         matcher: "Task",
-        command: ".cursor/hooks/cursor-setup-explorer-subagent.sh",
+        command: ".cursor/hooks/setup-explorer-subagent.sh",
       },
     ],
   },

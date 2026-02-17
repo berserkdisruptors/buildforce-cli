@@ -137,9 +137,9 @@ build_package() {
         generate_skills claude "$base_dir/.claude/skills"
       fi
       # Claude Code hooks (Claude-specific script only)
-      if [[ -f src/templates/hooks/setup-explorer-subagent.sh ]]; then
+      if [[ -f src/templates/hooks/claude/setup-explorer-subagent.sh ]]; then
         mkdir -p "$base_dir/.claude/hooks"
-        cp src/templates/hooks/setup-explorer-subagent.sh "$base_dir/.claude/hooks/"
+        cp src/templates/hooks/claude/setup-explorer-subagent.sh "$base_dir/.claude/hooks/"
       fi
       ;;
     cursor)
@@ -155,9 +155,9 @@ build_package() {
         generate_skills cursor "$base_dir/.cursor/skills"
       fi
       # Cursor hooks (Cursor-specific script only)
-      if [[ -f src/templates/hooks/cursor-setup-explorer-subagent.sh ]]; then
+      if [[ -f src/templates/hooks/cursor/setup-explorer-subagent.sh ]]; then
         mkdir -p "$base_dir/.cursor/hooks"
-        cp src/templates/hooks/cursor-setup-explorer-subagent.sh "$base_dir/.cursor/hooks/"
+        cp src/templates/hooks/cursor/setup-explorer-subagent.sh "$base_dir/.cursor/hooks/"
       fi
       ;;
     opencode)
@@ -173,9 +173,9 @@ build_package() {
         generate_skills opencode "$base_dir/.opencode/skills"
       fi
       # OpenCode plugin
-      if [[ -f src/templates/hooks/opencode-explorer-plugin.ts ]]; then
+      if [[ -f src/templates/hooks/opencode/setup-explorer-subagent.ts ]]; then
         mkdir -p "$base_dir/.opencode/plugins"
-        cp src/templates/hooks/opencode-explorer-plugin.ts \
+        cp src/templates/hooks/opencode/setup-explorer-subagent.ts \
            "$base_dir/.opencode/plugins/buildforce-explorer-redirect.ts"
       fi
       ;;

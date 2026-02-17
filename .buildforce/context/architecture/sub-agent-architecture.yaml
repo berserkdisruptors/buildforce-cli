@@ -253,10 +253,10 @@ architecture_patterns:
     - Entire skill directory copied to .claude/skills/
     - Currently Claude-only but extensible
 
-    HOOKS (src/templates/hooks/):
+    HOOKS (src/templates/hooks/{claude,cursor,opencode}/):
     - Direct file copy to agent hook directories
     - Claude: .claude/hooks/setup-explorer-subagent.sh
-    - Cursor: .cursor/hooks/cursor-setup-explorer-subagent.sh
+    - Cursor: .cursor/hooks/setup-explorer-subagent.sh
     - OpenCode: .opencode/plugins/buildforce-explorer-redirect.ts (via settings-merge)
 
     Note: Commands (generate_commands) were removed in v3.0. Only 3 agents supported

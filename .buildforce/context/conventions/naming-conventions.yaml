@@ -60,9 +60,8 @@ file_naming:
     pattern: "descriptive-kebab-case.{sh,ts}"
     examples:
       - "setup-explorer-subagent.sh"
-      - "cursor-setup-explorer-subagent.sh"
-      - "opencode-explorer-plugin.ts"
-    location: "src/templates/hooks/"
+      - "setup-explorer-subagent.ts"
+    location: "src/templates/hooks/{claude,cursor,opencode}/"
 
 folder_naming:
   context_domains:
@@ -139,8 +138,8 @@ edge_cases:
     rule: "Use agent name in folder, not filename"
     examples:
       - ".claude/hooks/setup-explorer-subagent.sh"
-      - ".cursor/hooks/cursor-setup-explorer-subagent.sh"
-    rationale: "Same functionality, different agent folders"
+      - ".cursor/hooks/setup-explorer-subagent.sh"
+    rationale: "Same functionality, same filename, different agent folders"
 
 enforcement_mechanism:
   context_files: "Enforced by template instructions in extract skill"
