@@ -58,7 +58,7 @@ version: "2.1"
 
 # Timestamps (populated by /buildforce.extract on first run)
 generated_at: "2026-02-02"
-last_updated: "2026-02-16"
+last_updated: "2026-02-17"
 
 # ============================================================================
 # CODEBASE PROFILE
@@ -205,6 +205,15 @@ domains:
         tags: [ commit-enforcement, conventional-commits, commitlint, husky ]
         related_context: [ readme-documentation, cli-architecture ]
 
+      - id: migration-runner
+        file: architecture/migration-runner.yaml
+        type: structural
+        status: extracted
+        depth: deep
+        description: Database-migration-inspired system for context schema upgrades (MigrationRunner class)
+        tags: [ migration, upgrade, versioning, context-schema, sequential-execution ]
+        related_context: [ upgrade-command, cli-architecture ]
+
 
   conventions:
     description: |
@@ -298,6 +307,16 @@ domains:
         enforcement: strict
         related_context: [ skills-bundling, extract-command ]
 
+      - id: migration-conventions
+        file: conventions/migration-conventions.yaml
+        type: convention
+        status: extracted
+        depth: moderate
+        description: Conventions for context migration system (file naming, interface structure, idempotency)
+        sub_type: code-convention
+        enforcement: strict
+        related_context: [ migration-runner, upgrade-command ]
+
   verification:
     description: |
       Verification context about HOW to know if code is right.
@@ -359,9 +378,9 @@ domains:
 
 summary:
   overall_coverage: 100
-  total_items: 27
-  extracted_items: 27
-  iterations_completed: 5
+  total_items: 29
+  extracted_items: 29
+  iterations_completed: 6
 
 # ============================================================================
 # EXTRACTION STATE
@@ -380,10 +399,6 @@ extraction:
     - id: settings-merge-utility
       reason: "Major expansion to multi-agent strategies - could benefit from deep depth on each strategy"
   new_discoveries:
-    - id: migration-runner
-      domain: architecture
-      description: "Database-migration-inspired system for context schema upgrades (MigrationRunner class)"
-      priority: medium
     - id: step-tracker
       domain: architecture
       description: "Visual progress tracking class for hierarchical step display"

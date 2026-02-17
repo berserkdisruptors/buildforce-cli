@@ -3,7 +3,7 @@ name: Known Risks
 type: verification
 source: extracted
 created: "2026-02-02"
-last_updated: "2026-02-02"
+last_updated: "2026-02-17"
 
 quality_standards:
   - standard: "Risk awareness documentation"
@@ -63,3 +63,56 @@ known_risks:
       - Valid project structure
     occurrences: 0
     last_flagged: "2026-02-02"
+
+  - module: "src/commands/upgrade/migrations/**/*.ts"
+    risk: "Forward-only migrations with no rollback support"
+    mitigation: |
+      Migration system is intentionally forward-only (no rollback).
+      Key behaviors to understand:
+      1. MigrationRunner stops on FIRST failure (runner.ts:135)
+      2. Partial migrations can occur if a migration fails mid-way
+      3. Failed migrations leave files in intermediate state
+      4. Re-running upgrade will skip already-applied migrations (version check)
+      
+      When troubleshooting failed migrations:
+      - Check _index.yaml version field for current state
+      - Review error messages in upgrade output
+      - Manual cleanup may be needed for partially-migrated content
+      - Consider backup before running migrations on production context
+    occurrences: 0
+    last_flagged: "2026-02-17"
+
+  - module: "src/commands/upgrade/execution.ts"
+    risk: "Migration failures are non-blocking (graceful degradation)"
+    mitigation: |
+      Context migration errors do NOT fail the upgrade command.
+      See execution.ts:421-427 - errors are logged but upgrade continues.
+      
+      This means:
+      - Agent/skill files update even if context migration fails
+      - Users may have mismatched versions between agents and context
+      - Always check migration step output for "skipped" or warnings
+      
+      This is INTENTIONAL design: better to have updated agents with
+      old context than to block critical security/feature updates.
+    occurrences: 0
+    last_flagged: "2026-02-17"
+
+  - module: "src/commands/upgrade/migrations/*.ts"
+    risk: "No automated test coverage for migrations"
+    mitigation: |
+      Migration code has zero test coverage. Changes to migrations are
+      HIGH RISK because:
+      - They modify user's context files permanently
+      - Failures may leave files in corrupt state
+      - No automated verification of migration correctness
+      
+      Before modifying migration code:
+      1. Create backup of a real .buildforce/context folder
+      2. Test full v1.0 → v2.1 path manually
+      3. Test re-running migrations (should skip cleanly)
+      4. Verify error paths with corrupted inputs
+      
+      Consider adding integration tests as future improvement.
+    occurrences: 0
+    last_flagged: "2026-02-17"

@@ -1,0 +1,293 @@
+id: migration-runner
+name: Migration Runner System
+type: structural
+status: production
+created: "2026-01-28"
+last_updated: "2026-02-17"
+
+summary: |
+  Database-migration-inspired system for context schema upgrades. Implements
+  sequential version-based migrations that transform the .buildforce/context/
+  structure as the schema evolves (v1.0 → v2.0 → v2.1). Unlike traditional
+  database migrations requiring tracking tables and timestamps, this system
+  reads the current version from _index.yaml and runs all migrations targeting
+  higher versions sequentially. Each migration is self-contained with idempotent
+  operations, automatic version detection, and rollback-friendly design.
+
+responsibilities:
+  - Execute context schema migrations sequentially based on version ordering
+  - Detect current context version from _index.yaml version field
+  - Determine which migrations need to run (current version → latest)
+  - Run migrations in order, updating version after each successful migration
+  - Provide migration results with actions, errors, and applied versions
+  - Support idempotent operations (migrations can detect already-applied state)
+  - Enable easy extension with new migration files
+  - Integrate with upgrade command for automatic migration during upgrades
+
+dependencies:
+  internal:
+    - upgrade-command: "MigrationRunner is invoked during executeUpgrade() flow"
+    - context-management: "Migrations transform context folder structure and _index.yaml"
+  external:
+    - fs-extra: "^11.2.0 - File system operations (copy, remove, ensureDir, pathExists)"
+    - yaml: "^2.7.0 - YAML parsing for _index.yaml version detection and content transformation"
+
+files:
+  primary:
+    - src/commands/upgrade/migrations/index.ts
+    - src/commands/upgrade/migrations/runner.ts
+    - src/commands/upgrade/migrations/registry.ts
+  secondary:
+    - src/commands/upgrade/migrations/v2.0.ts
+    - src/commands/upgrade/migrations/v2.1.ts
+    - src/commands/upgrade/execution.ts
+
+interfaces:
+  exports:
+    - name: Migration
+      signature: |
+        interface Migration {
+          version: string;
+          description: string;
+          execute: (projectPath: string, templateSourceDir: string) => Promise<MigrationResult>;
+        }
+      description: "Contract for individual migration files. Each migration targets a specific version."
+    
+    - name: MigrationResult
+      signature: |
+        interface MigrationResult {
+          migrated: boolean;
+          skipped: boolean;
+          actions: string[];
+          errors: string[];
+        }
+      description: "Result of a single migration execution with success/skip state and details."
+    
+    - name: MigrationRunner
+      signature: |
+        class MigrationRunner {
+          register(migration: Migration): void;
+          getLatestVersion(): string;
+          getMigrationsToApply(currentVersion: string | null): Migration[];
+          run(projectPath: string, templateSourceDir: string): Promise<MigrationRunnerResult>;
+        }
+      description: "Orchestrates migration execution. Registers migrations, detects applicable ones, runs sequentially."
+    
+    - name: MigrationRunnerResult
+      signature: |
+        interface MigrationRunnerResult {
+          migrated: boolean;
+          alreadyLatest: boolean;
+          fromVersion: string | null;
+          toVersion: string;
+          appliedMigrations: string[];
+          actions: string[];
+          errors: string[];
+        }
+      description: "Comprehensive result of running all applicable migrations with version transition details."
+    
+    - name: createMigrationRunner
+      signature: "() => MigrationRunner"
+      description: "Factory function that creates a pre-configured MigrationRunner with all registered migrations."
+    
+    - name: compareVersions
+      signature: "(a: string, b: string) => number"
+      description: "Semantic version comparison utility (-1 if a < b, 0 if equal, 1 if a > b)."
+    
+    - name: getCurrentVersion
+      signature: "(projectPath: string) => Promise<string | null>"
+      description: "Reads context version from .buildforce/context/_index.yaml. Returns null if no context exists."
+
+design_decisions:
+  - decision: "Version-based sequential execution instead of timestamp-based tracking"
+    rationale: |
+      Traditional database migrations use migration IDs/timestamps and a tracking table.
+      Context migrations are simpler: version is stored in _index.yaml, migrations are
+      executed sequentially from current version to latest. This avoids complexity of
+      tracking tables while leveraging the fact that context schema versions are linear.
+  
+  - decision: "Each migration in its own file (v2.0.ts, v2.1.ts)"
+    rationale: |
+      Separating migrations into individual files improves maintainability, makes diffs
+      cleaner, and follows the pattern established by database migration tools (Knex,
+      Prisma, Rails). Each file is self-contained with its transformation logic.
+  
+  - decision: "Factory function (createMigrationRunner) for registration"
+    rationale: |
+      Centralizes migration registration in registry.ts, making it easy to see all
+      available migrations at a glance. The factory pattern ensures consistent
+      configuration and avoids global state.
+  
+  - decision: "Migrations receive templateSourceDir for template file access"
+    rationale: |
+      Migrations often need to copy schema files or other templates from the release
+      package. Passing templateSourceDir allows migrations to access the extracted
+      template contents (e.g., copying _schema.yaml files to new folders).
+  
+  - decision: "Idempotent migrations with skip capability"
+    rationale: |
+      Each migration checks if it's already been applied (e.g., target folders exist,
+      version already at target). This allows re-running upgrades safely and handles
+      interrupted migrations gracefully.
+  
+  - decision: "Stop on first failure"
+    rationale: |
+      When a migration fails, subsequent migrations are skipped. This prevents partial
+      state and makes debugging easier. The MigrationRunnerResult includes the error
+      and the last successful version for user feedback.
+  
+  - decision: "Automatic sorting of registered migrations by version"
+    rationale: |
+      MigrationRunner sorts migrations by version after registration, so order of
+      registration doesn't matter. Uses compareVersions() for proper semantic ordering
+      (e.g., 2.10 > 2.9 > 2.1).
+
+architecture_patterns:
+  runner_pattern: |
+    MigrationRunner implements a command/runner pattern:
+    1. Migrations are registered (added to internal array)
+    2. Runner sorts migrations by version
+    3. run() detects current version, filters applicable migrations
+    4. Each migration.execute() is called sequentially
+    5. Results are aggregated into MigrationRunnerResult
+  
+  execution_flow: |
+    MigrationRunner.run(projectPath, templateSourceDir):
+    
+    1. Version Detection:
+       - Call getCurrentVersion(projectPath)
+       - Read .buildforce/context/_index.yaml
+       - Extract version field (default "1.0" if missing)
+    
+    2. Migration Filtering:
+       - Call getMigrationsToApply(currentVersion)
+       - Filter: migration.version > currentVersion
+       - Return sorted array of applicable migrations
+    
+    3. Sequential Execution:
+       - For each migration in order:
+         a. Call migration.execute(projectPath, templateSourceDir)
+         b. If migrated: record in appliedMigrations, add actions
+         c. If skipped: log skip reason
+         d. If error: add to errors, stop execution
+         e. Update toVersion to migration.version
+    
+    4. Return Result:
+       - migrated: true if any migrations applied
+       - alreadyLatest: true if no migrations needed
+       - fromVersion/toVersion: version transition
+       - appliedMigrations: list of versions applied
+       - actions/errors: detailed logs
+  
+  registry_pattern: |
+    Registry (registry.ts) implements factory pattern:
+    1. createMigrationRunner() creates new MigrationRunner instance
+    2. Imports and registers all migrations (migration20, migration21)
+    3. Returns configured runner ready for use
+    4. Re-exports types for consumer convenience
+    
+    Adding new migration:
+    1. Create src/commands/upgrade/migrations/v{version}.ts
+    2. Export Migration object with version, description, execute
+    3. Import in registry.ts and call runner.register()
+  
+  migration_structure: |
+    Each migration file follows consistent structure:
+    
+    1. Interface definitions for data transformation
+    2. Helper functions for conversion logic
+    3. Main execute function implementing Migration interface
+    4. Export const migration{version}: Migration = { ... }
+    
+    Example (v2.0):
+    - OldConventionItem → NewConventionFile transformation
+    - migrateGuidelinesFile() for _guidelines.yaml breakdown
+    - migrateContextFilesToArchitecture() for file moves
+    - migrateIndexEntriesToArchitecture() for index consolidation
+
+extension_points:
+  adding_new_migration: |
+    To add a new migration (e.g., v3.0):
+    
+    1. Create file: src/commands/upgrade/migrations/v3.0.ts
+    
+    2. Implement Migration interface:
+       export const migration30: Migration = {
+         version: "3.0",
+         description: "Description of what this migration does",
+         async execute(projectPath, templateSourceDir) {
+           const result: MigrationResult = {
+             migrated: false,
+             skipped: false,
+             actions: [],
+             errors: []
+           };
+           
+           // Check if already migrated (idempotency)
+           // Perform transformation
+           // Update result.migrated/skipped/actions/errors
+           
+           return result;
+         }
+       };
+    
+    3. Register in registry.ts:
+       import { migration30 } from "./v3.0.js";
+       runner.register(migration30);
+    
+    4. Migration will automatically run when:
+       - Current version < 3.0
+       - upgrade command is executed
+  
+  version_detection_extension: |
+    getCurrentVersion() reads from _index.yaml version field.
+    To support alternative version sources:
+    1. Extend getCurrentVersion() in index.ts
+    2. Add fallback version sources (e.g., buildforce.json)
+    3. Maintain backward compatibility with existing behavior
+
+evolution:
+  - version: "1.0"
+    date: "2026-01-28"
+    changes: |
+      Initial implementation of MigrationRunner pattern. Separated from monolithic
+      context-migration.ts into modular structure. Created index.ts (types/utilities),
+      runner.ts (MigrationRunner class), registry.ts (factory function). Migrated
+      existing v2.0 and v2.1 transformation logic into dedicated files.
+  
+  - version: "1.1"
+    date: "2026-02-16"
+    changes: |
+      Updated migration file paths in upgrade command. MigrationRunner now receives
+      firstSourceDir (extracted template) as templateSourceDir parameter. Migrations
+      use this to copy schema files and templates from release package.
+
+related_context:
+  - upgrade-command
+  - cli-architecture
+
+notes: |
+  Key design insight: The migration system is intentionally simpler than traditional
+  database migration tools. Context schema changes are:
+  1. Infrequent (major version releases only)
+  2. Linear (no branching versions)
+  3. Deterministic (same input always produces same output)
+  
+  This allows version-based detection instead of tracking tables.
+  
+  Migration safety features:
+  - Idempotent operations (safe to re-run)
+  - Atomic file operations within each migration
+  - Skip capability for already-applied migrations
+  - Stop-on-failure prevents cascade of errors
+  - Detailed action logging for debugging
+  
+  Current migrations:
+  - v2.0: Context taxonomy restructure (architecture/, conventions/, verification/)
+  - v2.1: Unified coverage map (consolidate domain indexes into root _index.yaml)
+  
+  Future considerations:
+  - Add migration rollback support (reverse migrations)
+  - Add dry-run mode for migrations (preview changes)
+  - Add migration validation (verify post-migration state)
+  - Consider backup before migration for safer rollback

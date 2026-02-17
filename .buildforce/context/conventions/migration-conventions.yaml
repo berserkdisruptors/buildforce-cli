@@ -1,0 +1,187 @@
+id: migration-conventions
+name: "Migration System Conventions"
+type: convention
+sub_type: code-convention
+enforcement: strict
+created: "2026-02-17"
+last_updated: "2026-02-17"
+
+description: |
+  Conventions for the context migration system that upgrades .buildforce/context/ 
+  between schema versions. Migrations transform context structure (v1.0 → v2.0 → v2.1)
+  while preserving user data.
+
+  KEY PRINCIPLES:
+  - Forward-only: No rollback support. If a migration fails, fix issues and retry.
+  - Idempotent: Migrations check preconditions (version, folder existence) before acting.
+  - Sequential: Migrations run in version order, each updating _index.yaml version field.
+  - Self-describing: Each migration has version and description fields.
+
+file_naming:
+  pattern: "v{major}.{minor}.ts"
+  location: "src/commands/upgrade/migrations/"
+  examples:
+    - "v2.0.ts"
+    - "v2.1.ts"
+    - "v3.0.ts (future)"
+  counter_examples:
+    - "migration-2.0.ts (wrong prefix)"
+    - "v2.ts (missing minor version)"
+    - "v2.0.0.ts (no patch version needed)"
+  rationale: |
+    Version in filename matches the target version the migration produces.
+    Minor versions allow incremental schema changes within major versions.
+
+version_string_format:
+  pattern: "{major}.{minor}"
+  examples:
+    - "1.0"
+    - "2.0"
+    - "2.1"
+  counter_examples:
+    - "v2.0 (no 'v' prefix in version string)"
+    - "2.0.0 (no patch version)"
+    - "2 (must include minor)"
+  rationale: |
+    Version strings are compared numerically via compareVersions().
+    The 'v' prefix appears in filenames but NOT in version field values.
+
+migration_interface:
+  structure: |
+    export interface Migration {
+      /** Target version this migration produces (e.g., "2.0", "2.1") */
+      version: string;
+      /** Human-readable description of what this migration does */
+      description: string;
+      /** Execute the migration */
+      execute: (projectPath: string, templateSourceDir: string) => Promise<MigrationResult>;
+    }
+  required_fields:
+    - version: "Target version (e.g., '2.0')"
+    - description: "Human-readable summary"
+    - execute: "Async function that performs the migration"
+  rationale: |
+    Simple interface focused on what (version), why (description), and how (execute).
+    The runner handles sequencing and version comparison.
+
+result_structure:
+  structure: |
+    export interface MigrationResult {
+      migrated: boolean;  // True if migration made changes
+      skipped: boolean;   // True if migration was skipped (already applied)
+      actions: string[];  // Human-readable list of actions taken
+      errors: string[];   // Any errors encountered (non-fatal)
+    }
+  states:
+    success: "migrated: true, skipped: false"
+    skipped: "migrated: false, skipped: true"
+    partial: "migrated: true with errors.length > 0"
+  rationale: |
+    Boolean flags allow runner to distinguish new migrations from no-ops.
+    Actions array provides audit trail for user feedback.
+
+idempotency_patterns:
+  check_version_first: |
+    // Always check current version before proceeding
+    const version = index?.version;
+    if (version === "2.0" || version === "2.1") {
+      result.skipped = true;
+      result.actions.push(`Already at version ${version} - skipping`);
+      return result;
+    }
+  check_folder_existence: |
+    // Check if target folders already exist
+    if (archExists && convExists && verExists) {
+      result.skipped = true;
+      result.actions.push("Context structure already exists - skipping");
+      return result;
+    }
+  skip_existing_files: |
+    // Don't overwrite existing files during migration
+    if (await fs.pathExists(destPath)) {
+      result.errors.push(`Skipping ${filename} - already exists`);
+      continue;
+    }
+  rationale: |
+    Each migration must be safely re-runnable. If the migration detects its
+    target state already exists, it should skip rather than fail or duplicate.
+
+export_pattern:
+  convention: "Export migration object, not class"
+  example: |
+    // In v2.0.ts
+    export const migration20: Migration = {
+      version: "2.0",
+      description: "Migrate to v2.0 taxonomy",
+      async execute(projectPath, templateSourceDir) { ... }
+    };
+  registration: |
+    // In registry.ts
+    import { migration20 } from "./v2.0.js";
+    import { migration21 } from "./v2.1.js";
+    
+    runner.register(migration20);
+    runner.register(migration21);
+  naming: "migration{major}{minor} (e.g., migration20, migration21)"
+  rationale: |
+    Simple object export avoids class instantiation complexity.
+    Registry imports and registers in version order for clarity.
+
+forward_only_pattern:
+  principle: "No rollback support by design"
+  reasoning: |
+    - Context migrations transform schema structure, not transactional data
+    - Partial rollback would leave context in undefined state
+    - If migration fails, user fixes issue and retries
+    - Template copying from source ensures fresh schema files
+  implementation: |
+    // Migrations copy from template, not restore from backup
+    const templatePath = path.join(templateSourceDir, ".buildforce", "context", "_index.yaml");
+    if (await fs.pathExists(templatePath)) {
+      await fs.copy(templatePath, rootIndexPath);
+    }
+
+adding_new_migration:
+  steps:
+    - "1. Create file: src/commands/upgrade/migrations/v{major}.{minor}.ts"
+    - "2. Export Migration object with version, description, execute"
+    - "3. Import and register in registry.ts"
+    - "4. Migrations auto-sort by version; registration order is for readability"
+  example_header: |
+    // registry.ts comment block explains the pattern:
+    // To add a new migration:
+    // 1. Create a new file: src/commands/upgrade/migrations/v{version}.ts
+    // 2. Export a Migration object with version, description, and execute function
+    // 3. Import and register the migration here
+
+template: |
+  // src/commands/upgrade/migrations/v{major}.{minor}.ts
+  import { Migration, MigrationResult, getTodayDate } from "./index.js";
+  
+  export const migration{major}{minor}: Migration = {
+    version: "{major}.{minor}",
+    description: "Migrate to v{major}.{minor} - {brief description}",
+  
+    async execute(projectPath: string, templateSourceDir: string): Promise<MigrationResult> {
+      const result: MigrationResult = {
+        migrated: false,
+        skipped: false,
+        actions: [],
+        errors: [],
+      };
+  
+      // 1. Check preconditions (version, folder existence)
+      // 2. Perform migration actions
+      // 3. Update result.actions[] with what was done
+      // 4. Set result.migrated = true on success
+  
+      return result;
+    },
+  };
+
+reference_files:
+  - "src/commands/upgrade/migrations/index.ts (core types)"
+  - "src/commands/upgrade/migrations/v2.0.ts (canonical example)"
+  - "src/commands/upgrade/migrations/v2.1.ts (incremental migration)"
+  - "src/commands/upgrade/migrations/registry.ts (registration pattern)"
+  - "src/commands/upgrade/migrations/runner.ts (execution logic)"
