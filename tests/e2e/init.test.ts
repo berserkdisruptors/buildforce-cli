@@ -45,7 +45,7 @@ describe('buildforce init (e2e)', () => {
     const projectPath = path.join(tempDir, projectName);
 
     execSync(
-      `node ${CLI_PATH} init ${projectPath} --ai claude --local ${localArtifactsDir} --no-git`,
+      `node ${CLI_PATH} init ${projectPath} --ai claude --local ${localArtifactsDir} --no-git --ignore-agent-tools`,
       {
         encoding: 'utf8',
         timeout: 30000,
@@ -75,7 +75,7 @@ describe('buildforce init (e2e)', () => {
 
     try {
       execSync(
-        `node ${CLI_PATH} init ${projectPath} --ai claude --local ${localArtifactsDir} --no-git`,
+        `node ${CLI_PATH} init ${projectPath} --ai claude --local ${localArtifactsDir} --no-git --ignore-agent-tools`,
         {
           encoding: 'utf8',
           timeout: 10000,
