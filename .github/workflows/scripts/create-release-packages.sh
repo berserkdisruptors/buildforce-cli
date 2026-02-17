@@ -64,6 +64,12 @@ generate_agents() {
   done
 }
 
+normalize_agents() {
+  local agent=$1 output_dir=$2
+  echo "  Normalizing agent templates for $agent..."
+  npx tsx src/scripts/normalize-agent-templates.ts "$agent" "$output_dir"
+}
+
 generate_skills() {
   local agent=$1 output_dir=$2
   mkdir -p "$output_dir"
@@ -141,6 +147,7 @@ build_package() {
       if [[ -d src/templates/agents ]]; then
         mkdir -p "$base_dir/.cursor/agents"
         generate_agents cursor "$base_dir/.cursor/agents"
+        normalize_agents cursor "$base_dir/.cursor/agents"
       fi
       # Cursor skills
       if [[ -d src/templates/skills ]]; then
@@ -158,6 +165,7 @@ build_package() {
       if [[ -d src/templates/agents ]]; then
         mkdir -p "$base_dir/.opencode/agents"
         generate_agents opencode "$base_dir/.opencode/agents"
+        normalize_agents opencode "$base_dir/.opencode/agents"
       fi
       # OpenCode skills
       if [[ -d src/templates/skills ]]; then
