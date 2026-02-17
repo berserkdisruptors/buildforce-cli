@@ -16,7 +16,12 @@
     "build": "tsc",
     "dev": "tsx src/cli.ts",
     "start": "node dist/cli.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:unit": "vitest run tests/unit",
+    "test:integration": "vitest run tests/integration",
+    "test:e2e": "vitest run tests/e2e",
+    "test:coverage": "vitest run --coverage",
     "prepare": "husky",
     "commit": "cz",
     "prepublishOnly": "npm run build",
@@ -71,11 +76,13 @@
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^20.11.19",
     "@types/which": "^3.0.3",
+    "@vitest/coverage-v8": "^4.0.18",
     "commitizen": "^4.3.1",
     "cz-conventional-changelog": "^3.3.0",
     "husky": "^9.1.7",
     "tsx": "^4.7.1",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "vitest": "^4.0.18"
   },
   "engines": {
     "node": ">=18.0.0"

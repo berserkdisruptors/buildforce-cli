@@ -9,6 +9,7 @@ import { generateBanner } from "./lib/interactive.js";
 import { MINT_COLOR, TAGLINE } from "./constants.js";
 import { createBox } from "./utils/box.js";
 import { getPackageVersion } from "./utils/package-info.js";
+import { hardWrap, formatKeyValueRows } from "./utils/text-format.js";
 
 const program = new Command();
 
@@ -29,75 +30,6 @@ const renderBannerForHelp = () => {
   return generateBanner();
 };
 program.addHelpText("beforeAll", renderBannerForHelp);
-
-function hardWrap(text: string, width: number): string[] {
-  if (text.length <= width) return [text];
-  const words = text.split(/\s+/);
-  const lines: string[] = [];
-  let current = "";
-  for (const w of words) {
-    if ((current ? current.length + 1 : 0) + w.length > width) {
-      if (current) lines.push(current);
-      current = w;
-    } else {
-      current = current ? current + " " + w : w;
-    }
-  }
-  if (current) lines.push(current);
-  return lines;
-}
-
-function formatKeyValueRows(
-  rows: Array<{ term: string; desc: string }>,
-  termWidth: number,
-  helpWidth: number
-): string[] {
-  const pad = 1;
-  // Smaller box width - max 70 chars for content (excluding borders)
-  const boxMaxWidth = 70;
-  const innerMax = Math.min(boxMaxWidth, Math.max(20, helpWidth - 2));
-  const gutter = 2;
-  // Allocate more width to descriptions - about 25% to terms, 75% to descriptions
-  const clampedTermWidth = Math.min(
-    termWidth,
-    Math.max(8, Math.floor(innerMax * 0.25))
-  );
-  const firstLineDescWidth = Math.max(
-    20,
-    innerMax - pad * 2 - clampedTermWidth - gutter
-  );
-  // Full width for continuation lines (minus padding)
-  const fullDescWidth = innerMax - pad * 2;
-
-  const lines: string[] = [];
-  rows.forEach(({ term, desc }, index) => {
-    // First line: term + description start (respecting word boundaries)
-    const firstLineWrapped = hardWrap(desc, firstLineDescWidth);
-    const firstLineDesc = firstLineWrapped[0] || "";
-    const remainingDesc =
-      firstLineWrapped.length > 1 ? firstLineWrapped.slice(1).join(" ") : "";
-
-    // First line: term + description start
-    const firstLine = `${term.padEnd(clampedTermWidth)}${" ".repeat(
-      gutter
-    )}${chalk.hex("#B8B8B8")(firstLineDesc)}`;
-    lines.push(firstLine);
-
-    // Remaining description uses full width
-    if (remainingDesc) {
-      const wrapped = hardWrap(remainingDesc, fullDescWidth);
-      wrapped.forEach((line) => {
-        lines.push(chalk.hex("#B8B8B8")(line));
-      });
-    }
-
-    // add spacing between entries (but not after the last one)
-    if (index !== rows.length - 1) {
-      lines.push("");
-    }
-  });
-  return lines;
-}
 
 program.configureHelp({
   optionTerm(option) {
