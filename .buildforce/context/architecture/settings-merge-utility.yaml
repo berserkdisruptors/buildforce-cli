@@ -3,29 +3,33 @@ name: Settings Merge Utility
 type: structural
 status: production
 created: "2026-02-04"
-last_updated: "2026-02-13"
+last_updated: "2026-02-16"
 
 summary: |
-  Unified TypeScript utility for merging agent settings from template configuration into
-  the agent's settings.local.json file. Agent-agnostic API (mergeAgentSettings) that
-  accepts agentFolder parameter. For Claude agents, also merges hard-coded Buildforce
-  hooks (PreToolUse hook for Explore→buildforce-explorer redirection) and ensures hook
-  scripts are executable. Uses additive deep-merge strategy that preserves all existing
-  user permissions and hooks while adding new entries from templates. Deduplicates arrays
-  using JSON.stringify comparison to ensure idempotent operations across multiple
-  init/upgrade cycles. Consolidates the former hooks.ts utility into a single file.
+  Unified TypeScript utility for merging agent settings into agent-specific configuration
+  files. Agent-agnostic API (mergeAgentSettings) dispatches to per-agent strategies:
+  - Claude: Merges PreToolUse hooks into .claude/settings.local.json, ensures .sh executability
+  - Cursor: Merges preToolUse hooks into .cursor/hooks.json
+  - OpenCode: Writes explorer redirect plugin to .opencode/plugins/
+
+  Uses additive deep-merge strategy that preserves all existing user permissions and hooks
+  while adding new entries. Deduplicates arrays using JSON.stringify comparison to ensure
+  idempotent operations across multiple init/upgrade cycles. Hard-coded hook configurations
+  per agent (no template config.json dependency for Claude and Cursor).
 
 responsibilities:
-  - Merge template hooks/config.json into agent's settings.local.json
-  - Conditionally merge hard-coded Buildforce hooks for Claude agents (PreToolUse hook)
-  - Ensure hook scripts are executable after writing (Claude-only, chmod .sh files)
-  - Preserve existing user permissions (allow, deny, ask arrays)
-  - Preserve existing user hooks (Stop, PreToolUse, PostToolUse arrays)
+  - Dispatch to agent-specific merge strategy based on agentFolder parameter
+  - Claude: Merge hard-coded CLAUDE_HOOKS_CONFIG (PreToolUse) into .claude/settings.local.json
+  - Cursor: Merge hard-coded CURSOR_HOOKS_CONFIG (preToolUse) into .cursor/hooks.json
+  - OpenCode: Write explorer redirect plugin to .opencode/plugins/buildforce-explorer-redirect.ts
+  - Ensure hook scripts are executable after writing (chmod .sh files in hooks directory)
+  - Preserve existing user permissions (allow, deny, ask arrays) via additive merge
+  - Preserve existing user hooks (Stop, PreToolUse, PostToolUse arrays) via additive merge
   - Deduplicate array entries using JSON.stringify comparison
-  - Create settings.local.json if it doesn't exist
-  - Handle edge cases gracefully (missing template, malformed JSON)
+  - Create settings files if they don't exist
+  - Handle edge cases gracefully (malformed JSON)
   - Provide debug logging when enabled
-  - Return detailed merge result for progress tracking
+  - Return detailed MergeResult for progress tracking
 
 dependencies:
   internal:
@@ -45,8 +49,8 @@ files:
 interfaces:
   exports:
     - name: "mergeAgentSettings"
-      signature: "(projectPath: string, agentFolder: string, templateConfigPath: string, options?: { debug?: boolean }) => Promise<MergeResult>"
-      description: "Merges template config into agent's settings.local.json. For Claude, also merges hard-coded Buildforce hooks and ensures hook scripts are executable."
+      signature: "(projectPath: string, agentFolder: string, options?: { debug?: boolean }) => Promise<MergeResult>"
+      description: "Dispatches to agent-specific merge strategy. Claude: settings.local.json + hooks chmod. Cursor: hooks.json. OpenCode: plugins/buildforce-explorer-redirect.ts."
 
     - name: "MergeResult"
       signature: "interface { merged: boolean; skipped: boolean; reason: string; hooksAdded?: number; permissionsAdded?: number }"
@@ -69,28 +73,29 @@ design_decisions:
     rationale: "Merge is additive-only and git tracks changes. Backup adds complexity without significant value since no data is lost."
 
 merge_algorithm: |
-  1. Read template config from .buildforce/templates/hooks/config.json
-     - Template contains hooks content directly: { "Stop": [...], "PreToolUse": [...] }
-     - Wrap in settings structure: { hooks: templateContent }
+  The mergeAgentSettings() function dispatches to agent-specific strategies:
 
-  2. Read existing settings from {agentFolder}/settings.local.json
-     - If file doesn't exist: start with empty object {}
-     - If file is malformed: log warning, start with empty object {}
+  CLAUDE (.claude/):
+  1. Read existing .claude/settings.local.json (or start with {})
+  2. Merge hard-coded CLAUDE_HOOKS_CONFIG (PreToolUse hook for Task → buildforce-explorer)
+  3. Write merged result to .claude/settings.local.json
+  4. Ensure all .sh files in .claude/hooks/ are executable (chmod +x)
 
-  3. Merge template config into existing settings (additive):
-     - permissions.allow/deny/ask: concat arrays, deduplicate
-     - hooks.*: concat arrays, deduplicate
+  CURSOR (.cursor/):
+  1. Read existing .cursor/hooks.json (or start with {})
+  2. Merge hard-coded CURSOR_HOOKS_CONFIG (preToolUse hook for Task → buildforce-explorer)
+  3. Write merged result to .cursor/hooks.json
+  4. Ensure all .sh files in .cursor/hooks/ are executable (chmod +x)
 
-  4. If agentFolder === ".claude/": merge hard-coded Buildforce hooks
-     - BUILDFORCE_HOOKS_CONFIG contains PreToolUse hook for Task tool redirection
-     - Same additive merge with deduplication
+  OPENCODE (.opencode/):
+  1. Create .opencode/plugins/ directory
+  2. Write buildforce-explorer-redirect.ts plugin (full replacement, not merge)
+  3. Plugin intercepts task tool calls with subagent_type "Explore"
 
-  5. Write merged result to {agentFolder}/settings.local.json
-     - Pretty-print with 2-space indent
-     - Add trailing newline
-
-  6. If agentFolder === ".claude/": ensure hook scripts are executable
-     - chmod +x all .sh files in {agentFolder}/hooks/
+  Shared merge logic (mergeJsonSettingsFile):
+  - Read existing JSON file (or start with {})
+  - Additive merge: concat arrays with deduplication (JSON.stringify comparison)
+  - Write with 2-space indent + trailing newline
 
 data_models:
   - name: "ClaudeSettings"
@@ -131,22 +136,30 @@ evolution:
     date: "2026-02-13"
     changes: "Unified mergeAgentSettings API (agent-agnostic signature with agentFolder param). Consolidated hooks.ts into settings-merge.ts. Added hard-coded Buildforce hooks merge and ensureHooksExecutable for Claude agents."
 
+  - version: "3.0"
+    date: "2026-02-16"
+    changes: |
+      Full multi-agent support. Added mergeCursorSettings (hooks.json), mergeOpenCodeSettings
+      (plugin file). All hook configs are now hard-coded per agent (CLAUDE_HOOKS_CONFIG,
+      CURSOR_HOOKS_CONFIG) instead of reading from template config.json. Removed template
+      config file dependency. Each agent strategy handles its own settings file format.
+
 related_specs:
   - skills-bundling-config-concat-20260204000000
 
 notes: |
   This utility enables configuration of Buildforce features by merging
-  template settings into agent's settings.local.json. Consolidated from
-  two separate files (settings-merge.ts + hooks.ts) into a single
-  agent-agnostic utility.
+  hook configurations into agent-specific settings files.
 
   The merge is designed to be:
-  - Safe: Never removes user data
+  - Safe: Never removes user data (additive only)
   - Idempotent: Multiple runs don't create duplicates
   - Transparent: Debug logging shows what was done
   - Resilient: Graceful handling of missing/malformed files
   - Agent-agnostic: Works with any agent folder via agentFolder parameter
 
-  Claude-specific behavior (agentFolder === ".claude/"):
-  - Merges hard-coded BUILDFORCE_HOOKS_CONFIG (PreToolUse hook for Explore redirect)
-  - Ensures .sh files in hooks directory are executable (chmod)
+  Agent-specific behaviors:
+  - Claude (.claude/): Merges CLAUDE_HOOKS_CONFIG into settings.local.json, chmod hooks
+  - Cursor (.cursor/): Merges CURSOR_HOOKS_CONFIG into hooks.json, chmod hooks
+  - OpenCode (.opencode/): Writes plugin file to plugins/ directory
+  - Unknown agent: Returns { merged: false, skipped: true, reason: "unknown agent" }

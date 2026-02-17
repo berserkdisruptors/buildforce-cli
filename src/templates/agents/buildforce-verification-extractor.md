@@ -3,7 +3,7 @@ name: buildforce-verification-extractor
 description: Context Extractor for verification context. Extracts quality standards, test expectations, and known risks. Use when extracting verification context during /buildforce.extract iterations.
 tools: Read, Glob, Grep
 model: inherit
-agents: [claude]
+agents: [claude, cursor, opencode]
 ---
 
 # Context Extractor: Verification

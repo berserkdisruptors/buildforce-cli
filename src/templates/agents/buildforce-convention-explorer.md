@@ -3,7 +3,7 @@ name: buildforce-convention-explorer
 description: Context Explorer for convention/standards context. Searches the context repository for relevant patterns, coding standards, and practices. Use during /buildforce.explore for convention-related queries.
 tools: Read, Glob, Grep
 model: inherit
-agents: [claude]
+agents: [claude, cursor, opencode]
 ---
 
 # Context Explorer: Conventions

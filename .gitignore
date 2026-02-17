@@ -16,15 +16,13 @@ node_modules/
 dist/
 *.tsbuildinfo
 
-inspiration/
-.buildforce/scripts
-.buildforce/templates
+# Buildforce
 .buildforce/buildforce.json
-.buildforce/.temp
 
-.claude/commands/**
-.claude/agents/**
-.claude/hooks/**
-.claude/skills/**
-.cursor/commands/**
+# Agents
+.claude/**
+.cursor/**
+.opencode/**
+
+# Release packages
 .genreleases/

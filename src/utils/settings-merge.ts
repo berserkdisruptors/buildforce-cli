@@ -28,6 +28,7 @@ interface HooksConfig {
  * Agent settings structure
  */
 interface AgentSettings {
+  version?: number;
   permissions?: {
     allow?: string[];
     deny?: string[];
@@ -38,12 +39,10 @@ interface AgentSettings {
 }
 
 /**
- * Buildforce hooks configuration.
- * Source of truth: src/templates/hooks/config.json
- *
+ * Claude hooks configuration.
  * PreToolUse hook for Task tool redirection (Explore → buildforce-explorer).
  */
-const BUILDFORCE_HOOKS_CONFIG: HooksConfig = {
+const CLAUDE_HOOKS_CONFIG: HooksConfig = {
   PreToolUse: [
     {
       matcher: "Task",
@@ -55,6 +54,22 @@ const BUILDFORCE_HOOKS_CONFIG: HooksConfig = {
       ],
     },
   ],
+};
+
+/**
+ * Cursor hooks configuration.
+ * preToolUse hook for Task tool redirection (explore → buildforce-explorer).
+ */
+const CURSOR_HOOKS_CONFIG = {
+  version: 1,
+  hooks: {
+    preToolUse: [
+      {
+        matcher: "Task",
+        command: ".cursor/hooks/setup-explorer-subagent.sh",
+      },
+    ],
+  },
 };
 
 /**
@@ -86,6 +101,11 @@ function mergeSettings(
   incoming: AgentSettings
 ): AgentSettings {
   const result: AgentSettings = { ...existing };
+
+  // Merge version (incoming takes precedence)
+  if (incoming.version !== undefined) {
+    result.version = incoming.version;
+  }
 
   // Merge permissions
   if (incoming.permissions) {
@@ -154,38 +174,14 @@ async function ensureHooksExecutable(hooksDir: string): Promise<void> {
 }
 
 /**
- * Merge Buildforce agent settings into the user's settings.local.json.
- * For Claude agents, merges the Buildforce hooks configuration and ensures
- * hook scripts are executable.
- *
- * @param projectPath - Root path of the project
- * @param agentFolder - Agent folder (e.g. ".claude/") from AGENT_FOLDER_MAP
- * @param options - Merge options
- * @returns MergeResult indicating what was done
+ * Merge a JSON settings file with incoming config using additive merge.
+ * Shared by Claude and Cursor strategies.
  */
-export async function mergeAgentSettings(
-  projectPath: string,
-  agentFolder: string,
-  options: { debug?: boolean } = {}
-): Promise<MergeResult> {
-  const { debug = false } = options;
-
-  // Currently hooks are Claude-only — skip for other agents
-  if (agentFolder !== ".claude/") {
-    return {
-      merged: false,
-      skipped: true,
-      reason: "hooks not applicable for this agent",
-    };
-  }
-
-  const settingsPath = path.join(projectPath, agentFolder, "settings.local.json");
-
-  // Ensure agent directory exists
-  const agentDir = path.join(projectPath, agentFolder);
-  await fs.ensureDir(agentDir);
-
-  // Read existing settings if they exist
+async function mergeJsonSettingsFile(
+  settingsPath: string,
+  incomingSettings: AgentSettings,
+  debug: boolean
+): Promise<{ settingsExisted: boolean }> {
   let existingSettings: AgentSettings = {};
   let settingsExisted = false;
 
@@ -207,16 +203,8 @@ export async function mergeAgentSettings(
     }
   }
 
-  // Merge Buildforce hooks config into existing settings
-  const mergedSettings = mergeSettings(existingSettings, { hooks: BUILDFORCE_HOOKS_CONFIG });
+  const mergedSettings = mergeSettings(existingSettings, incomingSettings);
 
-  // Count hooks added
-  const hooksAdded = Object.values(BUILDFORCE_HOOKS_CONFIG).reduce(
-    (sum, arr) => sum + (Array.isArray(arr) ? arr.length : 0),
-    0
-  );
-
-  // Write merged settings
   await fs.writeFile(
     settingsPath,
     JSON.stringify(mergedSettings, null, 2) + "\n",
@@ -225,11 +213,38 @@ export async function mergeAgentSettings(
 
   if (debug) {
     console.log(chalk.gray(`[settings-merge] Wrote merged settings to: ${settingsPath}`));
-    console.log(chalk.gray(`[settings-merge] Hooks entries: ${hooksAdded}`));
   }
 
-  // Ensure hook scripts are executable
-  await ensureHooksExecutable(path.join(projectPath, agentFolder, "hooks"));
+  return { settingsExisted };
+}
+
+/**
+ * Claude Code: merge hooks into .claude/settings.local.json
+ */
+async function mergeClaudeSettings(
+  projectPath: string,
+  debug: boolean
+): Promise<MergeResult> {
+  const agentDir = path.join(projectPath, ".claude");
+  await fs.ensureDir(agentDir);
+
+  const settingsPath = path.join(agentDir, "settings.local.json");
+  const { settingsExisted } = await mergeJsonSettingsFile(
+    settingsPath,
+    { hooks: CLAUDE_HOOKS_CONFIG },
+    debug
+  );
+
+  const hooksAdded = Object.values(CLAUDE_HOOKS_CONFIG).reduce(
+    (sum, arr) => sum + (Array.isArray(arr) ? arr.length : 0),
+    0
+  );
+
+  if (debug) {
+    console.log(chalk.gray(`[settings-merge] Claude hooks entries: ${hooksAdded}`));
+  }
+
+  await ensureHooksExecutable(path.join(agentDir, "hooks"));
 
   return {
     merged: true,
@@ -237,4 +252,110 @@ export async function mergeAgentSettings(
     reason: settingsExisted ? "merged with existing" : "created new",
     hooksAdded,
   };
+}
+
+/**
+ * Cursor: merge hooks into .cursor/hooks.json
+ */
+async function mergeCursorSettings(
+  projectPath: string,
+  debug: boolean
+): Promise<MergeResult> {
+  const agentDir = path.join(projectPath, ".cursor");
+  await fs.ensureDir(agentDir);
+
+  const settingsPath = path.join(agentDir, "hooks.json");
+  const { settingsExisted } = await mergeJsonSettingsFile(
+    settingsPath,
+    CURSOR_HOOKS_CONFIG,
+    debug
+  );
+
+  const hooksAdded = CURSOR_HOOKS_CONFIG.hooks.preToolUse.length;
+
+  if (debug) {
+    console.log(chalk.gray(`[settings-merge] Cursor hooks entries: ${hooksAdded}`));
+  }
+
+  await ensureHooksExecutable(path.join(agentDir, "hooks"));
+
+  return {
+    merged: true,
+    skipped: false,
+    reason: settingsExisted ? "merged with existing" : "created new",
+    hooksAdded,
+  };
+}
+
+/**
+ * OpenCode: write plugin file to .opencode/plugins/
+ */
+async function mergeOpenCodeSettings(
+  projectPath: string,
+  debug: boolean
+): Promise<MergeResult> {
+  const pluginsDir = path.join(projectPath, ".opencode", "plugins");
+  await fs.ensureDir(pluginsDir);
+
+  const pluginPath = path.join(pluginsDir, "buildforce-explorer-redirect.ts");
+  const pluginContent = `export default async ({ project, client, $, directory, worktree }) => {
+  return {
+    tool: {
+      execute: {
+        before: (input, output) => {
+          if (input.tool === "task" && output.args?.subagent_type === "Explore") {
+            output.args.subagent_type = "buildforce-explorer";
+          }
+        },
+      },
+    },
+  };
+};
+`;
+
+  const existed = await fs.pathExists(pluginPath);
+  await fs.writeFile(pluginPath, pluginContent, "utf8");
+
+  if (debug) {
+    console.log(chalk.gray(`[settings-merge] Wrote OpenCode plugin to: ${pluginPath}`));
+  }
+
+  return {
+    merged: true,
+    skipped: false,
+    reason: existed ? "replaced existing plugin" : "created new plugin",
+    hooksAdded: 1,
+  };
+}
+
+/**
+ * Merge Buildforce agent settings for the given agent.
+ * Dispatches to agent-specific merge strategy.
+ *
+ * @param projectPath - Root path of the project
+ * @param agentFolder - Agent folder (e.g. ".claude/") from AGENT_FOLDER_MAP
+ * @param options - Merge options
+ * @returns MergeResult indicating what was done
+ */
+export async function mergeAgentSettings(
+  projectPath: string,
+  agentFolder: string,
+  options: { debug?: boolean } = {}
+): Promise<MergeResult> {
+  const { debug = false } = options;
+
+  switch (agentFolder) {
+    case ".claude/":
+      return mergeClaudeSettings(projectPath, debug);
+    case ".cursor/":
+      return mergeCursorSettings(projectPath, debug);
+    case ".opencode/":
+      return mergeOpenCodeSettings(projectPath, debug);
+    default:
+      return {
+        merged: false,
+        skipped: true,
+        reason: "unknown agent",
+      };
+  }
 }

@@ -28,7 +28,7 @@ fi
 
 # Create release notes header
 cat > release_notes.md << 'EOF'
-Template packages for all supported AI assistants. **Recommended:** Install via `npm install -g @buildforce/cli` and run `buildforce init`.
+Template packages for all supported AI agents. **Recommended:** Install via `npm install -g @buildforce/cli` and run `buildforce init`.
 
 EOF
 

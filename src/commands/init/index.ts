@@ -1,7 +1,6 @@
 import chalk from "chalk";
 import {
   AI_CHOICES,
-  SCRIPT_TYPE_CHOICES,
   TAGLINE,
   AGENT_FOLDER_MAP,
   MINT_COLOR,
@@ -9,11 +8,10 @@ import {
 } from "../../constants.js";
 import { InitOptions } from "../../types.js";
 import { checkTool } from "../../utils/index.js";
-import { showBanner, selectWithArrows, selectMultipleWithCheckboxes } from "../../lib/interactive.js";
+import { showBanner, selectMultipleWithCheckboxes } from "../../lib/interactive.js";
 import {
   validateProjectSetup,
   validateAiAssistant,
-  validateScriptType,
   checkAgentTool,
 } from "./validation.js";
 import { setupProject, handleSetupError } from "./setup.js";
@@ -33,7 +31,6 @@ export async function initCommand(options: InitOptions): Promise<void> {
   const {
     projectName: inputProjectName,
     aiAssistant: inputAiAssistant,
-    scriptType: inputScriptType,
     ignoreAgentTools = false,
     noGit = false,
     here = false,
@@ -65,19 +62,19 @@ export async function initCommand(options: InitOptions): Promise<void> {
     }
   }
 
-  // AI assistant selection (multi-select)
+  // AI agent selection (multi-select)
   let selectedAi: string[];
   if (inputAiAssistant) {
     // Handle array input from Commander.js variadic option
     const aiArray = Array.isArray(inputAiAssistant) ? inputAiAssistant : [inputAiAssistant];
-    // Validate each assistant
+    // Validate each agent
     aiArray.forEach(ai => validateAiAssistant(ai, AI_CHOICES));
     selectedAi = aiArray;
   } else {
     // Use checkbox multi-select interface
     selectedAi = await selectMultipleWithCheckboxes(
       AI_CHOICES,
-      "Choose your AI assistant(s) (use spacebar to select, enter to confirm):",
+      "Choose your AI agent(s) (use spacebar to select, enter to confirm):",
       ["claude"]
     );
   }
@@ -87,35 +84,13 @@ export async function initCommand(options: InitOptions): Promise<void> {
     checkAgentTool(selectedAi[0], AI_CHOICES, checkTool);
   }
 
-  // Determine script type
-  let selectedScript: string;
-  if (inputScriptType) {
-    validateScriptType(inputScriptType, SCRIPT_TYPE_CHOICES);
-    selectedScript = inputScriptType;
-  } else {
-    // Auto-detect default
-    const defaultScript = process.platform === "win32" ? "ps" : "sh";
-
-    // Provide interactive selection if stdin is a TTY
-    if (process.stdin.isTTY) {
-      selectedScript = await selectWithArrows(
-        SCRIPT_TYPE_CHOICES,
-        "Choose script type (or press Enter)",
-        defaultScript
-      );
-    } else {
-      selectedScript = defaultScript;
-    }
-  }
-
-  console.log(MINT_COLOR("Selected AI assistant(s):"), selectedAi.join(", "));
+  console.log(MINT_COLOR("Selected AI agent(s):"), selectedAi.join(", "));
   console.log(MINT_COLOR(`(${selectedAi.length} agent${selectedAi.length > 1 ? "s" : ""})`));
-  console.log(MINT_COLOR("Selected script type:"), selectedScript);
   console.log();
 
   // Execute project setup
   try {
-    await setupProject(projectPath, selectedAi, selectedScript, isHere, {
+    await setupProject(projectPath, selectedAi, isHere, {
       debug,
       githubToken,
       skipTls,

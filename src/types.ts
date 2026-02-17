@@ -2,9 +2,6 @@ export interface AIChoice {
   [key: string]: string;
 }
 
-export interface ScriptTypeChoice {
-  [key: string]: string;
-}
 
 export type StepStatus = 'pending' | 'running' | 'done' | 'error' | 'skipped';
 
@@ -39,7 +36,6 @@ export interface ReleaseData {
 export interface InitOptions {
   projectName?: string;
   aiAssistant?: string;
-  scriptType?: string;
   ignoreAgentTools?: boolean;
   noGit?: boolean;
   here?: boolean;
@@ -51,17 +47,13 @@ export interface InitOptions {
 }
 
 export interface BuildforceConfig {
-  sessionsFolder: string;
   framework: string;
   aiAssistants?: string[];
-  currentSession?: string | null;
-  scriptType?: string;
   version?: string;
 }
 
 export interface UpgradeOptions {
   ai?: string;
-  script?: string;
   dryRun?: boolean;
   debug?: boolean;
   githubToken?: string;

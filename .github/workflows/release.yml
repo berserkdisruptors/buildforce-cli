@@ -39,12 +39,6 @@ jobs:
         run: |
           chmod +x .github/workflows/scripts/get-next-version.sh
           .github/workflows/scripts/get-next-version.sh
-      - name: Update template versions
-        run: |
-          chmod +x .github/workflows/scripts/update-template-versions.sh
-          VERSION="${{ steps.get_tag.outputs.new_version }}"
-          VERSION_NO_V="${VERSION#v}"
-          .github/workflows/scripts/update-template-versions.sh "$VERSION_NO_V"
       - name: Update package.json version
         run: |
           VERSION="${{ steps.get_tag.outputs.new_version }}"
@@ -54,7 +48,7 @@ jobs:
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add src/templates/ package.json package-lock.json
+          git add package.json package-lock.json
           if git diff --cached --quiet; then
             echo "No version changes to commit"
           else

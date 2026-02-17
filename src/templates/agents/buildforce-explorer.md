@@ -3,7 +3,7 @@ name: buildforce-explorer
 description: Redirected Explore agent that searches the Buildforce context repository via Context Explorer sub-agents. Dispatches structural, convention, and verification explorers in parallel, then synthesizes findings into a unified response.
 tools: Task, Read, Glob, Grep
 model: inherit
-agents: [claude]
+agents: [claude, cursor, opencode]
 ---
 
 # Context Searcher

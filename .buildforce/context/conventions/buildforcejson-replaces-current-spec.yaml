@@ -1,10 +1,10 @@
 id: buildforcejson-replaces-current-spec
-name: "buildforce.json replaces .current-spec"
+name: "buildforce.json configuration (simplified)"
 type: convention
 sub_type: project-quirk
 enforcement: recommended
 created: "2026-01-26"
-last_updated: "2026-01-26"
+last_updated: "2026-02-16"
 
 description: |
   The CLI previously tracked current spec using .current-spec file. This has been

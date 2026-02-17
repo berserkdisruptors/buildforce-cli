@@ -3,7 +3,7 @@ name: buildforce-conventions-extractor
 description: Context Extractor for convention context. Extracts coding standards, patterns, and practices. Use when extracting convention context during /buildforce.extract iterations.
 tools: Read, Glob, Grep
 model: inherit
-agents: [claude]
+agents: [claude, cursor, opencode]
 ---
 
 # Context Extractor: Conventions

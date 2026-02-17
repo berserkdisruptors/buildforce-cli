@@ -7,7 +7,7 @@ description: >-
   codebase that cannot be easily derived from reading source files. This enriches agentic
   search with structured understanding of WHY the code was built a certain way, what
   patterns to follow, and what pitfalls to avoid.
-agents: [claude]
+agents: [claude, cursor, opencode]
 ---
 
 User input:

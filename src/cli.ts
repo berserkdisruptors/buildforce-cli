@@ -5,8 +5,6 @@ import chalk from "chalk";
 import { initCommand } from "./commands/init/index.js";
 import { upgradeCommand } from "./commands/upgrade/index.js";
 import { checkCommand } from "./commands/check.js";
-import { examplesCommand } from "./commands/examples.js";
-import { sessionCommand } from "./commands/session/index.js";
 import { generateBanner } from "./lib/interactive.js";
 import { MINT_COLOR, TAGLINE } from "./constants.js";
 import { createBox } from "./utils/box.js";
@@ -191,10 +189,9 @@ program
     'Name for your new project directory (optional if using --here, or use "." for current directory)'
   )
   .option(
-    "--ai <assistant...>",
-    "AI assistant(s) to use (can specify multiple): claude, gemini, copilot, cursor, qwen, opencode, codex, windsurf, kilocode, auggie, or roo"
+    "--ai <agent...>",
+    "AI agent(s) to use (can specify multiple): claude, cursor, or opencode"
   )
-  .option("--script <type>", "Script type to use: sh or ps")
   .option(
     "--ignore-agent-tools",
     "Skip checks for AI agent tools like Claude Code"
@@ -220,7 +217,7 @@ program
   .option(
     "--local [path]",
     "Use local artifacts from directory instead of GitHub (default: .genreleases)\n" +
-      "Example: buildforce init my-project --local --ai claude --script sh"
+      "Example: buildforce init my-project --local --ai claude"
   )
   .action(async (projectName, options) => {
     // If no project name and no flags, show help
@@ -234,7 +231,6 @@ program
     await initCommand({
       projectName,
       aiAssistant: options.ai,
-      scriptType: options.script,
       ignoreAgentTools: options.ignoreAgentTools,
       noGit: !options.git,
       here: options.here,
@@ -252,10 +248,9 @@ program
     "Upgrade project templates, commands, and scripts to the latest version"
   )
   .option(
-    "--ai <assistant...>",
-    "Override or add AI assistant(s) (can specify multiple): claude, gemini, copilot, cursor, qwen, opencode, codex, windsurf, kilocode, auggie, roo"
+    "--ai <agent...>",
+    "Override or add AI agent(s) (can specify multiple): claude, cursor, or opencode"
   )
-  .option("--script <type>", "Override script type (sh or ps)")
   .option("--dry-run", "Preview changes without applying them")
   .option("--debug", "Show verbose diagnostic output")
   .option("--github-token <token>", "GitHub token for API requests")
@@ -267,7 +262,6 @@ program
   .action(async (options) => {
     await upgradeCommand({
       ai: options.ai,
-      script: options.script,
       dryRun: options.dryRun,
       debug: options.debug,
       githubToken: options.githubToken,
@@ -281,20 +275,6 @@ program
   .description("Check that all required tools are installed")
   .action(() => {
     checkCommand();
-  });
-
-program
-  .command("examples")
-  .description("View workflow examples interactively")
-  .action(async () => {
-    await examplesCommand();
-  });
-
-program
-  .command("session")
-  .description("Interactively switch between active development sessions")
-  .action(async () => {
-    await sessionCommand();
   });
 
 program.parse(process.argv);

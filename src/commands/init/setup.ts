@@ -19,7 +19,6 @@ import { AGENT_FOLDER_MAP } from "../../constants.js";
 export async function setupProject(
   projectPath: string,
   selectedAi: string[],
-  selectedScript: string,
   isHere: boolean,
   options: {
     debug: boolean;
@@ -36,25 +35,35 @@ export async function setupProject(
   // Pre-steps recorded as completed before live rendering
   tracker.add("precheck", "Check required tools");
   tracker.complete("precheck", "ok");
-  tracker.add("ai-select", "Select AI assistant(s)");
+  tracker.add("ai-select", "Select AI agent(s)");
   tracker.complete("ai-select", selectedAi.join(", "));
-  tracker.add("script-select", "Select script type");
-  tracker.complete("script-select", selectedScript);
 
-  // Add pending steps
-  const steps = [
-    ["fetch", "Fetch latest release"],
-    ["download", "Download template"],
-    ["extract", "Extract template"],
-    ["zip-list", "Archive contents"],
-    ["extracted-summary", "Extraction summary"],
-    ["chmod", "Ensure scripts executable"],
-    ["config", "Create configuration file"],
-    ["merge-settings", "Merge agent settings"],
-    ["cleanup", "Cleanup"],
-    ["git", "Initialize git repository"],
-    ["final", "Finalize"],
-  ];
+  // Add pending steps (pluralize labels when multiple agents selected)
+  const isMultiAgent = selectedAi.length > 1;
+  const steps = isMultiAgent
+    ? [
+        ["fetch", "Fetch latest releases"],
+        ["download", "Download templates"],
+        ["extract", "Extract templates"],
+        ["chmod", "Ensure scripts executable"],
+        ["config", "Create configuration file"],
+        ["merge-settings", "Merge agent settings"],
+        ["git", "Initialize git repository"],
+        ["final", "Finalize"],
+      ]
+    : [
+        ["fetch", "Fetch latest release"],
+        ["download", "Download template"],
+        ["extract", "Extract template"],
+        ["zip-list", "Archive contents"],
+        ["extracted-summary", "Extraction summary"],
+        ["chmod", "Ensure scripts executable"],
+        ["config", "Create configuration file"],
+        ["merge-settings", "Merge agent settings"],
+        ["cleanup", "Cleanup"],
+        ["git", "Initialize git repository"],
+        ["final", "Finalize"],
+      ];
 
   for (const [key, label] of steps) {
     tracker.add(key, label);
@@ -87,6 +96,8 @@ export async function setupProject(
     const successfulAgents: string[] = [];
     const failedAgents: Array<{ agent: string; error: string }> = [];
 
+    const downloadedAgents: string[] = [];
+
     for (let i = 0; i < selectedAi.length; i++) {
       const agent = selectedAi[i];
       try {
@@ -97,8 +108,7 @@ export async function setupProject(
           try {
             const result = await resolveLocalArtifact(
               localDir,
-              agent,
-              selectedScript
+              agent
             );
             localZipPath = result.zipPath;
           } catch (e: any) {
@@ -107,22 +117,31 @@ export async function setupProject(
           }
         }
 
-        // Tracker will show progress for current agent
+        // Show per-agent progress for multi-agent downloads
+        if (isMultiAgent) {
+          tracker.start("fetch", `${agent} (${i + 1}/${selectedAi.length})`);
+        }
 
         const result = await downloadAndExtractTemplate(
           projectPath,
           agent,
-          selectedScript,
           isHere,
           {
             verbose: false,
-            tracker,
+            tracker: isMultiAgent ? undefined : tracker,
             debug,
             githubToken,
             skipTls,
             localZipPath,
           }
         );
+
+        if (isMultiAgent) {
+          downloadedAgents.push(agent);
+          tracker.complete("fetch", `${downloadedAgents.length}/${selectedAi.length} agents`);
+          tracker.complete("download", downloadedAgents.join(", "));
+          tracker.complete("extract", `${downloadedAgents.length} templates`);
+        }
 
         version = result.version;
         successfulAgents.push(agent);
@@ -173,7 +192,7 @@ export async function setupProject(
     await fs.ensureDir(buildforceDir);
 
     const configPath = path.join(buildforceDir, "buildforce.json");
-    const configContent = createConfigContent(successfulAgents, selectedScript, version);
+    const configContent = createConfigContent(successfulAgents, version);
 
     if (debug) {
       console.log(chalk.gray(`\nWriting config to: ${configPath}`));
@@ -228,60 +247,36 @@ export async function setupProject(
         }
       }
 
-      // Check if .buildforce/.temp is already in gitignore
-      if (!gitignoreContent.includes(".buildforce/.temp")) {
-        gitignoreContent = gitignoreContent.trimEnd() + "\n.buildforce/.temp\n";
-        modified = true;
-
-        if (debug) {
-          console.log(chalk.gray(`\nUpdated .gitignore: added .buildforce/.temp`));
-        }
-      }
-
-      // Check if .buildforce/scripts is already in gitignore
-      if (!gitignoreContent.includes(".buildforce/scripts")) {
-        gitignoreContent = gitignoreContent.trimEnd() + "\n.buildforce/scripts\n";
-        modified = true;
-
-        if (debug) {
-          console.log(chalk.gray(`\nUpdated .gitignore: added .buildforce/scripts`));
-        }
-      }
-
-      // Check if .buildforce/templates is already in gitignore
-      if (!gitignoreContent.includes(".buildforce/templates")) {
-        gitignoreContent = gitignoreContent.trimEnd() + "\n.buildforce/templates\n";
-        modified = true;
-
-        if (debug) {
-          console.log(chalk.gray(`\nUpdated .gitignore: added .buildforce/templates`));
-        }
-      }
-
       // Write the file only if modifications were made
       if (modified) {
         await fs.writeFile(gitignorePath, gitignoreContent, "utf8");
       }
     }
 
-    // Merge agent settings if claude is one of the selected agents
+    // Merge agent settings for all successful agents
     tracker.start("merge-settings");
-    if (successfulAgents.includes("claude")) {
-      const agentFolder = AGENT_FOLDER_MAP["claude"];
+    let totalHooksAdded = 0;
+    let anyMerged = false;
+
+    for (const agent of successfulAgents) {
+      const agentFolder = AGENT_FOLDER_MAP[agent];
       const mergeResult = await mergeAgentSettings(projectPath, agentFolder, {
         debug,
       });
 
       if (mergeResult.merged) {
-        const detail = mergeResult.hooksAdded
-          ? `${mergeResult.hooksAdded} hook(s) added`
-          : "settings created";
-        tracker.complete("merge-settings", detail);
-      } else {
-        tracker.skip("merge-settings", mergeResult.reason);
+        anyMerged = true;
+        totalHooksAdded += mergeResult.hooksAdded || 0;
       }
+    }
+
+    if (anyMerged) {
+      const detail = totalHooksAdded
+        ? `${totalHooksAdded} hook(s) added`
+        : "settings created";
+      tracker.complete("merge-settings", detail);
     } else {
-      tracker.skip("merge-settings", "claude not selected");
+      tracker.skip("merge-settings", "no agents required settings merge");
     }
 
     // Git step

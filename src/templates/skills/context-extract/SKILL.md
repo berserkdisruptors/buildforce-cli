@@ -1,6 +1,7 @@
 ---
 name: context-extract
 description: Extract and update context files based on recent implementation changes
+agents: [claude, cursor, opencode]
 user-invocable: true
 context: fork
 allowed-tools:
@@ -82,7 +83,7 @@ Use this mode when no context index exists yet. Bootstraps the entire context re
 
 ### 1.3 Generate Mining Plans
 
-- Use `.buildforce/templates/extraction-progress-template.yaml` as reference for plan structure
+- Use [extraction-progress-template.yaml](assets/extraction-progress-template.yaml) as reference for plan structure
 - Create `_extraction-progress.yaml` in each domain folder (architecture/, conventions/, verification/)
 - Set target_items, target_depth: "shallow", and verification_criteria specific to discoveries
 
@@ -193,7 +194,7 @@ This step is shared across all modes. The extractors are plan-driven - they read
 
 ### 4.1 Generate Plans
 
-Create `_extraction-progress.yaml` in each domain folder using the `.buildforce/templates/extraction-progress-template.yaml` template.
+Create `_extraction-progress.yaml` in each domain folder using the [extraction-progress-template.yaml](assets/extraction-progress-template.yaml) template.
 
 The plan content varies by mode:
 - **Cold Start**: All discovered items, target_depth: "shallow", preamble: "Entire codebase, shallow extraction"

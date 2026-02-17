@@ -3,7 +3,7 @@ name: Skills Bundling System
 type: structural
 status: production
 created: "2026-02-04"
-last_updated: "2026-02-09"
+last_updated: "2026-02-16"
 
 summary: |
   Release packaging functionality that bundles Claude Code skills from src/templates/skills/
@@ -17,7 +17,7 @@ responsibilities:
   - Support agent filtering via 'agents:' YAML frontmatter in SKILL.md
   - Preserve entire skill folder structure (SKILL.md plus any additional files)
   - Deploy skills to .claude/skills/ directory in target project
-  - Exclude skills and hooks folders from .buildforce/templates/ copy (avoid duplication)
+  - Exclude skills and hooks folders from template copy (avoid duplication)
   - Log filtering decisions during package generation
 
 dependencies:
@@ -110,6 +110,9 @@ evolution:
   - version: "1.0"
     date: "2026-02-04"
     changes: "Initial implementation with generate_skills() function, agent filtering, and build_variant() integration for Claude"
+  - version: "2.0"
+    date: "2026-02-16"
+    changes: "Renamed build_variant to build_package (no script variants). generate_commands() removed. Skills bundling is now the primary distribution mechanism alongside agents and hooks."
 
 related_specs:
   - skills-bundling-config-concat-20260204000000

@@ -6,15 +6,19 @@ name: "Buildforce Explorer Agent & Hook"
 type: structural
 status: production
 created: "2026-02-10"
-last_updated: "2026-02-10"
+last_updated: "2026-02-16"
 
 summary: |
-  The buildforce-explorer agent is a thin wrapper that transparently replaces Claude Code's
-  built-in Explore sub-agent. A PreToolUse hook intercepts every Task call with
-  subagent_type=Explore and rewrites it to buildforce-explorer, which then reads and executes
-  the context-search skill (SKILL.md). This ensures all exploration — whether triggered by
-  the user or proactively by the agent — goes through the curated context repository instead
-  of raw file search.
+  The buildforce-explorer agent is a thin wrapper that transparently replaces the built-in
+  Explore sub-agent for Claude Code, Cursor, and OpenCode. Each agent has its own hook
+  mechanism that intercepts explore/Explore dispatch and rewrites it to buildforce-explorer.
+  The explorer then reads and executes the context-search skill (SKILL.md), routing all
+  exploration through the curated context repository instead of raw file search.
+
+  Hook implementations:
+  - Claude: PreToolUse bash hook (.claude/hooks/setup-explorer-subagent.sh)
+  - Cursor: preToolUse bash hook (.cursor/hooks/setup-explorer-subagent.sh)
+  - OpenCode: TypeScript plugin (.opencode/plugins/buildforce-explorer-redirect.ts)
 
   The explorer agent itself contains no search logic. It delegates entirely to the
   context-search skill, keeping the skill as the single source of truth.
@@ -28,18 +32,21 @@ responsibilities:
 dependencies:
   internal:
     - context-search-skill: "Contains all search logic — the explorer agent just reads and follows SKILL.md"
-    - hooks-utility: "src/utils/hooks.ts merges hook config into settings.local.json and sets executable permissions"
+    - settings-merge-utility: "src/utils/settings-merge.ts merges hook config into agent settings and sets executable permissions"
   external:
     - Claude Code hooks system: "PreToolUse event for intercepting tool calls before execution"
+    - Cursor hooks system: "preToolUse event for intercepting tool calls"
+    - OpenCode plugin system: "Plugin API for intercepting tool execution"
     - Claude Code Task tool: "The tool being intercepted — all sub-agent dispatches go through Task"
-    - Claude Code settings.local.json: "Hook registration lives here, merged idempotently by init/upgrade"
 
 files:
   primary:
     - src/templates/agents/buildforce-explorer.md
-    - src/templates/hooks/setup-explorer-subagent.sh
+    - src/templates/hooks/claude/setup-explorer-subagent.sh
+    - src/templates/hooks/cursor/setup-explorer-subagent.sh
+    - src/templates/hooks/opencode/setup-explorer-subagent.ts
   secondary:
-    - src/utils/hooks.ts
+    - src/utils/settings-merge.ts
     - src/templates/skills/context-search/SKILL.md
 
 interfaces:

@@ -3,12 +3,11 @@ name: Extract Command & Skill
 type: structural
 status: production
 created: "2026-01-28"
-last_updated: "2026-02-13"
+last_updated: "2026-02-16"
 
 summary: |
-  Claude Code-specific context extraction system with a two-layer architecture:
-  1. Thin command layer (extract.md) that delegates to the skill
-  2. Full skill layer (context-extract SKILL.md) containing all extraction logic
+  Claude Code-specific context extraction system implemented as a skill:
+  context-extract SKILL.md contains all extraction logic (no command layer - extract.md removed).
 
   The skill handles three unified extraction modes:
   - Cold Start: Bootstraps context repository from scratch when no _index.yaml exists
@@ -33,7 +32,6 @@ responsibilities:
 dependencies:
   internal:
     - cli-architecture: "Template distributed via agent-specific release packaging"
-    - slash-commands: "Part of the slash command system (extract.md is the command entry point)"
     - skills-bundling: "Skill deployed via generate_skills() in release packaging"
     - upgrade-command: "v2.1 migration adds coverage map fields to _index.yaml"
   external:
@@ -43,11 +41,10 @@ dependencies:
 files:
   primary:
     - src/templates/skills/context-extract/SKILL.md
-    - src/templates/commands/extract.md
     - src/templates/agents/buildforce-structural-extractor.md
     - src/templates/agents/buildforce-conventions-extractor.md
     - src/templates/agents/buildforce-verification-extractor.md
-    - .buildforce/templates/extraction-progress-template.yaml
+    - src/templates/skills/context-extract/assets/extraction-progress-template.yaml
   secondary:
     - .github/workflows/scripts/create-release-packages.sh
 
@@ -152,18 +149,14 @@ design_decisions:
       and design decisions that extractors didn't specifically analyze in the current iteration.
 
 architecture_patterns:
-  two_layer_architecture: |
-    The extract system has two layers:
+  skill_architecture: |
+    The extract system is a single skill (command layer removed in v3.0):
 
-    Layer 1 - Command Entry Point (extract.md):
-      - Thin wrapper: "Call the context-extract skill with these arguments: $ARGUMENTS"
-      - Exists for user invocation via /buildforce.extract
-      - Passes through user arguments to the skill
-
-    Layer 2 - Skill Logic (SKILL.md in .claude/skills/context-extract/):
+    Skill Logic (SKILL.md in .claude/skills/context-extract/):
       - Contains all extraction logic: mode routing, plan generation, extractor deployment
-      - Entry point: command invocation or direct skill invocation
+      - Entry point: direct skill invocation via /context-extract
       - YAML frontmatter: name, description, user-invocable, context: fork, allowed-tools
+      - No command wrapper (extract.md was removed in the slash commands cleanup)
 
   context_manager: |
     The SKILL.md acts as Context Manager, orchestrating extraction:
@@ -228,6 +221,13 @@ evolution:
       - Added incremental mode with git diff analysis and change significance filtering
       - Added verification before cleanup (N contributions = M files written)
       - Skill deployed via skills-bundling
+
+  - version: "3.0"
+    date: "2026-02-16"
+    changes: |
+      Removed command layer (extract.md deleted as part of slash commands removal).
+      Skill is now the only entry point - invoked directly via /context-extract.
+      No functional changes to extraction logic itself.
 
 related_specs:
   - claude-code-extract-command-20260127152345
@@ -382,17 +382,12 @@ critical_rules:
     - Only proceed to cleanup if counts match
 
 activation_mechanisms:
-  command_invocation: |
-    User types /buildforce.extract [args]:
-    1. Claude Code loads extract.md from .buildforce/commands/
-    2. extract.md contains: "Call the context-extract skill with these arguments: $ARGUMENTS"
-    3. Claude Code loads SKILL.md from .claude/skills/context-extract/
-    4. SKILL.md routes to FOCUSED mode (args non-empty) or INCREMENTAL mode (no args)
-
-  direct_skill_invocation: |
+  skill_invocation: |
     User types /context-extract [args]:
     1. Claude Code loads SKILL.md from .claude/skills/context-extract/
     2. SKILL.md routes based on _index.yaml state and $ARGUMENTS
+    3. FOCUSED mode if args non-empty, INCREMENTAL mode if no args
+    Note: The extract.md command wrapper was removed in v3.0 (slash commands cleanup)
 
 extension_points:
   adding_extraction_mode: |

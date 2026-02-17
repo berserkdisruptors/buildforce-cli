@@ -108,7 +108,7 @@ export async function validateProjectSetup(
 }
 
 /**
- * Validate AI assistant selection
+ * Validate AI agent selection
  */
 export function validateAiAssistant(
   selectedAi: string,
@@ -117,26 +117,8 @@ export function validateAiAssistant(
   if (!aiChoices[selectedAi]) {
     console.error(
       chalk.red("Error:"),
-      `Invalid AI assistant '${selectedAi}'. Choose from: ${Object.keys(
+      `Invalid AI agent '${selectedAi}'. Choose from: ${Object.keys(
         aiChoices
-      ).join(", ")}`
-    );
-    process.exit(1);
-  }
-}
-
-/**
- * Validate script type selection
- */
-export function validateScriptType(
-  selectedScript: string,
-  scriptTypeChoices: Record<string, string>
-): void {
-  if (!scriptTypeChoices[selectedScript]) {
-    console.error(
-      chalk.red("Error:"),
-      `Invalid script type '${selectedScript}'. Choose from: ${Object.keys(
-        scriptTypeChoices
       ).join(", ")}`
     );
     process.exit(1);
@@ -153,11 +135,7 @@ export function checkAgentTool(
 ): void {
   const agentChecks: Record<string, string> = {
     claude: "https://docs.anthropic.com/en/docs/claude-code/setup",
-    gemini: "https://github.com/google-gemini/gemini-cli",
-    qwen: "https://github.com/QwenLM/qwen-code",
     opencode: "https://opencode.ai",
-    codex: "https://github.com/openai/codex",
-    auggie: "https://docs.augmentcode.com/cli/setup-auggie/install-auggie-cli",
   };
 
   if (agentChecks[selectedAi]) {
