@@ -6,17 +6,19 @@ created: "2026-02-04"
 last_updated: "2026-02-16"
 
 summary: |
-  Release packaging functionality that bundles Claude Code skills from src/templates/skills/
-  into .claude/skills/ in release ZIP packages. Skills are stored as directories containing
-  SKILL.md files with YAML frontmatter for agent filtering and skill configuration.
-  Follows the same pattern as generate_agents() for consistency. Currently Claude-only feature.
-  Primary consumer: context-extract skill for automatic context extraction.
+  Release packaging functionality that bundles skills from src/templates/skills/
+  into agent-specific skill directories in release ZIP packages. Skills are stored as
+  directories containing SKILL.md files with YAML frontmatter for agent filtering and
+  skill configuration. Follows the same pattern as generate_agents() for consistency.
+  Supports all three agents: Claude (.claude/skills/), Cursor (.cursor/skills/),
+  and OpenCode (.opencode/skills/). Primary consumer: context-extract skill for
+  automatic context extraction.
 
 responsibilities:
   - Bundle skill folders from src/templates/skills/ into release packages
   - Support agent filtering via 'agents:' YAML frontmatter in SKILL.md
   - Preserve entire skill folder structure (SKILL.md plus any additional files)
-  - Deploy skills to .claude/skills/ directory in target project
+  - Deploy skills to .{agent}/skills/ directory in target project (all three agents)
   - Exclude skills and hooks folders from template copy (avoid duplication)
   - Log filtering decisions during package generation
 
@@ -35,6 +37,8 @@ files:
     - .github/workflows/scripts/create-release-packages.sh
   secondary:
     - src/templates/skills/context-extract/SKILL.md
+    - src/templates/skills/context-search/SKILL.md
+    - src/templates/skills/context-add/SKILL.md
     - src/commands/upgrade/execution.ts
     - src/commands/init/setup.ts
 
@@ -48,8 +52,8 @@ design_decisions:
   - decision: "Follow generate_agents() pattern for consistency"
     rationale: "Agents and skills have similar bundling requirements. Reusing the proven pattern reduces complexity and ensures consistent behavior."
 
-  - decision: "Skills are Claude-only feature (for now)"
-    rationale: "Only Claude Code supports skills in .claude/skills/. Other AI assistants don't have equivalent skill systems. Can be extended when other agents add skill support."
+  - decision: "Skills are distributed to all three agents"
+    rationale: "All three supported agents (Claude, Cursor, OpenCode) receive skills via their respective skill directories. The agents: frontmatter field in SKILL.md controls per-skill filtering."
 
   - decision: "Copy entire skill folder, not just SKILL.md"
     rationale: "Skills may contain additional files (examples, schemas, etc.). Preserving folder structure allows for richer skill definitions in the future."
@@ -70,17 +74,16 @@ skill_structure: |
   ---
   name: skill-name
   description: Brief description
-  agents: [claude]          # Optional - if present, only bundle for listed agents
+  agents: [claude, cursor, opencode]  # Optional - if present, only bundle for listed agents
   ---
 
-  Output in release package:
-  .claude/skills/
-  └── {skill-name}/
-      └── SKILL.md
-      └── [other files]
+  Output in release packages:
+  .claude/skills/{skill-name}/SKILL.md      (Claude)
+  .cursor/skills/{skill-name}/SKILL.md      (Cursor)
+  .opencode/skills/{skill-name}/SKILL.md    (OpenCode)
 
 bundling_flow: |
-  1. create-release-packages.sh runs generate_skills() for Claude agent
+  1. create-release-packages.sh runs generate_skills() for each agent (claude, cursor, opencode)
   2. For each directory in src/templates/skills/:
      a. Check if SKILL.md exists (skip if not)
      b. Read SKILL.md content and parse frontmatter
@@ -88,7 +91,7 @@ bundling_flow: |
      d. Copy entire skill folder to output_dir/{skill-name}/
      e. Log filtering/copying decisions
   3. build_variant() excludes skills and hooks from .buildforce/templates/ copy
-  4. ZIP package contains .claude/skills/{skill-name}/SKILL.md
+  4. ZIP package contains .{agent}/skills/{skill-name}/SKILL.md for each agent
 
 agent_filtering: |
   Agent filtering logic (same as generate_agents):
@@ -120,8 +123,8 @@ related_specs:
 extract_skill_integration: |
   The skills bundling system is critical to the extract skill deployment chain:
   1. Source: src/templates/skills/context-extract/SKILL.md (with YAML frontmatter)
-  2. Bundling: generate_skills() copies to .claude/skills/context-extract/ in release ZIP
-  3. Deployment: init/upgrade extracts to user's .claude/skills/ directory
+  2. Bundling: generate_skills() copies to .{agent}/skills/context-extract/ in release ZIP (all 3 agents)
+  3. Deployment: init/upgrade extracts to user's .{agent}/skills/ directory
   4. Command: extract.md thin wrapper delegates to the skill for invocation
   5. Direct: User can also invoke the context-extract skill directly
 
@@ -137,6 +140,5 @@ notes: |
   init and upgrade.
 
   Future enhancements:
-  - Support skills bundling for other agents when they add skill support
   - Add skill version tracking
   - Support skill dependencies (one skill requiring another)

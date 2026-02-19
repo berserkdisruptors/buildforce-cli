@@ -250,8 +250,8 @@ architecture_patterns:
     SKILLS (src/templates/skills/*/SKILL.md):
     - generate_skills() function processes skill directories
     - agents: field filtering in SKILL.md frontmatter
-    - Entire skill directory copied to .claude/skills/
-    - Currently Claude-only but extensible
+    - Entire skill directory copied to .{agent}/skills/
+    - Distributed to all three agents
 
     HOOKS (src/templates/hooks/{claude,cursor,opencode}/):
     - Direct file copy to agent hook directories

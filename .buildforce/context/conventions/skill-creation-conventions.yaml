@@ -199,8 +199,7 @@ frontmatter_fields:
       notes: |
         Controls which agent release packages include this skill. The generate_skills()
         function in create-release-packages.sh reads this field and filters accordingly.
-        Default should be all three agents unless the skill uses agent-specific features
-        (e.g., Task tool for sub-agent spawning is Claude-only).
+        Default should be all three agents unless the skill uses agent-specific features.
 
   optional:
     - field: user-invocable
@@ -222,7 +221,7 @@ frontmatter_fields:
       when: "Skill needs to restrict or specify available tools"
       notes: |
         Lists the tools the skill is allowed to use. Common tools: Read, Write, Edit,
-        Glob, Grep, Bash, Task. Task tool is Claude-only (sub-agent spawning).
+        Glob, Grep, Bash, Task.
 
 content_structure_conventions:
   argument_handling: |
@@ -280,8 +279,7 @@ multi_agent_support: |
   Keep SKILL.md under 500 lines. Move detailed reference material to separate files.
 
   AGENT-SPECIFIC CONSIDERATIONS:
-  - Task tool (sub-agent spawning): Claude-only. Skills that use Task should set agents: [claude]
-  - Tool names: Use standard names (Read, Write, Edit, Glob, Grep, Bash). These are
+  - Tool names: Use standard names (Read, Write, Edit, Glob, Grep, Bash, Task). These are
     consistent across all three agents for skills.
   - No normalization needed: Unlike agent templates, skills are NOT passed through
     normalize-agent-templates.ts. They are copied as-is.

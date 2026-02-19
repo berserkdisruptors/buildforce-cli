@@ -18,7 +18,7 @@ responsibilities:
   - Template distribution and extraction from GitHub Releases or local artifacts
   - Local artifact resolution for offline workflows and testing
   - Context/knowledge management system for accumulated learning
-  - Skills deployment (context-extract, context-search) to agent directories
+  - Skills deployment (context-extract, context-search, context-add) to agent directories
   - Hooks deployment and settings merge for explorer sub-agent redirection
   - Progress tracking and user interaction flows
   - AI assistant detection and configuration (3 supported: claude, cursor, opencode)
@@ -431,9 +431,10 @@ core_modules:
 workflow_integration: |
   The CLI initializes projects with a pure context layer containing:
 
-  1. Skills (Claude Code):
+  1. Skills (all agents unless noted):
      - context-extract: Bootstraps and updates the context repository
      - context-search: Searches curated context for codebase knowledge
+     - context-add: Manually adds human knowledge to the context repository
 
   2. Hooks:
      - Claude: PreToolUse hook redirects Explore → buildforce-explorer
@@ -559,6 +560,7 @@ related_context:
   - sub-agent-architecture
   - extract-command
   - context-search-skill
+  - context-add-skill
   - explorer-agent
   - settings-merge-utility
   - skills-bundling

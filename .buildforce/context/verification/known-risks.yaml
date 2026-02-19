@@ -151,6 +151,24 @@ known_risks:
     occurrences: 0
     last_flagged: "2026-02-19"
 
+  - module: ".buildforce/context/_index.yaml"
+    risk: "context-add skill may leave _index.yaml in inconsistent state"
+    mitigation: |
+      The context-add skill (Step 5 + Step 6) performs two writes: the context file
+      and the _index.yaml update. If the skill is interrupted between these steps,
+      the context file exists but _index.yaml does not reference it (orphaned file),
+      or _index.yaml references a file that was not written (dangling reference).
+
+      Additionally, summary.total_items is manually incremented -- if context-add
+      runs concurrently or is interrupted, the count may drift from actual item count.
+
+      Mitigations:
+      - Run /context-extract to reconcile _index.yaml with actual files
+      - Manually verify _index.yaml item count matches file count
+      - The duplicate detection in Step 2 helps prevent double-adds on retry
+    occurrences: 0
+    last_flagged: "2026-02-19"
+
   - module: ".github/workflows/scripts/create-release-packages.sh"
     risk: "Agents invoke shell script directly instead of using npm scripts"
     mitigation: |

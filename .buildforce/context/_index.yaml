@@ -95,7 +95,7 @@ domains:
         depth: deep
         description: CLI architecture with template distribution, context layer, and 3-agent support
         tags: [ core, architecture, cli, commander, context-layer, skills, hooks ]
-        related_context: [ extract-command, context-search-skill, explorer-agent, upgrade-command, skills-bundling, settings-merge-utility ]
+        related_context: [ extract-command, context-search-skill, context-add-skill, explorer-agent, upgrade-command, skills-bundling, settings-merge-utility ]
 
       - id: upgrade-command
         file: architecture/upgrade-command.yaml
@@ -213,6 +213,15 @@ domains:
         description: Database-migration-inspired system for context schema upgrades (MigrationRunner class)
         tags: [ migration, upgrade, versioning, context-schema, sequential-execution ]
         related_context: [ upgrade-command, cli-architecture ]
+
+      - id: context-add-skill
+        file: architecture/context-add-skill.yaml
+        type: structural
+        status: extracted
+        depth: moderate
+        description: Multi-agent skill for manually adding human knowledge to the context repository
+        tags: [ skill, context-add, manual-entry, domain-classification, codebase-grounding, multi-agent ]
+        related_context: [ extract-command, context-search-skill, cli-architecture, skills-bundling, skill-creation-conventions ]
 
 
   conventions:
@@ -398,9 +407,9 @@ domains:
 
 summary:
   overall_coverage: 100
-  total_items: 31
-  extracted_items: 31
-  iterations_completed: 8
+  total_items: 32
+  extracted_items: 32
+  iterations_completed: 9
 
 # ============================================================================
 # EXTRACTION STATE
