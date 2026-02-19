@@ -4,7 +4,7 @@ type: convention
 sub_type: code-convention
 enforcement: strict
 created: "2026-02-05"
-last_updated: "2026-02-05"
+last_updated: "2026-02-19"
 
 description: |
   Conventions for writing buildforce agent templates. Agent templates are Markdown
@@ -240,7 +240,46 @@ instruction_structure:
     - "Emphasize speed for explorers ('Seconds, not minutes')"
     - "Include behavioral constraints ('Never write files directly')"
 
+hook_writing_conventions: |
+  When writing hook scripts for multi-agent support, follow these patterns:
+
+  FILE NAMING:
+  - All agents use the same script name: setup-explorer-subagent.{ext}
+  - Claude/Cursor: .sh extension (bash scripts)
+  - OpenCode: .ts extension (TypeScript plugin)
+
+  DIRECTORY STRUCTURE:
+  - Source templates: src/templates/hooks/{agent}/
+  - Claude: src/templates/hooks/claude/setup-explorer-subagent.sh
+  - Cursor: src/templates/hooks/cursor/setup-explorer-subagent.sh
+  - OpenCode: src/templates/hooks/opencode/setup-explorer-subagent.ts
+
+  AGENT-SPECIFIC API CONVENTIONS:
+  - Claude uses PascalCase events (PreToolUse) and camelCase fields (updatedInput)
+  - Cursor uses camelCase events (preToolUse) and snake_case fields (updated_input)
+  - OpenCode uses plugin API with execute.before callbacks
+  - Claude checks for "Explore" (capital E), Cursor checks for "explore" (lowercase e)
+  - OpenCode checks for "Explore" (capital E, same as Claude)
+
+  SETTINGS CONFIG CONVENTIONS:
+  - Hook configs are HARD-CODED in settings-merge.ts (not read from template files)
+  - CLAUDE_HOOKS_CONFIG and CURSOR_HOOKS_CONFIG are TypeScript constants
+  - OpenCode plugin content is an inline template string
+  - This means hook config changes require modifying settings-merge.ts source code
+
+  TEMPLATE FILTERING:
+  - agents: field in YAML frontmatter controls which agents receive the template
+  - agents: [claude] means Claude only (extractors, some skills)
+  - agents: [claude, cursor, opencode] means all agents (explorer, shared agents)
+  - agents: field is STRIPPED from frontmatter during release packaging
+
+  NORMALIZATION:
+  - Cursor and OpenCode agent templates pass through normalize-agent-templates.ts
+  - This script adjusts tool names and formatting for non-Claude agents
+  - Claude templates are used as-is (no normalization needed)
+
 related_context:
   - sub-agent-architecture
   - extract-command
-  - explore-command
+  - explorer-agent
+  - settings-merge-utility

@@ -58,7 +58,7 @@ version: "2.1"
 
 # Timestamps (populated by /buildforce.extract on first run)
 generated_at: "2026-02-02"
-last_updated: "2026-02-17"
+last_updated: "2026-02-19"
 
 # ============================================================================
 # CODEBASE PROFILE
@@ -92,7 +92,7 @@ domains:
         file: architecture/cli-architecture.yaml
         type: structural
         status: extracted
-        depth: moderate
+        depth: deep
         description: CLI architecture with template distribution, context layer, and 3-agent support
         tags: [ core, architecture, cli, commander, context-layer, skills, hooks ]
         related_context: [ extract-command, context-search-skill, explorer-agent, upgrade-command, skills-bundling, settings-merge-utility ]
@@ -128,7 +128,7 @@ domains:
         file: architecture/explorer-agent.yaml
         type: structural
         status: extracted
-        depth: moderate
+        depth: deep
         description: Explorer wrapper agent and hooks (Claude/Cursor/OpenCode) redirecting through context repository
         tags: [ agent, hook, explore-redirect, context-search, multi-agent ]
         related_context: [ context-search-skill, sub-agent-architecture, cli-architecture, settings-merge-utility ]
@@ -146,7 +146,7 @@ domains:
         file: architecture/settings-merge-utility.yaml
         type: structural
         status: extracted
-        depth: moderate
+        depth: deep
         description: Multi-agent settings merge utility (Claude, Cursor, OpenCode) with additive strategy
         tags: [ utility, settings, multi-agent, merge, hooks, permissions ]
         related_context: [ upgrade-command, cli-architecture, explorer-agent ]
@@ -291,11 +291,11 @@ domains:
         file: conventions/agent-template-conventions.yaml
         type: convention
         status: extracted
-        depth: moderate
+        depth: deep
         description: Conventions for writing buildforce agent templates (frontmatter, tools, output formats)
         sub_type: code-convention
         enforcement: strict
-        related_context: [ sub-agent-architecture, extract-command, context-search-skill ]
+        related_context: [ sub-agent-architecture, extract-command, context-search-skill, explorer-agent, settings-merge-utility ]
 
       - id: skill-naming-conventions
         file: conventions/skill-naming-conventions.yaml
@@ -356,10 +356,10 @@ domains:
         file: verification/known-risks.yaml
         type: verification
         status: extracted
-        depth: shallow
+        depth: moderate
         description: Known risks and areas requiring extra attention
         source: extracted
-        tags: [ risks, gaps, testing, linting ]
+        tags: [ risks, gaps, testing, linting, multi-agent, hooks ]
 
       - id: local-testing-workflow
         file: verification/local-testing-workflow.yaml
@@ -371,6 +371,16 @@ domains:
         tags: [ testing, local, templates, verification, workflow ]
         related_context: [ local-artifact-resolution, cli-architecture, manual-workflow-testing ]
 
+      - id: release-package-verification
+        file: verification/release-package-verification.yaml
+        type: verification
+        status: extracted
+        depth: moderate
+        description: Release package creation verification with anti-pattern documentation
+        source: manual
+        tags: [ release-packages, local-testing, anti-pattern, npm-scripts, verification ]
+        related_context: [ local-testing-workflow, local-artifact-resolution, skills-bundling, cli-architecture ]
+
 # ============================================================================
 # AGGREGATE SUMMARY
 # ============================================================================
@@ -378,9 +388,9 @@ domains:
 
 summary:
   overall_coverage: 100
-  total_items: 29
-  extracted_items: 29
-  iterations_completed: 6
+  total_items: 30
+  extracted_items: 30
+  iterations_completed: 8
 
 # ============================================================================
 # EXTRACTION STATE
@@ -391,13 +401,7 @@ summary:
 extraction:
   needs_clarification:
     - "Should linting tools (ESLint/Prettier) be added to the quality gates?"
-  recommended_focus:
-    - id: cli-architecture
-      reason: "Core item updated significantly - could benefit from deep depth reviewing the new 3-agent model"
-    - id: explorer-agent
-      reason: "Now supports 3 agents (Claude, Cursor, OpenCode) - could document per-agent hook differences in depth"
-    - id: settings-merge-utility
-      reason: "Major expansion to multi-agent strategies - could benefit from deep depth on each strategy"
+  recommended_focus: []
   new_discoveries:
     - id: step-tracker
       domain: architecture

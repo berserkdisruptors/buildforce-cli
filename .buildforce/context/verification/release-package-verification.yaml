@@ -1,0 +1,186 @@
+id: release-package-verification
+name: Release Package Verification
+type: verification
+source: manual
+created: "2026-02-19"
+last_updated: "2026-02-19"
+
+description: |
+  Verification step for building and testing release packages locally.
+  This documents the CORRECT way to create release packages and the COMMON
+  anti-pattern that agents repeatedly fall into.
+
+  CRITICAL: Agents must NEVER call the shell script directly. Always use npm scripts.
+
+# ============================================================================
+# THE ANTI-PATTERN (what agents keep doing wrong)
+# ============================================================================
+#
+# Agents repeatedly attempt to create release packages by:
+#   1. Setting environment variables (VERSION, NEW_VERSION, AGENTS, etc.)
+#   2. Running the shell script directly:
+#      .github/workflows/scripts/create-release-packages.sh
+#
+# This NEVER works locally because:
+#   - The script requires a version argument with v-prefix (e.g., v0.0.43)
+#   - The script is designed for CI/GitHub Actions workflows
+#   - Agents guess wrong env vars or pass them incorrectly
+#   - The script has strict validation that rejects malformed input
+#
+# ============================================================================
+
+anti_pattern:
+  description: |
+    Agents attempt to invoke the release packaging shell script directly,
+    often setting environment variables first, then calling:
+      .github/workflows/scripts/create-release-packages.sh
+    This approach consistently fails because the script expects a specific
+    version argument format and is designed for CI workflow use.
+  wrong_approaches:
+    - approach: "Setting env vars and running shell script directly"
+      example: |
+        export VERSION=0.0.43
+        .github/workflows/scripts/create-release-packages.sh
+      why_it_fails: "Script requires a positional argument with v-prefix (e.g., v0.0.43), not env vars"
+    - approach: "Trying to pass version without v-prefix"
+      example: |
+        .github/workflows/scripts/create-release-packages.sh 0.0.43
+      why_it_fails: "Script validates version format must match ^v[0-9]+.[0-9]+.[0-9]+$"
+    - approach: "Setting AGENTS env var incorrectly"
+      example: |
+        AGENTS=claude .github/workflows/scripts/create-release-packages.sh v0.0.43
+      why_it_fails: "While this could work in theory, agents typically get the full invocation wrong"
+
+correct_workflow:
+  description: |
+    The package.json already defines a "create-release-packages" npm script that
+    wraps the shell script with a hardcoded local-development version (v0.0.100).
+    This is the ONLY way agents should create release packages locally.
+
+  for_testing_upgrade:
+    commands:
+      - "npm run build"
+      - "npm run create-release-packages"
+      - "node ./dist/cli.js upgrade --local"
+    one_liner: "npm run build && npm run create-release-packages && node ./dist/cli.js upgrade --local"
+    purpose: "Build, package, and test the upgrade flow with local artifacts"
+    when_to_use: |
+      Use this when testing changes to:
+      - Template files (skills, agents, hooks)
+      - Upgrade command logic
+      - Settings merge behavior
+      - Migration system
+      - Any change that affects what gets distributed to users
+
+  for_testing_init:
+    commands:
+      - "npm run build"
+      - "npm run create-release-packages"
+      - "node ./dist/cli.js init . --local"
+    one_liner: "npm run build && npm run create-release-packages && node ./dist/cli.js init . --local"
+    purpose: "Build, package, and test the init flow with local artifacts"
+    when_to_use: |
+      Use this when testing changes to:
+      - Initial project scaffolding
+      - Template structure for fresh installs
+      - Agent-specific folder creation
+      - Default configuration generation
+    prerequisites: |
+      IMPORTANT: Before running init, back up the existing .buildforce folder:
+        mv .buildforce .buildforce-backup
+      After testing:
+        rm -rf .buildforce
+        mv .buildforce-backup .buildforce
+
+  why_npm_scripts_work: |
+    The package.json defines:
+      "create-release-packages": ".github/workflows/scripts/create-release-packages.sh v0.0.100"
+
+    This works because:
+    1. It passes the required version argument (v0.0.100) automatically
+    2. The version follows the required ^v[0-9]+.[0-9]+.[0-9]+$ format
+    3. v0.0.100 is a reserved "local development" version number
+    4. No environment variables need to be set
+    5. npm handles script execution and PATH resolution
+
+verification_steps:
+  step_1_build:
+    command: "npm run build"
+    verify: "No TypeScript compilation errors"
+    on_failure: "Fix TypeScript errors before proceeding"
+
+  step_2_package:
+    command: "npm run create-release-packages"
+    verify: |
+      Check that ZIP files are created in the .genreleases/ directory:
+      - buildforce-cli-template-claude-v0.0.100.zip
+      - buildforce-cli-template-cursor-v0.0.100.zip
+      - buildforce-cli-template-opencode-v0.0.100.zip
+    on_failure: "Check shell script syntax errors or missing source directories"
+
+  step_3_test:
+    command_upgrade: "node ./dist/cli.js upgrade --local"
+    command_init: "node ./dist/cli.js init . --local"
+    verify_upgrade: |
+      - Upgrade completes without errors
+      - Skills updated in .claude/skills/
+      - Agents updated in .claude/agents/
+      - Hooks updated in .claude/hooks/
+      - Context files preserved in .buildforce/context/
+      - buildforce.json version updated
+    verify_init: |
+      - Fresh .buildforce/ folder created
+      - Agent-specific folders created (.claude/, .cursor/, .opencode/)
+      - All templates correctly distributed
+      - Script permissions set correctly
+
+quality_standards:
+  - standard: "Never invoke shell script directly for local testing"
+    description: |
+      The .github/workflows/scripts/create-release-packages.sh script is designed
+      for CI use. For local testing, always use the npm script wrapper:
+      npm run create-release-packages
+    enforcement: strict
+    confidence: 1.0
+
+  - standard: "Always build before packaging"
+    description: |
+      npm run build must succeed before npm run create-release-packages.
+      The packaging script copies compiled output from dist/ into release archives.
+    enforcement: strict
+    confidence: 1.0
+
+  - standard: "Use --local flag for local artifact testing"
+    description: |
+      Both upgrade and init commands support --local flag which resolves artifacts
+      from the local .genreleases/ directory instead of downloading from GitHub.
+    enforcement: strict
+    confidence: 1.0
+
+known_risks:
+  - module: ".github/workflows/scripts/create-release-packages.sh"
+    risk: "Agents repeatedly try to run this script directly instead of via npm"
+    mitigation: |
+      ALWAYS use: npm run create-release-packages
+      NEVER use: .github/workflows/scripts/create-release-packages.sh [args]
+
+      The npm script handles the version argument automatically.
+      Direct invocation requires a v-prefixed version argument that agents
+      consistently get wrong.
+    occurrences: 3
+    last_flagged: "2026-02-19"
+
+  - module: "package.json (create-release-packages script)"
+    risk: "Hardcoded version v0.0.100 in npm script"
+    mitigation: |
+      The v0.0.100 version is intentionally hardcoded for local development.
+      It does NOT need to match the actual package version.
+      Do NOT change this version number - it is a convention for local testing.
+    occurrences: 0
+    last_flagged: "2026-02-19"
+
+related_context:
+  - verification/local-testing-workflow.yaml
+  - architecture/local-artifact-resolution.yaml
+  - architecture/skills-bundling.yaml
+  - architecture/cli-architecture.yaml

@@ -3,7 +3,7 @@ name: Known Risks
 type: verification
 source: extracted
 created: "2026-02-02"
-last_updated: "2026-02-17"
+last_updated: "2026-02-19"
 
 quality_standards:
   - standard: "Risk awareness documentation"
@@ -116,3 +116,56 @@ known_risks:
       Consider adding integration tests as future improvement.
     occurrences: 0
     last_flagged: "2026-02-17"
+
+  - module: "src/utils/settings-merge.ts"
+    risk: "OpenCode plugin is fully replaced on every merge, not additively merged"
+    mitigation: |
+      Unlike Claude/Cursor where settings are additively merged, the OpenCode plugin
+      file (.opencode/plugins/buildforce-explorer-redirect.ts) is fully overwritten
+      on each init/upgrade. If users customize this file, changes WILL be lost.
+      This is intentional since the plugin is single-purpose, but document for users.
+    occurrences: 0
+    last_flagged: "2026-02-19"
+
+  - module: "src/templates/hooks/**/*"
+    risk: "Per-agent hook API differences may cause subtle breakage"
+    mitigation: |
+      Claude, Cursor, and OpenCode each have different hook APIs:
+      - Claude: "Explore" (capital E), updatedInput (camelCase), hookSpecificOutput
+      - Cursor: "explore" (lowercase e), updated_input (snake_case), decision
+      - OpenCode: "Explore" (capital E), in-place mutation, plugin API
+
+      When modifying hook logic, ensure ALL three hook scripts are updated
+      consistently. A change to one must be verified against the other two.
+      The casing difference (Explore vs explore) is especially error-prone.
+    occurrences: 0
+    last_flagged: "2026-02-19"
+
+  - module: "src/utils/settings-merge.ts"
+    risk: "jq dependency not validated before hook execution"
+    mitigation: |
+      Claude and Cursor hook scripts depend on jq for JSON processing.
+      If jq is not installed, hooks fail silently (no output, exit 0 = no rewrite).
+      The buildforce check command does NOT verify jq installation.
+      Consider adding jq to the check command's tool verification list.
+    occurrences: 0
+    last_flagged: "2026-02-19"
+
+  - module: ".github/workflows/scripts/create-release-packages.sh"
+    risk: "Agents invoke shell script directly instead of using npm scripts"
+    mitigation: |
+      Agents repeatedly try to create release packages by setting env vars
+      and running the shell script directly. This NEVER works.
+
+      CORRECT approach (always use npm scripts):
+        npm run build && npm run create-release-packages && node ./dist/cli.js upgrade --local
+        npm run build && npm run create-release-packages && node ./dist/cli.js init . --local
+
+      WRONG approach (never do this):
+        .github/workflows/scripts/create-release-packages.sh [any args]
+
+      The npm "create-release-packages" script wraps the shell script with
+      the correct version argument (v0.0.100) automatically.
+      See: verification/release-package-verification.yaml for full details.
+    occurrences: 3
+    last_flagged: "2026-02-19"
