@@ -12,6 +12,7 @@ import { createConfigContent } from "../../utils/config.js";
 import { mergeAgentSettings } from "../../utils/settings-merge.js";
 import { resolveLocalArtifact } from "../../lib/local-artifacts.js";
 import { AGENT_FOLDER_MAP } from "../../constants.js";
+import { ensureBuildforceInstructionFiles } from "../../utils/agent-instructions.js";
 
 /**
  * Execute project setup steps with progress tracking
@@ -277,6 +278,18 @@ export async function setupProject(
       tracker.complete("merge-settings", detail);
     } else {
       tracker.skip("merge-settings", "no agents required settings merge");
+    }
+
+    // Ensure root instruction files include Buildforce context guidance.
+    const instructionFiles = await ensureBuildforceInstructionFiles(projectPath, {
+      selectedAi: successfulAgents,
+    });
+    if (debug && instructionFiles.updated.length > 0) {
+      console.log(
+        chalk.gray(
+          `[instructions] updated: ${instructionFiles.updated.join(", ")}`
+        )
+      );
     }
 
     // Git step
