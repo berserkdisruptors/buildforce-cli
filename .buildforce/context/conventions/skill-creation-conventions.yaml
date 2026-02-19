@@ -1,0 +1,317 @@
+id: skill-creation-conventions
+name: "Skill Creation Conventions"
+type: convention
+sub_type: code-convention
+enforcement: strict
+created: "2026-02-19"
+last_updated: "2026-02-19"
+
+description: |
+  Comprehensive conventions for creating Buildforce skills. Skills are Markdown-based
+  instruction files that define reusable AI agent capabilities. They live in
+  src/templates/skills/{skill-name}/ as directories containing a SKILL.md file
+  (with optional assets). Skills are distributed to all three supported agents
+  (Claude, Cursor, OpenCode) via the release packaging pipeline.
+
+  Every new skill MUST follow the directory structure, SKILL.md frontmatter format,
+  content structure, and multi-agent support patterns established by the existing skills
+  (context-extract, context-search, context-add). This ensures consistent bundling,
+  agent filtering, and upgrade behavior.
+
+  Key principle: Skills are agent-agnostic instruction files by default. The agents:
+  frontmatter field controls which agents receive the skill during release packaging.
+  Skills that use agent-specific features (like the Task tool for sub-agents) should
+  restrict their agents: field accordingly, but the content itself should be written
+  as plain Markdown instructions that any AI agent can interpret.
+
+examples:
+  - file: "src/templates/skills/context-extract/SKILL.md"
+    snippet: |
+      ---
+      name: context-extract
+      description: Extract and update context files based on recent implementation changes
+      agents: [claude, cursor, opencode]
+      user-invocable: true
+      context: fork
+      allowed-tools:
+        - Read
+        - Write
+        - Edit
+        - Glob
+        - Grep
+        - Bash
+        - Task
+      ---
+
+      # Unified Context Extraction
+
+      This skill handles all context extraction modes...
+
+      User input:
+
+      $ARGUMENTS
+
+      ---
+
+      ## Step 0: Route to Mode
+      ...
+
+  - file: "src/templates/skills/context-search/SKILL.md"
+    snippet: |
+      ---
+      name: context-search
+      description: >-
+        Search the Buildforce context repository for curated codebase knowledge...
+      agents: [claude, cursor, opencode]
+      ---
+
+      User input:
+
+      $ARGUMENTS
+
+      ## Prerequisites Check
+      ...
+
+  - file: "src/templates/skills/context-add/SKILL.md"
+    snippet: |
+      ---
+      name: context-add
+      description: >-
+        Add new knowledge to the context repository. Classifies the input into the right
+        domain (architecture, conventions, or verification)...
+      agents: [claude, cursor, opencode]
+      user-invocable: true
+      context: fork
+      allowed-tools:
+        - Read
+        - Write
+        - Edit
+        - Glob
+        - Grep
+      ---
+
+      # Add Context to Repository
+
+      ...
+
+      User input:
+
+      $ARGUMENTS
+
+violations:
+  - "Placing SKILL.md directly in src/templates/skills/ instead of a named subdirectory"
+  - "Using a flat file instead of a directory (skills are always directories, even with just SKILL.md)"
+  - "Omitting the agents: field in frontmatter (prevents proper agent filtering during release)"
+  - "Using camelCase or PascalCase for skill directory names (must be kebab-case)"
+  - "Missing $ARGUMENTS placeholder when the skill accepts user input"
+  - "Omitting --- separators between major sections (reduces readability for AI agents)"
+  - "Including agent-specific tool names that other agents cannot use without documenting it"
+  - "Forgetting to add the skill to the release packaging pipeline test"
+
+reference_files:
+  - "src/templates/skills/context-extract/SKILL.md"
+  - "src/templates/skills/context-extract/assets/extraction-progress-template.yaml"
+  - "src/templates/skills/context-search/SKILL.md"
+  - "src/templates/skills/context-add/SKILL.md"
+  - ".github/workflows/scripts/create-release-packages.sh"
+  - "src/commands/upgrade/execution.ts"
+
+template: |
+  # Skill Directory Structure
+
+  This project follows the Agent Skills specification (https://agentskills.io/specification).
+  The directory structure below extends the standard with src/templates/skills/ as the
+  source location for skill authoring.
+
+  src/templates/skills/
+  └── {skill-name}/           # kebab-case, {noun}-{verb} pattern (e.g., context-search)
+      ├── SKILL.md            # Required: skill definition with YAML frontmatter
+      ├── [assets/]           # Optional: static resources (templates, schemas, diagrams, data files)
+      ├── [references/]       # Optional: additional documentation loaded on demand by agents
+      │                       #   e.g., REFERENCE.md, domain-specific guides (finance.md, legal.md)
+      │                       #   Keep individual files focused — agents load these on demand
+      └── [scripts/]          # Optional: executable code agents can run (Python, Bash, JS)
+                              #   Scripts should be self-contained and include helpful error messages
+
+  # SKILL.md Template
+
+  ---
+  name: {skill-name}
+  description: >-
+    {One or two sentences describing what the skill does and when to use it.
+    This description is used by AI agents for skill discovery.}
+  agents: [claude, cursor, opencode]     # Which agents receive this skill
+  user-invocable: true                   # Optional: can the user invoke this directly?
+  context: fork                          # Optional: fork context for isolated execution
+  allowed-tools:                         # Optional: restrict available tools
+    - Read
+    - Write
+    - Edit
+    - Glob
+    - Grep
+  ---
+
+  # {Skill Title}
+
+  {Brief description of what this skill does.}
+
+  User input:
+
+  $ARGUMENTS
+
+  ---
+
+  ## Step 0: Prerequisites
+
+  {Check preconditions (files exist, context repo initialized, etc.)}
+
+  ---
+
+  ## Step N: {Action Name}
+
+  {Step instructions. Use ### for sub-steps within a step.}
+
+  ---
+
+  ## Error Handling
+
+  {How to handle failures gracefully.}
+
+frontmatter_fields:
+  required:
+    - field: name
+      format: "kebab-case, must match directory name"
+      notes: |
+        Follows the {noun}-{verb} naming convention (e.g., context-search, context-extract).
+        Must exactly match the parent directory name in src/templates/skills/.
+
+    - field: description
+      format: "String or multi-line >- block"
+      notes: |
+        Used by AI agents to determine when to invoke the skill. Should describe WHAT it does
+        and WHEN to use it. Keep under 200 characters for single-line, or use >- for multi-line.
+
+    - field: agents
+      format: "Array notation"
+      values:
+        all: "[claude, cursor, opencode]"
+        claude_only: "[claude]"
+      notes: |
+        Controls which agent release packages include this skill. The generate_skills()
+        function in create-release-packages.sh reads this field and filters accordingly.
+        Default should be all three agents unless the skill uses agent-specific features
+        (e.g., Task tool for sub-agent spawning is Claude-only).
+
+  optional:
+    - field: user-invocable
+      format: "boolean"
+      when: "Skill can be directly invoked by users via slash command"
+      notes: |
+        When true, the skill appears in the user's available slash commands.
+        When false or omitted, the skill is only used internally by other skills or agents.
+
+    - field: context
+      format: "fork"
+      when: "Skill needs isolated execution context"
+      notes: |
+        Setting context: fork gives the skill a clean execution context, preventing
+        it from being influenced by prior conversation state.
+
+    - field: allowed-tools
+      format: "Array of tool names"
+      when: "Skill needs to restrict or specify available tools"
+      notes: |
+        Lists the tools the skill is allowed to use. Common tools: Read, Write, Edit,
+        Glob, Grep, Bash, Task. Task tool is Claude-only (sub-agent spawning).
+
+content_structure_conventions:
+  argument_handling: |
+    Every skill that accepts user input MUST include the $ARGUMENTS placeholder:
+
+    ```
+    User input:
+
+    $ARGUMENTS
+    ```
+
+    This is placed after the title/description and before the first step. The runtime
+    replaces $ARGUMENTS with the user's actual input.
+
+  section_separators: |
+    Use horizontal rules (---) between major sections. This improves readability for
+    AI agents parsing the skill and provides clear boundaries between steps.
+
+  step_numbering: |
+    Use ## Step N: {Action Name} format for major steps. Start with Step 0 for
+    prerequisites/routing. Use ### for sub-steps within a step (e.g., ### 1.1 Sub-step).
+
+  error_handling: |
+    Include explicit error handling instructions. Each skill should define what happens
+    when preconditions fail, external operations time out, or unexpected states occur.
+    Use STOP to indicate the skill should halt execution.
+
+multi_agent_support: |
+  Skills support three agents: Claude, Cursor, and OpenCode. The distribution pipeline
+  handles per-agent filtering:
+
+  BUILD PHASE (create-release-packages.sh → generate_skills()):
+  1. Iterates over src/templates/skills/*/
+  2. Reads SKILL.md frontmatter for agents: field
+  3. Uses word-boundary matching (grep -w) to check if current agent is in list
+  4. Copies entire skill directory to output (preserving assets)
+  5. Runs for ALL three agents: Claude, Cursor, and OpenCode
+
+  DEPLOYMENT TARGETS:
+  - Claude: .claude/skills/{skill-name}/SKILL.md
+  - Cursor: .cursor/skills/{skill-name}/SKILL.md
+  - OpenCode: .opencode/skills/{skill-name}/SKILL.md
+
+  UPGRADE BEHAVIOR:
+  - Skills are replaced individually (not as a single folder replacement)
+  - Each skill directory is backed up before replacement
+  - Rollback restores individual skill backups on failure
+  - See src/commands/upgrade/execution.ts for implementation
+
+  PROGRESSIVE DISCLOSURE (per Agent Skills spec):
+  Skills are structured for efficient context usage:
+  1. Metadata (~100 tokens): name + description loaded at startup for all skills
+  2. Instructions (< 5000 tokens recommended): full SKILL.md body loaded on activation
+  3. Resources (as needed): files in references/, scripts/, assets/ loaded only when required
+  Keep SKILL.md under 500 lines. Move detailed reference material to separate files.
+
+  AGENT-SPECIFIC CONSIDERATIONS:
+  - Task tool (sub-agent spawning): Claude-only. Skills that use Task should set agents: [claude]
+  - Tool names: Use standard names (Read, Write, Edit, Glob, Grep, Bash). These are
+    consistent across all three agents for skills.
+  - No normalization needed: Unlike agent templates, skills are NOT passed through
+    normalize-agent-templates.ts. They are copied as-is.
+
+existing_skills_inventory: |
+  Current skills in the codebase (as of 2026-02-19):
+
+  1. context-extract
+     - Purpose: Extract and update context files from codebase analysis
+     - Agents: [claude, cursor, opencode]
+     - Assets: extraction-progress-template.yaml
+     - Features: Three modes (cold start, focused, incremental), sub-agent spawning via Task tool
+     - Frontmatter: user-invocable: true, context: fork, allowed-tools with Task
+
+  2. context-search
+     - Purpose: Search context repository for curated codebase knowledge
+     - Agents: [claude, cursor, opencode]
+     - Assets: none
+     - Features: Explorer sub-agent dispatch, intent classification, synthesis
+     - Frontmatter: minimal (no user-invocable, no allowed-tools)
+
+  3. context-add
+     - Purpose: Add new knowledge to context repository
+     - Agents: [claude, cursor, opencode]
+     - Assets: none
+     - Features: Domain classification, codebase grounding, _index.yaml update
+     - Frontmatter: user-invocable: true, context: fork, allowed-tools without Task
+
+related_context:
+  - skill-naming-conventions
+  - skills-bundling
+  - agent-template-conventions
+  - sub-agent-architecture

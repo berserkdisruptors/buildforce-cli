@@ -307,6 +307,16 @@ domains:
         enforcement: strict
         related_context: [ skills-bundling, extract-command ]
 
+      - id: skill-creation-conventions
+        file: conventions/skill-creation-conventions.yaml
+        type: convention
+        status: extracted
+        depth: deep
+        description: Comprehensive conventions for creating Buildforce skills (directory structure, frontmatter, multi-agent distribution)
+        sub_type: code-convention
+        enforcement: strict
+        related_context: [ skill-naming-conventions, skills-bundling, agent-template-conventions, sub-agent-architecture ]
+
       - id: migration-conventions
         file: conventions/migration-conventions.yaml
         type: convention
@@ -388,8 +398,8 @@ domains:
 
 summary:
   overall_coverage: 100
-  total_items: 30
-  extracted_items: 30
+  total_items: 31
+  extracted_items: 31
   iterations_completed: 8
 
 # ============================================================================
