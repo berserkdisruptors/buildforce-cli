@@ -2,9 +2,9 @@
 name: context-verify
 description: >-
   Verify current branch changes against the context repository. Checks conventions
-  for static compliance (naming, structure, patterns) and executes verification
-  procedures (build steps, output inspection, end-to-end validation) to confirm
-  changes meet established quality criteria.
+  for static compliance (naming, structure, patterns) and presents verification
+  steps to follow (build steps, output inspection, end-to-end validation) as a
+  checklist for the user to run.
 agents: [claude, cursor, opencode]
 user-invocable: true
 context: fork
@@ -17,10 +17,10 @@ allowed-tools:
 
 # Verify Changes Against Context Repository
 
-Verify the current branch's changes against the Buildforce context repository. This skill does two distinct things:
+Verify the current branch's changes against the Buildforce context repository. This skill produces a **report** — it does not execute verification procedures or auto-fix anything. It does two distinct things:
 
 1. **Conventions** (static checks): Compare changes against established conventions — naming patterns, file structure, required fields, anti-patterns. Result: violation, warning, or pass.
-2. **Verification** (procedural checks): Read verification context files to derive executable steps — build processes, output inspection, end-to-end validation — that the agent must run to confirm changes meet quality criteria. Result: a set of executed procedures with pass/fail outcomes.
+2. **Verification** (step checklist): Read verification context files to derive the steps that should be followed — build processes, output inspection, test execution, end-to-end validation — and present them as a checklist. The agent does NOT execute these steps; it compiles them for the user to follow.
 
 User input:
 
@@ -79,37 +79,45 @@ git rev-parse --verify <base>
 
 ## Step 1: Collect Changes
 
-Gather all changes on the current branch relative to the base branch.
+Use **either/or** logic — never combine uncommitted and committed changes.
 
-1. Get the list of changed files (committed changes on branch):
+### 1.1 Check for staged/unstaged changes first
+
+```bash
+git diff --name-only
+git diff --cached --name-only
+```
+
+Combine these two lists (deduplicated). If the result is non-empty, these are the changes to verify (**pre-commit check** mode). Skip the base branch comparison entirely — Step 0's base branch detection can be skipped too.
+
+Get the full diff content:
+```bash
+git diff
+git diff --cached
+```
+
+### 1.2 If working tree is clean, use committed branch changes
+
+If both commands above returned empty, fall back to committed changes against the base branch:
+
 ```bash
 git diff <base>...HEAD --name-only
 ```
 
-2. Get uncommitted changes:
-```bash
-git diff --name-only
-```
-
-3. Combine both lists into a unified set of changed files (deduplicated).
-
-**Exclude** all files under `.buildforce/` — the context repository itself is out of scope for verification. Only verify source code and project files outside of `.buildforce/`.
-
-4. Get the full diff content for committed changes:
+Get the full diff content:
 ```bash
 git diff <base>...HEAD
 ```
 
-5. Get the full diff content for uncommitted changes:
-```bash
-git diff
-```
+### 1.3 Filter and validate
 
-**If no changes found anywhere (both lists empty):**
+**Exclude** all files under `.buildforce/` — the context repository itself is out of scope for verification. Only verify source code and project files outside of `.buildforce/`.
+
+**If no changes found (empty list after filtering):**
 - Tell the user: "No changes to verify."
 - STOP.
 
-Store the combined file list and diff content for use in subsequent steps.
+Store the file list and diff content for use in subsequent steps. Track which mode was used (uncommitted vs. committed) for the report header.
 
 ---
 
@@ -163,13 +171,13 @@ Extract static, checkable rules:
 
 ### 3B: Verification Files (domain: `verification`)
 
-Extract procedural validation steps. Verification files describe *processes the agent must execute* — not just patterns to match. Read the file carefully to understand:
+Extract procedural validation steps. Verification files describe *processes that should be followed* — not just patterns to match. Read the file carefully to understand:
 - What conditions trigger this verification (e.g., "when files in X directory change")
-- What steps to run (e.g., "execute the build, extract the output, inspect contents")
+- What steps should be followed (e.g., "run the build, extract the output, inspect contents")
 - What the expected outcome looks like (e.g., "the packaged archive must contain the new files")
 - `known_risks` with `module` glob patterns — flag when changes touch risky areas and surface the documented mitigation
 
-Each verification file may describe a multi-step procedure. Collect these as executable verification procedures for Step 4B.
+Each verification file may describe a multi-step procedure. Collect these as verification checklist items for Step 4B.
 
 ### Skip Rules That Are
 - Purely informational (`enforcement: reference`) unless the changed files directly match
@@ -177,7 +185,7 @@ Each verification file may describe a multi-step procedure. Collect these as exe
 
 ---
 
-## Step 4: Execute Checks
+## Step 4: Analyze Changes
 
 ### 4A: Convention Compliance (static checks)
 
@@ -193,24 +201,16 @@ Classify each convention finding as:
 - **warning**: A `recommended` rule may not be followed, or changes are in a documented risk zone
 - **pass**: The rule was checked and the changes comply
 
-### 4B: Verification Procedures (procedural checks)
+### 4B: Verification Procedures (compile checklist)
 
-For each verification procedure extracted in Step 3B, **execute the described steps**. This is not pattern matching — the agent must actively run the procedures described in the verification file.
+For each verification procedure extracted in Step 3B, **compile the described steps into a checklist** for the user to follow. Do NOT execute any verification steps — read the verification files, match them against the changes, and output the steps as actionable items.
 
-Examples of what verification procedures might require:
-- **Running tests** — the most common and important verification. Use the `test_execution` field to determine which test types and which specific test suites to run based on which modules were changed. Run the exact commands documented in the verification file.
-- Running a build process and inspecting the output artifacts
-- Extracting an archive and confirming expected files are present
-- Executing a command and checking its exit code or output
-- Reading generated files and validating their contents against expectations
-
-**Test execution is the primary verification mechanism.** If a verification file contains a `test_execution` field with `module_test_map`, use it to determine exactly which tests to run based on the changed files. For example, if `src/auth/login.ts` changed and the map says auth is covered by `[unit, e2e]`, run both the unit and e2e commands for auth. If the map shows a module has no coverage (`covered_by: []`), report that as a warning — changes to untested modules carry higher risk.
-
-For each procedure:
+For each applicable verification file:
 1. Read the verification file's steps carefully (pay special attention to `test_execution` and `verification_procedures`)
-2. Execute each step using the available tools (Bash for commands, Read/Glob/Grep for inspection)
-3. Compare actual results against the expected outcomes documented in the verification file
-4. Record: **pass** if the procedure's expectations are met, **fail** if not (with details on what diverged)
+2. Match the changed files against the verification file's scope to determine which steps are relevant
+3. Compile each relevant step into a checklist item with: the command to run, what to inspect, and what the expected outcome should be
+
+**Test execution steps:** If a verification file contains a `test_execution` field with `module_test_map`, use it to determine which tests should be run based on the changed files. For example, if `src/auth/login.ts` changed and the map says auth is covered by `[unit, e2e]`, list both the unit and e2e commands as steps to run. If the map shows a module has no coverage (`covered_by: []`), report that as a warning — changes to untested modules carry higher risk.
 
 For `known_risks` entries: flag when changes touch modules with documented risks and surface the risk description and its mitigation guidance as a **warning**.
 
@@ -223,14 +223,14 @@ Output the verification report in this format:
 ```
 ## Verification Report
 
-Branch: `{current-branch}` -> `{base-branch}`
-Files changed: {N} | Conventions checked: {C} | Verification procedures run: {V}
+Branch: `{current-branch}` {→ `{base-branch}` if committed mode, or "(uncommitted changes)" if pre-commit mode}
+Files changed: {N} | Conventions checked: {C} | Verification steps compiled: {V}
 
-**Combined file list** (committed + uncommitted, deduplicated):
+**Changed files** {("staged/unstaged" or "committed vs {base-branch}")}:
 
 | # | File | Status |
 |---|------|--------|
-| 1 | `{file-path}` | {Modified/New/Deleted/New (untracked)} |
+| 1 | `{file-path}` | {Modified/New/Deleted/Staged/Unstaged} |
 
 ---
 
@@ -254,15 +254,17 @@ N. **{rule-name}** - `{file-path}`
 {For each pass:}
 - **{rule-name}** -- {brief explanation of what was checked}
 
-### Verification Procedures ({count})
+### Verification Steps to Follow ({count})
 
-{For each procedure executed:}
-N. **{verification-rule-name}** — {result: PASS or FAIL}
-   Procedure: {what was executed}
-   {If PASS:} Result: {brief confirmation of what was validated}
-   {If FAIL:} Expected: {what should have happened}
-   Actual: {what happened instead}
-   Fix: {specific action to fix}
+{For each matched verification rule, list the steps the user should follow:}
+N. **{verification-rule-name}**
+   Applies because: {why this rule matched — e.g., "changes to files in src/auth/"}
+   Steps:
+   a. {command to run or action to take}
+      Expected: {what the outcome should be}
+   b. {next command or action}
+      Expected: {expected outcome}
+   ...
 
 ### Verification Warnings ({count})
 
@@ -280,11 +282,13 @@ End the report with a horizontal rule and a summary sentence.
 
 ## Step 6: Follow-Up
 
-Based on the results, provide a clear next action:
+Based on the results, provide a clear summary:
 
-- **If convention violations or verification failures found**: "Found {N} violation(s) and {F} failed verification(s). Want me to fix them?"
-- **If only warnings**: "No violations or failures. {N} warning(s) to be aware of - no action needed."
-- **If all passed**: "All conventions passed and all verification procedures succeeded. Changes look good."
+- **If convention violations found**: "Found {N} convention violation(s). Review the report above."
+- **If verification steps were compiled**: "Found {V} verification procedure(s) to follow. Run the steps listed above to validate your changes."
+- **If both**: "Found {N} convention violation(s) and {V} verification procedure(s) to follow. Review the report above."
+- **If only warnings**: "No violations found. {W} warning(s) to be aware of — no action needed."
+- **If all conventions passed and no verification steps**: "All conventions passed. No verification steps apply. Changes look good."
 
 ---
 
