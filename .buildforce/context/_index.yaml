@@ -58,7 +58,7 @@ version: "2.1"
 
 # Timestamps (populated by /buildforce.extract on first run)
 generated_at: "2026-02-02"
-last_updated: "2026-02-17"
+last_updated: "2026-02-20"
 
 # ============================================================================
 # CODEBASE PROFILE
@@ -317,6 +317,16 @@ domains:
         enforcement: strict
         related_context: [ migration-runner, upgrade-command ]
 
+      - id: testing-conventions
+        file: conventions/testing-conventions.yaml
+        type: convention
+        status: extracted
+        depth: moderate
+        description: Testing conventions for vitest three-tier strategy (unit, integration, e2e)
+        sub_type: testing-standard
+        enforcement: strict
+        related_context: [ cli-architecture, manual-workflow-testing ]
+
   verification:
     description: |
       Verification context about HOW to know if code is right.
@@ -378,9 +388,9 @@ domains:
 
 summary:
   overall_coverage: 100
-  total_items: 29
-  extracted_items: 29
-  iterations_completed: 6
+  total_items: 30
+  extracted_items: 30
+  iterations_completed: 7
 
 # ============================================================================
 # EXTRACTION STATE
@@ -399,6 +409,10 @@ extraction:
     - id: settings-merge-utility
       reason: "Major expansion to multi-agent strategies - could benefit from deep depth on each strategy"
   new_discoveries:
+    - id: testing-infrastructure
+      domain: architecture
+      description: "Three-tier vitest testing strategy with CI pipeline, helpers, and coverage"
+      priority: low
     - id: step-tracker
       domain: architecture
       description: "Visual progress tracking class for hierarchical step display"

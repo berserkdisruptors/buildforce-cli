@@ -3,7 +3,7 @@ name: Quality Gates
 type: verification
 source: extracted
 created: "2026-02-02"
-last_updated: "2026-02-02"
+last_updated: "2026-02-20"
 
 quality_standards:
   - standard: "Branch naming convention"
@@ -28,7 +28,28 @@ quality_standards:
     description: |
       All TypeScript must compile without errors before release.
       Build step runs `tsc` with strict mode.
-      Enforced in: .github/workflows/release.yml and .github/workflows/npm-publish.yml
+      Enforced in: .github/workflows/release.yml, .github/workflows/npm-publish.yml,
+      and .github/workflows/test.yml (type check step: npx tsc --noEmit).
+    enforcement: strict
+    confidence: 1.0
+
+  - standard: "Automated test suite must pass"
+    description: |
+      Three-tier test suite must pass in CI before merge:
+      1. Unit tests (npm run test:unit) - Pure function tests with mocks
+      2. Integration tests (npm run test:integration) - Real filesystem operations
+      3. E2E tests (npm run test:e2e) - Full CLI execution (requires build)
+      Runs across Node.js 18, 20, and 22 matrix.
+      Enforced in: .github/workflows/test.yml on PR and push to main/develop.
+    enforcement: strict
+    confidence: 1.0
+
+  - standard: "Coverage thresholds"
+    description: |
+      Code coverage must meet minimum thresholds:
+      - Statements: 30%, Branches: 25%, Functions: 30%, Lines: 30%
+      Measured by vitest with v8 provider. Reported on Node.js 20 in CI.
+      Enforced in: vitest.config.ts thresholds and .github/workflows/test.yml.
     enforcement: strict
     confidence: 1.0
 
@@ -52,6 +73,14 @@ review_checklist:
   - item: "TypeScript compiles without errors"
     frequency: 1.0
     example_comment: "Run npm run build to verify compilation"
+
+  - item: "All test tiers pass"
+    frequency: 1.0
+    example_comment: "Run npm test to verify unit, integration, and e2e tests pass"
+
+  - item: "Coverage thresholds met"
+    frequency: 0.8
+    example_comment: "Run npm run test:coverage to verify thresholds"
 
 compliance_requirements:
   - requirement: "Git hooks must be enabled"

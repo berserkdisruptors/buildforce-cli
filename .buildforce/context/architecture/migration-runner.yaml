@@ -3,7 +3,7 @@ name: Migration Runner System
 type: structural
 status: production
 created: "2026-01-28"
-last_updated: "2026-02-17"
+last_updated: "2026-02-20"
 
 summary: |
   Database-migration-inspired system for context schema upgrades. Implements
@@ -39,6 +39,7 @@ files:
     - src/commands/upgrade/migrations/registry.ts
   secondary:
     - src/commands/upgrade/migrations/v2.0.ts
+    - src/commands/upgrade/migrations/v20-helpers.ts
     - src/commands/upgrade/migrations/v2.1.ts
     - src/commands/upgrade/execution.ts
 
@@ -261,6 +262,16 @@ evolution:
       Updated migration file paths in upgrade command. MigrationRunner now receives
       firstSourceDir (extracted template) as templateSourceDir parameter. Migrations
       use this to copy schema files and templates from release package.
+
+  - version: "1.2"
+    date: "2026-02-20"
+    changes: |
+      Extracted pure helper functions from v2.0.ts into v20-helpers.ts for testability.
+      Moved types (OldConventionItem, NewConventionFile) and pure functions (toKebabCase,
+      getItemName, sectionToSubType, convertToNewConvention, formatYamlValue) to separate
+      file. Also exported mergeArraysUnique/mergeSettings from settings-merge.ts.
+      Added comprehensive test coverage: unit tests for helpers and runner, integration
+      tests for v2.0, v2.1, and full runner path.
 
 related_context:
   - upgrade-command
