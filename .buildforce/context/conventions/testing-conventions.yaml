@@ -1,0 +1,117 @@
+id: testing-conventions
+name: "Testing Conventions"
+type: convention
+sub_type: testing-standard
+enforcement: strict
+created: "2026-02-20"
+last_updated: "2026-02-20"
+
+description: |
+  Conventions for writing and organizing tests in the Buildforce CLI project.
+  The project uses vitest v4 with a three-tier test strategy: unit, integration,
+  and e2e. Tests must follow specific patterns for each tier and use shared
+  helper utilities for test isolation and fixture creation.
+
+examples:
+  - file: "tests/unit/utils/config.test.ts"
+    snippet: |
+      import { describe, it, expect } from 'vitest';
+      import { getDefaultConfig } from '../../../src/utils/config.js';
+
+      describe('getDefaultConfig', () => {
+        it('returns object with framework: buildforce', () => {
+          const config = getDefaultConfig();
+          expect(config).toEqual({ framework: 'buildforce' });
+        });
+      });
+
+  - file: "tests/integration/utils/config-io.test.ts"
+    snippet: |
+      import { createTempDir, cleanupTempDir } from '../../helpers/temp-dir.js';
+
+      let projectDir: string;
+      beforeEach(async () => {
+        projectDir = createTempDir('bf-config-');
+        await fs.ensureDir(path.join(projectDir, '.buildforce'));
+      });
+      afterEach(() => { cleanupTempDir(projectDir); });
+
+  - file: "tests/e2e/check.test.ts"
+    snippet: |
+      const CLI_PATH = path.resolve('dist/cli.js');
+      function runCli(args: string): string {
+        return execSync(`node ${CLI_PATH} ${args}`, {
+          encoding: 'utf8', timeout: 10000,
+          env: { ...process.env, FORCE_COLOR: '0' },
+        });
+      }
+
+violations:
+  - "Placing integration tests in the unit test directory"
+  - "Using real filesystem operations in unit tests (use vi.mock instead)"
+  - "Running e2e tests without building first (dist/cli.js must be current)"
+  - "Not cleaning up temporary directories in afterEach hooks"
+  - "Using process.exit() in tests without the setup.ts mock"
+
+reference_files:
+  - "vitest.config.ts"
+  - "tests/setup.ts"
+  - "tests/helpers/temp-dir.ts"
+  - "tests/helpers/fixtures.ts"
+  - "tests/helpers/yaml-builders.ts"
+  - "tests/unit/utils/settings-merge.test.ts"
+  - "tests/integration/migrations/runner-full.test.ts"
+  - "tests/e2e/init.test.ts"
+
+rules:
+  directory_structure: |
+    tests/
+      unit/           # Pure function tests with mocked dependencies
+        cli/           # CLI-specific utility tests
+        commands/      # Command handler unit tests
+          upgrade/     # Upgrade sub-command tests
+        lib/           # Library class tests
+        utils/         # Utility function tests
+        validation/    # Validation logic tests
+      integration/     # Real filesystem and I/O tests
+        commands/      # Command validation integration tests
+        migrations/    # Migration execution with real files
+        utils/         # Utility integration tests
+      helpers/         # Shared test helpers (not test files)
+      e2e/            # Full CLI execution tests
+      setup.ts        # Global test setup
+
+  unit_test_rules: |
+    - Use vi.mock() for all external dependencies (fs, child_process, etc.)
+    - Import from source using .js extension (ESM resolution)
+    - Mirror src/ directory structure in tests/unit/
+    - Test pure logic only - no filesystem, network, or process operations
+
+  integration_test_rules: |
+    - Use createTempDir(prefix) for test isolation (resolves macOS /var symlinks)
+    - Always cleanupTempDir() in afterEach()
+    - Use fs-extra for filesystem operations
+    - Test real I/O behavior (file creation, config merging, migration execution)
+
+  e2e_test_rules: |
+    - Run against built dist/cli.js (requires npm run build first)
+    - Use execSync with FORCE_COLOR=0 for predictable output
+    - Use --local flag with test ZIP artifacts for init/upgrade tests
+    - Set reasonable timeouts (10-30 seconds)
+    - Use AdmZip to create minimal test artifact ZIPs
+
+  helper_conventions: |
+    - createTempDir(prefix): Creates isolated temp dir with real path resolution
+    - cleanupTempDir(path): Best-effort recursive removal
+    - createAgentTemplate(opts): Builds agent template with frontmatter
+    - createBuildforceConfig(overrides): Builds minimal config object
+    - createV1IndexYaml(entries): Builds v1.0 _index.yaml for migration tests
+    - createV2IndexYaml(): Builds v2.0 _index.yaml
+    - createDomainIndexYaml(entries): Builds domain _index.yaml
+    - createGuidelinesYaml(sections): Builds _guidelines.yaml for migration tests
+
+  process_exit_handling: |
+    Global setup (tests/setup.ts) mocks process.exit() to throw an Error
+    with message "process.exit(CODE)". Tests that expect exit behavior should:
+    - Use expect(...).rejects.toThrow('process.exit(1)') for async
+    - Use expect(() => ...).toThrow('process.exit(1)') for sync

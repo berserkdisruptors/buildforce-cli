@@ -75,7 +75,7 @@ const CURSOR_HOOKS_CONFIG = {
 /**
  * Deep merge two arrays, removing duplicates based on JSON.stringify comparison
  */
-function mergeArraysUnique<T>(existing: T[], incoming: T[]): T[] {
+export function mergeArraysUnique<T>(existing: T[], incoming: T[]): T[] {
   const result = [...existing];
   const existingStrings = new Set(existing.map((item) => JSON.stringify(item)));
 
@@ -96,7 +96,7 @@ function mergeArraysUnique<T>(existing: T[], incoming: T[]): T[] {
  * - Objects are merged recursively
  * - Existing values are preserved
  */
-function mergeSettings(
+export function mergeSettings(
   existing: AgentSettings,
   incoming: AgentSettings
 ): AgentSettings {

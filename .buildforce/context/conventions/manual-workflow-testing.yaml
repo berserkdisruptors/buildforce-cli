@@ -4,23 +4,34 @@ type: convention
 sub_type: testing-standard
 enforcement: recommended
 created: "2026-01-26"
-last_updated: "2026-01-26"
+last_updated: "2026-02-20"
 
 description: |
-  Since slash commands are templates interpreted by AI, automated unit tests
-  have limited value. Primary testing strategy is end-to-end workflow testing:
-  run actual commands and verify output files match expected structure.
-  
+  Manual workflow testing complements the automated test suite for areas that
+  cannot be covered by automated tests. Skills and agent templates are interpreted
+  by AI agents at runtime and require manual verification. The automated vitest
+  suite covers utilities, migrations, CLI commands, and settings merge logic.
+  Manual testing remains necessary for:
+  - Template changes (skills, agents, hooks)
+  - AI agent behavior validation
+  - Visual output verification
 
 examples:
   - file: "example"
     snippet: |
-      # Test /plan workflow
-      1. Run /plan for new feature
-      2. Verify spec.yaml created with correct schema
-      3. Check plan.yaml contains all required sections
-      4. Validate YAML syntax with yamllint
-      
+      # Automated test tiers (run via npm scripts):
+      npm run test:unit          # Pure function tests
+      npm run test:integration   # Real filesystem tests
+      npm run test:e2e           # Full CLI execution tests
+
+      # Manual testing still needed for:
+      1. Template changes: Run init with --local, verify agent files
+      2. Skill behavior: Invoke skill in Claude, verify output
+      3. Hook behavior: Trigger explore redirect, verify context search
 
 reference_files:
-  - "src/templates/plan-template.yaml (validation section)"
+  - "vitest.config.ts"
+  - "tests/setup.ts"
+  - "tests/helpers/temp-dir.ts"
+  - "tests/helpers/fixtures.ts"
+  - "tests/helpers/yaml-builders.ts"

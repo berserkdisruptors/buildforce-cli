@@ -3,7 +3,7 @@ name: Buildforce CLI Architecture
 type: structural
 status: production
 created: 2025-10-27
-last_updated: "2026-02-16"
+last_updated: "2026-02-20"
 
 summary: |
   Comprehensive architecture of the Buildforce CLI tool - a Node.js-based command-line
@@ -49,6 +49,8 @@ dependencies:
     - which: "^5.0.0 - Executable detection"
     - cli-table3: "^0.6.5 - Table formatting"
     - glob: "^10.3.10 - Pattern matching for local artifact discovery"
+    - vitest: "^4.0.18 - Test framework (dev)"
+    - "@vitest/coverage-v8": "^4.0.18 - Coverage provider (dev)"
 
 files:
   primary:
@@ -64,6 +66,7 @@ files:
     - src/lib/step-tracker.ts
     - src/config/agents.ts
     - src/utils/settings-merge.ts
+    - src/utils/text-format.ts
     - src/context/_index.yaml
     - .github/workflows/scripts/create-release-packages.sh
   secondary:
@@ -385,6 +388,7 @@ core_modules:
     - "commands.ts - Shell command execution wrapper"
     - "config.ts - Configuration file read/write (buildforce.json management)"
     - "settings-merge.ts - Agent settings merge utility (hooks, permissions) for Claude, Cursor, OpenCode"
+    - "text-format.ts - Text formatting utilities (hardWrap, formatKeyValueRows) extracted from cli.ts"
     - "box.ts - Shared box component utility with standardized #D3FFCA borders"
 
   configuration:
@@ -505,6 +509,17 @@ evolution:
       no script variants). BuildforceConfig simplified (removed sessionsFolder, currentSession,
       scriptType). Upgrade command now replaces skills, hooks, and agents instead of commands,
       templates, and scripts.
+
+  - version: "3.1"
+    date: "2026-02-20"
+    changes: |
+      Added comprehensive testing strategy with vitest v4. Three-tier test suite:
+      unit (14 test files), integration (7 test files), e2e (3 test files). CI pipeline
+      via .github/workflows/test.yml running across Node.js 18/20/22 matrix. Coverage
+      thresholds (30/25/30/30). Refactored for testability: extracted hardWrap/formatKeyValueRows
+      to src/utils/text-format.ts, extracted migration helpers to v20-helpers.ts, exported
+      mergeArraysUnique/mergeSettings from settings-merge.ts. Test helpers: temp-dir,
+      fixtures, yaml-builders.
 
 related_specs:
   - "standardize-cli-title-display-20250130220000"

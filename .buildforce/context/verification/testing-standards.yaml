@@ -3,15 +3,17 @@ name: Testing Standards
 type: verification
 source: extracted
 created: "2026-02-02"
-last_updated: "2026-02-17"
+last_updated: "2026-02-20"
 
 quality_standards:
-  - standard: "No automated tests exist"
+  - standard: "Three-tier automated test suite with vitest"
     description: |
-      This project currently has NO automated testing infrastructure.
-      The package.json test script explicitly returns an error: "Error: no test specified".
-      All verification must be done manually through local execution and manual review.
-    enforcement: reference
+      The project uses vitest v4 as the test framework with a three-tier strategy:
+      - Unit tests (tests/unit/): Pure function tests with mocked dependencies
+      - Integration tests (tests/integration/): Real filesystem operations with temp dirs
+      - E2E tests (tests/e2e/): Full CLI execution against built dist/cli.js
+      All tiers run in CI across Node.js 18, 20, and 22.
+    enforcement: strict
     confidence: 1.0
 
   - standard: "TypeScript strict mode"
@@ -22,60 +24,100 @@ quality_standards:
     enforcement: strict
     confidence: 1.0
 
+  - standard: "Coverage thresholds enforced in CI"
+    description: |
+      vitest coverage via v8 provider with thresholds:
+      - Statements: 30%, Branches: 25%, Functions: 30%, Lines: 30%
+      Coverage runs on Node.js 20 in CI. Excludes types, constants, agent config,
+      scripts, and templates from coverage calculation.
+    enforcement: strict
+    confidence: 1.0
+
 test_expectations:
   unit_tests:
-    when_required: "Not currently implemented - no test framework exists"
-    patterns: "N/A - tests need to be added"
+    when_required: |
+      Pure utility functions, data transformations, validation logic,
+      any exported function that can be tested without filesystem or network I/O.
+    patterns: |
+      Vitest with describe/it blocks. Use vi.mock() for dependencies.
+      Located in tests/unit/ mirroring src/ directory structure.
+      Examples: settings-merge.test.ts, config.test.ts, git.test.ts,
+      agent-normalize.test.ts, tools.test.ts, text-format.test.ts,
+      migrations-index.test.ts, migrations-v20-helpers.test.ts, runner.test.ts
   integration_tests:
-    when_required: "Not currently implemented"
-    patterns: "N/A - tests need to be added"
+    when_required: |
+      Commands that interact with filesystem, config I/O, migration execution,
+      agent settings merge with real file creation.
+    patterns: |
+      Vitest with real filesystem via createTempDir()/cleanupTempDir() helpers.
+      Located in tests/integration/ organized by feature area.
+      Examples: config-io.test.ts, settings-merge.test.ts,
+      v20-migration.test.ts, v21-migration.test.ts, runner-full.test.ts,
+      init-validation.test.ts, upgrade-validation.test.ts
   e2e_tests:
-    when_required: "Not currently implemented"
-    patterns: "N/A - tests need to be added"
+    when_required: |
+      Full CLI command execution, verifying real user-facing behavior.
+      Must build first (npm run build) since tests run against dist/cli.js.
+    patterns: |
+      Vitest with execSync calling "node dist/cli.js" with real arguments.
+      Use local artifact ZIPs (AdmZip) for init/upgrade tests.
+      Located in tests/e2e/. Examples: init.test.ts, check.test.ts, upgrade.test.ts
   migration_testing:
     when_required: |
       When modifying src/commands/upgrade/migrations/*.ts
       When adding new migrations (v3.0, etc.)
       When changing MigrationRunner behavior
     patterns: |
-      NO AUTOMATED TESTS EXIST for migrations. Manual verification required:
-      
-      1. Version detection test:
-         - Create test .buildforce/context with specific version
-         - Run upgrade, verify correct migrations apply
-         
-      2. Skip behavior test:
-         - Run upgrade on already-migrated content
-         - Verify "skipped" status and no changes
-         
-      3. Error handling test:
-         - Corrupt a migration target (e.g., invalid YAML)
-         - Verify graceful failure with helpful error message
-         - Verify upgrade continues for other steps
-         
-      4. Full migration path test:
-         - Start with v1.0 context structure
-         - Run upgrade through v2.0 → v2.1
-         - Verify all files moved/created correctly
-         
-      Testing commands:
-        npm run build         # Must compile
-        npm run dev -- upgrade --dry-run  # Preview changes
-        npm run dev -- upgrade  # Real execution
+      AUTOMATED TESTS EXIST for migrations at two levels:
+
+      Unit tests (tests/unit/commands/upgrade/):
+      - runner.test.ts: MigrationRunner register, sort, run, error handling
+      - migrations-index.test.ts: compareVersions, getTodayDate
+      - migrations-v20-helpers.test.ts: toKebabCase, getItemName, sectionToSubType,
+        convertToNewConvention, formatYamlValue
+
+      Integration tests (tests/integration/migrations/):
+      - v20-migration.test.ts: Full v2.0 migration with real filesystem
+      - v21-migration.test.ts: Full v2.1 migration with real filesystem
+      - runner-full.test.ts: Complete v1.0 → v2.0 → v2.1 migration path
+
+      These cover: version detection, skip behavior, error handling,
+      full migration paths, idempotency, and convention file generation.
+
+test_infrastructure:
+  framework: "vitest v4"
+  config_file: "vitest.config.ts"
+  setup_file: "tests/setup.ts"
+  setup_behavior: |
+    Global setup mocks process.exit() to throw instead of terminating
+    the test runner. Tests expecting process.exit can catch the known error.
+  helpers:
+    - "tests/helpers/temp-dir.ts: createTempDir() / cleanupTempDir() for test isolation"
+    - "tests/helpers/fixtures.ts: createAgentTemplate() / createBuildforceConfig() builders"
+    - "tests/helpers/yaml-builders.ts: createV1IndexYaml() / createV2IndexYaml() / createDomainIndexYaml() / createGuidelinesYaml()"
+  npm_scripts:
+    - "npm test: vitest run (all tiers)"
+    - "npm run test:unit: vitest run tests/unit"
+    - "npm run test:integration: vitest run tests/integration"
+    - "npm run test:e2e: vitest run tests/e2e"
+    - "npm run test:coverage: vitest run --coverage"
+    - "npm run test:watch: vitest (watch mode)"
 
 known_risks:
-  - module: "src/**/*.ts"
-    risk: "No automated test coverage exists for any module"
+  - module: "src/templates/**/*.ts"
+    risk: "Templates (skills, agents, hooks) are not covered by automated tests"
     mitigation: |
-      Manual testing required before merge. Run `npm run dev` to test changes locally.
-      Build verification via `npm run build` ensures TypeScript compilation succeeds.
+      Skill and agent templates are interpreted by AI agents at runtime and
+      cannot be meaningfully unit tested. Manual workflow testing is still
+      recommended for template changes.
     occurrences: 0
-    last_flagged: "2026-02-02"
+    last_flagged: "2026-02-20"
 
-  - module: "package.json"
-    risk: "Test script is a placeholder that always fails"
+  - module: "tests/e2e/*.test.ts"
+    risk: "E2E tests require prior build step"
     mitigation: |
-      Do not run `npm test` expecting it to validate changes.
-      Use manual verification and TypeScript build checks instead.
+      E2E tests run against dist/cli.js. If build is stale, tests may pass
+      or fail based on old code. CI pipeline runs build before e2e step.
+      Locally, run npm run build before npm run test:e2e.
     occurrences: 0
-    last_flagged: "2026-02-02"
+    last_flagged: "2026-02-20"
