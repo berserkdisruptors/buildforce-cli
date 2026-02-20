@@ -3,7 +3,7 @@ name: Extract Command & Skill
 type: structural
 status: production
 created: "2026-01-28"
-last_updated: "2026-02-16"
+last_updated: "2026-02-20"
 
 summary: |
   Claude Code-specific context extraction system implemented as a skill:
@@ -83,8 +83,15 @@ workflow:
       action: "Merge proposals into existing files (context preservation rule)"
 
   incremental:
-    - step: "Get changed files"
-      action: "Run git diff --name-status HEAD and git status --porcelain"
+    - step: "Collect changes (either/or logic)"
+      action: |
+        Either/or logic — never combine uncommitted and committed changes.
+        1. Check staged/unstaged first: git diff --name-only + git diff --cached --name-only
+           If non-empty -> pre-commit mode (use these files, skip branch comparison)
+        2. If working tree clean -> detect base branch:
+           a. Try upstream: git rev-parse --abbrev-ref @{upstream}
+           b. Fallback: nearest ancestor branch via git log commit count comparison
+           Then: git diff <base>...HEAD --name-only
     - step: "Filter trivial changes"
       action: "Disregard root-level *.md, lock files, .buildforce/*, .gitignored, whitespace-only"
     - step: "Assess significance"
@@ -140,6 +147,15 @@ design_decisions:
       and validation logic (Steps 4-5). A single skill file with mode routing at Step 0
       eliminates code duplication. The decision tree is deterministic:
       no _index.yaml -> cold start; arguments present -> focused; no arguments -> incremental.
+
+  - decision: "Either/or change collection in incremental mode"
+    rationale: |
+      Incremental mode uses either/or logic for collecting changes — never combines
+      uncommitted and committed changes. Staged/unstaged changes (git diff + git diff --cached)
+      are checked first for pre-commit scenarios. Only if the working tree is clean does
+      it fall back to committed branch changes with base branch detection (upstream tracking
+      or nearest ancestor branch). This prevents double-counting changes that are both
+      uncommitted and committed, and enables pre-commit context extraction.
 
   - decision: "Context preservation as critical rule"
     rationale: |
@@ -228,6 +244,16 @@ evolution:
       Removed command layer (extract.md deleted as part of slash commands removal).
       Skill is now the only entry point - invoked directly via /context-extract.
       No functional changes to extraction logic itself.
+
+  - version: "3.1"
+    date: "2026-02-20"
+    changes: |
+      Improved incremental mode change collection logic (Step 3.1):
+      - Replaced simple "git diff --name-status HEAD + git status --porcelain" with either/or logic
+      - Staged/unstaged changes checked first (pre-commit mode)
+      - Committed branch changes used as fallback when working tree is clean
+      - Base branch detection: upstream tracking branch, then nearest ancestor branch
+      - Prevents double-counting of changes across uncommitted and committed states
 
 related_specs:
   - claude-code-extract-command-20260127152345

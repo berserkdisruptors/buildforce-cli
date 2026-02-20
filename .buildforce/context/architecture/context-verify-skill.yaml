@@ -3,7 +3,7 @@ name: "context-verify Skill"
 type: structural
 status: production
 created: "2026-02-19"
-last_updated: "2026-02-19"
+last_updated: "2026-02-20"
 
 summary: |
   Skill that verifies current branch changes against established conventions and
@@ -98,10 +98,17 @@ workflow:
     format: |
       ## Verification Report
       Branch: `{current}` -> `{base}`
-      Files changed: N | Rules checked: M
+      Files changed: N | Conventions checked: C | Verification rules matched: V
       ### Violations (count)
       ### Warnings (count)
       ### Passed (count)
+      ### Verification Rules to Follow (count)
+      {Matched rules presented as markdown task-list checklists (- [ ] steps)}
+    notes: |
+      The report distinguishes between "Conventions checked" (static compliance)
+      and "Verification rules matched" (procedural steps). Verification rules are
+      presented as numbered rules with markdown task-list checklists (- [ ] format)
+      for each rule's internal steps, rather than nested lettered sub-steps.
 
   step_6_follow_up:
     outcomes:
@@ -123,11 +130,14 @@ design_decisions:
       This is faster for a targeted rule-matching task where we know exactly which
       files to check. Sub-agent overhead would slow down verification unnecessarily.
 
-  - decision: "context: fork for isolated execution"
+  - decision: "Removed context: fork — no isolated execution context"
     rationale: |
-      Each verification run starts fresh, uninfluenced by prior conversation state.
-      This ensures consistent, reproducible results regardless of what was discussed
-      before invoking the skill.
+      The context: fork frontmatter key was initially included to ensure each verification
+      run starts fresh, uninfluenced by prior conversation state. It was later removed
+      because the skill benefits from having access to the current conversation context
+      (e.g., knowing what changes were just made). The skill's read-only nature (no Write
+      or Edit tools) already prevents it from causing side effects, making fork isolation
+      unnecessary.
 
   - decision: "Bash tool for git operations only"
     rationale: |
@@ -172,11 +182,29 @@ architecture_patterns:
     | Tools needed    | Read,Write,Edit,Glob,Grep,Bash,Task | Read,Write,Edit,Glob,Grep | Read,Glob,Grep,Task | Read,Glob,Grep,Bash |
     | Input           | Optional (mode routing) | Required (knowledge) | Optional (topic)     | Optional (base branch)|
     | Output          | Coverage map + files  | Single context file   | Synthesized response  | Verification report   |
-    | Context mode    | fork                  | fork                  | (none)                | fork                  |
+    | Context mode    | fork                  | fork                  | (none)                | (none)                |
     | User-invocable  | yes                   | yes                   | yes (+ model-invocable) | yes                 |
     | Modifies files  | yes                   | yes                   | no                    | no                    |
 
 evolution:
+  - version: "1.2"
+    date: "2026-02-20"
+    changes: |
+      Terminology and output format updates:
+      - Renamed "Verification Steps" to "Verification Rules" throughout the report
+      - Changed verification output from nested lettered sub-steps (a., b., c.) to
+        markdown task-list checklists (- [ ] Step 1, - [ ] Step 2) for better
+        readability and actionability
+      - Updated report header to "Verification rules matched: V" (was "Verification steps compiled: V")
+      - Updated summary messages to use "verification rule(s)" instead of "verification procedure(s)"
+
+  - version: "1.1"
+    date: "2026-02-20"
+    changes: |
+      Removed context: fork from SKILL.md frontmatter. The skill no longer runs in
+      an isolated context. This allows it to benefit from the current conversation
+      context while remaining safe due to its read-only tool set.
+
   - version: "1.0"
     date: "2026-02-19"
     changes: |

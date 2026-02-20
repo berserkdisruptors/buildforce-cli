@@ -7,7 +7,6 @@ description: >-
   checklist for the user to run.
 agents: [claude, cursor, opencode]
 user-invocable: true
-context: fork
 allowed-tools:
   - Read
   - Glob
@@ -224,7 +223,7 @@ Output the verification report in this format:
 ## Verification Report
 
 Branch: `{current-branch}` {→ `{base-branch}` if committed mode, or "(uncommitted changes)" if pre-commit mode}
-Files changed: {N} | Conventions checked: {C} | Verification steps compiled: {V}
+Files changed: {N} | Conventions checked: {C} | Verification rules matched: {V}
 
 **Changed files** {("staged/unstaged" or "committed vs {base-branch}")}:
 
@@ -254,17 +253,20 @@ N. **{rule-name}** - `{file-path}`
 {For each pass:}
 - **{rule-name}** -- {brief explanation of what was checked}
 
-### Verification Steps to Follow ({count})
+### Verification Rules to Follow ({count})
 
-{For each matched verification rule, list the steps the user should follow:}
+{count} = number of matched verification rules, NOT the total sub-steps.
+Use **bold rule name** as a heading, then a task-list checklist for ordered internal steps.
+
+{For each matched verification rule:}
 N. **{verification-rule-name}**
-   Applies because: {why this rule matched — e.g., "changes to files in src/auth/"}
-   Steps:
-   a. {command to run or action to take}
-      Expected: {what the outcome should be}
-   b. {next command or action}
-      Expected: {expected outcome}
-   ...
+Applies because: {why this rule matched — e.g., "changes to files in src/auth/"}
+
+- [ ] Step 1: {command to run or action to take}
+  Expected: {what the outcome should be}
+- [ ] Step 2: {next command or action}
+  Expected: {expected outcome}
+- [ ] ...
 
 ### Verification Warnings ({count})
 
@@ -285,8 +287,8 @@ End the report with a horizontal rule and a summary sentence.
 Based on the results, provide a clear summary:
 
 - **If convention violations found**: "Found {N} convention violation(s). Review the report above."
-- **If verification steps were compiled**: "Found {V} verification procedure(s) to follow. Run the steps listed above to validate your changes."
-- **If both**: "Found {N} convention violation(s) and {V} verification procedure(s) to follow. Review the report above."
+- **If verification rules matched**: "Found {V} verification rule(s) to follow. Run the steps listed above to validate your changes."
+- **If both**: "Found {N} convention violation(s) and {V} verification rule(s) to follow. Review the report above."
 - **If only warnings**: "No violations found. {W} warning(s) to be aware of — no action needed."
 - **If all conventions passed and no verification steps**: "All conventions passed. No verification steps apply. Changes look good."
 

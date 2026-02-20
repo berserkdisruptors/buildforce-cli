@@ -124,12 +124,42 @@ Parse `$ARGUMENTS`:
 
 Use this mode when invoked with no user arguments.
 
-### 3.1 Get Changed Files
+### 3.1 Collect Changes
 
-Run:
+Use **either/or** logic — never combine uncommitted and committed changes.
+
+**Check for staged/unstaged changes first:**
+
 ```bash
-git diff --name-status HEAD
-git status --porcelain
+git diff --name-only
+git diff --cached --name-only
+```
+
+Combine these two lists (deduplicated). If the result is non-empty, these are the changes to extract context from (**pre-commit** mode). Skip the base branch comparison entirely.
+
+**If working tree is clean, use committed branch changes:**
+
+If both commands above returned empty, detect the base branch:
+
+```bash
+# Try upstream tracking branch first
+git rev-parse --abbrev-ref @{upstream} 2>/dev/null | sed 's|^origin/||'
+```
+
+If no upstream is set, find the nearest ancestor branch:
+
+```bash
+current=$(git rev-parse --abbrev-ref HEAD)
+git for-each-ref --format='%(refname:short)' refs/heads/ | while read branch; do
+  [ "$branch" = "$current" ] && continue
+  echo "$(git log --oneline "$branch..$current" 2>/dev/null | wc -l | tr -d ' ') $branch"
+done | sort -n | head -1 | awk '{print $2}'
+```
+
+Then get committed changes:
+
+```bash
+git diff <base>...HEAD --name-only
 ```
 
 ### 3.2 Filter Out Trivial Changes

@@ -4,7 +4,7 @@ type: convention
 sub_type: code-convention
 enforcement: strict
 created: "2026-02-19"
-last_updated: "2026-02-19"
+last_updated: "2026-02-20"
 
 description: |
   Comprehensive conventions for creating Buildforce skills. Skills are Markdown-based
@@ -313,7 +313,8 @@ existing_skills_inventory: |
      - Agents: [claude, cursor, opencode]
      - Assets: none
      - Features: Git diff analysis, rule matching, violation/warning/pass classification, actionable report
-     - Frontmatter: user-invocable: true, context: fork, allowed-tools: [Read, Glob, Grep, Bash]
+     - Frontmatter: user-invocable: true, allowed-tools: [Read, Glob, Grep, Bash]
+     - Note: context: fork was removed — skill benefits from conversation context, read-only tools make isolation unnecessary
 
 related_context:
   - skill-naming-conventions
