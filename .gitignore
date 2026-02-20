@@ -29,3 +29,6 @@ dist/
 
 # Git worktrees
 .worktrees/
+
+# Test coverage
+coverage/

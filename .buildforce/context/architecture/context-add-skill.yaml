@@ -1,0 +1,272 @@
+id: context-add-skill
+name: "context-add Skill"
+type: structural
+status: production
+created: "2026-02-19"
+last_updated: "2026-02-19"
+
+summary: |
+  Multi-agent skill for manually adding knowledge to the Buildforce context repository.
+  Complements context-extract (automated extraction) and context-search (retrieval) by
+  providing a human-driven entry point for capturing knowledge that automated extraction
+  might miss -- project-specific rules, team conventions, design rationale, or risk
+  documentation. Available to all three agents (Claude, Cursor, OpenCode) since it uses
+  only basic tools (Read, Write, Edit, Glob, Grep) with no sub-agent spawning.
+
+  The skill follows a 7-step workflow: prerequisites check, intent parsing, duplicate
+  detection, domain classification, codebase grounding, context file generation, and
+  _index.yaml update. It supports both creating new context files and merging into
+  existing ones when duplicates are detected.
+
+responsibilities:
+  - Parse natural language knowledge descriptions from user input
+  - Detect duplicate or overlapping context before creating new entries
+  - Classify knowledge into the correct domain (architecture, conventions, verification)
+  - Ground abstract knowledge in real codebase examples via Glob/Grep/Read
+  - Generate structured YAML context files following domain schemas
+  - Support both create (new file) and merge (update existing file) workflows
+  - Maintain _index.yaml consistency by adding new items and incrementing total_items
+  - Present concise summary of actions taken
+
+dependencies:
+  internal:
+    - cli-architecture: "Deployed via template distribution and release packaging"
+    - skills-bundling: "Bundled via generate_skills() in release packaging"
+    - context-search-skill: "Complementary skill -- context-add writes, context-search reads"
+    - extract-command: "Complementary skill -- context-extract automates, context-add is manual"
+  external:
+    - none: "No external dependencies -- uses only basic file tools (Read, Write, Edit, Glob, Grep)"
+
+files:
+  primary:
+    - src/templates/skills/context-add/SKILL.md
+  secondary:
+    - .buildforce/context/_index.yaml
+    - .buildforce/context/architecture/_schema.yaml
+    - .buildforce/context/conventions/_schema.yaml
+    - .buildforce/context/verification/_schema.yaml
+  distribution:
+    - .github/workflows/scripts/create-release-packages.sh
+    - src/commands/init/setup.ts
+    - src/commands/upgrade/execution.ts
+
+interfaces:
+  skill:
+    - name: "context-add"
+      invocation: "/context-add [natural language description of knowledge to add]"
+      user_invocable: true
+      model_invocable: false
+      description: "Add new knowledge to the context repository with domain classification and codebase grounding"
+
+workflow:
+  step_0_prerequisites:
+    action: "Read _index.yaml and verify context repository exists and is populated"
+    failure_modes:
+      - condition: "_index.yaml does not exist"
+        response: "Tell user to run 'buildforce init' first"
+      - condition: "All three domains have empty items[] arrays"
+        response: "Tell user to run '/context-extract' first to bootstrap"
+
+  step_1_understand_intent:
+    action: "Parse $ARGUMENTS to identify core knowledge, rule, or pattern"
+    failure_modes:
+      - condition: "$ARGUMENTS is empty"
+        response: "Ask user what knowledge they want to add and STOP"
+
+  step_2_check_duplicates:
+    action: "Scan existing items in all three domains for similar ids, descriptions, or overlapping tags"
+    outcomes:
+      - match_found: "Ask user whether to merge or create new -- STOP and wait for response"
+      - no_match: "Proceed to classification"
+
+  step_3_classify_domain:
+    action: "Read all three domain schemas and classify using heuristic table"
+    heuristics:
+      architecture: "Describes WHAT exists -- components, modules, relationships, design decisions"
+      conventions: "Describes HOW to do things -- patterns, standards, rules for writing code"
+      verification: "Describes HOW to verify correctness -- testing, quality, review, known risks"
+    ambiguity_handling: "Pick best fit and explain reasoning to user"
+
+  step_4_ground_in_codebase:
+    action: "Search for real files that relate to the knowledge using Glob/Grep"
+    outputs:
+      - reference_files: "Real file paths in the codebase"
+      - examples: "Code snippets showing the pattern in action"
+      - violations: "Counter-examples (conventions only)"
+
+  step_5_generate_file:
+    action: "Create YAML file following domain schema"
+    naming: "kebab-case, semantic, max 50 characters"
+    location: ".buildforce/context/{domain}/"
+    modes:
+      - create: "Write new file for new entries"
+      - merge: "Edit existing file for duplicate merges -- preserve existing sections, append to lists"
+
+  step_6_update_index:
+    action: "Add new item to _index.yaml or update existing item metadata"
+    new_item_fields: "id, file, type, status (extracted), depth (moderate), description, tags"
+    domain_specific_fields:
+      conventions: "sub_type, enforcement"
+      verification: "source: manual"
+      architecture: "related_context"
+    counter_update: "Increment summary.total_items by 1 for new entries"
+
+  step_7_present_summary:
+    format_new: |
+      Context added: {domain}/{filename}.yaml
+        Classification: {type} ({sub_type if convention}, {enforcement if convention})
+        Grounded with: {N} reference files, {N} examples
+        Reasoning: {One sentence explaining the classification choice}
+    format_merged: |
+      Context updated: {domain}/{filename}.yaml
+        Merged: {description of what was added}
+        Grounded with: {N} reference files, {N} examples
+
+design_decisions:
+  - decision: "Available to all three agents (Claude, Cursor, OpenCode)"
+    rationale: |
+      Both context-add and context-extract are distributed to all three agents
+      (Claude, Cursor, OpenCode). context-add uses only basic tools (Read, Write, Edit,
+      Glob, Grep), while context-extract additionally uses the Task tool for sub-agent
+      spawning (a Claude-specific capability). Both skills set agents: [claude, cursor, opencode].
+
+  - decision: "Duplicate detection before classification"
+    rationale: |
+      Step 2 checks for existing context BEFORE classifying into a domain (Step 3). This
+      prevents creating duplicate entries and enables intelligent merging. The user is given
+      explicit choice: merge into existing or create separate entry. This interaction point
+      ensures human judgment controls deduplication.
+
+  - decision: "Codebase grounding as mandatory step"
+    rationale: |
+      Step 4 requires searching for real files that demonstrate the knowledge being added.
+      This prevents abstract, disconnected context entries. Grounded context includes real
+      file paths, code snippets, and (for conventions) violation examples. This makes the
+      context immediately actionable for AI agents during development.
+
+  - decision: "Heuristic-based domain classification"
+    rationale: |
+      Uses a simple WHAT/HOW/HOW-TO-VERIFY heuristic table rather than complex NLP. The
+      three-domain taxonomy maps cleanly: architecture (WHAT exists), conventions (HOW to
+      do things), verification (HOW to verify). When ambiguous, the skill explains its
+      reasoning -- maintaining transparency.
+
+  - decision: "Default depth of 'moderate' for new entries"
+    rationale: |
+      New context-add entries start at moderate depth since they include codebase grounding
+      (reference files, examples). This is deeper than shallow (basic structure only) but
+      not deep (full rationale, edge cases, extension points). The user can later use
+      /context-extract focused mode to go deeper on specific items.
+
+  - decision: "context: fork for isolated execution"
+    rationale: |
+      The skill uses context: fork in frontmatter to prevent prior conversation state from
+      influencing classification or grounding. Each invocation starts fresh, ensuring
+      consistent behavior regardless of conversation history.
+
+  - decision: "Interactive merge flow with user confirmation"
+    rationale: |
+      When a duplicate is detected, the skill STOPs and waits for user input before
+      proceeding. This is intentionally blocking because merging context requires human
+      judgment -- the user must decide if the new knowledge should update the existing
+      entry or create a separate, distinct entry.
+
+  - decision: "Use Edit for merges, Write for creates"
+    rationale: |
+      Merge operations use Edit tool to surgically update existing files (preserving
+      existing sections, appending to lists). Create operations use Write for new files.
+      This aligns with the context preservation principle from context-extract.
+
+architecture_patterns:
+  skill_positioning: |
+    The context-add skill completes the context lifecycle triad:
+
+    context-extract (automated)  -- Discovers and extracts context from codebase
+    context-add (manual)         -- Accepts human knowledge not in code
+    context-search (retrieval)   -- Queries context for AI agent enrichment
+
+    These three skills together form a complete CRUD-like system for context:
+    - Create: context-add (manual) + context-extract (automated)
+    - Read: context-search
+    - Update: context-add (merge mode) + context-extract (incremental mode)
+    - Delete: Not yet implemented (manual file deletion)
+
+  workflow_comparison: |
+    Comparing the three context skills:
+
+    | Aspect          | context-extract       | context-add           | context-search        |
+    |-----------------|----------------------|----------------------|----------------------|
+    | Purpose         | Automated extraction  | Manual knowledge add  | Query/retrieval       |
+    | Agents          | [claude] only         | [claude,cursor,opencode] | [claude,cursor,opencode] |
+    | Sub-agents      | 3 extractors (Task)   | None                  | 3 explorers (Task)    |
+    | Tools needed    | Read,Write,Edit,Glob,Grep,Bash,Task | Read,Write,Edit,Glob,Grep | Read,Glob,Grep,Task |
+    | Input           | Optional (mode routing) | Required (knowledge) | Optional (topic)     |
+    | Output          | Coverage map + files  | Single context file   | Synthesized response  |
+    | Context mode    | fork                  | fork                  | (none)                |
+    | User-invocable  | yes                   | yes                   | yes (+ model-invocable) |
+
+  deployment_chain: |
+    Full deployment chain from source to runtime:
+
+    1. Source: src/templates/skills/context-add/SKILL.md
+    2. Packaging: generate_skills() in create-release-packages.sh
+       - Reads agents: [claude, cursor, opencode] from frontmatter
+       - Bundles for ALL three agent packages (same as all current skills)
+    3. Deployment: init/upgrade extracts to user's .{agent}/skills/ directory
+    4. Runtime: User invokes /context-add with natural language description
+
+  domain_classification_flow: |
+    Classification decision tree:
+
+    User knowledge input
+         |
+         v
+    Read all 3 domain schemas
+         |
+         v
+    Apply heuristics:
+    - "WHAT exists" signals -> architecture/
+    - "HOW to do things" signals -> conventions/
+    - "HOW to verify" signals -> verification/
+         |
+         v
+    Ambiguous? -> Pick best fit, explain reasoning
+         |
+         v
+    Generate file following domain schema
+
+evolution:
+  - version: "1.0"
+    date: "2026-02-19"
+    changes: |
+      Initial implementation as multi-agent skill with 7-step workflow:
+      prerequisites, intent parsing, duplicate detection, domain classification,
+      codebase grounding, file generation, and _index.yaml update. Available
+      to all three agents (claude, cursor, opencode). Supports both create
+      and merge flows with user confirmation for duplicates.
+
+related_context:
+  - extract-command
+  - context-search-skill
+  - cli-architecture
+  - skills-bundling
+  - skill-creation-conventions
+
+notes: |
+  The context-add skill fills a critical gap in the context management system. While
+  context-extract can discover and document what exists in code, many important pieces
+  of knowledge live only in developers' heads -- team conventions, design rationale,
+  risk awareness, architectural constraints. This skill provides the manual entry point
+  for that institutional knowledge.
+
+  Key differences from context-extract:
+  - No sub-agents needed (simpler execution model)
+  - Human-initiated knowledge (not code-derived)
+  - Single item per invocation (not batch extraction)
+  - Interactive duplicate handling (stops for user input)
+  - Codebase grounding validates human knowledge against real code
+
+  The skill intentionally has no model-invocable flag. Context addition should always
+  be a deliberate human action -- the AI agent should not proactively decide to add
+  context without user intent. This contrasts with context-search which IS model-invocable
+  since reading context is always safe and beneficial.

@@ -124,12 +124,42 @@ Parse `$ARGUMENTS`:
 
 Use this mode when invoked with no user arguments.
 
-### 3.1 Get Changed Files
+### 3.1 Collect Changes
 
-Run:
+Use **either/or** logic — never combine uncommitted and committed changes.
+
+**Check for staged/unstaged changes first:**
+
 ```bash
-git diff --name-status HEAD
-git status --porcelain
+git diff --name-only
+git diff --cached --name-only
+```
+
+Combine these two lists (deduplicated). If the result is non-empty, these are the changes to extract context from (**pre-commit** mode). Skip the base branch comparison entirely.
+
+**If working tree is clean, use committed branch changes:**
+
+If both commands above returned empty, detect the base branch:
+
+```bash
+# Try upstream tracking branch first
+git rev-parse --abbrev-ref @{upstream} 2>/dev/null | sed 's|^origin/||'
+```
+
+If no upstream is set, find the nearest ancestor branch:
+
+```bash
+current=$(git rev-parse --abbrev-ref HEAD)
+git for-each-ref --format='%(refname:short)' refs/heads/ | while read branch; do
+  [ "$branch" = "$current" ] && continue
+  echo "$(git log --oneline "$branch..$current" 2>/dev/null | wc -l | tr -d ' ') $branch"
+done | sort -n | head -1 | awk '{print $2}'
+```
+
+Then get committed changes:
+
+```bash
+git diff <base>...HEAD --name-only
 ```
 
 ### 3.2 Filter Out Trivial Changes
@@ -215,9 +245,9 @@ Use the Task tool to spawn all three Context Extractor sub-agents **simultaneous
    - Reads plan from `.buildforce/context/conventions/_extraction-progress.yaml`
    - Returns proposals for convention context files
 
-3. **buildforce-verification-extractor**: Extracts verification/quality context
+3. **buildforce-verification-extractor**: Extracts verification procedures (build/test/deploy validation steps)
    - Reads plan from `.buildforce/context/verification/_extraction-progress.yaml`
-   - Returns proposals for verification context files
+   - Returns proposals for verification context files (procedural, not static facts)
 
 Each extractor will:
 - Read their plan from the `_extraction-progress.yaml` file
@@ -228,7 +258,7 @@ Each extractor will:
 
 - If an extractor times out (> 120s): skip it, continue with the others.
 - If an extractor fails: skip it, continue with the others.
-- If all three fail: output "Context extraction failed. Run /buildforce.extract manually to retry." and STOP.
+- If all three fail: output "Context extraction failed. Run /context-extract manually to retry." and STOP.
 
 ### 4.4 Validate & Write Proposals
 
@@ -349,8 +379,8 @@ Items extracted: {count} | New discoveries: {count}
 - {item}: {reason for focus}
 
 ---
-State preserved in _index.yaml. Run `/buildforce.extract` to continue,
-or `/buildforce.extract "go deeper on X"` to focus on specific areas.
+State preserved in _index.yaml. Run `/context-extract` to continue,
+or `/context-extract "go deeper on X"` to focus on specific areas.
 ```
 
 ### Compact Output (Incremental mode)
@@ -367,7 +397,7 @@ Context updated: {created_count} created, {updated_count} updated
 **Partial failure:**
 ```
 Context partially updated: {success_count} file(s), {error_count} extractor(s) failed
-   Run /buildforce.extract to retry
+   Run /context-extract to retry
 ```
 
 ---

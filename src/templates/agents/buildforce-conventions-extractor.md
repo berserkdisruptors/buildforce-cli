@@ -1,6 +1,6 @@
 ---
 name: buildforce-conventions-extractor
-description: Context Extractor for convention context. Extracts coding standards, patterns, and practices. Use when extracting convention context during /buildforce.extract iterations.
+description: Context Extractor for convention context. Extracts coding standards, patterns, and practices. Use when extracting convention context during /context-extract iterations.
 tools: Read, Glob, Grep
 model: inherit
 agents: [claude, cursor, opencode]
@@ -61,6 +61,16 @@ For each target item in your plan:
 - Historical decisions that persist
 - "Don't touch this because..." patterns
 
+**Test Creation Conventions**
+- When should unit tests be written? Integration tests? E2e tests?
+- What modules or change types require which kinds of tests?
+- Test file naming and location patterns (e.g., `*.test.ts` next to source, or `tests/` directory)
+- Test structure patterns (describe/it, arrange/act/assert, given/when/then)
+- Mocking conventions — what to mock, what to test against real implementations
+- Example: "Changes to `src/auth/**` require both unit tests AND new/updated e2e tests"
+- NOTE: How to RUN tests belongs in verification context, not here. Here we capture
+  when and how to CREATE/WRITE tests.
+
 **Repeated Patterns**
 - Conventions that emerge from code, not from docs
 - Patterns repeated across 3+ files indicate team agreement
@@ -68,7 +78,8 @@ For each target item in your plan:
 
 **Sources to Check**
 - Lint, format and config files (ex. .eslintrc, .prettierrc, tsconfig.json)
-- CONTRIBUTING.md, STYLE.md
+- Test files — look for structural patterns across existing tests
+- CONTRIBUTING.md, STYLE.md, TESTING.md
 - Code review comments (if accessible)
 
 ## Output Quality

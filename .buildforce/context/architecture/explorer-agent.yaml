@@ -6,7 +6,7 @@ name: "Buildforce Explorer Agent & Hook"
 type: structural
 status: production
 created: "2026-02-10"
-last_updated: "2026-02-16"
+last_updated: "2026-02-19"
 
 summary: |
   The buildforce-explorer agent is a thin wrapper that transparently replaces the built-in
@@ -174,7 +174,93 @@ distribution: |
   - Permissions: ensureHooksExecutable() re-sets chmod
   - Rollback: Hook directory restored from backup on failure
 
+per_agent_hook_details: |
+  CLAUDE CODE (.claude/hooks/setup-explorer-subagent.sh):
+    Event: PreToolUse
+    Matcher: "Task" (registered in settings.local.json hooks.PreToolUse[])
+    Trigger: subagent_type === "Explore" (capital E)
+    Input: JSON on stdin with tool_input.subagent_type and tool_input.prompt
+    Processing: jq -r extracts subagent_type and prompt from tool_input
+    Output (match): JSON with hookSpecificOutput containing:
+      - hookEventName: "PreToolUse"
+      - permissionDecision: "allow"
+      - updatedInput: { subagent_type: "buildforce-explorer", prompt: <original> }
+    Output (no match): Empty stdout, exit 0 (no-op, call proceeds unchanged)
+    Exit code: Always 0 (non-zero would be treated as hook error)
+    Config location: .claude/settings.local.json -> hooks.PreToolUse[]
+    Script location: .claude/hooks/setup-explorer-subagent.sh
+    Permission: Must be chmod +x (ensureHooksExecutable handles this)
+
+  CURSOR (.cursor/hooks/setup-explorer-subagent.sh):
+    Event: preToolUse (lowercase, Cursor convention)
+    Matcher: "Task" (registered in hooks.json hooks.preToolUse[])
+    Trigger: subagent_type === "explore" (lowercase e - KEY DIFFERENCE from Claude)
+    Input: JSON on stdin with tool_input.subagent_type and tool_input.prompt
+    Processing: Same jq pattern as Claude
+    Output (match): JSON with:
+      - decision: "allow" (not "permissionDecision" - KEY DIFFERENCE from Claude)
+      - updated_input: { subagent_type: "buildforce-explorer", prompt: <original> }
+        (snake_case "updated_input", not camelCase "updatedInput" - KEY DIFFERENCE)
+    Output (no match): Empty stdout, exit 0
+    Exit code: Always 0
+    Config location: .cursor/hooks.json -> hooks.preToolUse[]
+    Config format: { version: 1, hooks: { preToolUse: [{ matcher: "Task", command: "..." }] } }
+    Script location: .cursor/hooks/setup-explorer-subagent.sh
+    Permission: Must be chmod +x
+
+  OPENCODE (.opencode/plugins/buildforce-explorer-redirect.ts):
+    Event: tool.execute.before (Plugin API)
+    Matcher: input.tool === "task" (lowercase, OpenCode convention)
+    Trigger: output.args?.subagent_type === "Explore" (capital E, same as Claude)
+    Input: Plugin receives (input, output) parameters with tool name and args
+    Processing: Direct property mutation on output.args.subagent_type
+    Output: Modifies output.args.subagent_type in-place to "buildforce-explorer"
+    No stdout/exit code: Plugin API, not a shell script
+    File location: .opencode/plugins/buildforce-explorer-redirect.ts
+    Permission: No chmod needed (TypeScript, not bash)
+    Note: Plugin is fully REPLACED on each merge (not merged like Claude/Cursor)
+
+  CRITICAL DIFFERENCES SUMMARY:
+  ┌──────────────────────┬──────────────┬──────────────┬──────────────────┐
+  │ Aspect               │ Claude       │ Cursor       │ OpenCode         │
+  ├──────────────────────┼──────────────┼──────────────┼──────────────────┤
+  │ Hook type            │ bash script  │ bash script  │ TS plugin        │
+  │ Event casing         │ PreToolUse   │ preToolUse   │ execute.before   │
+  │ Trigger string       │ "Explore"    │ "explore"    │ "Explore"        │
+  │ Output key (rewrite) │ updatedInput │ updated_input│ (in-place)       │
+  │ Permission key       │ permission   │ decision     │ N/A              │
+  │   Decision           │              │              │                  │
+  │ Settings file        │ settings     │ hooks.json   │ plugin .ts file  │
+  │                      │ .local.json  │              │                  │
+  │ Merge strategy       │ additive     │ additive     │ full replacement │
+  │ Needs chmod          │ yes (.sh)    │ yes (.sh)    │ no (.ts)         │
+  └──────────────────────┴──────────────┴──────────────┴──────────────────┘
+
+edge_cases: |
+  Hook Error Handling:
+  - If jq is not installed, Claude/Cursor hooks fail silently (jq commands produce no output)
+  - If hook script is not executable, Claude/Cursor report "Permission denied" on first Task call
+  - ensureHooksExecutable only runs on non-Windows (process.platform !== "win32")
+  - Hook scripts always exit 0 even when no rewrite happens (exit non-zero = hook error)
+
+  Agent Template Filtering:
+  - buildforce-explorer.md has agents: [claude, cursor, opencode] - all agents get it
+  - The agents: field is stripped from frontmatter during packaging (generate_agents awk)
+  - Cursor/OpenCode agents go through normalize-agent-templates.ts for tool name adjustments
+
+  Settings Merge Edge Cases:
+  - Claude: If settings.local.json has malformed JSON, it's replaced with empty {}
+  - Cursor: If hooks.json doesn't exist, it's created fresh with version: 1
+  - OpenCode: Plugin is always fully rewritten (no merge), so no conflict risk
+  - Multiple init/upgrade cycles: deduplication via JSON.stringify prevents duplicate hooks
+
+  Distribution Edge Cases:
+  - OpenCode plugin is RENAMED during packaging: setup-explorer-subagent.ts → buildforce-explorer-redirect.ts
+  - Claude/Cursor hooks keep original filename: setup-explorer-subagent.sh
+  - If src/templates/hooks/{agent}/ directory is missing, build_package silently skips hooks
+
 related_context:
   - context-search-skill
   - sub-agent-architecture
   - cli-architecture
+  - settings-merge-utility

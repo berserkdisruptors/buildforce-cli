@@ -20,7 +20,7 @@ $ARGUMENTS
 
 ## Prerequisites Check
 
-Read `.buildforce/context/_index.yaml` - if it does NOT exist, inform user: "No context repository found. Run `/buildforce.extract` first to build your context." Otherwise, proceed.
+Read `.buildforce/context/_index.yaml` - if it does NOT exist, inform user: "No context repository found. Run `/context-extract` first to build your context." Otherwise, proceed.
 
 ---
 
@@ -246,7 +246,7 @@ What aspect would you like to dig into — the refresh flow, how it connects to 
 
 ### No Context Found
 
-> "I don't have documented context about {topic} yet. We could explore what we think it should be based on general patterns, or you could run `/buildforce.extract` to build context from the codebase first. What would you prefer?"
+> "I don't have documented context about {topic} yet. We could explore what we think it should be based on general patterns, or you could run `/context-extract` to build context from the codebase first. What would you prefer?"
 
 ### Partial Context
 

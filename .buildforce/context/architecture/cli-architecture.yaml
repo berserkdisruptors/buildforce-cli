@@ -3,7 +3,7 @@ name: Buildforce CLI Architecture
 type: structural
 status: production
 created: 2025-10-27
-last_updated: "2026-02-16"
+last_updated: "2026-02-20"
 
 summary: |
   Comprehensive architecture of the Buildforce CLI tool - a Node.js-based command-line
@@ -18,7 +18,7 @@ responsibilities:
   - Template distribution and extraction from GitHub Releases or local artifacts
   - Local artifact resolution for offline workflows and testing
   - Context/knowledge management system for accumulated learning
-  - Skills deployment (context-extract, context-search) to agent directories
+  - Skills deployment (context-extract, context-search, context-add) to agent directories
   - Hooks deployment and settings merge for explorer sub-agent redirection
   - Progress tracking and user interaction flows
   - AI assistant detection and configuration (3 supported: claude, cursor, opencode)
@@ -49,6 +49,8 @@ dependencies:
     - which: "^5.0.0 - Executable detection"
     - cli-table3: "^0.6.5 - Table formatting"
     - glob: "^10.3.10 - Pattern matching for local artifact discovery"
+    - vitest: "^4.0.18 - Test framework (dev)"
+    - "@vitest/coverage-v8": "^4.0.18 - Coverage provider (dev)"
 
 files:
   primary:
@@ -64,6 +66,7 @@ files:
     - src/lib/step-tracker.ts
     - src/config/agents.ts
     - src/utils/settings-merge.ts
+    - src/utils/text-format.ts
     - src/context/_index.yaml
     - .github/workflows/scripts/create-release-packages.sh
   secondary:
@@ -316,28 +319,64 @@ architecture_patterns:
   agent_configuration: |
     Supported Assistants (3):
     - Claude Code → .claude/ (agents, skills, hooks, settings.local.json)
-    - Cursor → .cursor/ (hooks, hooks.json)
-    - OpenCode → .opencode/ (plugins)
+    - Cursor → .cursor/ (agents, skills, hooks, hooks.json)
+    - OpenCode → .opencode/ (agents, skills, plugins)
+
+    Rationale for 3-Agent Reduction (from 11 to 3):
+    - Only Claude Code, Cursor, and OpenCode have meaningful hook/skill support
+    - Other agents (GitHub Copilot, Codeium, etc.) lacked equivalent capabilities
+    - Reduces maintenance burden: 11 agents x packaging = 11 ZIP artifacts per release
+    - Simplifies testing: manual testing of 3 agents is feasible, 11 is not
+    - Each of the 3 agents has a distinct hook mechanism that enables explorer redirection
 
     Deployment Structure:
     - No slash commands - pure context layer via skills and hooks
     - Claude: Skills in .claude/skills/, agents in .claude/agents/, hooks in .claude/hooks/
-    - Cursor: Hooks in .cursor/hooks/
-    - OpenCode: Plugins in .opencode/plugins/
+    - Cursor: Agents in .cursor/agents/, skills in .cursor/skills/, hooks in .cursor/hooks/
+    - OpenCode: Agents in .opencode/agents/, skills in .opencode/skills/, plugins in .opencode/plugins/
+
+    Per-Agent Capabilities Matrix:
+    ┌────────────┬─────────┬──────────┬────────────┐
+    │ Capability │ Claude  │ Cursor   │ OpenCode   │
+    ├────────────┼─────────┼──────────┼────────────┤
+    │ Agents     │ native  │ filtered │ filtered   │
+    │ Skills     │ native  │ filtered │ filtered   │
+    │ Hooks      │ bash    │ bash     │ TypeScript │
+    │ Settings   │ JSON    │ JSON     │ Plugin TS  │
+    │ Extractor  │ yes     │ no       │ no         │
+    │ Explorer   │ yes     │ yes      │ yes        │
+    └────────────┴─────────┴──────────┴────────────┘
+
+    Note: Claude is the primary agent. Cursor and OpenCode get filtered agent templates
+    via normalize-agent-templates.ts which adjusts tool names and formatting. Skills
+    with agents: [claude] frontmatter are excluded from Cursor/OpenCode packages.
 
     Settings Merge Strategy (per agent):
-    - Claude: mergeAgentSettings() → .claude/settings.local.json (PreToolUse hooks)
-    - Cursor: mergeAgentSettings() → .cursor/hooks.json (preToolUse hooks)
-    - OpenCode: mergeAgentSettings() → .opencode/plugins/buildforce-explorer-redirect.ts
+    - Claude: mergeAgentSettings() → .claude/settings.local.json (PreToolUse hooks via CLAUDE_HOOKS_CONFIG)
+    - Cursor: mergeAgentSettings() → .cursor/hooks.json (preToolUse hooks via CURSOR_HOOKS_CONFIG)
+    - OpenCode: mergeAgentSettings() → .opencode/plugins/buildforce-explorer-redirect.ts (full file write)
+
+    Settings File Differences:
+    - Claude: settings.local.json uses { hooks: { PreToolUse: [...] } } with hookSpecificOutput/updatedInput
+    - Cursor: hooks.json uses { version: 1, hooks: { preToolUse: [...] } } with decision/updated_input
+    - OpenCode: Plugin file is NOT merged, it's written as a complete replacement each time
+
+    Hook Mechanism Differences:
+    - Claude: hookEventName "PreToolUse", permissionDecision "allow", subagent_type "Explore" (capitalized)
+    - Cursor: decision "allow", updated_input (not updatedInput), subagent_type "explore" (lowercase)
+    - OpenCode: Plugin API with execute.before callback, input.tool === "task", subagent_type "Explore" (capitalized)
 
     Detection Mechanism:
     - Uses which(tool) to find executables in PATH
     - Checks: claude, cursor-agent, opencode
     - Validates agent availability before setup
+    - Can be bypassed with --ignore-agent-tools flag
 
     Configuration:
     - Each agent gets dedicated folder for credentials/config
     - Security notice recommends .gitignore for agent folders
+    - Agent choices defined in src/config/agents.ts: AI_CHOICES and AGENT_FOLDER_MAP
+    - BuildforceConfig stores aiAssistants[] array in buildforce.json for upgrade detection
 
   progress_tracking: |
     StepTracker Class:
@@ -385,6 +424,7 @@ core_modules:
     - "commands.ts - Shell command execution wrapper"
     - "config.ts - Configuration file read/write (buildforce.json management)"
     - "settings-merge.ts - Agent settings merge utility (hooks, permissions) for Claude, Cursor, OpenCode"
+    - "text-format.ts - Text formatting utilities (hardWrap, formatKeyValueRows) extracted from cli.ts"
     - "box.ts - Shared box component utility with standardized #D3FFCA borders"
 
   configuration:
@@ -395,9 +435,10 @@ core_modules:
 workflow_integration: |
   The CLI initializes projects with a pure context layer containing:
 
-  1. Skills (Claude Code):
+  1. Skills (all agents unless noted):
      - context-extract: Bootstraps and updates the context repository
      - context-search: Searches curated context for codebase knowledge
+     - context-add: Manually adds human knowledge to the context repository
 
   2. Hooks:
      - Claude: PreToolUse hook redirects Explore → buildforce-explorer
@@ -506,6 +547,17 @@ evolution:
       scriptType). Upgrade command now replaces skills, hooks, and agents instead of commands,
       templates, and scripts.
 
+  - version: "3.1"
+    date: "2026-02-20"
+    changes: |
+      Added comprehensive testing strategy with vitest v4. Three-tier test suite:
+      unit (14 test files), integration (7 test files), e2e (3 test files). CI pipeline
+      via .github/workflows/test.yml running across Node.js 18/20/22 matrix. Coverage
+      thresholds (30/25/30/30). Refactored for testability: extracted hardWrap/formatKeyValueRows
+      to src/utils/text-format.ts, extracted migration helpers to v20-helpers.ts, exported
+      mergeArraysUnique/mergeSettings from settings-merge.ts. Test helpers: temp-dir,
+      fixtures, yaml-builders.
+
 related_specs:
   - "standardize-cli-title-display-20250130220000"
   - "standardize-color-scheme-mint-20251031011544"
@@ -523,6 +575,7 @@ related_context:
   - sub-agent-architecture
   - extract-command
   - context-search-skill
+  - context-add-skill
   - explorer-agent
   - settings-merge-utility
   - skills-bundling
@@ -590,6 +643,29 @@ integration_points:
     - Agents: agents: field stripped from frontmatter before packaging
     - Skills: Entire skill directories copied to .claude/skills/
     - Hooks: Scripts copied to agent hook directories
+
+multi_agent_edge_cases: |
+  Init Command Multi-Agent Flow:
+  - Downloads templates sequentially per agent (not parallel) in setup.ts:101
+  - Partial success is allowed: if 2 of 3 agents download, init continues with the 2
+  - Failed agents are logged as warnings but don't block initialization
+  - Version is taken from the LAST successful download (could be mismatched if releases differ)
+  - mergeAgentSettings runs per-agent in a loop; each agent's merge is independent
+
+  Upgrade Command Multi-Agent Flow:
+  - Same sequential download pattern in execution.ts:96
+  - Backup is per-agent: each agent's agents/, skills/, hooks/ are backed up separately
+  - Rollback on failure restores ALL successful agents' backups (execution.ts:471-498)
+  - Migration only runs from first successful agent's source directory
+  - buildforce.json updated with only successfulAgents[] (not original selectedAi)
+
+  Edge Cases:
+  - If --local flag points to missing agent ZIP, that agent silently fails with warning
+  - mergeJsonSettingsFile handles malformed JSON gracefully: logs warning, starts with empty {}
+  - ensureHooksExecutable skips on Windows (process.platform === "win32")
+  - ensureHooksExecutable only chmod's .sh files, not .ts files (OpenCode plugin is not chmod'd)
+  - Unknown agentFolder returns { merged: false, skipped: true, reason: "unknown agent" }
+  - Cursor and OpenCode agent templates are normalized via normalize-agent-templates.ts
 
 notes: |
   Key architectural strengths:

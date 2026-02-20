@@ -1,0 +1,139 @@
+id: release-package-verification
+name: Release Package Verification
+type: verification
+source: manual
+created: "2026-02-19"
+last_updated: "2026-02-20"
+
+description: |
+  Verification procedure for building and testing release packages locally.
+  Ensures that template changes (skills, agents, hooks) are correctly
+  packaged and distributed to all three supported agents.
+
+  CRITICAL: Agents must NEVER call the shell script directly. Always use npm scripts.
+
+triggers:
+  file_patterns:
+    - "src/templates/skills/**/*"
+    - "src/templates/agents/**/*"
+    - "src/templates/hooks/**/*"
+    - "src/commands/upgrade/**/*"
+    - "src/commands/init/**/*"
+    - ".github/workflows/scripts/create-release-packages.sh"
+  conditions: |
+    Run when any distributable template files (skills, agents, hooks),
+    the upgrade/init command logic, or the release packaging script itself
+    are modified. These changes affect what gets distributed to users.
+
+verification_procedures:
+  step_1_build:
+    command: "npm run build"
+    verify: "No TypeScript compilation errors"
+    on_failure: "Fix TypeScript errors before proceeding"
+
+  step_2_package:
+    command: "npm run create-release-packages"
+    verify: |
+      Check that ZIP files are created in the .genreleases/ directory:
+      - buildforce-cli-template-claude-v0.0.100.zip
+      - buildforce-cli-template-cursor-v0.0.100.zip
+      - buildforce-cli-template-opencode-v0.0.100.zip
+    on_failure: "Check shell script syntax errors or missing source directories"
+
+  step_3_inspect_archive:
+    command: "unzip -l .genreleases/buildforce-cli-template-claude-v0.0.100.zip"
+    verify: |
+      Confirm the archive contains the expected structure:
+      - New or modified skill directories appear under skills/
+      - New or modified agent files appear under agents/
+      - New or modified hook files appear under hooks/
+      Repeat for cursor and opencode ZIPs if agent filtering is involved.
+    on_failure: "Check agents: frontmatter in SKILL.md or agent template — the file may be filtered out"
+
+  step_4_test_upgrade:
+    command: "node ./dist/cli.js upgrade --local"
+    verify: |
+      - Upgrade completes without errors
+      - Skills updated in .claude/skills/
+      - Agents updated in .claude/agents/
+      - Hooks updated in .claude/hooks/
+      - Context files preserved in .buildforce/context/
+      - buildforce.json version updated
+    on_failure: "Check upgrade command logic or template structure"
+
+  step_4_alt_test_init:
+    command: "node ./dist/cli.js init . --local"
+    verify: |
+      - Fresh .buildforce/ folder created
+      - Agent-specific folders created (.claude/, .cursor/, .opencode/)
+      - All templates correctly distributed
+      - Script permissions set correctly
+    on_failure: "Check init command logic or template structure"
+    prerequisites: |
+      IMPORTANT: Before running init, back up the existing .buildforce folder:
+        mv .buildforce .buildforce-backup
+      After testing:
+        rm -rf .buildforce
+        mv .buildforce-backup .buildforce
+
+expected_outcomes:
+  - "All three agent ZIP packages contain the updated templates"
+  - "Upgrade command distributes changes to agent-specific folders without errors"
+  - "Context files in .buildforce/context/ are preserved through upgrade"
+
+anti_patterns:
+  description: |
+    Agents repeatedly attempt to create release packages by setting environment
+    variables and running the shell script directly. This NEVER works locally.
+  wrong_approaches:
+    - approach: "Setting env vars and running shell script directly"
+      example: |
+        export VERSION=0.0.43
+        .github/workflows/scripts/create-release-packages.sh
+      why_it_fails: "Script requires a positional argument with v-prefix (e.g., v0.0.43), not env vars"
+    - approach: "Trying to pass version without v-prefix"
+      example: |
+        .github/workflows/scripts/create-release-packages.sh 0.0.43
+      why_it_fails: "Script validates version format must match ^v[0-9]+.[0-9]+.[0-9]+$"
+    - approach: "Setting AGENTS env var incorrectly"
+      example: |
+        AGENTS=claude .github/workflows/scripts/create-release-packages.sh v0.0.43
+      why_it_fails: "While this could work in theory, agents typically get the full invocation wrong"
+  correct_approach: |
+    The package.json defines a "create-release-packages" npm script that wraps
+    the shell script with a hardcoded local-development version (v0.0.100).
+    This is the ONLY way agents should create release packages locally:
+
+      npm run build && npm run create-release-packages && node ./dist/cli.js upgrade --local
+
+    Why it works:
+    1. It passes the required version argument (v0.0.100) automatically
+    2. The version follows the required ^v[0-9]+.[0-9]+.[0-9]+$ format
+    3. v0.0.100 is a reserved "local development" version number
+    4. No environment variables need to be set
+
+known_risks:
+  - module: ".github/workflows/scripts/create-release-packages.sh"
+    risk: "Agents repeatedly try to run this script directly instead of via npm"
+    mitigation: |
+      ALWAYS use: npm run create-release-packages
+      NEVER use: .github/workflows/scripts/create-release-packages.sh [args]
+
+      The npm script handles the version argument automatically.
+      Direct invocation requires a v-prefixed version argument that agents
+      consistently get wrong.
+    occurrences: 3
+    last_flagged: "2026-02-19"
+
+  - module: "package.json (create-release-packages script)"
+    risk: "Hardcoded version v0.0.100 in npm script"
+    mitigation: |
+      The v0.0.100 version is intentionally hardcoded for local development.
+      It does NOT need to match the actual package version.
+      Do NOT change this version number - it is a convention for local testing.
+    occurrences: 0
+    last_flagged: "2026-02-19"
+
+related_context:
+  - architecture/skills-bundling.yaml
+  - architecture/cli-architecture.yaml
