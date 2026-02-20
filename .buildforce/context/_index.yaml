@@ -347,66 +347,21 @@ domains:
   verification:
     description: |
       Verification context about HOW to know if code is right.
-      Contains quality standards, test expectations, review checklists, and known risks.
+      Contains procedural validation steps — build/test/deploy workflows that
+      agents must follow to confirm changes meet quality criteria.
     schema: verification/_schema.yaml
-    coverage: 100
-    average_depth: shallow
+    coverage: 0
+    average_depth: none
     items:
-      - id: testing-standards
-        file: verification/testing-standards.yaml
-        type: verification
-        status: extracted
-        depth: shallow
-        description: Testing standards and expectations for the project
-        source: extracted
-        tags: [ testing, quality, verification ]
-
-      - id: quality-gates
-        file: verification/quality-gates.yaml
-        type: verification
-        status: extracted
-        depth: shallow
-        description: CI/CD quality gates and pre-commit requirements
-        source: extracted
-        tags: [ ci-cd, quality-gates, git-hooks, conventional-commits ]
-
-      - id: review-criteria
-        file: verification/review-criteria.yaml
-        type: verification
-        status: extracted
-        depth: shallow
-        description: PR review expectations and issue templates
-        source: extracted
-        tags: [ review, pr, issues, contribution ]
-
-      - id: known-risks
-        file: verification/known-risks.yaml
-        type: verification
-        status: extracted
-        depth: moderate
-        description: Known risks and areas requiring extra attention
-        source: extracted
-        tags: [ risks, gaps, testing, linting, multi-agent, hooks ]
-
-      - id: local-testing-workflow
-        file: verification/local-testing-workflow.yaml
-        type: verification
-        status: extracted
-        depth: shallow
-        description: Local testing workflow for template changes
-        source: manual
-        tags: [ testing, local, templates, verification, workflow ]
-        related_context: [ local-artifact-resolution, cli-architecture, manual-workflow-testing ]
-
       - id: release-package-verification
         file: verification/release-package-verification.yaml
         type: verification
         status: extracted
         depth: moderate
-        description: Release package creation verification with anti-pattern documentation
+        description: Release package build, inspect, and test procedure for template changes
         source: manual
         tags: [ release-packages, local-testing, anti-pattern, npm-scripts, verification ]
-        related_context: [ local-testing-workflow, local-artifact-resolution, skills-bundling, cli-architecture ]
+        related_context: [ skills-bundling, cli-architecture ]
 
 # ============================================================================
 # AGGREGATE SUMMARY
@@ -415,8 +370,8 @@ domains:
 
 summary:
   overall_coverage: 100
-  total_items: 33
-  extracted_items: 33
+  total_items: 28
+  extracted_items: 28
   iterations_completed: 9
 
 # ============================================================================
