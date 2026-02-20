@@ -10,6 +10,7 @@ import { AGENT_FOLDER_MAP, MINT_COLOR } from "../../constants.js";
 import { resolveLocalArtifact } from "../../lib/local-artifacts.js";
 import { createMigrationRunner } from "./migrations/registry.js";
 import { mergeAgentSettings } from "../../utils/settings-merge.js";
+import { ensureBuildforceInstructionFiles } from "../../utils/agent-instructions.js";
 
 /**
  * Execute the upgrade process
@@ -450,6 +451,18 @@ export async function executeUpgrade(
         version: version,
       });
       tracker.complete("update-config", `version ${version}`);
+
+      // Keep AGENTS.md / CLAUDE.md aligned with Buildforce context usage.
+      const instructionFiles = await ensureBuildforceInstructionFiles(projectPath, {
+        selectedAi: successfulAgents,
+      });
+      if (debug && instructionFiles.updated.length > 0) {
+        console.log(
+          chalk.gray(
+            `[instructions] updated: ${instructionFiles.updated.join(", ")}`
+          )
+        );
+      }
 
       tracker.complete("final", "upgrade complete");
     }
