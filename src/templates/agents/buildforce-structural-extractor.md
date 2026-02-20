@@ -1,6 +1,6 @@
 ---
 name: buildforce-structural-extractor
-description: Context Extractor for structural/architecture context. Extracts understanding of modules, features, components, and their relationships. Use when extracting structural context during /buildforce.extract iterations.
+description: Context Extractor for structural/architecture context. Extracts understanding of modules, features, components, and their relationships. Use when extracting structural context during /context-extract iterations.
 tools: Read, Glob, Grep
 model: inherit
 agents: [claude, cursor, opencode]

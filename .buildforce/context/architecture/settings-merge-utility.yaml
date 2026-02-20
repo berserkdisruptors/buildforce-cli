@@ -3,7 +3,7 @@ name: Settings Merge Utility
 type: structural
 status: production
 created: "2026-02-04"
-last_updated: "2026-02-16"
+last_updated: "2026-02-19"
 
 summary: |
   Unified TypeScript utility for merging agent settings into agent-specific configuration
@@ -147,6 +147,95 @@ evolution:
 related_specs:
   - skills-bundling-config-concat-20260204000000
 
+per_agent_strategy_details: |
+  CLAUDE STRATEGY (mergeClaudeSettings):
+    Config: CLAUDE_HOOKS_CONFIG (hard-coded in settings-merge.ts:45-57)
+    Content: PreToolUse hook for Task matcher → .claude/hooks/setup-explorer-subagent.sh
+    Target file: .claude/settings.local.json
+    Merge flow:
+      1. fs.ensureDir(".claude/") - create agent dir if needed
+      2. mergeJsonSettingsFile() wraps CLAUDE_HOOKS_CONFIG in { hooks: ... }
+      3. Read existing settings.local.json or start with {}
+      4. mergeSettings() additive merge: existing + incoming
+      5. Write JSON with 2-space indent + trailing newline
+      6. ensureHooksExecutable(".claude/hooks/") - chmod +x all .sh files
+    hooksAdded count: Reduces CLAUDE_HOOKS_CONFIG values (1 PreToolUse entry = 1)
+
+  CURSOR STRATEGY (mergeCursorSettings):
+    Config: CURSOR_HOOKS_CONFIG (hard-coded in settings-merge.ts:63-73)
+    Content: { version: 1, hooks: { preToolUse: [{ matcher: "Task", command: "..." }] } }
+    Target file: .cursor/hooks.json
+    Merge flow:
+      1. fs.ensureDir(".cursor/") - create agent dir if needed
+      2. mergeJsonSettingsFile() merges FULL CURSOR_HOOKS_CONFIG (including version field)
+      3. Read existing hooks.json or start with {}
+      4. mergeSettings() additive merge (version field: incoming takes precedence)
+      5. Write JSON with 2-space indent + trailing newline
+      6. ensureHooksExecutable(".cursor/hooks/") - chmod +x all .sh files
+    hooksAdded count: CURSOR_HOOKS_CONFIG.hooks.preToolUse.length (1)
+    Key difference: Cursor uses "preToolUse" (camelCase), Claude uses "PreToolUse" (PascalCase)
+
+  OPENCODE STRATEGY (mergeOpenCodeSettings):
+    Config: Inline TypeScript plugin template (hard-coded in settings-merge.ts:301-313)
+    Content: Default export async function with tool.execute.before hook
+    Target file: .opencode/plugins/buildforce-explorer-redirect.ts
+    Merge flow:
+      1. fs.ensureDir(".opencode/plugins/") - create plugins dir if needed
+      2. Write pluginContent directly (FULL REPLACEMENT, not merge)
+      3. No ensureHooksExecutable (TypeScript file, not bash script)
+    hooksAdded count: Always 1
+    Key difference: NOT a merge operation - always overwrites entire file
+
+  DISPATCH MECHANISM:
+    mergeAgentSettings(projectPath, agentFolder, options) at settings-merge.ts:340
+    Switch on agentFolder string:
+      ".claude/"  → mergeClaudeSettings()
+      ".cursor/"  → mergeCursorSettings()
+      ".opencode/" → mergeOpenCodeSettings()
+      default     → { merged: false, skipped: true, reason: "unknown agent" }
+
+idempotency_guarantees: |
+  Array Deduplication:
+  - mergeArraysUnique() uses JSON.stringify to compare existing vs incoming items
+  - Set-based lookup: O(n) per merge call for duplicate detection
+  - Preserves order: existing items first, then new unique items appended
+  - Works correctly for nested objects (hooks have nested matcher/hooks structure)
+
+  JSON Merge Behavior:
+  - mergeSettings() is additive-only: never removes keys or array entries
+  - Version field: incoming takes precedence (Cursor hooks.json version: 1)
+  - Permissions: allow[], deny[], ask[] arrays merged with deduplication
+  - Hooks: all hook types (Stop, PreToolUse, PostToolUse + any future types via [key: string])
+  - Unknown top-level keys in existing settings are preserved (spread operator)
+
+  OpenCode Exception:
+  - Plugin file is ALWAYS fully rewritten (fs.writeFile, not merge)
+  - This is intentional: plugin is a single-purpose file with no user-customizable content
+  - If user modifies plugin, their changes WILL be lost on next init/upgrade
+
+  Edge Case: Malformed JSON:
+  - If settings file contains invalid JSON, it's replaced with empty {}
+  - Warning logged to console if debug mode is enabled
+  - This means corrupted settings files self-heal on next merge
+
+error_handling_paths: |
+  ensureHooksExecutable:
+  - Windows: returns immediately (process.platform === "win32"), no chmod on Windows
+  - Missing hooks dir: returns immediately (fs.pathExists check)
+  - Non-.sh files: skipped (only .endsWith(".sh") are processed)
+  - Stat/chmod failure: caught silently (try/catch with empty catch block)
+  - Already executable: checks mode bits (stats.mode & 0o111) before chmod
+
+  mergeJsonSettingsFile:
+  - File doesn't exist: creates new with incoming settings only
+  - File exists but empty: JSON.parse fails → caught → starts with {}
+  - File exists with malformed JSON: same as empty (graceful degradation)
+  - Write failure: propagates error to caller (no catch)
+
+  mergeAgentSettings:
+  - Unknown agentFolder: returns graceful { merged: false, skipped: true, reason: "unknown agent" }
+  - Caller (setup.ts, execution.ts) loops over agents, so one failure doesn't block others
+
 notes: |
   This utility enables configuration of Buildforce features by merging
   hook configurations into agent-specific settings files.
@@ -163,3 +252,13 @@ notes: |
   - Cursor (.cursor/): Merges CURSOR_HOOKS_CONFIG into hooks.json, chmod hooks
   - OpenCode (.opencode/): Writes plugin file to plugins/ directory
   - Unknown agent: Returns { merged: false, skipped: true, reason: "unknown agent" }
+
+  Internal function architecture:
+  - mergeArraysUnique<T>(): Generic array dedup using JSON.stringify Set
+  - mergeSettings(): Recursive additive merge for AgentSettings objects
+  - mergeJsonSettingsFile(): Shared read-merge-write for JSON settings files
+  - ensureHooksExecutable(): POSIX-only chmod for hook scripts
+  - mergeClaudeSettings(): Claude-specific strategy
+  - mergeCursorSettings(): Cursor-specific strategy
+  - mergeOpenCodeSettings(): OpenCode-specific strategy (full replace, not merge)
+  - mergeAgentSettings(): Public entry point with switch dispatch

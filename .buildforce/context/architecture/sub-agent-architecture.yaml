@@ -64,7 +64,7 @@ design_decisions:
     rationale: |
       Separation of concerns: Explorers are read-only and optimized for speed (context retrieval
       during /buildforce.explore). Extractors return proposals without direct writes (context
-      creation during /buildforce.extract). This prevents accidental modifications during
+      creation during /context-extract). This prevents accidental modifications during
       exploration and enables validation before writes during extraction.
 
   - decision: "Archiver has bypassPermissions and runs in background"
@@ -165,7 +165,7 @@ architecture_patterns:
     - model: haiku
     ```
 
-    For Extractors (during /buildforce.extract):
+    For Extractors (during /context-extract):
     ```
     Task tool parameters:
     - subagent_type: "buildforce-structural-extractor" | "buildforce-conventions-extractor" | "buildforce-verification-extractor"
@@ -250,8 +250,8 @@ architecture_patterns:
     SKILLS (src/templates/skills/*/SKILL.md):
     - generate_skills() function processes skill directories
     - agents: field filtering in SKILL.md frontmatter
-    - Entire skill directory copied to .claude/skills/
-    - Currently Claude-only but extensible
+    - Entire skill directory copied to .{agent}/skills/
+    - Distributed to all three agents
 
     HOOKS (src/templates/hooks/{claude,cursor,opencode}/):
     - Direct file copy to agent hook directories

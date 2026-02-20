@@ -20,7 +20,7 @@ description: |
 
 lifecycle:
   creation:
-    - trigger: "/buildforce.extract (bootstrap from fresh codebase)"
+    - trigger: "/context-extract (bootstrap from fresh codebase)"
       flow: "Scan codebase → Generate extraction plans → Deploy extractors → Validate proposals → Write files → Update _index.yaml"
 
     - trigger: "/buildforce.complete (after spec workflow)"
@@ -34,7 +34,7 @@ lifecycle:
       flow: "Read existing file → Preserve structure → Merge new information → Update last_updated → Append to evolution"
 
     - trigger: "Manual edits"
-      flow: "Edit YAML directly → Update last_updated → Run /buildforce.extract to validate"
+      flow: "Edit YAML directly → Update last_updated → Run /context-extract to validate"
 
   discovery:
     - method: "/buildforce.research searches _index.yaml first"
@@ -121,7 +121,7 @@ anti_patterns:
 
 enforcement_mechanism:
   primary: "/buildforce.complete and /buildforce.document auto-update _index.yaml"
-  secondary: "/buildforce.extract validates against _index.yaml before writing"
+  secondary: "/context-extract validates against _index.yaml before writing"
   verification: "All context files must have corresponding _index.yaml entry"
   tooling: "Template instructions enforce index updates; no separate linting"
 

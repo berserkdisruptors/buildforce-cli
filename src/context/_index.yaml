@@ -34,7 +34,7 @@ version: "2.1"
 # ============================================================================
 #
 # In v2.1, this file also serves as a coverage map for context extraction
-# (context-extract skill / /buildforce.extract command).
+# (context-extract skill / /context-extract command).
 # Each domain tracks:
 #   - items[]: Discovered and extracted context items with status/depth
 #   - coverage: Percentage of items that have been extracted

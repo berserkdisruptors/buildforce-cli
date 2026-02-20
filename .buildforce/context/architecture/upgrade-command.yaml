@@ -268,7 +268,7 @@ evolution:
 
   - version: "1.4"
     date: "2026-01-28"
-    changes: "Refactored migration system to MigrationRunner pattern. Each migration now lives in its own file (migrations/v2.0.ts, migrations/v2.1.ts) with standard interface. MigrationRunner detects current version and runs all needed migrations sequentially. v2.1 migration consolidates domain-specific _index.yaml files into root _index.yaml and supports /buildforce.extract coverage map functionality."
+    changes: "Refactored migration system to MigrationRunner pattern. Each migration now lives in its own file (migrations/v2.0.ts, migrations/v2.1.ts) with standard interface. MigrationRunner detects current version and runs all needed migrations sequentially. v2.1 migration consolidates domain-specific _index.yaml files into root _index.yaml and supports /context-extract coverage map functionality."
 
   - version: "1.5"
     date: "2026-02-04"

@@ -1,6 +1,6 @@
 # Buildforce Context Repository Index & Coverage Map
 # This file serves as both the context index AND the context coverage map.
-# Version 2.1: Unified structure with domain items tracking for /buildforce.extract
+# Version 2.1: Unified structure with domain items tracking for /context-extract
 
 version: "2.1"
 
@@ -33,7 +33,7 @@ version: "2.1"
 # VERSION 2.1: COVERAGE MAP FUNCTIONALITY
 # ============================================================================
 #
-# In v2.1, this file also serves as a coverage map for /buildforce.extract.
+# In v2.1, this file also serves as a coverage map for /context-extract.
 # Each domain tracks:
 #   - items[]: Discovered and extracted context items with status/depth
 #   - coverage: Percentage of items that have been extracted
@@ -49,21 +49,21 @@ version: "2.1"
 #   - status: discovered | in-progress | extracted
 #   - depth: none | shallow | moderate | deep
 #
-# The /buildforce.extract command uses this coverage map to:
+# The /context-extract command uses this coverage map to:
 #   1. Track what has been discovered in the codebase
 #   2. Track what has been extracted and to what depth
 #   3. Recommend focus areas for subsequent extraction iterations
 #
 # ============================================================================
 
-# Timestamps (populated by /buildforce.extract on first run)
+# Timestamps (populated by /context-extract on first run)
 generated_at: "2026-02-02"
 last_updated: "2026-02-20"
 
 # ============================================================================
 # CODEBASE PROFILE
 # ============================================================================
-# Populated by /buildforce.extract during initial codebase scan.
+# Populated by /context-extract during initial codebase scan.
 # Provides high-level overview of the project for AI agents.
 
 codebase_profile:
@@ -92,10 +92,10 @@ domains:
         file: architecture/cli-architecture.yaml
         type: structural
         status: extracted
-        depth: moderate
+        depth: deep
         description: CLI architecture with template distribution, context layer, and 3-agent support
         tags: [ core, architecture, cli, commander, context-layer, skills, hooks ]
-        related_context: [ extract-command, context-search-skill, explorer-agent, upgrade-command, skills-bundling, settings-merge-utility ]
+        related_context: [ extract-command, context-search-skill, context-add-skill, explorer-agent, upgrade-command, skills-bundling, settings-merge-utility ]
 
       - id: upgrade-command
         file: architecture/upgrade-command.yaml
@@ -128,7 +128,7 @@ domains:
         file: architecture/explorer-agent.yaml
         type: structural
         status: extracted
-        depth: moderate
+        depth: deep
         description: Explorer wrapper agent and hooks (Claude/Cursor/OpenCode) redirecting through context repository
         tags: [ agent, hook, explore-redirect, context-search, multi-agent ]
         related_context: [ context-search-skill, sub-agent-architecture, cli-architecture, settings-merge-utility ]
@@ -146,7 +146,7 @@ domains:
         file: architecture/settings-merge-utility.yaml
         type: structural
         status: extracted
-        depth: moderate
+        depth: deep
         description: Multi-agent settings merge utility (Claude, Cursor, OpenCode) with additive strategy
         tags: [ utility, settings, multi-agent, merge, hooks, permissions ]
         related_context: [ upgrade-command, cli-architecture, explorer-agent ]
@@ -214,6 +214,23 @@ domains:
         tags: [ migration, upgrade, versioning, context-schema, sequential-execution ]
         related_context: [ upgrade-command, cli-architecture ]
 
+      - id: context-add-skill
+        file: architecture/context-add-skill.yaml
+        type: structural
+        status: extracted
+        depth: moderate
+        description: Multi-agent skill for manually adding human knowledge to the context repository
+        tags: [ skill, context-add, manual-entry, domain-classification, codebase-grounding, multi-agent ]
+        related_context: [ extract-command, context-search-skill, cli-architecture, skills-bundling, skill-creation-conventions ]
+
+      - id: context-verify-skill
+        file: architecture/context-verify-skill.yaml
+        type: structural
+        status: extracted
+        depth: moderate
+        description: "Skill that verifies branch changes against context repository conventions and verification rules"
+        tags: [skill, verification, conventions, context]
+        related_context: [context-search-skill, context-add-skill]
 
   conventions:
     description: |
@@ -291,11 +308,11 @@ domains:
         file: conventions/agent-template-conventions.yaml
         type: convention
         status: extracted
-        depth: moderate
+        depth: deep
         description: Conventions for writing buildforce agent templates (frontmatter, tools, output formats)
         sub_type: code-convention
         enforcement: strict
-        related_context: [ sub-agent-architecture, extract-command, context-search-skill ]
+        related_context: [ sub-agent-architecture, extract-command, context-search-skill, explorer-agent, settings-merge-utility ]
 
       - id: skill-naming-conventions
         file: conventions/skill-naming-conventions.yaml
@@ -306,6 +323,16 @@ domains:
         sub_type: naming-convention
         enforcement: strict
         related_context: [ skills-bundling, extract-command ]
+
+      - id: skill-creation-conventions
+        file: conventions/skill-creation-conventions.yaml
+        type: convention
+        status: extracted
+        depth: deep
+        description: Comprehensive conventions for creating Buildforce skills (directory structure, frontmatter, multi-agent distribution)
+        sub_type: code-convention
+        enforcement: strict
+        related_context: [ skill-naming-conventions, skills-bundling, agent-template-conventions, sub-agent-architecture ]
 
       - id: migration-conventions
         file: conventions/migration-conventions.yaml
@@ -330,56 +357,30 @@ domains:
   verification:
     description: |
       Verification context about HOW to know if code is right.
-      Contains quality standards, test expectations, review checklists, and known risks.
+      Contains procedural validation steps — build/test/deploy workflows that
+      agents must follow to confirm changes meet quality criteria.
     schema: verification/_schema.yaml
-    coverage: 100
-    average_depth: shallow
+    coverage: 0
+    average_depth: none
     items:
+      - id: release-package-verification
+        file: verification/release-package-verification.yaml
+        type: verification
+        status: extracted
+        depth: moderate
+        description: Release package build, inspect, and test procedure for template changes
+        source: manual
+        tags: [ release-packages, local-testing, anti-pattern, npm-scripts, verification ]
+        related_context: [ skills-bundling, cli-architecture ]
+
       - id: testing-standards
         file: verification/testing-standards.yaml
         type: verification
         status: extracted
-        depth: shallow
-        description: Testing standards and expectations for the project
-        source: extracted
-        tags: [ testing, quality, verification ]
-
-      - id: quality-gates
-        file: verification/quality-gates.yaml
-        type: verification
-        status: extracted
-        depth: shallow
-        description: CI/CD quality gates and pre-commit requirements
-        source: extracted
-        tags: [ ci-cd, quality-gates, git-hooks, conventional-commits ]
-
-      - id: review-criteria
-        file: verification/review-criteria.yaml
-        type: verification
-        status: extracted
-        depth: shallow
-        description: PR review expectations and issue templates
-        source: extracted
-        tags: [ review, pr, issues, contribution ]
-
-      - id: known-risks
-        file: verification/known-risks.yaml
-        type: verification
-        status: extracted
-        depth: shallow
-        description: Known risks and areas requiring extra attention
-        source: extracted
-        tags: [ risks, gaps, testing, linting ]
-
-      - id: local-testing-workflow
-        file: verification/local-testing-workflow.yaml
-        type: verification
-        status: extracted
-        depth: shallow
-        description: Local testing workflow for template changes
-        source: manual
-        tags: [ testing, local, templates, verification, workflow ]
-        related_context: [ local-artifact-resolution, cli-architecture, manual-workflow-testing ]
+        depth: moderate
+        description: Three-tier vitest testing standards with CI pipeline, coverage thresholds, and known risks
+        tags: [ testing, vitest, ci, coverage, quality-standards ]
+        related_context: [ cli-architecture, testing-conventions, manual-workflow-testing ]
 
 # ============================================================================
 # AGGREGATE SUMMARY
@@ -390,24 +391,18 @@ summary:
   overall_coverage: 100
   total_items: 30
   extracted_items: 30
-  iterations_completed: 7
+  iterations_completed: 12
 
 # ============================================================================
 # EXTRACTION STATE
 # ============================================================================
-# Tracks state between /buildforce.extract invocations.
+# Tracks state between /context-extract invocations.
 # Enables continuation after /clear or session restart.
 
 extraction:
   needs_clarification:
     - "Should linting tools (ESLint/Prettier) be added to the quality gates?"
-  recommended_focus:
-    - id: cli-architecture
-      reason: "Core item updated significantly - could benefit from deep depth reviewing the new 3-agent model"
-    - id: explorer-agent
-      reason: "Now supports 3 agents (Claude, Cursor, OpenCode) - could document per-agent hook differences in depth"
-    - id: settings-merge-utility
-      reason: "Major expansion to multi-agent strategies - could benefit from deep depth on each strategy"
+  recommended_focus: []
   new_discoveries:
     - id: testing-infrastructure
       domain: architecture
