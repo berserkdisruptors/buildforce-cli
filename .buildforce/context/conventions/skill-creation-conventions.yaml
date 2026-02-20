@@ -15,7 +15,7 @@ description: |
 
   Every new skill MUST follow the directory structure, SKILL.md frontmatter format,
   content structure, and multi-agent support patterns established by the existing skills
-  (context-extract, context-search, context-add). This ensures consistent bundling,
+  (context-extract, context-search, context-add, context-verify). This ensures consistent bundling,
   agent filtering, and upgrade behavior.
 
   Key principle: Skills are agent-agnostic instruction files by default. The agents:
@@ -307,6 +307,13 @@ existing_skills_inventory: |
      - Assets: none
      - Features: Domain classification, codebase grounding, _index.yaml update
      - Frontmatter: user-invocable: true, context: fork, allowed-tools without Task
+
+  4. context-verify
+     - Purpose: Verify branch changes against conventions and verification rules
+     - Agents: [claude, cursor, opencode]
+     - Assets: none
+     - Features: Git diff analysis, rule matching, violation/warning/pass classification, actionable report
+     - Frontmatter: user-invocable: true, context: fork, allowed-tools: [Read, Glob, Grep, Bash]
 
 related_context:
   - skill-naming-conventions

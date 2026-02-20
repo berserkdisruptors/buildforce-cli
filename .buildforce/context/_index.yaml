@@ -223,6 +223,14 @@ domains:
         tags: [ skill, context-add, manual-entry, domain-classification, codebase-grounding, multi-agent ]
         related_context: [ extract-command, context-search-skill, cli-architecture, skills-bundling, skill-creation-conventions ]
 
+      - id: context-verify-skill
+        file: architecture/context-verify-skill.yaml
+        type: structural
+        status: extracted
+        depth: moderate
+        description: "Skill that verifies branch changes against context repository conventions and verification rules"
+        tags: [skill, verification, conventions, context]
+        related_context: [context-search-skill, context-add-skill]
 
   conventions:
     description: |
@@ -407,8 +415,8 @@ domains:
 
 summary:
   overall_coverage: 100
-  total_items: 32
-  extracted_items: 32
+  total_items: 33
+  extracted_items: 33
   iterations_completed: 9
 
 # ============================================================================

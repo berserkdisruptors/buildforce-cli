@@ -1,0 +1,212 @@
+id: context-verify-skill
+name: "context-verify Skill"
+type: structural
+status: production
+created: "2026-02-19"
+last_updated: "2026-02-19"
+
+summary: |
+  Skill that verifies current branch changes against established conventions and
+  verification rules from the context repository. Reads the git diff, finds applicable
+  rules, and reports violations with actionable fixes. Completes the context lifecycle:
+  extract -> add -> search -> verify.
+
+  Available to all three agents (Claude, Cursor, OpenCode). Uses only basic tools
+  (Read, Glob, Grep, Bash) with no sub-agent spawning. The skill is read-only --
+  it reports findings but does not modify files. Fixes happen in the main conversation
+  after the skill returns its report.
+
+responsibilities:
+  - Read branch diff (committed + uncommitted) relative to a base branch
+  - Quick-scan _index.yaml to find applicable convention and verification rules
+  - Match changed files to rules using type, tag, and module pattern heuristics
+  - Read and extract checkable rules from matched context files
+  - Verify diff content against naming, structure, quality gate, and known risk rules
+  - Classify findings as violation, warning, or pass
+  - Generate a structured verification report with actionable fix suggestions
+  - Offer to fix violations after reporting
+
+dependencies:
+  internal:
+    - cli-architecture: "Deployed via template distribution and release packaging"
+    - skills-bundling: "Bundled via generate_skills() in release packaging"
+    - context-search-skill: "Complementary skill -- context-verify checks, context-search retrieves"
+    - context-add-skill: "Complementary skill -- context-add writes rules, context-verify checks them"
+    - extract-command: "Complementary skill -- context-extract discovers rules, context-verify enforces them"
+  external:
+    - git: "Requires git for diff and branch operations"
+
+files:
+  primary:
+    - src/templates/skills/context-verify/SKILL.md
+  secondary:
+    - .buildforce/context/_index.yaml
+    - .buildforce/context/conventions/
+    - .buildforce/context/verification/
+
+interfaces:
+  skill:
+    - name: "context-verify"
+      invocation: "/context-verify [against <base-branch>]"
+      user_invocable: true
+      model_invocable: false
+      description: "Verify branch changes against context repository conventions and verification rules"
+
+workflow:
+  step_0_prerequisites:
+    action: "Read _index.yaml, verify git repo, determine and validate base branch"
+    failure_modes:
+      - condition: "_index.yaml does not exist"
+        response: "Tell user to run '/context-extract' first"
+      - condition: "Not a git repository"
+        response: "Tell user to run from a project root"
+      - condition: "Base branch not found"
+        response: "Tell user to specify a different base branch"
+
+  step_1_collect_changes:
+    action: "Run git diff to collect committed and uncommitted changes"
+    outputs:
+      - changed_files: "Deduplicated list of changed file paths"
+      - diff_content: "Full diff text for committed and uncommitted changes"
+    failure_modes:
+      - condition: "No changes found"
+        response: "Tell user 'No changes to verify' and STOP"
+
+  step_2_quick_scan_rules:
+    action: "Scan _index.yaml conventions and verification items, match against changed files"
+    strategies:
+      - type_match: "Match file paths/extensions to known rule categories"
+      - tag_match: "Compare item tags against directory names and extensions"
+      - enforcement_priority: "Rank strict > recommended > reference"
+
+  step_3_read_rules:
+    action: "Read matched context files and extract concrete checkable rules"
+    sources:
+      conventions: "examples, violations, template patterns, field requirements"
+      verification: "quality_standards, review_checklist, known_risks, test_expectations"
+
+  step_4_verify:
+    action: "Check diff against each extracted rule"
+    checks:
+      - naming_rules: "File names, variable patterns against required conventions"
+      - structure_rules: "Frontmatter fields, required sections, directory placement"
+      - quality_gates: "Branch naming, TypeScript compilation, config requirements"
+      - known_risks: "Flag changes in documented risk areas"
+      - convention_violations: "Check for explicitly listed violation patterns"
+
+  step_5_generate_report:
+    format: |
+      ## Verification Report
+      Branch: `{current}` -> `{base}`
+      Files changed: N | Rules checked: M
+      ### Violations (count)
+      ### Warnings (count)
+      ### Passed (count)
+
+  step_6_follow_up:
+    outcomes:
+      - violations_found: "Offer to fix them"
+      - warnings_only: "Note them, no action needed"
+      - all_passed: "Confirm changes look good"
+
+design_decisions:
+  - decision: "Read-only skill -- no Write or Edit tools"
+    rationale: |
+      The skill only reports findings. Fixes are applied in the main conversation
+      after the user reviews the report and confirms. This separation ensures the
+      user maintains control over what changes are made to their code.
+
+  - decision: "No sub-agents -- direct index scan"
+    rationale: |
+      Unlike context-search (which dispatches 3 explorer sub-agents), context-verify
+      reads the index directly and only opens the specific rule files that match.
+      This is faster for a targeted rule-matching task where we know exactly which
+      files to check. Sub-agent overhead would slow down verification unnecessarily.
+
+  - decision: "context: fork for isolated execution"
+    rationale: |
+      Each verification run starts fresh, uninfluenced by prior conversation state.
+      This ensures consistent, reproducible results regardless of what was discussed
+      before invoking the skill.
+
+  - decision: "Bash tool for git operations only"
+    rationale: |
+      Bash is included solely for git diff and git rev-parse commands. All file
+      reading uses Read, file searching uses Glob/Grep. This minimizes the tool
+      surface while enabling the essential git operations.
+
+  - decision: "Two-phase rule matching (quick-scan then deep-read)"
+    rationale: |
+      Step 2 reads only the index to identify applicable rules (fast). Step 3 reads
+      only the matched rule files (targeted). This avoids reading all 17+ context
+      files on every invocation. For a typical branch with 5-10 changed files,
+      only 3-5 rule files need to be read.
+
+  - decision: "Combined committed + uncommitted diff"
+    rationale: |
+      The skill checks both committed branch changes (git diff base...HEAD) and
+      uncommitted working directory changes (git diff). This catches violations
+      before they're committed, making the skill useful at any point in the
+      development workflow.
+
+architecture_patterns:
+  skill_positioning: |
+    The context-verify skill completes the context lifecycle:
+
+    context-extract (create)   -- Discovers and extracts rules from codebase
+    context-add (create)       -- Accepts human-defined rules
+    context-search (read)      -- Queries context for AI agent enrichment
+    context-verify (enforce)   -- Checks code against established rules
+
+    This mirrors a policy engine pattern: extract/add define policies,
+    verify enforces them, search retrieves them for guidance.
+
+  workflow_comparison: |
+    Comparing the four context skills:
+
+    | Aspect          | context-extract       | context-add           | context-search        | context-verify        |
+    |-----------------|----------------------|----------------------|----------------------|----------------------|
+    | Purpose         | Automated extraction  | Manual knowledge add  | Query/retrieval       | Rule enforcement      |
+    | Agents          | [claude] only         | [claude,cursor,opencode] | [claude,cursor,opencode] | [claude,cursor,opencode] |
+    | Sub-agents      | 3 extractors (Task)   | None                  | 3 explorers (Task)    | None                  |
+    | Tools needed    | Read,Write,Edit,Glob,Grep,Bash,Task | Read,Write,Edit,Glob,Grep | Read,Glob,Grep,Task | Read,Glob,Grep,Bash |
+    | Input           | Optional (mode routing) | Required (knowledge) | Optional (topic)     | Optional (base branch)|
+    | Output          | Coverage map + files  | Single context file   | Synthesized response  | Verification report   |
+    | Context mode    | fork                  | fork                  | (none)                | fork                  |
+    | User-invocable  | yes                   | yes                   | yes (+ model-invocable) | yes                 |
+    | Modifies files  | yes                   | yes                   | no                    | no                    |
+
+evolution:
+  - version: "1.0"
+    date: "2026-02-19"
+    changes: |
+      Initial implementation with 7-step workflow: prerequisites, change collection,
+      quick-scan rule matching, deep rule reading, verification, report generation,
+      and follow-up. Supports committed and uncommitted changes, configurable base
+      branch, and three finding classifications (violation, warning, pass).
+
+related_context:
+  - context-search-skill
+  - context-add-skill
+  - extract-command
+  - cli-architecture
+  - skills-bundling
+  - skill-creation-conventions
+
+notes: |
+  The context-verify skill is the enforcement arm of the context repository. While
+  context-search passively retrieves knowledge, context-verify actively checks that
+  new code follows established rules. This is particularly valuable for:
+
+  - Pre-commit checks: Run /context-verify before committing to catch convention violations
+  - PR review: Run against the PR branch to generate a structured review checklist
+  - Onboarding: New contributors can verify their changes follow project conventions
+
+  The skill intentionally has no model-invocable flag. Verification should be a
+  deliberate action, not something the AI agent runs proactively -- it involves
+  reading potentially large diffs and multiple rule files, which is expensive.
+
+  Future considerations:
+  - Hook integration: Could be wired as a pre-commit or pre-push hook
+  - Severity thresholds: Could add --strict flag to fail on warnings
+  - Auto-fix mode: Could add --fix flag to apply fixes directly (would need Write/Edit tools)
