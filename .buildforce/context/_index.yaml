@@ -344,6 +344,16 @@ domains:
         enforcement: strict
         related_context: [ migration-runner, upgrade-command ]
 
+      - id: testing-conventions
+        file: conventions/testing-conventions.yaml
+        type: convention
+        status: extracted
+        depth: moderate
+        description: Testing conventions for vitest three-tier strategy (unit, integration, e2e)
+        sub_type: testing-standard
+        enforcement: strict
+        related_context: [ cli-architecture, manual-workflow-testing ]
+
   verification:
     description: |
       Verification context about HOW to know if code is right.
@@ -363,6 +373,15 @@ domains:
         tags: [ release-packages, local-testing, anti-pattern, npm-scripts, verification ]
         related_context: [ skills-bundling, cli-architecture ]
 
+      - id: testing-standards
+        file: verification/testing-standards.yaml
+        type: verification
+        status: extracted
+        depth: moderate
+        description: Three-tier vitest testing standards with CI pipeline, coverage thresholds, and known risks
+        tags: [ testing, vitest, ci, coverage, quality-standards ]
+        related_context: [ cli-architecture, testing-conventions, manual-workflow-testing ]
+
 # ============================================================================
 # AGGREGATE SUMMARY
 # ============================================================================
@@ -370,8 +389,8 @@ domains:
 
 summary:
   overall_coverage: 100
-  total_items: 28
-  extracted_items: 28
+  total_items: 30
+  extracted_items: 30
   iterations_completed: 12
 
 # ============================================================================
@@ -385,6 +404,10 @@ extraction:
     - "Should linting tools (ESLint/Prettier) be added to the quality gates?"
   recommended_focus: []
   new_discoveries:
+    - id: testing-infrastructure
+      domain: architecture
+      description: "Three-tier vitest testing strategy with CI pipeline, helpers, and coverage"
+      priority: low
     - id: step-tracker
       domain: architecture
       description: "Visual progress tracking class for hierarchical step display"

@@ -1,0 +1,158 @@
+id: testing-standards
+name: Testing Standards
+type: verification
+source: extracted
+created: "2026-02-02"
+last_updated: "2026-02-20"
+
+description: |
+  Verification procedure for running the three-tier automated test suite.
+  Ensures that code changes pass unit, integration, and e2e tests with
+  coverage thresholds enforced. TypeScript strict compilation serves as
+  an additional static verification gate.
+
+triggers:
+  file_patterns:
+    - "src/**/*.ts"
+    - "tests/**/*.ts"
+    - "vitest.config.ts"
+    - "tsconfig.json"
+  conditions: |
+    Run when any source code or test files are modified.
+    TypeScript compilation check applies to all .ts file changes.
+    Coverage check applies when source files under src/ change.
+
+verification_procedures:
+  step_1_typecheck:
+    command: "npx tsc --noEmit"
+    verify: "No TypeScript compilation errors (strict: true, noImplicitReturns: true, noFallthroughCasesInSwitch: true)"
+    on_failure: "Fix type errors before proceeding — strict mode is enforced"
+
+  step_2_unit_tests:
+    command: "npm run test:unit"
+    verify: "All unit tests pass"
+    on_failure: "Fix failing unit tests — these are fast and test pure logic"
+
+  step_3_integration_tests:
+    command: "npm run test:integration"
+    verify: "All integration tests pass"
+    on_failure: "Fix failing integration tests — these use real filesystem via temp dirs"
+
+  step_4_build:
+    command: "npm run build"
+    verify: "dist/cli.js is produced without errors"
+    on_failure: "Fix build errors — e2e tests depend on a fresh build"
+
+  step_5_e2e_tests:
+    command: "npm run test:e2e"
+    verify: "All e2e tests pass against the built dist/cli.js"
+    on_failure: "Ensure npm run build was run first, then fix failing e2e tests"
+
+  step_6_coverage:
+    command: "npm run test:coverage"
+    verify: |
+      Coverage meets thresholds:
+      - Statements: 30%, Branches: 25%, Functions: 30%, Lines: 30%
+    on_failure: "Add tests to meet coverage thresholds"
+
+test_execution:
+  test_types:
+    - type: unit
+      command: "npm run test:unit"
+      selective: "npx vitest run tests/unit/{module}"
+      prerequisites: "None"
+      ci_only: false
+    - type: integration
+      command: "npm run test:integration"
+      selective: "npx vitest run tests/integration/{module}"
+      prerequisites: "None (uses createTempDir()/cleanupTempDir() for filesystem isolation)"
+      ci_only: false
+    - type: e2e
+      command: "npm run test:e2e"
+      selective: "npx vitest run tests/e2e/{module}"
+      prerequisites: "npm run build (tests run against dist/cli.js)"
+      ci_only: false
+
+  module_test_map:
+    - module: "src/utils/**"
+      covered_by: [unit, integration]
+      run: "npm run test:unit && npm run test:integration"
+      gap: null
+    - module: "src/commands/upgrade/migrations/**"
+      covered_by: [unit, integration]
+      run: "npx vitest run tests/unit/commands/upgrade && npx vitest run tests/integration/migrations"
+      gap: null
+    - module: "src/commands/upgrade/runner.ts"
+      covered_by: [unit, integration]
+      run: "npx vitest run tests/unit/commands/upgrade/runner.test.ts && npx vitest run tests/integration/migrations/runner-full.test.ts"
+      gap: null
+    - module: "src/commands/init/**"
+      covered_by: [integration, e2e]
+      run: "npx vitest run tests/integration/commands/init-validation.test.ts && npx vitest run tests/e2e/init.test.ts"
+      gap: null
+    - module: "src/commands/check/**"
+      covered_by: [unit, e2e]
+      run: "npx vitest run tests/unit/commands/check.test.ts && npx vitest run tests/e2e/check.test.ts"
+      gap: null
+    - module: "src/cli.ts"
+      covered_by: [e2e]
+      run: "npm run test:e2e"
+      gap: "No unit tests for CLI argument parsing"
+    - module: "src/templates/**"
+      covered_by: []
+      run: null
+      gap: "Templates are AI-interpreted at runtime — not testable with automated tests. Use manual workflow testing."
+
+  coverage:
+    command: "npm run test:coverage"
+    threshold: "Statements: 30%, Branches: 25%, Functions: 30%, Lines: 30%"
+    excluded:
+      - "src/types/ (type definitions)"
+      - "src/constants/ (static values)"
+      - "src/agent-config/ (agent configuration)"
+      - "src/scripts/ (build scripts)"
+      - "src/templates/ (AI-interpreted templates)"
+
+  known_issues: []
+
+  infrastructure:
+    framework: "vitest v4"
+    config_file: "vitest.config.ts"
+    setup_file: "tests/setup.ts"
+    setup_behavior: |
+      Global setup mocks process.exit() to throw instead of terminating
+      the test runner. Tests expecting process.exit can catch the known error.
+    helpers:
+      - "tests/helpers/temp-dir.ts: createTempDir() / cleanupTempDir() for test isolation"
+      - "tests/helpers/fixtures.ts: createAgentTemplate() / createBuildforceConfig() builders"
+      - "tests/helpers/yaml-builders.ts: createV1IndexYaml() / createV2IndexYaml() / createDomainIndexYaml() / createGuidelinesYaml()"
+    ci_matrix: "Node.js 18, 20, 22 — coverage runs on Node.js 20 only"
+
+expected_outcomes:
+  - "TypeScript compiles with zero errors under strict mode"
+  - "All three test tiers pass (unit, integration, e2e)"
+  - "Coverage thresholds are met across statements, branches, functions, and lines"
+
+known_risks:
+  - module: "src/templates/**/*.ts"
+    risk: "Templates (skills, agents, hooks) are not covered by automated tests"
+    mitigation: |
+      Skill and agent templates are interpreted by AI agents at runtime and
+      cannot be meaningfully unit tested. Manual workflow testing is still
+      recommended for template changes.
+    occurrences: 0
+    last_flagged: "2026-02-20"
+
+  - module: "tests/e2e/*.test.ts"
+    risk: "E2E tests require prior build step"
+    mitigation: |
+      E2E tests run against dist/cli.js. If build is stale, tests may pass
+      or fail based on old code. CI pipeline runs build before e2e step.
+      Locally, run npm run build before npm run test:e2e.
+    occurrences: 0
+    last_flagged: "2026-02-20"
+
+related_context:
+  - architecture/cli-architecture.yaml
+  - conventions/testing-conventions.yaml
+  - conventions/manual-workflow-testing.yaml

@@ -26,3 +26,9 @@ dist/
 
 # Release packages
 .genreleases/
+
+# Git worktrees
+.worktrees/
+
+# Test coverage
+coverage/

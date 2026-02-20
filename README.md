@@ -235,13 +235,35 @@ npm run build
 npm link
 ```
 
+### Testing
+
+We use [Vitest](https://vitest.dev/) with a three-tier testing strategy:
+
+- **Unit tests** (`tests/unit/`) — fast, isolated tests for individual functions and modules
+- **Integration tests** (`tests/integration/`) — test interactions between components (filesystem, config loading)
+- **E2E tests** (`tests/e2e/`) — test full CLI commands against real project fixtures
+
+All PRs must pass the full test suite. Aim to add tests for any new functionality or bug fixes.
+
+```bash
+npm test                  # Run all tests
+npm run test:unit         # Unit tests only
+npm run test:integration  # Integration tests only
+npm run test:e2e          # End-to-end tests only
+npm run test:coverage     # Run tests with coverage report
+npm run test:watch        # Watch mode for development
+```
+
+
+
 ### How to Contribute
 
 1. **Check existing issues** - [View open issues](https://github.com/berserkdisruptors/buildforce-cli/issues)
 2. **Create an issue** - Describe the problem or feature request
 3. **Fork & branch** - Create a feature branch following our naming convention
-4. **Test locally** - `npm link` and test your changes
-5. **Submit PR** - Describe your changes and link related issues
+4. **Write tests** - Add unit/integration/e2e tests for your changes
+5. **Run the test suite** - `npm test` to verify everything passes
+6. **Submit PR** - Describe your changes and link related issues
 
 Adding support for a new AI agent is a great way to contribute — see [Supported AI Agents](#supported-ai-agents) for details.
 
