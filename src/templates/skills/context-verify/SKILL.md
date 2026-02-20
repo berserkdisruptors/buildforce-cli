@@ -198,13 +198,16 @@ Classify each convention finding as:
 For each verification procedure extracted in Step 3B, **execute the described steps**. This is not pattern matching — the agent must actively run the procedures described in the verification file.
 
 Examples of what verification procedures might require:
+- **Running tests** — the most common and important verification. Use the `test_execution` field to determine which test types and which specific test suites to run based on which modules were changed. Run the exact commands documented in the verification file.
 - Running a build process and inspecting the output artifacts
 - Extracting an archive and confirming expected files are present
 - Executing a command and checking its exit code or output
 - Reading generated files and validating their contents against expectations
 
+**Test execution is the primary verification mechanism.** If a verification file contains a `test_execution` field with `module_test_map`, use it to determine exactly which tests to run based on the changed files. For example, if `src/auth/login.ts` changed and the map says auth is covered by `[unit, e2e]`, run both the unit and e2e commands for auth. If the map shows a module has no coverage (`covered_by: []`), report that as a warning — changes to untested modules carry higher risk.
+
 For each procedure:
-1. Read the verification file's steps carefully
+1. Read the verification file's steps carefully (pay special attention to `test_execution` and `verification_procedures`)
 2. Execute each step using the available tools (Bash for commands, Read/Glob/Grep for inspection)
 3. Compare actual results against the expected outcomes documented in the verification file
 4. Record: **pass** if the procedure's expectations are met, **fail** if not (with details on what diverged)

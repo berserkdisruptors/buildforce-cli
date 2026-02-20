@@ -215,9 +215,9 @@ Use the Task tool to spawn all three Context Extractor sub-agents **simultaneous
    - Reads plan from `.buildforce/context/conventions/_extraction-progress.yaml`
    - Returns proposals for convention context files
 
-3. **buildforce-verification-extractor**: Extracts verification/quality context
+3. **buildforce-verification-extractor**: Extracts verification procedures (build/test/deploy validation steps)
    - Reads plan from `.buildforce/context/verification/_extraction-progress.yaml`
-   - Returns proposals for verification context files
+   - Returns proposals for verification context files (procedural, not static facts)
 
 Each extractor will:
 - Read their plan from the `_extraction-progress.yaml` file
