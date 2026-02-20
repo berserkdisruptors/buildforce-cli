@@ -1,23 +1,31 @@
 # Verification Context Schema
-# Version: 2.0
+# Version: 2.1
 # This schema defines the structure for verification context files.
 # Verification context answers: "HOW do I know it's right?"
 #
-# IMPORTANT: Verification context is human-originated, not code-derivable.
-# It captures quality standards, test expectations, and known risks that
-# agents cannot infer from code alone.
+# IMPORTANT: Verification context describes PROCEDURAL VALIDATION — executable
+# steps an agent must run to confirm that changes meet quality criteria.
+# This is NOT a catalog of static facts about quality (that's conventions).
+#
+# The key distinction:
+#   - Conventions = "HOW do we do things?" (patterns, rules, style) -> static compliance
+#   - Verification = "HOW do I know it's right?" (procedures, steps, validation) -> executable checks
+#
+# A verification file describes WHEN to run a procedure, WHAT steps to execute,
+# and WHAT outcomes to expect. Agents use these to actively validate changes,
+# not just pattern-match against code.
 #
 # SOURCE OPTIONS:
-#   - extracted: Derived from PR comment analysis (GitHub Action)
+#   - extracted: Derived from CI configs, build scripts, test infrastructure
 #   - manual: Manually documented by the team
-#   - hybrid: Combination of mining with human curation
+#   - hybrid: Combination of extraction with human curation
 #
 # PRIMARY USE CASES:
-#   - CLI /build self-review: Pre-flight check before presenting to user
-#   - PR Review Action: Official verification gate before merge
-#   - Agent self-evaluation: What makes code "good enough" here?
+#   - context-verify skill: Reads these files and executes the procedures
+#   - Agent self-validation: Run procedures before presenting work to user
+#   - PR review: Verify changes meet criteria before merge
 
-version: "2.0"
+version: "2.1"
 
 # Required fields for all verification files
 required_fields:
@@ -30,115 +38,169 @@ required_fields:
 
 # Optional fields - populate based on what's known
 optional_fields:
-  - quality_standards       # What makes code "good enough" to submit
-  - test_expectations       # How to prove the code works
-  - review_checklist        # What reviewers actually check
-  - compliance_requirements # Regulatory or organizational requirements
+  - triggers                # WHEN this verification applies
+  - verification_procedures # WHAT steps to execute (the core of this schema)
+  - test_execution          # HOW to run tests (the most important verification type)
+  - expected_outcomes       # WHAT success looks like
+  - anti_patterns           # Common mistakes to avoid
   - known_risks             # Module-specific problem areas
+  - compliance_requirements # Regulatory requirements with verification steps
 
 # Field definitions
 
 id:
   description: "Unique identifier for this verification context"
   format: "kebab-case"
-  example: "project-verification-standards"
+  example: "release-package-verification"
 
 name:
   description: "Human-readable name"
   format: "String with proper capitalization"
-  example: "Project Verification Standards"
+  example: "Release Package Verification"
 
 type:
   description: "Context type identifier - always 'verification' for this schema"
   value: "verification"
-  note: "This is a fixed value - all files in verification/ must have type: verification"
 
 source:
   description: "How this verification context was populated"
   values:
-    - extracted: "Derived from PR comment analysis by GitHub Action"
+    - extracted: "Derived from CI configs, build scripts, test infrastructure"
     - manual: "Manually documented by the team"
-    - hybrid: "Combination of mining results with human curation"
-  example: "hybrid"
+    - hybrid: "Combination of extraction with human curation"
 
-created:
-  description: "Date when this verification context was first created"
-  format: "ISO date (YYYY-MM-DD)"
-  example: "2025-01-15"
-
-last_updated:
-  description: "Date when this verification context was last modified"
-  format: "ISO date (YYYY-MM-DD)"
-  example: "2025-09-20"
-
-# Optional field definitions
-
-quality_standards:
-  description: "What makes code 'good enough' to submit for review"
-  format: "Array of standard objects"
+triggers:
+  description: "Conditions that indicate this verification should be executed"
+  format: "Object describing when the procedure applies"
   fields:
-    - standard: "Name of the quality standard"
-    - description: "What this standard requires"
-    - enforcement: "strict | recommended (strict = block PR, recommended = warn)"
-    - confidence: "0.0-1.0, from mining: percentage of PRs rejected without this"
+    - file_patterns: "Glob patterns for files that trigger this verification"
+    - conditions: "Human-readable description of when to run"
   example:
-    - standard: "Test coverage for public interfaces"
-      description: "All public methods and exported functions require unit tests"
-      enforcement: strict
-      confidence: 0.89
+    file_patterns:
+      - "src/templates/skills/**/*"
+      - "src/templates/agents/**/*"
+      - ".github/workflows/scripts/create-release-packages.sh"
+    conditions: |
+      Run when any template files, agent files, or the release packaging
+      script itself are modified. These changes affect what gets distributed.
 
-test_expectations:
-  description: "How to prove the code works - patterns for different test types"
-  format: "Object with test type categories"
-  structure:
-    unit_tests:
-      when_required: "String describing when unit tests are needed"
-      patterns: "String describing expected test patterns"
-    integration_tests:
-      when_required: "String describing when integration tests are needed"
-      patterns: "String describing expected test patterns"
-    e2e_tests:
-      when_required: "String describing when e2e tests are needed"
-      patterns: "String describing expected test patterns"
-  example:
-    unit_tests:
-      when_required: "Business logic, utility functions, data transformations"
-      patterns: "Jest with describe/it blocks, mock external dependencies"
-    integration_tests:
-      when_required: "API endpoints, database operations, external service calls"
-      patterns: "Supertest for APIs, test containers for databases"
-
-review_checklist:
-  description: "What reviewers actually check - derived from PR comment patterns"
-  format: "Array of checklist items"
+verification_procedures:
+  description: "Step-by-step procedures the agent must execute to validate changes"
+  format: "Object with named steps, each containing a command, verification check, and failure action"
+  note: |
+    This is the core of a verification file. Each step describes a concrete
+    action to execute, what to check in the output, and what to do if it fails.
+    Steps are ordered and may depend on previous steps succeeding.
   fields:
-    - item: "What reviewers look for"
-    - frequency: "0.0-1.0, how often this is mentioned in reviews"
-    - example_comment: "Example of what reviewers write"
+    - step_N:
+        command: "Shell command or action to execute"
+        verify: "What to check — expected output, files created, exit codes"
+        on_failure: "What to do if verification fails"
   example:
-    - item: "Error handling"
-      frequency: 0.24
-      example_comment: "Please add error handling for the edge case when..."
-    - item: "Test coverage"
-      frequency: 0.19
-      example_comment: "Can you add tests for this new function?"
+    step_1_build:
+      command: "npm run build"
+      verify: "No TypeScript compilation errors"
+      on_failure: "Fix TypeScript errors before proceeding"
+    step_2_package:
+      command: "npm run create-release-packages"
+      verify: |
+        Check that ZIP files are created in the .genreleases/ directory:
+        - buildforce-cli-template-claude-v0.0.100.zip
+        - buildforce-cli-template-cursor-v0.0.100.zip
+        - buildforce-cli-template-opencode-v0.0.100.zip
+      on_failure: "Check shell script syntax errors or missing source directories"
+    step_3_inspect:
+      command: "unzip -l .genreleases/buildforce-cli-template-claude-v0.0.100.zip"
+      verify: "New skill directory appears in the archive"
+      on_failure: "Skill may not be included in agents: frontmatter or directory is missing"
 
-compliance_requirements:
-  description: "Regulatory or organizational requirements that must be followed"
-  format: "Array of compliance requirement objects"
+test_execution:
+  description: |
+    Testing is the primary verification mechanism. This field captures everything
+    an agent needs to know to run the right tests for the right changes.
+    Unlike verification_procedures (which are generic step-by-step processes),
+    test_execution is specifically about the test infrastructure, test types,
+    selective execution, and module-to-test mapping.
+  format: "Object with test types, module mapping, and prerequisites"
   fields:
-    - requirement: "Name of the compliance requirement"
-    - description: "What this requirement mandates"
-    - applies_to: "What code/areas this applies to"
-    - enforcement: "strict | recommended"
+    - test_types:
+        description: "Each test type available in the codebase"
+        fields:
+          - type: "Name (unit, integration, e2e, contract, snapshot, etc.)"
+          - command: "Exact command to run all tests of this type"
+          - selective: "Command pattern for running tests for a specific module"
+          - prerequisites: "Services, env vars, or setup needed before running"
+          - ci_only: "Whether this test type only runs in CI (not locally)"
+    - module_test_map:
+        description: "Maps source modules to which test types cover them"
+        fields:
+          - module: "Glob pattern for source files"
+          - covered_by: "Array of test types that cover this module"
+          - run: "Exact command(s) to run all relevant tests for this module"
+          - gap: "What test coverage is missing for this module"
+    - coverage:
+        description: "Coverage thresholds and how to check them"
+        fields:
+          - command: "Command to generate coverage report"
+          - threshold: "Minimum coverage percentage"
+          - excluded: "Paths excluded from coverage and why"
+    - known_issues:
+        description: "Flaky tests, slow tests, skipped tests"
+        fields:
+          - test: "Test file or pattern"
+          - issue: "What's wrong"
+          - workaround: "How to handle it"
   example:
-    - requirement: "GDPR - Personal data handling"
-      description: "PII must not be logged, must be encrypted at rest"
-      applies_to: "Any code handling user data"
-      enforcement: strict
+    test_types:
+      - type: unit
+        command: "npm test"
+        selective: "npm test -- --testPathPattern='{module}'"
+        prerequisites: "None"
+      - type: e2e
+        command: "npm run test:e2e"
+        selective: "npm run test:e2e -- --testPathPattern='{module}'"
+        prerequisites: "docker-compose up -d"
+        ci_only: false
+    module_test_map:
+      - module: "src/auth/**"
+        covered_by: [unit, e2e]
+        run: "npm test -- --testPathPattern='auth' && npm run test:e2e -- --testPathPattern='auth'"
+      - module: "src/utils/**"
+        covered_by: []
+        gap: "No test coverage — changes require manual verification"
+    coverage:
+      command: "npm test -- --coverage"
+      threshold: "80%"
+      excluded: ["src/legacy/", "src/migrations/"]
+
+expected_outcomes:
+  description: "What success looks like after all procedures pass"
+  format: "Array of outcome descriptions"
+  example:
+    - "All three agent ZIP packages contain the new skill directory"
+    - "Upgrade command completes without errors"
+    - "Skills are correctly distributed to agent-specific folders"
+
+anti_patterns:
+  description: "Common mistakes agents or contributors make when working in this area"
+  format: "Object with description and wrong_approaches array"
+  fields:
+    - description: "Overview of the anti-pattern"
+    - wrong_approaches:
+        - approach: "What people do wrong"
+          example: "Code showing the wrong approach"
+          why_it_fails: "Why this doesn't work"
+  example:
+    description: "Agents attempt to invoke the release packaging shell script directly"
+    wrong_approaches:
+      - approach: "Setting env vars and running shell script directly"
+        example: |
+          export VERSION=0.0.43
+          .github/workflows/scripts/create-release-packages.sh
+        why_it_fails: "Script requires a positional argument with v-prefix"
 
 known_risks:
-  description: "Module-specific problem areas - derived from historical issues"
+  description: "Module-specific problem areas — areas requiring extra attention"
   format: "Array of known risk objects"
   fields:
     - module: "File path or glob pattern for affected module"
@@ -147,52 +209,76 @@ known_risks:
     - occurrences: "Number of times this was flagged"
     - last_flagged: "ISO date of last occurrence"
   example:
-    - module: "src/services/UserService.ts"
-      risk: "N+1 query patterns when loading user relationships"
-      mitigation: "Always use eager loading or explicit batch queries"
-      occurrences: 6
+    - module: ".github/workflows/scripts/create-release-packages.sh"
+      risk: "Agents invoke shell script directly instead of using npm scripts"
+      mitigation: "ALWAYS use: npm run create-release-packages"
+      occurrences: 3
       last_flagged: "2025-03-15"
+
+compliance_requirements:
+  description: "Regulatory or organizational requirements with verification procedures"
+  format: "Array of compliance objects, each with verification steps"
+  fields:
+    - requirement: "Name of the compliance requirement"
+    - description: "What this requirement mandates"
+    - verification: "How to verify compliance (procedural)"
+    - enforcement: "strict | recommended"
+  example:
+    - requirement: "GDPR - Personal data handling"
+      description: "PII must not be logged, must be encrypted at rest"
+      verification: "Grep new code for logging calls that include user fields; check encryption at storage boundaries"
+      enforcement: strict
 
 # Example verification file structure
 example_file: |
-  # project-verification-standards.yaml
-  id: project-verification-standards
-  name: "Project Verification Standards"
+  id: release-package-verification
+  name: Release Package Verification
   type: verification
-  source: hybrid
+  source: manual
   created: "2025-01-15"
   last_updated: "2025-09-20"
 
-  quality_standards:
-    - standard: "Test coverage for public interfaces"
-      description: "All public methods and exported functions require unit tests"
-      enforcement: strict
-      confidence: 0.89
+  description: |
+    Verification procedure for building and testing release packages locally.
+    Ensures that template changes (skills, agents, hooks) are correctly
+    packaged and distributed to all three supported agents.
 
-    - standard: "Error handling completeness"
-      description: "All async operations must have explicit error handling"
-      enforcement: recommended
-      confidence: 0.71
+  triggers:
+    file_patterns:
+      - "src/templates/skills/**/*"
+      - "src/templates/agents/**/*"
+      - "src/templates/hooks/**/*"
+    conditions: |
+      Run when any distributable template files are modified.
 
-  test_expectations:
-    unit_tests:
-      when_required: "Business logic, utility functions, data transformations"
-      patterns: "Jest with describe/it blocks, mock external dependencies"
-    integration_tests:
-      when_required: "API endpoints, database operations, external service calls"
-      patterns: "Supertest for APIs, test containers for databases"
+  verification_procedures:
+    step_1_build:
+      command: "npm run build"
+      verify: "No TypeScript compilation errors"
+      on_failure: "Fix TypeScript errors before proceeding"
+    step_2_package:
+      command: "npm run create-release-packages"
+      verify: "ZIP files created in .genreleases/ for all three agents"
+      on_failure: "Check shell script syntax or missing source directories"
+    step_3_test:
+      command: "node ./dist/cli.js upgrade --local"
+      verify: "Upgrade completes, skills/agents/hooks updated correctly"
+      on_failure: "Check upgrade command logic or template structure"
 
-  review_checklist:
-    - item: "Error handling"
-      frequency: 0.24
-      example_comment: "Please add error handling for the edge case when..."
-    - item: "Test coverage"
-      frequency: 0.19
-      example_comment: "Can you add tests for this new function?"
+  expected_outcomes:
+    - "All three agent packages contain updated templates"
+    - "Upgrade command distributes changes to agent-specific folders"
+
+  anti_patterns:
+    description: "Agents try to run the shell script directly"
+    wrong_approaches:
+      - approach: "Direct shell script invocation"
+        example: ".github/workflows/scripts/create-release-packages.sh v0.0.43"
+        why_it_fails: "Script is designed for CI; use npm run create-release-packages"
 
   known_risks:
-    - module: "src/services/UserService.ts"
-      risk: "N+1 query patterns when loading user relationships"
-      mitigation: "Always use eager loading or explicit batch queries"
-      occurrences: 6
+    - module: ".github/workflows/scripts/create-release-packages.sh"
+      risk: "Direct invocation fails with version argument errors"
+      mitigation: "Always use npm run create-release-packages"
+      occurrences: 3
       last_flagged: "2025-03-15"
