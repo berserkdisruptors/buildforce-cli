@@ -201,7 +201,7 @@ architecture_patterns:
     1. Source: src/templates/skills/context-extract/SKILL.md
     2. Packaging: generate_skills() in create-release-packages.sh bundles to .claude/skills/
     3. Deployment: init/upgrade extracts to user's .claude/skills/ directory
-    4. Runtime (command): User invokes /buildforce.extract -> extract.md -> skill
+    4. Runtime (command): User invokes /context-extract -> extract.md -> skill
     5. Runtime (direct): User invokes /context-extract skill directly
 
 evolution:

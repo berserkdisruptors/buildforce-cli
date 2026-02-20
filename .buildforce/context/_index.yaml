@@ -1,6 +1,6 @@
 # Buildforce Context Repository Index & Coverage Map
 # This file serves as both the context index AND the context coverage map.
-# Version 2.1: Unified structure with domain items tracking for /buildforce.extract
+# Version 2.1: Unified structure with domain items tracking for /context-extract
 
 version: "2.1"
 
@@ -33,7 +33,7 @@ version: "2.1"
 # VERSION 2.1: COVERAGE MAP FUNCTIONALITY
 # ============================================================================
 #
-# In v2.1, this file also serves as a coverage map for /buildforce.extract.
+# In v2.1, this file also serves as a coverage map for /context-extract.
 # Each domain tracks:
 #   - items[]: Discovered and extracted context items with status/depth
 #   - coverage: Percentage of items that have been extracted
@@ -49,21 +49,21 @@ version: "2.1"
 #   - status: discovered | in-progress | extracted
 #   - depth: none | shallow | moderate | deep
 #
-# The /buildforce.extract command uses this coverage map to:
+# The /context-extract command uses this coverage map to:
 #   1. Track what has been discovered in the codebase
 #   2. Track what has been extracted and to what depth
 #   3. Recommend focus areas for subsequent extraction iterations
 #
 # ============================================================================
 
-# Timestamps (populated by /buildforce.extract on first run)
+# Timestamps (populated by /context-extract on first run)
 generated_at: "2026-02-02"
 last_updated: "2026-02-19"
 
 # ============================================================================
 # CODEBASE PROFILE
 # ============================================================================
-# Populated by /buildforce.extract during initial codebase scan.
+# Populated by /context-extract during initial codebase scan.
 # Provides high-level overview of the project for AI agents.
 
 codebase_profile:
@@ -422,7 +422,7 @@ summary:
 # ============================================================================
 # EXTRACTION STATE
 # ============================================================================
-# Tracks state between /buildforce.extract invocations.
+# Tracks state between /context-extract invocations.
 # Enables continuation after /clear or session restart.
 
 extraction:

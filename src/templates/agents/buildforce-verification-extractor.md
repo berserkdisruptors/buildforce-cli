@@ -1,6 +1,6 @@
 ---
 name: buildforce-verification-extractor
-description: Context Extractor for verification context. Extracts procedural validation steps, build/test workflows, and known risks. Use when extracting verification context during /buildforce.extract iterations.
+description: Context Extractor for verification context. Extracts procedural validation steps, build/test workflows, and known risks. Use when extracting verification context during /context-extract iterations.
 tools: Read, Glob, Grep
 model: inherit
 agents: [claude, cursor, opencode]

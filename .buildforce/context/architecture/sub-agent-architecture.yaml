@@ -64,7 +64,7 @@ design_decisions:
     rationale: |
       Separation of concerns: Explorers are read-only and optimized for speed (context retrieval
       during /buildforce.explore). Extractors return proposals without direct writes (context
-      creation during /buildforce.extract). This prevents accidental modifications during
+      creation during /context-extract). This prevents accidental modifications during
       exploration and enables validation before writes during extraction.
 
   - decision: "Archiver has bypassPermissions and runs in background"
@@ -165,7 +165,7 @@ architecture_patterns:
     - model: haiku
     ```
 
-    For Extractors (during /buildforce.extract):
+    For Extractors (during /context-extract):
     ```
     Task tool parameters:
     - subagent_type: "buildforce-structural-extractor" | "buildforce-conventions-extractor" | "buildforce-verification-extractor"

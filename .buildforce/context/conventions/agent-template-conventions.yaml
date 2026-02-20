@@ -22,7 +22,7 @@ examples:
     snippet: |
       ---
       name: buildforce-conventions-extractor
-      description: Context Extractor for convention context. Extracts coding standards, patterns, and practices. Use when extracting convention context during /buildforce.extract iterations.
+      description: Context Extractor for convention context. Extracts coding standards, patterns, and practices. Use when extracting convention context during /context-extract iterations.
       tools: Read, Glob, Grep
       model: inherit
       agents: [claude]
@@ -132,7 +132,7 @@ frontmatter_fields:
     - field: description
       format: "Single sentence with purpose and usage context"
       examples:
-        - "Context Extractor for convention context. Extracts coding standards, patterns, and practices. Use when extracting convention context during /buildforce.extract iterations."
+        - "Context Extractor for convention context. Extracts coding standards, patterns, and practices. Use when extracting convention context during /context-extract iterations."
         - "Archives exploration artifacts to the appropriate location. Runs in background to avoid blocking conversation flow."
       notes: |
         Description should include WHEN to use the agent, not just WHAT it does.

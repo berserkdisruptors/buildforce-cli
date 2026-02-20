@@ -228,7 +228,7 @@ Each extractor will:
 
 - If an extractor times out (> 120s): skip it, continue with the others.
 - If an extractor fails: skip it, continue with the others.
-- If all three fail: output "Context extraction failed. Run /buildforce.extract manually to retry." and STOP.
+- If all three fail: output "Context extraction failed. Run /context-extract manually to retry." and STOP.
 
 ### 4.4 Validate & Write Proposals
 
@@ -349,8 +349,8 @@ Items extracted: {count} | New discoveries: {count}
 - {item}: {reason for focus}
 
 ---
-State preserved in _index.yaml. Run `/buildforce.extract` to continue,
-or `/buildforce.extract "go deeper on X"` to focus on specific areas.
+State preserved in _index.yaml. Run `/context-extract` to continue,
+or `/context-extract "go deeper on X"` to focus on specific areas.
 ```
 
 ### Compact Output (Incremental mode)
@@ -367,7 +367,7 @@ Context updated: {created_count} created, {updated_count} updated
 **Partial failure:**
 ```
 Context partially updated: {success_count} file(s), {error_count} extractor(s) failed
-   Run /buildforce.extract to retry
+   Run /context-extract to retry
 ```
 
 ---
